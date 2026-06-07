@@ -45,8 +45,8 @@ export default function Auth() {
   return (
     <div className="landing">
       <div className="hero">
-        <div className="hero-logo">🧺</div>
-        <h1>Tossalisti</h1>
+        <img className="hero-logo" src="/logo.svg" alt="Tossalisti" width="76" height="76" />
+        <h1>Tossa<span style={{ color: '#f5a623' }}>listi</span></h1>
         <p className="tagline">Eitt app til að muna, versla og deila.</p>
         <p className="lead">Innkaupalistar, verkefnalistar og uppskriftir á íslensku — deilanlegt með fjölskyldu og vinum.</p>
       </div>

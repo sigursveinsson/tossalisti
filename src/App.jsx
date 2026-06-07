@@ -184,7 +184,10 @@ export default function App() {
     <div className="app">
       <div className="header">
         <div className="brand">
-          <span className="basket">🧺</span>
+          <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true" style={{ flex: 'none' }}>
+            <rect x="6" y="6" width="52" height="52" rx="14" fill="#ffffff" />
+            <polyline points="20,33 29,42 45,24" fill="none" stroke="#f5a623" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           <button className="listbtn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan">
             <span className="lists-ico">☰</span> {isTask ? '✅' : '🛒'} {list.name} <span className="chev">▾</span>
           </button>
