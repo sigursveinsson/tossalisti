@@ -44,13 +44,18 @@ const local = {
     const list = lists.find(l => l.id === listId); if (!list) return
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
-    list.items.push({ id: uid(), name: n, dept: departmentFor(name), checked: false })
+    list.items.push({ id: uid(), name: n, dept: departmentFor(name), checked: false, points: 10, completed_by: null })
     lsWrite(lists)
   },
   async toggleItem(listId, itemId) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
-    if (it) { it.checked = !it.checked; lsWrite(lists) }
+    if (it) { it.checked = !it.checked; it.completed_by = it.checked ? 'me' : null; lsWrite(lists) }
+  },
+  async setPoints(listId, itemId, points) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
+    if (it) { it.points = points; lsWrite(lists) }
   },
   async removeItem(listId, itemId) {
     const lists = lsRead() || []
@@ -153,7 +158,12 @@ const cloud = {
     })
   },
   async toggleItem(listId, itemId, checked) {
-    await supabase.from('list_items').update({ checked: !checked }).eq('id', itemId)
+    const newChecked = !checked
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('list_items').update({ checked: newChecked, completed_by: newChecked ? user?.id : null }).eq('id', itemId)
+  },
+  async setPoints(listId, itemId, points) {
+    await supabase.from('list_items').update({ points }).eq('id', itemId)
   },
   async removeItem(listId, itemId) { await supabase.from('list_items').delete().eq('id', itemId) },
   async addManyItems(listId, names) {

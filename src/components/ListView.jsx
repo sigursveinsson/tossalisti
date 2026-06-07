@@ -3,11 +3,13 @@ import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 
 const initials = (email) => email ? email.split('@')[0].slice(0, 2).toUpperCase() : '?'
+const POINTS_OPTIONS = [5, 10, 20, 30, 50]
 
-export default function ListView({ items, listType = 'shopping', members = [], currentUserId, onAdd, onToggle, onRemove, onAssign }) {
+export default function ListView({ items, listType = 'shopping', members = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints }) {
   const isTask = listType === 'task'
   const [text, setText] = useState('')
-  const [assigning, setAssigning] = useState(null) // liður sem verið er að úthluta
+  const [assigning, setAssigning] = useState(null)
+  const [pointsItem, setPointsItem] = useState(null)
   const sugg = isTask ? [] : suggest(text)
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
@@ -28,7 +30,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta">＋</button>
   }
 
-  const itemRow = (it, color) => (
+  const itemRow = (it, color, taskMode) => (
     <div className={'item' + (it.checked ? ' done' : '')} key={it.id}>
       <div
         className="check"
@@ -36,6 +38,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         onClick={() => onToggle(it)}
       >{it.checked ? '✓' : ''}</div>
       <span className="label" onClick={() => onToggle(it)}>{it.name}</span>
+      {taskMode && <button className="points-badge" onClick={() => setPointsItem(it)}>{it.points ?? 10} stig</button>}
       {assignBtn(it)}
       <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
     </div>
@@ -70,25 +73,58 @@ export default function ListView({ items, listType = 'shopping', members = [], c
             <span className="assign-chip" style={{ pointerEvents: 'none' }}>{initials(m.email)}</span>
           </button>
         ))}
-        <button className="pick-row" onClick={() => { onAssign(assigning, null); setAssigning(null) }}>
-          <span>Enginn</span>
-        </button>
+        <button className="pick-row" onClick={() => { onAssign(assigning, null); setAssigning(null) }}><span>Enginn</span></button>
       </div>
     </div>
   )
 
-  // VERKEFNALISTI: einfaldur gátlisti í röð, óhökuð fyrst
+  const pointsModal = pointsItem && (
+    <div className="sheet-bg center" onClick={() => setPointsItem(null)}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Stig fyrir verk <button className="x" onClick={() => setPointsItem(null)} aria-label="Loka">×</button></h2>
+        <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 12 }}>{pointsItem.name}</div>
+        <div className="points-options">
+          {POINTS_OPTIONS.map(p => (
+            <button key={p} className={'points-opt' + ((pointsItem.points ?? 10) === p ? ' on' : '')} onClick={() => { onSetPoints(pointsItem, p); setPointsItem(null) }}>{p}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+
+  // VERKEFNALISTI: gátlisti + stig + stigatafla
   if (isTask) {
     const ordered = [...items].sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1))
+    const scores = members.map(m => ({
+      user_id: m.user_id, email: m.email,
+      points: items.filter(i => i.checked && i.completed_by === m.user_id).reduce((s, i) => s + (i.points ?? 10), 0),
+    })).sort((a, b) => b.points - a.points)
+
     return (
       <div>
         {addBar}
         <span className="badge">{open} eftir</span>
+
+        {members.length > 1 && (
+          <div className="leaderboard">
+            <div className="lb-title">🏆 Stigatafla</div>
+            {scores.map((s, idx) => (
+              <div className="lb-row" key={s.user_id}>
+                <span className="lb-rank">{idx + 1}</span>
+                <span className="assign-chip" style={{ pointerEvents: 'none' }}>{initials(s.email)}</span>
+                <span className="lb-name">{s.email}{s.user_id === currentUserId ? ' (þú)' : ''}</span>
+                <span className="lb-points">{s.points} stig</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {items.length === 0 && <p className="empty">Listinn er tómur — bættu við verki að ofan.</p>}
         <div className="group">
-          {ordered.map(it => itemRow(it, 'var(--accent)'))}
+          {ordered.map(it => itemRow(it, 'var(--accent)', true))}
         </div>
         {assignModal}
+        {pointsModal}
       </div>
     )
   }
@@ -112,7 +148,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
             <span className="emoji">{g.icon}</span>
             <span className="name" style={{ color: g.color }}>{g.name}</span>
           </div>
-          {g.items.map(it => itemRow(it, g.color))}
+          {g.items.map(it => itemRow(it, g.color, false))}
         </div>
       ))}
       {assignModal}

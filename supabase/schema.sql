@@ -48,6 +48,8 @@ create table if not exists public.list_items (
   dept        text not null default 'other',
   checked     boolean not null default false,
   assignee    uuid references auth.users(id) on delete set null,
+  points      int not null default 10,
+  completed_by uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now()
 );
 

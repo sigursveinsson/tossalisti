@@ -48,6 +48,16 @@ button { font-family: inherit; cursor: pointer; }
 .item .del { color: var(--faint); font-size: 20px; background: none; border: none; padding: 4px; }
 .assign-chip { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff; border: none; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none; }
 .assign-add { width: 26px; height: 26px; border-radius: 50%; background: transparent; border: 1px dashed var(--faint); color: var(--faint); font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+.points-badge { background: var(--chip); color: var(--navy); border: 1px solid var(--line); border-radius: 20px; font-size: 11px; font-weight: 600; padding: 3px 9px; flex: none; white-space: nowrap; }
+.points-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.points-opt { flex: 1; min-width: 52px; height: 46px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; font-size: 17px; font-weight: 600; }
+.points-opt.on { border-color: var(--accent); color: var(--accent); background: var(--chip); }
+.leaderboard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 12px 0 6px; }
+.lb-title { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.lb-rank { width: 16px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.lb-name { flex: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-points { font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
 .empty { text-align: center; color: var(--faint); font-size: 14px; margin-top: 48px; }
 
 .recipe { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 10px; }

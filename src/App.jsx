@@ -80,6 +80,7 @@ export default function App() {
   const toggleItem = async (it) => { await store.toggleItem(list.id, it.id, it.checked); await reload(list.id) }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
   const assignItem = async (it, userId) => { await store.assignItem(list.id, it.id, userId); await reload(list.id) }
+  const setPoints = async (it, pts) => { await store.setPoints(list.id, it.id, pts); await reload(list.id) }
 
   const addRecipeToList = async (recipe, listId, servings) => {
     const target = lists.find(l => l.id === listId)
@@ -197,7 +198,7 @@ export default function App() {
       <div className="body">
         {tab === 'recipes' && !isTask
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : <ListView items={list.items} listType={list.type} members={members} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} />}
+          : <ListView items={list.items} listType={list.type} members={members} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} />}
       </div>
 
       {showLists && (
