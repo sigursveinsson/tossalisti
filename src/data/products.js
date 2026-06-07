@@ -41,6 +41,11 @@ export const PRODUCTS = {
   'klósettpappír': 'household', 'eldhúsrúlla': 'household', 'uppþvottalögur': 'household',
   'þvottaefni': 'household', 'sápa': 'household', 'tannkrem': 'household', 'sjampó': 'household',
   'rusladpokar': 'household', 'álpappír': 'household', 'bleiur': 'household',
+  // Viðbætur fyrir uppskriftasafnið
+  'lasagnaplötur': 'pantry', 'karrí': 'pantry', 'karrímauk': 'pantry',
+  'hamborgarabrauð': 'bakery', 'tortillur': 'bakery', 'pítsadeig': 'pantry',
+  'pítsasósa': 'pantry', 'pepperóní': 'meat', 'haframjöl': 'pantry',
+  'kanill': 'pantry', 'vorlaukur': 'produce', 'raspur': 'pantry',
 }
 
 export const PRODUCT_NAMES = Object.keys(PRODUCTS)

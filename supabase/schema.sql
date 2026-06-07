@@ -28,6 +28,7 @@ create table if not exists public.lists (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   owner       uuid not null references auth.users(id) on delete cascade,
+  type        text not null default 'shopping',
   created_at  timestamptz not null default now()
 );
 
@@ -46,8 +47,19 @@ create table if not exists public.list_items (
   name        text not null,
   dept        text not null default 'other',
   checked     boolean not null default false,
+  assignee    uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now()
 );
+
+-- Meðlimir lista með netföngum (öruggt fall — aðeins meðlimir sjá)
+create or replace function public.list_members_emails(p_list uuid)
+returns table(user_id uuid, email text)
+language sql security definer stable as $$
+  select m.user_id, p.email
+  from public.list_members m
+  join public.profiles p on p.id = m.user_id
+  where m.list_id = p_list and public.is_member(p_list);
+$$;
 
 create index if not exists list_items_list_id_idx on public.list_items(list_id);
 
@@ -122,6 +134,63 @@ begin
   return true;
 end;
 $$;
+
+-- ===========================================================================
+--  Uppskriftir: notkun (mínar/vinsælar) og stjörnugjöf
+-- ===========================================================================
+create table if not exists public.recipe_uses (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  recipe_id  text not null,
+  uses       int not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, recipe_id)
+);
+alter table public.recipe_uses enable row level security;
+drop policy if exists recipe_uses_own on public.recipe_uses;
+create policy recipe_uses_own on public.recipe_uses for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create table if not exists public.recipe_ratings (
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  recipe_id  text not null,
+  stars      int not null check (stars between 1 and 5),
+  primary key (user_id, recipe_id)
+);
+alter table public.recipe_ratings enable row level security;
+drop policy if exists ratings_own on public.recipe_ratings;
+create policy ratings_own on public.recipe_ratings for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create or replace function public.record_recipe_use(p_recipe text)
+returns void language plpgsql security definer as $$
+begin
+  insert into public.recipe_uses (user_id, recipe_id, uses, updated_at)
+  values (auth.uid(), p_recipe, 1, now())
+  on conflict (user_id, recipe_id)
+  do update set uses = public.recipe_uses.uses + 1, updated_at = now();
+end; $$;
+
+create or replace function public.popular_recipes()
+returns table(recipe_id text, total bigint)
+language sql security definer stable as $$
+  select recipe_id, sum(uses)::bigint as total
+  from public.recipe_uses group by recipe_id order by total desc;
+$$;
+
+create or replace function public.recipe_rating_stats()
+returns table(recipe_id text, avg_stars numeric, num bigint)
+language sql security definer stable as $$
+  select recipe_id, round(avg(stars), 1) as avg_stars, count(*)::bigint as num
+  from public.recipe_ratings group by recipe_id;
+$$;
+
+create or replace function public.rate_recipe(p_recipe text, p_stars int)
+returns void language plpgsql security definer as $$
+begin
+  insert into public.recipe_ratings (user_id, recipe_id, stars)
+  values (auth.uid(), p_recipe, p_stars)
+  on conflict (user_id, recipe_id) do update set stars = excluded.stars;
+end; $$;
 
 -- ===========================================================================
 --  Rauntíma-samstilling

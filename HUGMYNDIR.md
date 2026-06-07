@@ -1,4 +1,8 @@
-# Körfan — framtíðarhugmyndir (roadmap)
+# Tossalisti (áður Körfan) — framtíðarhugmyndir (roadmap)
+
+Stefna: víkka úr innkaupalista í almennt lista-/to-do-app — „Tossalisti".
+Matarinnkaup = tekjukjarni (heildsalar/auglýsingar). Verkefnalistar = vaxtarvél.
+Lén: tossalisti.is.
 
 Hugmyndir fyrir seinni tíma þróun, með mati á gerlegleika.
 Flokkun: 🟢 einfalt · 🟡 gerlegt, krefst vinnu · 🟠 háð gögnum/samningum
@@ -52,10 +56,103 @@ Sterkasti eiginleikinn — gerir verðsamanburð mögulegan.
 
 ---
 
+## Tossalisti-útvíkkun (almennir verkefnalistar)
+
+### 🟢 Lista-tegundir
+'Innkaup' (sjálfvirk deildaflokkun) vs 'verkefni' (einfaldur gátlisti, engin búðarflokkun).
+Bæta `type` dálki á lists. Lætur báðar upplifanir lifa saman án þess að þynna matarhlutann.
+
+### 🟢 Ábyrgðarmaður á liði
+Bæta assignee (user_id) á list_items, sýna hver ber ábyrgð, sía „mín verkefni". Byggir á list_members.
+
+### 🟢 Haka við þegar lokið
+Er þegar til (nýtist beint í verkefnalistum).
+
+---
+
+## Samvinna
+
+### 🟢 Boðshlekkur í SMS
+Deila lista með hlekk án þess að hinn þurfi fyrst að stofna reikning. Minnkar núning verulega
+(núverandi deiling krefst þess að hinn sé skráður inn). Hár forgangur — deiling er kjarnavirðið.
+
+### 🟡 Gjalddagi + áminningar / ýtitilkynningar
+Tilkynning þegar liður nálgast gjalddaga eða þegar notanda er úthlutað verki. Nauðsynlegt um leið
+og ábyrgð/gjalddagar koma. Þarf push-uppsetningu.
+
+### 🟢 Athugasemdir / nótur við lið
+Stutt spjall eða nóta per lið.
+
+### 🟢 Virknisaga
+„Anna bætti við og hakaði við mjólk" — gott á sameiginlegum listum.
+
+---
+
+## Hraður innsláttur
+
+### 🟡 Raddinnsláttur
+„Bættu við mjólk, brauði og eggjum" — frábært í búð.
+
+### 🟠 Strikamerkjaskönnun
+Skanna vöru til að bæta við. Tengist vörugögnum frá heildsölum.
+
+### 🟢 Líma inn heilan lista
+Margar línur í einu → margir liðir.
+
+### 🟢 Endurteknir listar
+T.d. „vikuinnkaup" sem býr sig til sjálft á mánudögum (byggir á afritun sem er til).
+
+---
+
+## Sniðmát (templates) — sterkt fyrir vöxt
+
+### 🟢 Tilbúin sniðmát
+Brúðkaupsgátlisti, flutningar, ferðataska, veislugátlisti. Kynnir ný notkunartilvik,
+hjálpar nýjum notendum að byrja, dregur fólk inn fyrir annað en matarinnkaup.
+
+---
+
+## Innkaupasértækt
+
+### 🟢 Magn og einingar
+Við handvirkt innslátt (#11) og úr uppskriftum (komið). 250/500/1000 g fljótval.
+### 🟢 Eigin röðun búðardeilda
+Notandi raðar deildum eftir „sinni búð".
+### 🟢 Staðalvörur
+Vörur sem þú átt oftast, endurbæta með einum smelli.
+### 🟠 Áætlað verð / heildarsumma
+Tengist verðgögnum frá búðum.
+
+---
+
+## Verkefnasértækt
+
+### 🟢 Undirverkefni
+Gátlisti inni í lið.
+### 🟢 Forgangur / fáni
+### 🟡 Myndir / viðhengi
+T.d. innblástur fyrir brúðkaup eða mynd af kvittun.
+
+---
+
+## Yfirsýn og skipulag
+
+### 🟢 Leit þvert á alla lista
+### 🟢 Geymsla (archive) á kláruðum listum
+### 🟢 Sía „mín verkefni" þvert á lista
+
+---
+
 ## Forgangsröðun (tillaga)
 
-1. Klára kjarnann + Supabase (innskráning, deiling, rauntími) — í vinnslu.
-2. Vörulisti frá heildsölum (gæði appsins + grunnur að auglýsingum).
-3. Styrktar auglýsingar (þegar notendur eru komnir).
-4. AI-uppskriftalestur (sterkt aðdráttarafl fyrir nýja notendur).
-5. Verð frá búðum (langtímamarkmið, mest háð samstarfi).
+Eftir vinaprófun:
+1. Boðshlekkur í SMS (minnkar núning við deilingu — kjarnavirðið).
+2. Áminningar / tilkynningar (nauðsynlegt með gjalddögum og ábyrgð).
+3. Sniðmát (ódýr leið að fleiri notendum með ný notkunartilvik).
+4. Tossalisti-útvíkkun: lista-tegundir + ábyrgðarmenn.
+
+Lengra fram:
+5. Vörulisti frá heildsölum (gæði + grunnur að auglýsingum).
+6. Styrktar auglýsingar (þegar notendur eru komnir).
+7. AI-uppskriftalestur.
+8. Strikamerki + verð frá búðum (langtímamarkmið, háð samstarfi).
