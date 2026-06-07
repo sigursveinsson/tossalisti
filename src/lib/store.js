@@ -117,6 +117,8 @@ const local = {
     localStorage.setItem('korfan.recipes', JSON.stringify(list))
   },
   async getListMembers() { return [] }, // engir aðrir meðlimir staðbundið
+  async createInvite() { throw new Error('local') },
+  async acceptInvite() { return null },
   async assignItem(listId, itemId, userId) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -215,6 +217,8 @@ const cloud = {
   },
   async deleteRecipe(id) { const { error } = await supabase.from('recipes').delete().eq('id', id); if (error) throw error },
   async getListMembers(listId) { const { data } = await supabase.rpc('list_members_emails', { p_list: listId }); return data || [] },
+  async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
+  async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
   async assignItem(listId, itemId, userId) {
     await supabase.from('list_items').update({ assignee: userId || null }).eq('id', itemId)
   },

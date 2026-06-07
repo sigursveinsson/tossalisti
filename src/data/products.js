@@ -46,6 +46,63 @@ export const PRODUCTS = {
   'hamborgarabrauð': 'bakery', 'tortillur': 'bakery', 'pítsadeig': 'pantry',
   'pítsasósa': 'pantry', 'pepperóní': 'meat', 'haframjöl': 'pantry',
   'kanill': 'pantry', 'vorlaukur': 'produce', 'raspur': 'pantry',
+
+  // === Stækkað vöruúrval ===
+  // Ávextir & grænmeti
+  'pera': 'produce', 'perur': 'produce', 'plóma': 'produce', 'plómur': 'produce', 'ferskja': 'produce',
+  'nektarína': 'produce', 'mangó': 'produce', 'ananas': 'produce', 'melóna': 'produce', 'vatnsmelóna': 'produce',
+  'kíví': 'produce', 'lime': 'produce', 'greip': 'produce', 'klementínur': 'produce', 'mandarínur': 'produce',
+  'hindber': 'produce', 'brómber': 'produce', 'rúsínur': 'pantry', 'döðlur': 'produce', 'rabarbari': 'produce',
+  'hvítkál': 'produce', 'rauðkál': 'produce', 'grænkál': 'produce', 'kínakál': 'produce', 'rósakál': 'produce',
+  'blómkál': 'produce', 'gulrófa': 'produce', 'rófa': 'produce', 'rauðrófur': 'produce', 'maís': 'produce',
+  'sykurbaunir': 'produce', 'aspas': 'produce', 'eggaldin': 'produce', 'kúrbítur': 'produce', 'chili': 'produce',
+  'jalapeno': 'produce', 'graslaukur': 'produce', 'dill': 'produce', 'basilíka': 'produce', 'rósmarín': 'produce',
+  'timían': 'produce', 'mynta': 'produce', 'klettasalat': 'produce', 'jöklasalat': 'produce', 'lárperu': 'produce',
+  // Kjöt & fiskur
+  'svínakótilettur': 'meat', 'svínahnakki': 'meat', 'grísahnakki': 'meat', 'lambahryggur': 'meat',
+  'lambakótilettur': 'meat', 'lambaframpartur': 'meat', 'lambahakk': 'meat', 'nautalund': 'meat',
+  'nautafillet': 'meat', 'nautagúllas': 'meat', 'kjúklingalæri': 'meat', 'kjúklingavængir': 'meat',
+  'heill kjúklingur': 'meat', 'kalkúnn': 'meat', 'andabringa': 'meat', 'hangikjöt': 'meat', 'hangiálegg': 'meat',
+  'spægipylsa': 'meat', 'salami': 'meat', 'vínarpylsur': 'meat', 'grillpylsur': 'meat', 'lifrarpylsa': 'meat',
+  'blóðmör': 'meat', 'kæfa': 'meat', 'silungur': 'meat', 'ufsi': 'meat', 'karfi': 'meat', 'lúða': 'meat',
+  'skötuselur': 'meat', 'humar': 'meat', 'hörpuskel': 'meat', 'kræklingur': 'meat', 'reyktur lax': 'meat',
+  'síld': 'meat', 'makríll': 'meat', 'fiskibúðingur': 'meat',
+  // Mjólkurvörur & egg
+  'nýmjólk': 'dairy', 'fjörmjólk': 'dairy', 'súrmjólk': 'dairy', 'ab-mjólk': 'dairy', 'kókómjólk': 'dairy',
+  'matreiðslurjómi': 'dairy', 'créme fraiche': 'dairy', 'grísk jógúrt': 'dairy', 'brauðostur': 'dairy',
+  'óðalsostur': 'dairy', 'gouda': 'dairy', 'mozzarella': 'dairy', 'fetaostur': 'dairy', 'camembert': 'dairy',
+  'brie': 'dairy', 'smjörvi': 'dairy', 'skyrdrykkur': 'dairy',
+  // Brauð & bakkelsi
+  'heilkornabrauð': 'bakery', 'vínarbrauð': 'bakery', 'bollur': 'bakery', 'formkaka': 'bakery',
+  'súrdeigsbrauð': 'bakery', 'pítubrauð': 'bakery', 'naanbrauð': 'bakery', 'bagettur': 'bakery',
+  'croissant': 'bakery', 'múffur': 'bakery', 'kökubotnar': 'bakery',
+  // Þurrvara
+  'penne': 'pantry', 'fusilli': 'pantry', 'basmati hrísgrjón': 'pantry', 'jasmín hrísgrjón': 'pantry',
+  'kúskús': 'pantry', 'bygg': 'pantry', 'quinoa': 'pantry', 'heilhveiti': 'pantry', 'spelt': 'pantry',
+  'púðursykur': 'pantry', 'flórsykur': 'pantry', 'matarsódi': 'pantry', 'vanilludropar': 'pantry',
+  'súkkulaðibitar': 'pantry', 'hunang': 'pantry', 'síróp': 'pantry', 'kókosmjöl': 'pantry', 'möndlur': 'pantry',
+  'valhnetur': 'pantry', 'kasjúhnetur': 'pantry', 'jarðhnetur': 'pantry', 'sólkjarnar': 'pantry',
+  'graskersfræ': 'pantry', 'kókosolía': 'pantry', 'balsamik edik': 'pantry', 'fiskisósa': 'pantry',
+  'ostrusósa': 'pantry', 'sweet chili sósa': 'pantry', 'sriracha': 'pantry', 'sinnep': 'pantry',
+  'majónes': 'pantry', 'bbq sósa': 'pantry', 'salatsósa': 'pantry', 'paprikukrydd': 'pantry', 'múskat': 'pantry',
+  'kúmen': 'pantry', 'óreganó': 'pantry', 'taco krydd': 'pantry', 'grillkrydd': 'pantry', 'súputeningar': 'pantry',
+  'kjúklingakraftur': 'pantry', 'grænmetiskraftur': 'pantry', 'niðursoðnar baunir': 'pantry',
+  'nýrnabaunir': 'pantry', 'túnfiskur': 'pantry', 'ananas í dós': 'pantry', 'kaffibaunir': 'pantry',
+  'kremkex': 'pantry', 'kartöfluflögur': 'pantry', 'popp': 'pantry', 'lakkrís': 'pantry', 'tyggjó': 'pantry',
+  'gos': 'pantry', 'sódavatn': 'pantry', 'safi': 'pantry', 'djús': 'pantry', 'orkudrykkur': 'pantry',
+  'kornflex': 'pantry', 'cheerios': 'pantry',
+  // Frystivörur
+  'klakar': 'frozen', 'fiskistautar': 'frozen', 'kjúklinganaggar': 'frozen', 'rjómaís': 'frozen',
+  'frosnar pönnukökur': 'frozen',
+  // Heimilið
+  'uppþvottatöflur': 'household', 'mýkingarefni': 'household', 'handsápa': 'household', 'hárnæring': 'household',
+  'tannbursti': 'household', 'svitalyktareyðir': 'household', 'blautþurrkur': 'household', 'dömubindi': 'household',
+  'túrtappar': 'household', 'frystipokar': 'household', 'plastfilma': 'household', 'bökunarpappír': 'household',
+  'kerti': 'household', 'rafhlöður': 'household', 'ljósaperur': 'household', 'gúmmíhanskar': 'household',
+  'wc-hreinsir': 'household', 'gluggahreinsir': 'household', 'alhliða hreinsir': 'household', 'klórtöflur': 'household',
+  'saltkjöt': 'meat', 'hamborgarahryggur': 'meat', 'gular baunir': 'pantry',
+  'pestó': 'pantry', 'linsubaunir': 'pantry', 'kirsuberjatómatar': 'produce', 'rósmarín': 'produce',
+  'mascarpone': 'dairy', 'teriyaki sósa': 'pantry', 'tahini': 'pantry', 'maísflögur': 'pantry', 'sesamfræ': 'pantry',
 }
 
 export const PRODUCT_NAMES = Object.keys(PRODUCTS)

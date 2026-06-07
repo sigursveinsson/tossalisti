@@ -5,7 +5,10 @@ import ListView from './components/ListView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
+import ShareModal from './components/ShareModal.jsx'
 import Auth from './components/Auth.jsx'
+
+const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
 import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
 
@@ -21,6 +24,8 @@ export default function App() {
   const [error, setError] = useState('')
   const [pendingRecipe, setPendingRecipe] = useState(null)
   const [members, setMembers] = useState([])
+  const [sharing, setSharing] = useState(null)
+  const [inviteDone, setInviteDone] = useState(false)
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -72,6 +77,18 @@ export default function App() {
 
   const list = lists.find(l => l.id === currentId) || null
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400) }
+
+  // Taka við boðshlekk (?invite=token) eftir innskráningu
+  useEffect(() => {
+    if (!isCloud || !session || !INVITE_TOKEN || inviteDone) return
+    setInviteDone(true)
+    store.acceptInvite(INVITE_TOKEN)
+      .then((listId) => {
+        window.history.replaceState({}, '', window.location.pathname)
+        return reload(listId).then(() => { setCurrentId(listId); setTab('list'); flash('Þú gekkst í listann!') })
+      })
+      .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
+  }, [session])
 
   const addItem = async (name) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
@@ -138,11 +155,22 @@ export default function App() {
     if (!confirm('Eyða listanum „' + l.name + '“?')) return
     await store.deleteList(l.id); await reload()
   }
-  const shareList = async (l) => {
-    if (!isCloud) { flash('Deiling krefst innskráningar — tengdu Supabase fyrst'); return }
-    const email = prompt('Netfang þess sem þú vilt deila „' + l.name + '“ með:')
+  const openShare = (l) => {
+    if (!isCloud) { flash('Deiling krefst innskráningar'); return }
+    setSharing(l)
+  }
+  const inviteLink = async (l) => {
+    try {
+      const token = await store.createInvite(l.id)
+      const url = window.location.origin + '/?invite=' + token
+      try { await navigator.clipboard.writeText(url) } catch (e) { /* clipboard gæti verið læst */ }
+      flash('Boðshlekkur afritaður')
+      return url
+    } catch (e) { flash('Tókst ekki að búa til hlekk'); return '' }
+  }
+  const emailInvite = async (l, email) => {
     if (!email) return
-    try { await store.shareList(l.id, email); await reload(l.id); flash('Deilt með ' + email) }
+    try { await store.shareList(l.id, email); await reload(l.id); setSharing(null); flash('Deilt með ' + email) }
     catch (e) { flash(e.message || 'Tókst ekki að deila') }
   }
 
@@ -211,7 +239,7 @@ export default function App() {
           onSwitch={switchList}
           onCreate={createList}
           onDelete={deleteList}
-          onShare={shareList}
+          onShare={openShare}
           onDuplicate={duplicateList}
           onRename={renameList}
           templates={TEMPLATES}
@@ -219,6 +247,15 @@ export default function App() {
           userEmail={session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onClose={() => setShowLists(false)}
+        />
+      )}
+
+      {sharing && (
+        <ShareModal
+          list={sharing}
+          onInviteLink={inviteLink}
+          onEmail={emailInvite}
+          onClose={() => setSharing(null)}
         />
       )}
 

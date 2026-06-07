@@ -195,6 +195,46 @@ begin
 end; $$;
 
 -- ===========================================================================
+--  Boðshlekkir (deila lista með hlekk)
+-- ===========================================================================
+create table if not exists public.list_invites (
+  token       text primary key,
+  list_id     uuid not null references public.lists(id) on delete cascade,
+  created_by  uuid not null references auth.users(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  expires_at  timestamptz
+);
+alter table public.list_invites enable row level security;
+
+create or replace function public.create_invite(p_list uuid)
+returns text language plpgsql security definer as $$
+declare t text;
+begin
+  if not public.is_member(p_list) then
+    raise exception 'Aðeins meðlimir geta boðið í lista';
+  end if;
+  t := replace(gen_random_uuid()::text, '-', '');
+  insert into public.list_invites (token, list_id, created_by, expires_at)
+    values (t, p_list, auth.uid(), now() + interval '30 days');
+  return t;
+end; $$;
+
+create or replace function public.accept_invite(p_token text)
+returns uuid language plpgsql security definer as $$
+declare inv public.list_invites;
+begin
+  select * into inv from public.list_invites where token = p_token;
+  if inv.token is null then raise exception 'Boðshlekkur fannst ekki'; end if;
+  if inv.expires_at is not null and inv.expires_at < now() then
+    raise exception 'Boðshlekkur er útrunninn';
+  end if;
+  insert into public.list_members (list_id, user_id, role)
+    values (inv.list_id, auth.uid(), 'member')
+    on conflict do nothing;
+  return inv.list_id;
+end; $$;
+
+-- ===========================================================================
 --  Rauntíma-samstilling
 -- ===========================================================================
 alter publication supabase_realtime add table public.list_items;

@@ -85,6 +85,9 @@ button { font-family: inherit; cursor: pointer; }
 .steps li { padding: 6px 0; font-size: 15px; line-height: 1.55; }
 .add-recipe-btn { width: 100%; margin-top: 22px; height: 50px; background: var(--cta); color: var(--cta-ink); border: none; border-radius: 12px; font-size: 16px; font-weight: 600; }
 .match-tag { font-size: 12px; color: var(--accent); margin-top: 3px; }
+.cat-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; margin: 4px -2px 0; }
+.cat-chip { flex: 0 0 auto; height: 34px; padding: 0 14px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 20px; font-size: 13px; white-space: nowrap; }
+.cat-chip.on { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
 
 .stars { font-size: 13px; color: #f0b429; letter-spacing: 1px; }
 .stars.muted { color: var(--faint); letter-spacing: normal; }

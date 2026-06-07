@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { RECIPES, fmtQty } from '../data/recipes.js'
+import { RECIPES, fmtQty, RECIPE_CATEGORIES } from '../data/recipes.js'
 import { store } from '../lib/store.js'
 import RecipeForm from './RecipeForm.jsx'
 
@@ -19,6 +19,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
   const [creating, setCreating] = useState(false)
   const [servings, setServings] = useState(4)
   const [q, setQ] = useState('')
+  const [cat, setCat] = useState(null)
   const [custom, setCustom] = useState([])
   const [stats, setStats] = useState({ uses: {}, popular: {}, avg: {}, mine: {} })
 
@@ -55,8 +56,9 @@ export default function RecipesView({ onAddRecipe, authorName }) {
 
   const terms = q.toLowerCase().split(/[\s,]+/).map(t => t.trim()).filter(Boolean)
   const results = useMemo(() => {
-    if (!terms.length) return all.map(r => ({ r, matches: 0 }))
-    return all
+    const base = cat ? all.filter(r => (r.tags || []).includes(cat)) : all
+    if (!terms.length) return base.map(r => ({ r, matches: 0 }))
+    return base
       .map(r => {
         const nameMatch = terms.some(t => r.name.toLowerCase().includes(t))
         const matches = r.ingredients.filter(ing => terms.some(t => ing.name.includes(t))).length
@@ -64,7 +66,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
       })
       .filter(x => x.nameMatch || x.matches > 0)
       .sort((a, b) => b.matches - a.matches)
-  }, [q, all])
+  }, [q, all, cat])
 
   const mine = all.filter(r => stats.uses[r.id]).sort((a, b) => stats.uses[b.id] - stats.uses[a.id]).slice(0, 8)
   const popular = all.filter(r => stats.popular[r.id]).sort((a, b) => stats.popular[b.id] - stats.popular[a.id]).slice(0, 8)
@@ -164,14 +166,21 @@ export default function RecipesView({ onAddRecipe, authorName }) {
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Leita eftir nafni eða hráefni…" autoComplete="off" />
       </div>
 
-      {terms.length === 0 && (
+      <div className="cat-row">
+        <button className={'cat-chip' + (!cat ? ' on' : '')} onClick={() => setCat(null)}>Allar</button>
+        {RECIPE_CATEGORIES.map(c => (
+          <button key={c} className={'cat-chip' + (cat === c ? ' on' : '')} onClick={() => setCat(cat === c ? null : c)}>{c}</button>
+        ))}
+      </div>
+
+      {!cat && terms.length === 0 && (
         <>
           {mine.length > 0 && <><div className="recipe-section">Mínar uppskriftir</div>{reel(mine)}</>}
           {popular.length > 0 && <><div className="recipe-section">Vinsælar</div>{reel(popular)}</>}
           <div className="recipe-section">Allar uppskriftir</div>
         </>
       )}
-      {terms.length > 0 && <span className="badge">{results.length} uppskriftir passa</span>}
+      {(cat || terms.length > 0) && <span className="badge">{results.length} uppskriftir</span>}
 
       {results.length === 0 && <p className="empty">Engin uppskrift fannst</p>}
       {results.map(({ r, matches }) => card(
