@@ -34,6 +34,10 @@ button { font-family: inherit; cursor: pointer; }
 .addbar .qty-in { flex: none; width: 58px; text-align: center; }
 .addbar .unit-in { flex: none; width: 54px; text-align: center; }
 .recat-btn { background: none; border: none; font-size: 15px; padding: 4px; flex: none; }
+.addbar .day-in { flex: none; width: 74px; height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 0 8px; font-size: 14px; background: var(--surface); color: var(--text); }
+.due-tag { font-size: 11px; color: var(--accent); margin-left: 8px; white-space: nowrap; }
+.due-tag.overdue { color: #e05a5a; }
+.seg3 button { font-size: 13px; padding: 0 6px; }
 .suggest { position: absolute; top: 52px; left: 0; right: 58px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; z-index: 10; box-shadow: 0 6px 20px rgba(21,49,94,.10); }
 .suggest div { padding: 12px 14px; font-size: 15px; border-bottom: 1px solid var(--line); text-transform: capitalize; color: var(--text); }
 .suggest div:last-child { border-bottom: none; }

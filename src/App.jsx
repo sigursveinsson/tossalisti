@@ -118,12 +118,15 @@ export default function App() {
       .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
   }, [session])
 
-  const addItem = async (name) => {
+  const addItem = async (name, weekday) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
-    const pts = list.type === 'task' ? suggestChorePoints(name) : undefined
-    const dept = list.type === 'task' ? undefined : (customDept[name.toLowerCase().trim()] || departmentFor(name))
-    await store.addItem(list.id, name, pts, dept); await reload(list.id)
+    const isChore = list.type === 'task' || list.type === 'schedule'
+    const pts = isChore ? suggestChorePoints(name) : undefined
+    const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || departmentFor(name)) : undefined
+    await store.addItem(list.id, name, pts, dept, weekday); await reload(list.id)
   }
+  const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
+  const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
   const recategorize = async (it, dept) => {
     await store.setItemDept(list.id, it.id, dept)
     try { await store.addCustomProduct(it.name, dept) } catch (e) { /* ekki bagalegt */ }
@@ -251,7 +254,9 @@ export default function App() {
   )
 
   const open = list.items.filter(i => !i.checked).length
-  const isTask = list.type === 'task'
+  const isShopping = list.type === 'shopping'
+  const typeIcon = list.type === 'schedule' ? '📅' : list.type === 'task' ? '✅' : '🛒'
+  const firstTabLabel = list.type === 'schedule' ? 'Skema' : list.type === 'task' ? 'Verkefni' : 'Innkaupalisti'
 
   return (
     <div className="app">
@@ -262,19 +267,19 @@ export default function App() {
             <polyline points="20,33 29,42 45,24" fill="none" stroke="#f5a623" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <button className="listbtn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan">
-            <span className="lists-ico">☰</span> {isTask ? '✅' : '🛒'} {list.name} <span className="chev">▾</span>
+            <span className="lists-ico">☰</span> {typeIcon} {list.name} <span className="chev">▾</span>
           </button>
           <span className="count">{open} eftir</span>
         </div>
         <div className="tabs">
-          <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{isTask ? 'Verkefni' : 'Innkaupalisti'}</button>
-          {!isTask && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
+          <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
+          {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
         </div>
       </div>
       <div className="body">
-        {tab === 'recipes' && !isTask
+        {tab === 'recipes' && isShopping
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} />}
+          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} />}
       </div>
 
       {showLists && (

@@ -50,6 +50,8 @@ create table if not exists public.list_items (
   assignee    uuid references auth.users(id) on delete set null,
   points      int not null default 10,
   recurrence  text not null default 'none',
+  due_at      date,
+  weekday     text,
   completed_by uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now()
 );

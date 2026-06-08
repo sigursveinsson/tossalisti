@@ -30,4 +30,64 @@ export const TEMPLATES = [
     items: ['Skólataska', 'Stílabækur', 'Pennaveski', 'Pennar og blýantar', 'Yddari og strokleður',
       'Reiknivél', 'Nesti box', 'Íþróttaföt', 'Inniskór'],
   },
+  {
+    id: 'jol', name: 'Jól', emoji: '🎄', type: 'task',
+    items: ['Jólatré', 'Jólaljós', 'Jólaskraut', 'Jólagjafir', 'Gjafapappír', 'Jólakort', 'Jólamatur',
+      'Smákökur', 'Konfekt', 'Kerti', 'Servíettur', 'Skreyta heimilið', 'Jólaboð', 'Þrífa fyrir jól'],
+  },
+  {
+    id: 'afmaeli', name: 'Afmæli', emoji: '🎂', type: 'task',
+    items: ['Bjóða gestum', 'Panta eða baka köku', 'Kerti', 'Blöðrur', 'Partýskraut', 'Gjöf', 'Veitingar',
+      'Drykkir', 'Tónlist', 'Partýpokar', 'Myndavél', 'Þrífa eftir'],
+  },
+  {
+    id: 'ferming', name: 'Ferming', emoji: '⛪', type: 'task',
+    items: ['Bóka sal', 'Senda boðskort', 'Panta veitingar', 'Kaka', 'Fatnaður', 'Gjafalisti', 'Ljósmyndari',
+      'Skreytingar', 'Blóm', 'Tónlist', 'Borðplan', 'Þakkarkort'],
+  },
+  {
+    id: 'nytt-barn', name: 'Nýtt barn', emoji: '👶', type: 'shopping',
+    items: ['bleiur', 'blautþurrkur', 'ungbarnaföt', 'vagga', 'kerra', 'bílstóll', 'snuð', 'pelar',
+      'barnaþvottaefni', 'barnakrem', 'hitamælir', 'ungbarnabaðkar', 'smekkir', 'teppi'],
+  },
+  {
+    id: 'bustadur', name: 'Sumarbústaður', emoji: '🏡', type: 'shopping',
+    items: ['grillkjöt', 'pylsur', 'kol', 'drykkir', 'snakk', 'kaffi', 'morgunmatur', 'klósettpappír',
+      'eldhúsrúlla', 'sólarvörn', 'skordýravörn', 'spil', 'vatnsbrúsi', 'ruslapokar'],
+  },
+  {
+    id: 'gardvinna', name: 'Garðvinna', emoji: '🌱', type: 'task',
+    items: ['Slá grasið', 'Reyta arfa', 'Klippa runna', 'Gróðursetja', 'Bera á áburð', 'Vökva',
+      'Raka lauf', 'Þrífa pallinn', 'Mála girðingu', 'Hreinsa beð'],
+  },
+  {
+    id: 'vorhreingerning', name: 'Vorhreingerning', emoji: '🧹', type: 'task',
+    items: ['Þrífa glugga', 'Ryksuga', 'Skúra gólf', 'Þrífa baðherbergi', 'Þrífa eldhús', 'Þvo gardínur',
+      'Taka til í skápum', 'Þrífa ísskáp', 'Þurrka ryk', 'Skipta um rúmföt', 'Þrífa ofn'],
+  },
+  {
+    id: 'bilavidhald', name: 'Bílaviðhald', emoji: '🚗', type: 'task',
+    items: ['Skipta um dekk', 'Olíuskipti', 'Rúðuvökvi', 'Þvo bílinn', 'Athuga ljós', 'Athuga bremsur',
+      'Bóna', 'Ryksuga bílinn', 'Skoðun'],
+  },
+  {
+    id: 'grillveisla', name: 'Grillveisla', emoji: '🍖', type: 'shopping',
+    items: ['grillkjöt', 'pylsur', 'hamborgarar', 'hamborgarabrauð', 'grænmeti', 'salat', 'sósur',
+      'drykkir', 'kol', 'álpappír', 'einnota diskar', 'servíettur', 'snakk'],
+  },
+  {
+    id: 'skidaferd', name: 'Skíðaferð', emoji: '🎿', type: 'task',
+    items: ['Skíði', 'Skíðaskór', 'Hjálmur', 'Skíðagleraugu', 'Vettlingar', 'Húfa', 'Ullarföt',
+      'Sólarvörn', 'Varasalvi', 'Brúsi', 'Nesti'],
+  },
+  {
+    id: 'borgarferd', name: 'Borgarferð', emoji: '✈️', type: 'task',
+    items: ['Vegabréf', 'Flugmiðar', 'Hótelbókun', 'Ferðatrygging', 'Hleðslutæki', 'Millistykki',
+      'Kort/leiðsögn', 'Gjaldeyrir', 'Þægilegir skór', 'Regnjakki', 'Snyrtivörur'],
+  },
+  {
+    id: 'vikuleg-heimilisverk', name: 'Vikuleg heimilisverk', emoji: '🧽', type: 'task',
+    items: ['Fara út með rusl', 'Setja í þvottavél', 'Brjóta saman þvott', 'Ryksuga', 'Skúra',
+      'Þrífa baðherbergi', 'Kaupa í matinn', 'Vökva blóm', 'Taka til', 'Skipta um rúmföt'],
+  },
 ]
