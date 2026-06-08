@@ -118,15 +118,16 @@ export default function App() {
       .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
   }, [session])
 
-  const addItem = async (name, weekday) => {
+  const addItem = async (name, weekday, time) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
     const isChore = list.type === 'task' || list.type === 'schedule'
     const pts = isChore ? suggestChorePoints(name) : undefined
     const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || departmentFor(name)) : undefined
-    await store.addItem(list.id, name, pts, dept, weekday); await reload(list.id)
+    await store.addItem(list.id, name, { points: pts, dept, weekday, time }); await reload(list.id)
   }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
+  const setTime = async (it, t) => { await store.setTime(list.id, it.id, t); await reload(list.id) }
   const recategorize = async (it, dept) => {
     await store.setItemDept(list.id, it.id, dept)
     try { await store.addCustomProduct(it.name, dept) } catch (e) { /* ekki bagalegt */ }
@@ -279,7 +280,7 @@ export default function App() {
       <div className="body">
         {tab === 'recipes' && isShopping
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} />}
+          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (

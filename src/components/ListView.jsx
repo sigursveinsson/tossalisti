@@ -11,6 +11,8 @@ const WEEKDAYS = [
   ['thu', 'Fimmtudagur'], ['fri', 'Föstudagur'], ['sat', 'Laugardagur'], ['sun', 'Sunnudagur'],
 ]
 const WEEKDAY_LABEL = Object.fromEntries(WEEKDAYS)
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
 
 function weekStartMs() {
   const now = new Date()
@@ -34,13 +36,15 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday }) {
+export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('')
-  const [scheduleDay, setScheduleDay] = useState('daily')
+  const [scheduleDay, setScheduleDay] = useState(todayKey())
+  const [scheduleTime, setScheduleTime] = useState('')
+  const [viewDay, setViewDay] = useState(todayKey())
   const [assigning, setAssigning] = useState(null)
   const [editItem, setEditItem] = useState(null)
   const [deptItem, setDeptItem] = useState(null)
@@ -53,7 +57,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const add = (name) => {
     const v = (name ?? text).trim()
     if (!v) return
-    if (isSchedule) onAdd(v, scheduleDay)
+    if (isSchedule) onAdd(v, scheduleDay, scheduleTime)
     else if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`)
     else onAdd(v)
     setText(''); setQty('')
@@ -72,8 +76,10 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     <div className={'item' + (it.checked ? ' done' : '')} key={it.id}>
       <div className="check" style={{ background: it.checked ? color : 'transparent', borderColor: it.checked ? color : undefined }} onClick={() => onToggle(it)}>{it.checked ? '✓' : ''}</div>
       <span className="label" onClick={() => onToggle(it)}>
+        {chore && it.time && <span className="time-tag">{it.time}</span>}
         {it.name}
-        {chore && it.recurrence && it.recurrence !== 'none' && !isSchedule && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
+        {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
+        {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
         {dueTag(it)}
       </span>
       {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
@@ -85,7 +91,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
 
   const addBar = (
     <div className="addbar">
-      <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={isSchedule ? 'Bættu við verki…' : isTask ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
+      <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
       {!isTask && !isSchedule && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
       {!isTask && !isSchedule && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isSchedule && (
@@ -93,6 +99,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           {WEEKDAYS.map(([k, l]) => <option key={k} value={k}>{l.slice(0, 3)}</option>)}
         </select>
       )}
+      {isSchedule && <input className="time-in" type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
       {sugg.length > 0 && <div className="suggest">{sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}</div>}
     </div>
@@ -133,6 +140,8 @@ export default function ListView({ items, listType = 'shopping', members = [], c
             <select className="list-select" value={editItem.weekday || 'daily'} onChange={e => { onSetWeekday(editItem, e.target.value); setEditItem({ ...editItem, weekday: e.target.value }) }}>
               {WEEKDAYS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
+            <div className="modal-label">Tími</div>
+            <input className="dialog-input" type="time" value={editItem.time || ''} onChange={e => { onSetTime(editItem, e.target.value); setEditItem({ ...editItem, time: e.target.value }) }} />
           </>
         ) : (
           <>
@@ -142,11 +151,10 @@ export default function ListView({ items, listType = 'shopping', members = [], c
                 <button key={k} className={'rec-opt' + ((editItem.recurrence || 'none') === k ? ' on' : '')} onClick={() => { onSetRecurrence(editItem, k); setEditItem({ ...editItem, recurrence: k }) }}>{RECURRENCE_LABELS[k]}</button>
               ))}
             </div>
+            <div className="modal-label">Lokadagur</div>
+            <input className="dialog-input" type="date" value={editItem.due_at || ''} onChange={e => { onSetDue(editItem, e.target.value); setEditItem({ ...editItem, due_at: e.target.value }) }} />
           </>
         )}
-
-        <div className="modal-label">Lokadagur</div>
-        <input className="dialog-input" type="date" value={editItem.due_at || ''} onChange={e => { onSetDue(editItem, e.target.value); setEditItem({ ...editItem, due_at: e.target.value }) }} />
 
         <button className="add-recipe-btn" style={{ marginTop: 4 }} onClick={() => setEditItem(null)}>Loka</button>
       </div>
@@ -195,19 +203,22 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   })()
 
   if (isSchedule) {
-    const groups = WEEKDAYS.map(([k, l]) => ({ key: k, label: l, items: items.filter(i => (i.weekday || 'daily') === k) })).filter(g => g.items.length)
+    const idx = DAY_KEYS.indexOf(viewDay)
+    const go = (delta) => setViewDay(DAY_KEYS[(idx + delta + 7) % 7])
+    const dayItems = items
+      .filter(i => i.weekday === viewDay || (i.weekday || 'daily') === 'daily')
+      .sort((a, b) => (a.time || '99').localeCompare(b.time || '99'))
     return (
       <div>
         {addBar}
-        <span className="badge">{open} eftir</span>
+        <div className="day-nav">
+          <button onClick={() => go(-1)} aria-label="Fyrri dagur">‹</button>
+          <span className="day-nav-label">{WEEKDAY_LABEL[viewDay]}{viewDay === todayKey() ? ' · í dag' : ''}</span>
+          <button onClick={() => go(1)} aria-label="Næsti dagur">›</button>
+        </div>
         {leaderboard}
-        {items.length === 0 && <p className="empty">Skemað er tómt — bættu við verki og veldu dag.</p>}
-        {groups.map(g => (
-          <div className="group" key={g.key}>
-            <div className="group-head"><span className="name" style={{ color: 'var(--accent)' }}>{g.label}</span></div>
-            {g.items.map(it => itemRow(it, 'var(--accent)', true))}
-          </div>
-        ))}
+        {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við að ofan.</p>}
+        <div className="group">{dayItems.map(it => itemRow(it, 'var(--accent)', true))}</div>
         {assignModal}
         {settingsModal}
       </div>

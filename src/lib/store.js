@@ -39,13 +39,14 @@ const local = {
     lsWrite([...lists, list]); return list
   },
   async deleteList(id) { lsWrite((lsRead() || []).filter(l => l.id !== id)) },
-  async addItem(listId, name, points, dept, weekday) {
+  async addItem(listId, name, opts = {}) {
+    const { points, dept, weekday, time } = opts
     const lists = lsRead() || []
     const list = lists.find(l => l.id === listId); if (!list) return
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
     const rec = weekday === 'daily' ? 'daily' : (weekday ? 'weekly' : 'none')
-    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: rec, weekday: weekday || null, due_at: null, completed_by: null })
+    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, due_at: null, completed_by: null })
     lsWrite(lists)
   },
   async setItemDept(listId, itemId, dept) {
@@ -62,6 +63,11 @@ const local = {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.weekday = weekday; it.recurrence = weekday === 'daily' ? 'daily' : 'weekly'; lsWrite(lists) }
+  },
+  async setTime(listId, itemId, time) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
+    if (it) { it.time = time || null; lsWrite(lists) }
   },
   async getCustomProducts() { return JSON.parse(localStorage.getItem('korfan.customprod') || '[]') },
   async addCustomProduct(name, dept) {
@@ -187,10 +193,12 @@ const cloud = {
     return { ...data, shared: false, items: [] }
   },
   async deleteList(id) { await supabase.from('lists').delete().eq('id', id) },
-  async addItem(listId, name, points, dept, weekday) {
+  async addItem(listId, name, opts = {}) {
+    const { points, dept, weekday, time } = opts
     const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false }
     if (points != null) row.points = points
     if (weekday) { row.weekday = weekday; row.recurrence = weekday === 'daily' ? 'daily' : 'weekly' }
+    if (time) row.time = time
     await supabase.from('list_items').insert(row)
   },
   async setItemDept(listId, itemId, dept) {
@@ -201,6 +209,9 @@ const cloud = {
   },
   async setWeekday(listId, itemId, weekday) {
     await supabase.from('list_items').update({ weekday, recurrence: weekday === 'daily' ? 'daily' : 'weekly' }).eq('id', itemId)
+  },
+  async setTime(listId, itemId, time) {
+    await supabase.from('list_items').update({ time: time || null }).eq('id', itemId)
   },
   async getCustomProducts() {
     const { data } = await supabase.from('custom_products').select('name,dept')

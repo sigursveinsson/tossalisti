@@ -38,6 +38,11 @@ button { font-family: inherit; cursor: pointer; }
 .due-tag { font-size: 11px; color: var(--accent); margin-left: 8px; white-space: nowrap; }
 .due-tag.overdue { color: #e05a5a; }
 .seg3 button { font-size: 13px; padding: 0 6px; }
+.addbar .time-in { flex: none; width: 92px; height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 0 8px; font-size: 14px; background: var(--surface); color: var(--text); }
+.time-tag { font-size: 12px; font-weight: 600; color: var(--navy); margin-right: 8px; }
+.day-nav { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px; }
+.day-nav button { width: 38px; height: 34px; border: none; background: var(--chip); color: var(--navy); border-radius: 9px; font-size: 18px; line-height: 1; }
+.day-nav-label { font-size: 15px; font-weight: 600; color: var(--navy); }
 .suggest { position: absolute; top: 52px; left: 0; right: 58px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; z-index: 10; box-shadow: 0 6px 20px rgba(21,49,94,.10); }
 .suggest div { padding: 12px 14px; font-size: 15px; border-bottom: 1px solid var(--line); text-transform: capitalize; color: var(--text); }
 .suggest div:last-child { border-bottom: none; }
