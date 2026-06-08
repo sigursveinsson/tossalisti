@@ -7,6 +7,7 @@ import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
+import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
 
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
@@ -30,6 +31,7 @@ export default function App() {
   const [sharing, setSharing] = useState(null)
   const [inviteDone, setInviteDone] = useState(false)
   const [completions, setCompletions] = useState([])
+  const [dialog, setDialog] = useState(null)
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
   const [customProducts, setCustomProducts] = useState([])
@@ -167,29 +169,36 @@ export default function App() {
     await reload(l.id); setShowLists(false); setTab('list'); flash('Listinn „' + tpl.name + '“ búinn til')
   }
   const switchList = async (id) => { setCurrentId(id); setShowLists(false); setTab('list') }
-  const duplicateList = async (l) => {
+  const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
-    const name = prompt('Nafn á nýja listanum:', proposed)
-    if (name === null) return
-    const nl = await store.duplicateList(l.id, name.trim() || proposed)
-    await reload(nl.id); setShowLists(false); flash('Listi afritaður')
+    setDialog({
+      title: 'Afrita lista', input: true, defaultValue: proposed, confirmLabel: 'Afrita',
+      onConfirm: async (name) => {
+        const nl = await store.duplicateList(l.id, (name || '').trim() || proposed)
+        await reload(nl.id); setShowLists(false); flash('Listi afritaður')
+      },
+    })
   }
-  const renameList = async (l) => {
-    const name = prompt('Nýtt nafn á listanum:', l.name)
-    if (name === null) return
-    const trimmed = name.trim()
-    if (!trimmed || trimmed === l.name) return
-    await store.renameList(l.id, trimmed)
-    await reload(l.id); flash('Nafni breytt')
+  const renameList = (l) => {
+    setDialog({
+      title: 'Endurnefna lista', input: true, defaultValue: l.name, confirmLabel: 'Vista',
+      onConfirm: async (name) => {
+        const trimmed = (name || '').trim()
+        if (!trimmed || trimmed === l.name) return
+        await store.renameList(l.id, trimmed); await reload(l.id); flash('Nafni breytt')
+      },
+    })
   }
   const signOut = async () => {
     if (isCloud) await supabase.auth.signOut()
     setSession(null); setLists([]); setCurrentId(null); setError(''); setLoading(false)
   }
-  const deleteList = async (l) => {
+  const deleteList = (l) => {
     if (lists.length <= 1) { flash('Þú þarft að eiga a.m.k. einn lista'); return }
-    if (!confirm('Eyða listanum „' + l.name + '“?')) return
-    await store.deleteList(l.id); await reload()
+    setDialog({
+      title: 'Eyða lista?', message: 'Eyða „' + l.name + '"? Þetta er ekki hægt að afturkalla.', danger: true, confirmLabel: 'Eyða',
+      onConfirm: async () => { await store.deleteList(l.id); await reload() },
+    })
   }
   const openShare = (l) => {
     if (!isCloud) { flash('Deiling krefst innskráningar'); return }
@@ -304,6 +313,14 @@ export default function App() {
           defaultListId={currentId}
           onConfirm={(listId, lines) => confirmAddRecipe(pendingRecipe.recipe, listId, lines)}
           onClose={() => setPendingRecipe(null)}
+        />
+      )}
+
+      {dialog && (
+        <Dialog
+          {...dialog}
+          onConfirm={(v) => { setDialog(null); dialog.onConfirm(v) }}
+          onClose={() => setDialog(null)}
         />
       )}
 

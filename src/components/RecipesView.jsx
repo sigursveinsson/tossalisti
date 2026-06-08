@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { RECIPES, fmtQty, RECIPE_CATEGORIES } from '../data/recipes.js'
 import { store } from '../lib/store.js'
 import RecipeForm from './RecipeForm.jsx'
+import Dialog from './Dialog.jsx'
 
 function StarRow({ value, count }) {
   if (!value) return <span className="stars muted">Engin einkunn enn</span>
@@ -21,6 +22,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
   const [q, setQ] = useState('')
   const [cat, setCat] = useState(null)
   const [custom, setCustom] = useState([])
+  const [confirmDel, setConfirmDel] = useState(null)
   const [stats, setStats] = useState({ uses: {}, popular: {}, avg: {}, mine: {} })
 
   const loadRecipes = async () => { try { setCustom(await store.getRecipes()) } catch (e) {} }
@@ -48,11 +50,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
     setCreating(false)
     await loadRecipes()
   }
-  const removeRecipe = async (r) => {
-    if (!confirm('Eyða uppskriftinni „' + r.name + '“?')) return
-    await store.deleteRecipe(r.id)
-    setOpen(null); await loadRecipes()
-  }
+  const removeRecipe = (r) => setConfirmDel(r)
 
   const terms = q.toLowerCase().split(/[\s,]+/).map(t => t.trim()).filter(Boolean)
   const results = useMemo(() => {
@@ -130,6 +128,16 @@ export default function RecipesView({ onAddRecipe, authorName }) {
 
         <button className="add-recipe-btn" onClick={() => onAddRecipe(r, servings)}>+ Setja hráefni á lista</button>
         {r.mine && <button className="ghost-btn danger" onClick={() => removeRecipe(r)}>Eyða uppskrift</button>}
+        {confirmDel && (
+          <Dialog
+            title="Eyða uppskrift?"
+            message={'Eyða „' + confirmDel.name + '"?'}
+            danger
+            confirmLabel="Eyða"
+            onConfirm={async () => { await store.deleteRecipe(confirmDel.id); setConfirmDel(null); setOpen(null); await loadRecipes() }}
+            onClose={() => setConfirmDel(null)}
+          />
+        )}
       </div>
     )
   }
