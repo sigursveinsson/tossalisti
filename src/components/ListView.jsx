@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 import { RECURRENCE_LABELS } from '../data/chores.js'
+import ScheduleForm from './ScheduleForm.jsx'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
 const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
@@ -42,8 +43,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const [text, setText] = useState('')
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('')
-  const [scheduleDay, setScheduleDay] = useState(todayKey())
-  const [scheduleTime, setScheduleTime] = useState('')
+  const [showSchedForm, setShowSchedForm] = useState(false)
   const [viewDay, setViewDay] = useState(todayKey())
   const [assigning, setAssigning] = useState(null)
   const [editItem, setEditItem] = useState(null)
@@ -57,8 +57,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const add = (name) => {
     const v = (name ?? text).trim()
     if (!v) return
-    if (isSchedule) onAdd(v, scheduleDay, scheduleTime)
-    else if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`)
+    if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`)
     else onAdd(v)
     setText(''); setQty('')
   }
@@ -92,14 +91,8 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const addBar = (
     <div className="addbar">
       <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
-      {!isTask && !isSchedule && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
-      {!isTask && !isSchedule && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
-      {isSchedule && (
-        <select className="day-in" value={scheduleDay} onChange={e => setScheduleDay(e.target.value)}>
-          {WEEKDAYS.map(([k, l]) => <option key={k} value={k}>{l.slice(0, 3)}</option>)}
-        </select>
-      )}
-      {isSchedule && <input className="time-in" type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />}
+      {!isTask && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
+      {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
       {sugg.length > 0 && <div className="suggest">{sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}</div>}
     </div>
@@ -205,22 +198,54 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   if (isSchedule) {
     const idx = DAY_KEYS.indexOf(viewDay)
     const go = (delta) => setViewDay(DAY_KEYS[(idx + delta + 7) % 7])
-    const dayItems = items
-      .filter(i => i.weekday === viewDay || (i.weekday || 'daily') === 'daily')
-      .sort((a, b) => (a.time || '99').localeCompare(b.time || '99'))
+    const dayItems = items.filter(i => i.weekday === viewDay || (i.weekday || 'daily') === 'daily')
+    const timeless = dayItems.filter(i => !i.time).sort((a, b) => a.name.localeCompare(b.name))
+    const timed = dayItems.filter(i => i.time)
+    const hourOf = (t) => parseInt(t.slice(0, 2), 10)
+    let startH = 7, endH = 21
+    if (timed.length) {
+      const hs = timed.map(i => hourOf(i.time))
+      startH = Math.min(startH, ...hs); endH = Math.max(endH, ...hs)
+    }
+    const hours = []
+    for (let h = startH; h <= endH; h++) hours.push(h)
+    const atHour = (h) => timed.filter(i => hourOf(i.time) === h).sort((a, b) => a.time.localeCompare(b.time))
     return (
       <div>
-        {addBar}
+        <button className="primary-btn" style={{ marginTop: 4 }} onClick={() => setShowSchedForm(true)}>+ Nýtt verk</button>
         <div className="day-nav">
           <button onClick={() => go(-1)} aria-label="Fyrri dagur">‹</button>
           <span className="day-nav-label">{WEEKDAY_LABEL[viewDay]}{viewDay === todayKey() ? ' · í dag' : ''}</span>
           <button onClick={() => go(1)} aria-label="Næsti dagur">›</button>
         </div>
         {leaderboard}
-        {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við að ofan.</p>}
-        <div className="group">{dayItems.map(it => itemRow(it, 'var(--accent)', true))}</div>
+        {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við með „+ Nýtt verk".</p>}
+        {timeless.length > 0 && (
+          <div className="group">
+            <div className="group-head"><span className="name" style={{ color: 'var(--muted)' }}>Hvenær sem er</span></div>
+            {timeless.map(it => itemRow(it, 'var(--accent)', true))}
+          </div>
+        )}
+        {timed.length > 0 && (
+          <div className="timetable">
+            {hours.map(h => (
+              <div className="tt-hour" key={h}>
+                <div className="tt-time">{String(h).padStart(2, '0')}:00</div>
+                <div className="tt-tasks">{atHour(h).map(it => itemRow(it, 'var(--accent)', true))}</div>
+              </div>
+            ))}
+          </div>
+        )}
         {assignModal}
         {settingsModal}
+        {showSchedForm && (
+          <ScheduleForm
+            members={members}
+            defaultDay={viewDay}
+            onCreate={(name, weekday, time, assignee) => { onAdd(name, weekday, time, assignee); setShowSchedForm(false) }}
+            onClose={() => setShowSchedForm(false)}
+          />
+        )}
       </div>
     )
   }

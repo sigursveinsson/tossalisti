@@ -40,13 +40,13 @@ const local = {
   },
   async deleteList(id) { lsWrite((lsRead() || []).filter(l => l.id !== id)) },
   async addItem(listId, name, opts = {}) {
-    const { points, dept, weekday, time } = opts
+    const { points, dept, weekday, time, assignee } = opts
     const lists = lsRead() || []
     const list = lists.find(l => l.id === listId); if (!list) return
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
     const rec = weekday === 'daily' ? 'daily' : (weekday ? 'weekly' : 'none')
-    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, due_at: null, completed_by: null })
+    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, assignee: assignee || null, due_at: null, completed_by: null })
     lsWrite(lists)
   },
   async setItemDept(listId, itemId, dept) {
@@ -194,11 +194,12 @@ const cloud = {
   },
   async deleteList(id) { await supabase.from('lists').delete().eq('id', id) },
   async addItem(listId, name, opts = {}) {
-    const { points, dept, weekday, time } = opts
+    const { points, dept, weekday, time, assignee } = opts
     const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false }
     if (points != null) row.points = points
     if (weekday) { row.weekday = weekday; row.recurrence = weekday === 'daily' ? 'daily' : 'weekly' }
     if (time) row.time = time
+    if (assignee) row.assignee = assignee
     await supabase.from('list_items').insert(row)
   },
   async setItemDept(listId, itemId, dept) {
