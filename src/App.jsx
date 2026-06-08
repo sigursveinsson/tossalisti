@@ -6,11 +6,14 @@ import RecipesView from './components/RecipesView.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
+import ProfileSetup from './components/ProfileSetup.jsx'
 import Auth from './components/Auth.jsx'
 
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
 import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
+import { suggestChorePoints } from './data/chores.js'
+import { departmentFor } from './data/products.js'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -26,6 +29,10 @@ export default function App() {
   const [members, setMembers] = useState([])
   const [sharing, setSharing] = useState(null)
   const [inviteDone, setInviteDone] = useState(false)
+  const [completions, setCompletions] = useState([])
+  const [profile, setProfile] = useState(null)
+  const [profileLoaded, setProfileLoaded] = useState(!isCloud)
+  const [customProducts, setCustomProducts] = useState([])
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -69,13 +76,32 @@ export default function App() {
     return store.subscribe(currentId, () => reload(currentId))
   }, [currentId])
 
-  // Meðlimir núverandi lista (fyrir ábyrgðarmenn)
+  // Sækja prófíl notanda (nafn + litur)
   useEffect(() => {
-    if (!currentId) { setMembers([]); return }
+    if (!isCloud || !session) return
+    store.getMyProfile().then(p => { setProfile(p); setProfileLoaded(true) }).catch(() => setProfileLoaded(true))
+  }, [session])
+
+  const saveProfile = async (name, color) => {
+    await store.updateProfile({ name, color })
+    setProfile(p => ({ ...(p || {}), name, color }))
+  }
+
+  // Eigin vörur notanda (fyrir sjálfvirka flokkun)
+  useEffect(() => {
+    if (isCloud && !session) return
+    store.getCustomProducts().then(setCustomProducts).catch(() => {})
+  }, [session])
+
+  // Meðlimir og afrek núverandi lista (ábyrgðarmenn + stigatafla)
+  useEffect(() => {
+    if (!currentId) { setMembers([]); setCompletions([]); return }
     store.getListMembers(currentId).then(setMembers).catch(() => setMembers([]))
+    store.getCompletions(currentId).then(setCompletions).catch(() => setCompletions([]))
   }, [currentId])
 
   const list = lists.find(l => l.id === currentId) || null
+  const customDept = Object.fromEntries(customProducts.map(p => [p.name, p.dept]))
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400) }
 
   // Taka við boðshlekk (?invite=token) eftir innskráningu
@@ -92,17 +118,30 @@ export default function App() {
 
   const addItem = async (name) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
-    await store.addItem(list.id, name); await reload(list.id)
+    const pts = list.type === 'task' ? suggestChorePoints(name) : undefined
+    const dept = list.type === 'task' ? undefined : (customDept[name.toLowerCase().trim()] || departmentFor(name))
+    await store.addItem(list.id, name, pts, dept); await reload(list.id)
   }
-  const toggleItem = async (it) => { await store.toggleItem(list.id, it.id, it.checked); await reload(list.id) }
+  const recategorize = async (it, dept) => {
+    await store.setItemDept(list.id, it.id, dept)
+    try { await store.addCustomProduct(it.name, dept) } catch (e) { /* ekki bagalegt */ }
+    await reload(list.id)
+    store.getCustomProducts().then(setCustomProducts).catch(() => {})
+  }
+  const toggleItem = async (it) => {
+    const wasDone = it.checked
+    await store.toggleItem(list.id, it)
+    await reload(list.id)
+    store.getCompletions(list.id).then(setCompletions).catch(() => {})
+    if (!wasDone && list.type === 'task') flash('+' + (it.points ?? 10) + ' stig 🎉')
+  }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
   const assignItem = async (it, userId) => { await store.assignItem(list.id, it.id, userId); await reload(list.id) }
   const setPoints = async (it, pts) => { await store.setPoints(list.id, it.id, pts); await reload(list.id) }
+  const setRecurrence = async (it, rec) => { await store.setRecurrence(list.id, it.id, rec); await reload(list.id) }
 
-  const addRecipeToList = async (recipe, listId, servings) => {
+  const confirmAddRecipe = async (recipe, listId, lines) => {
     const target = lists.find(l => l.id === listId)
-    const factor = servings / recipe.serves
-    const lines = recipe.ingredients.map(ing => ingredientLine(ing, factor))
     const existing = new Set((target ? target.items : []).map(i => i.name))
     const toAdd = lines.filter(n => !existing.has(n.toLowerCase()))
     if (toAdd.length) await store.addManyItems(listId, toAdd)
@@ -115,11 +154,8 @@ export default function App() {
       ? `${toAdd.length} hráefni bætt á „${target ? target.name : ''}“`
       : 'Öll hráefni voru þegar á listanum')
   }
-  // Ef aðeins einn listi er til, bætum beint á hann — annars spyrjum hvaða lista.
-  const addRecipe = (recipe, servings) => {
-    if (lists.length <= 1) addRecipeToList(recipe, currentId, servings)
-    else setPendingRecipe({ recipe, servings })
-  }
+  // Opnar alltaf glugga þar sem hægt er að af-haka hráefni og velja lista.
+  const addRecipe = (recipe, servings) => setPendingRecipe({ recipe, servings })
 
   const createList = async (name, type = 'shopping') => {
     const l = await store.createList(name, type)
@@ -162,10 +198,7 @@ export default function App() {
   const inviteLink = async (l) => {
     try {
       const token = await store.createInvite(l.id)
-      const url = window.location.origin + '/?invite=' + token
-      try { await navigator.clipboard.writeText(url) } catch (e) { /* clipboard gæti verið læst */ }
-      flash('Boðshlekkur afritaður')
-      return url
+      return window.location.origin + '/?invite=' + token
     } catch (e) { flash('Tókst ekki að búa til hlekk'); return '' }
   }
   const emailInvite = async (l, email) => {
@@ -176,6 +209,9 @@ export default function App() {
 
   if (!authReady) return null
   if (isCloud && !session) return <Auth />
+  if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
+    return <ProfileSetup initial={profile} onSave={saveProfile} />
+  }
   if (loading) return <div className="empty">Hleð…</div>
   if (error && !list) return (
     <div className="empty" style={{ padding: '0 24px' }}>
@@ -229,7 +265,7 @@ export default function App() {
       <div className="body">
         {tab === 'recipes' && !isTask
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : <ListView items={list.items} listType={list.type} members={members} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} />}
+          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} />}
       </div>
 
       {showLists && (
@@ -253,6 +289,7 @@ export default function App() {
       {sharing && (
         <ShareModal
           list={sharing}
+          inviterName={profile?.name || session?.user?.email || ''}
           onInviteLink={inviteLink}
           onEmail={emailInvite}
           onClose={() => setSharing(null)}
@@ -262,8 +299,10 @@ export default function App() {
       {pendingRecipe && (
         <AddToListModal
           recipe={pendingRecipe.recipe}
+          servings={pendingRecipe.servings}
           lists={lists}
-          onPick={(id) => addRecipeToList(pendingRecipe.recipe, id, pendingRecipe.servings)}
+          defaultListId={currentId}
+          onConfirm={(listId, lines) => confirmAddRecipe(pendingRecipe.recipe, listId, lines)}
           onClose={() => setPendingRecipe(null)}
         />
       )}

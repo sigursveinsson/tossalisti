@@ -49,9 +49,28 @@ create table if not exists public.list_items (
   checked     boolean not null default false,
   assignee    uuid references auth.users(id) on delete set null,
   points      int not null default 10,
+  recurrence  text not null default 'none',
   completed_by uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now()
 );
+
+-- Afreka-skrá (stigatafla + endurtekin verk)
+create table if not exists public.completions (
+  id           uuid primary key default gen_random_uuid(),
+  list_id      uuid not null references public.lists(id) on delete cascade,
+  item_id      uuid,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  points       int not null default 0,
+  completed_at timestamptz not null default now()
+);
+create index if not exists completions_list_idx on public.completions(list_id);
+alter table public.completions enable row level security;
+drop policy if exists completions_select on public.completions;
+create policy completions_select on public.completions for select using (public.is_member(list_id));
+drop policy if exists completions_insert on public.completions;
+create policy completions_insert on public.completions for insert with check (user_id = auth.uid() and public.is_member(list_id));
+drop policy if exists completions_delete on public.completions;
+create policy completions_delete on public.completions for delete using (user_id = auth.uid());
 
 -- Meðlimir lista með netföngum (öruggt fall — aðeins meðlimir sjá)
 create or replace function public.list_members_emails(p_list uuid)
@@ -238,3 +257,4 @@ end; $$;
 --  Rauntíma-samstilling
 -- ===========================================================================
 alter publication supabase_realtime add table public.list_items;
+alter publication supabase_realtime add table public.completions;

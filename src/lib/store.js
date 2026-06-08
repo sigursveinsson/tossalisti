@@ -39,24 +39,44 @@ const local = {
     lsWrite([...lists, list]); return list
   },
   async deleteList(id) { lsWrite((lsRead() || []).filter(l => l.id !== id)) },
-  async addItem(listId, name) {
+  async addItem(listId, name, points, dept) {
     const lists = lsRead() || []
     const list = lists.find(l => l.id === listId); if (!list) return
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
-    list.items.push({ id: uid(), name: n, dept: departmentFor(name), checked: false, points: 10, completed_by: null })
+    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: 'none', completed_by: null })
     lsWrite(lists)
   },
-  async toggleItem(listId, itemId) {
+  async setItemDept(listId, itemId, dept) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
-    if (it) { it.checked = !it.checked; it.completed_by = it.checked ? 'me' : null; lsWrite(lists) }
+    if (it) { it.dept = dept; lsWrite(lists) }
+  },
+  async getCustomProducts() { return JSON.parse(localStorage.getItem('korfan.customprod') || '[]') },
+  async addCustomProduct(name, dept) {
+    const list = JSON.parse(localStorage.getItem('korfan.customprod') || '[]').filter(p => p.name !== name.toLowerCase().trim())
+    list.push({ name: name.toLowerCase().trim(), dept })
+    localStorage.setItem('korfan.customprod', JSON.stringify(list))
+  },
+  async toggleItem(listId, item) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === item.id)
+    if (!it) return
+    if (it.recurrence && it.recurrence !== 'none') { it.checked = false }
+    else { it.checked = !it.checked; it.completed_by = it.checked ? 'me' : null }
+    lsWrite(lists)
   },
   async setPoints(listId, itemId, points) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.points = points; lsWrite(lists) }
   },
+  async setRecurrence(listId, itemId, recurrence) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
+    if (it) { it.recurrence = recurrence; lsWrite(lists) }
+  },
+  async getCompletions() { return [] },
   async removeItem(listId, itemId) {
     const lists = lsRead() || []
     const list = lists.find(l => l.id === listId); if (!list) return
@@ -119,6 +139,8 @@ const local = {
   async getListMembers() { return [] }, // engir aðrir meðlimir staðbundið
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
+  async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
+  async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async assignItem(listId, itemId, userId) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -154,18 +176,45 @@ const cloud = {
     return { ...data, shared: false, items: [] }
   },
   async deleteList(id) { await supabase.from('lists').delete().eq('id', id) },
-  async addItem(listId, name) {
-    await supabase.from('list_items').insert({
-      list_id: listId, name: name.toLowerCase().trim(), dept: departmentFor(name), checked: false,
-    })
+  async addItem(listId, name, points, dept) {
+    const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false }
+    if (points != null) row.points = points
+    await supabase.from('list_items').insert(row)
   },
-  async toggleItem(listId, itemId, checked) {
-    const newChecked = !checked
+  async setItemDept(listId, itemId, dept) {
+    await supabase.from('list_items').update({ dept }).eq('id', itemId)
+  },
+  async getCustomProducts() {
+    const { data } = await supabase.from('custom_products').select('name,dept')
+    return data || []
+  },
+  async addCustomProduct(name, dept) {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('list_items').update({ checked: newChecked, completed_by: newChecked ? user?.id : null }).eq('id', itemId)
+    await supabase.from('custom_products').upsert({ user_id: user.id, name: name.toLowerCase().trim(), dept })
+  },
+  async toggleItem(listId, item) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const recurring = item.recurrence && item.recurrence !== 'none'
+    if (!item.checked) {
+      // Verk klárað → skrá afrek og gefa stig
+      await supabase.from('completions').insert({ list_id: listId, item_id: item.id, user_id: user?.id, points: item.points ?? 10 })
+      await supabase.from('list_items').update({ checked: recurring ? false : true, completed_by: user?.id }).eq('id', item.id)
+    } else {
+      // Af-haka (einnota verk) → fjarlægja nýjasta afrek
+      await supabase.from('list_items').update({ checked: false, completed_by: null }).eq('id', item.id)
+      const { data: c } = await supabase.from('completions').select('id').eq('item_id', item.id).eq('user_id', user?.id).order('completed_at', { ascending: false }).limit(1)
+      if (c && c[0]) await supabase.from('completions').delete().eq('id', c[0].id)
+    }
   },
   async setPoints(listId, itemId, points) {
     await supabase.from('list_items').update({ points }).eq('id', itemId)
+  },
+  async setRecurrence(listId, itemId, recurrence) {
+    await supabase.from('list_items').update({ recurrence }).eq('id', itemId)
+  },
+  async getCompletions(listId) {
+    const { data } = await supabase.from('completions').select('user_id,points,completed_at').eq('list_id', listId)
+    return data || []
   },
   async removeItem(listId, itemId) { await supabase.from('list_items').delete().eq('id', itemId) },
   async addManyItems(listId, names) {
@@ -219,6 +268,17 @@ const cloud = {
   async getListMembers(listId) { const { data } = await supabase.rpc('list_members_emails', { p_list: listId }); return data || [] },
   async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
   async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
+  async getMyProfile() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const { data } = await supabase.from('profiles').select('id,email,name,color').eq('id', user.id).single()
+    return data || { id: user.id, email: user.email }
+  },
+  async updateProfile({ name, color }) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('profiles').upsert({ id: user.id, email: user.email, name, color })
+    if (error) throw error
+  },
   async assignItem(listId, itemId, userId) {
     await supabase.from('list_items').update({ assignee: userId || null }).eq('id', itemId)
   },

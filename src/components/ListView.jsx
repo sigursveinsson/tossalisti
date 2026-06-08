@@ -1,24 +1,41 @@
 import React, { useState } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
+import { RECURRENCE_LABELS } from '../data/chores.js'
 
-const initials = (email) => email ? email.split('@')[0].slice(0, 2).toUpperCase() : '?'
+const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
+const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
 const POINTS_OPTIONS = [5, 10, 20, 30, 50]
 
-export default function ListView({ items, listType = 'shopping', members = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints }) {
+function weekStartMs() {
+  const now = new Date()
+  const day = (now.getDay() + 6) % 7
+  const d = new Date(now)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(now.getDate() - day)
+  return d.getTime()
+}
+
+export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize }) {
   const isTask = listType === 'task'
   const [text, setText] = useState('')
+  const [qty, setQty] = useState('')
+  const [unit, setUnit] = useState('')
   const [assigning, setAssigning] = useState(null)
-  const [pointsItem, setPointsItem] = useState(null)
+  const [editItem, setEditItem] = useState(null)
+  const [deptItem, setDeptItem] = useState(null)
+  const [lbWindow, setLbWindow] = useState('week')
   const sugg = isTask ? [] : suggest(text)
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
-  const emailOf = (uid) => (members.find(m => m.user_id === uid) || {}).email
+  const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
 
   const add = (name) => {
     const v = (name ?? text).trim()
     if (!v) return
-    onAdd(v); setText('')
+    let full = v
+    if (!isTask && qty.trim()) full = `${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`
+    onAdd(full); setText(''); setQty('')
   }
 
   const open = items.filter(i => !i.checked).length
@@ -26,7 +43,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const assignBtn = (it) => {
     if (!canAssign) return null
     return it.assignee
-      ? <button className="assign-chip" onClick={() => setAssigning(it)} title={emailOf(it.assignee) || ''}>{initials(emailOf(it.assignee))}</button>
+      ? <button className="assign-chip" style={{ background: memberOf(it.assignee).color || undefined }} onClick={() => setAssigning(it)} title={displayName(memberOf(it.assignee))}>{initialsOf(memberOf(it.assignee))}</button>
       : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta">＋</button>
   }
 
@@ -37,8 +54,12 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         style={{ background: it.checked ? color : 'transparent', borderColor: it.checked ? color : undefined }}
         onClick={() => onToggle(it)}
       >{it.checked ? '✓' : ''}</div>
-      <span className="label" onClick={() => onToggle(it)}>{it.name}</span>
-      {taskMode && <button className="points-badge" onClick={() => setPointsItem(it)}>{it.points ?? 10} stig</button>}
+      <span className="label" onClick={() => onToggle(it)}>
+        {it.name}
+        {taskMode && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
+      </span>
+      {taskMode && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
+      {!taskMode && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
       {assignBtn(it)}
       <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
     </div>
@@ -53,6 +74,8 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         placeholder={isTask ? 'Bættu við verki…' : 'Bættu við vöru…'}
         autoComplete="off"
       />
+      {!isTask && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
+      {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
       {sugg.length > 0 && (
         <div className="suggest">
@@ -69,8 +92,8 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 10 }}>{assigning.name}</div>
         {members.map(m => (
           <button className="pick-row" key={m.user_id} onClick={() => { onAssign(assigning, m.user_id); setAssigning(null) }}>
-            <span>{m.email}{m.user_id === currentUserId ? ' (þú)' : ''}</span>
-            <span className="assign-chip" style={{ pointerEvents: 'none' }}>{initials(m.email)}</span>
+            <span>{displayName(m)}{m.user_id === currentUserId ? ' (þú)' : ''}</span>
+            <span className="assign-chip" style={{ pointerEvents: 'none', background: m.color || undefined }}>{initialsOf(m)}</span>
           </button>
         ))}
         <button className="pick-row" onClick={() => { onAssign(assigning, null); setAssigning(null) }}><span>Enginn</span></button>
@@ -78,26 +101,50 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     </div>
   )
 
-  const pointsModal = pointsItem && (
-    <div className="sheet-bg center" onClick={() => setPointsItem(null)}>
+  const settingsModal = editItem && (
+    <div className="sheet-bg center" onClick={() => setEditItem(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Stig fyrir verk <button className="x" onClick={() => setPointsItem(null)} aria-label="Loka">×</button></h2>
-        <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 12 }}>{pointsItem.name}</div>
+        <h2>Verk-stillingar <button className="x" onClick={() => setEditItem(null)} aria-label="Loka">×</button></h2>
+        <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 12 }}>{editItem.name}</div>
+        <div className="modal-label">Stig</div>
         <div className="points-options">
           {POINTS_OPTIONS.map(p => (
-            <button key={p} className={'points-opt' + ((pointsItem.points ?? 10) === p ? ' on' : '')} onClick={() => { onSetPoints(pointsItem, p); setPointsItem(null) }}>{p}</button>
+            <button key={p} className={'points-opt' + ((editItem.points ?? 10) === p ? ' on' : '')} onClick={() => { onSetPoints(editItem, p); setEditItem({ ...editItem, points: p }) }}>{p}</button>
           ))}
         </div>
+        <div className="modal-label">Endurtekning</div>
+        <div className="rec-options">
+          {Object.keys(RECURRENCE_LABELS).map(k => (
+            <button key={k} className={'rec-opt' + ((editItem.recurrence || 'none') === k ? ' on' : '')} onClick={() => { onSetRecurrence(editItem, k); setEditItem({ ...editItem, recurrence: k }) }}>{RECURRENCE_LABELS[k]}</button>
+          ))}
+        </div>
+        <button className="add-recipe-btn" onClick={() => setEditItem(null)}>Loka</button>
       </div>
     </div>
   )
 
-  // VERKEFNALISTI: gátlisti + stig + stigatafla
+  const deptModal = deptItem && (
+    <div className="sheet-bg center" onClick={() => setDeptItem(null)}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <h2>Flokka vöru <button className="x" onClick={() => setDeptItem(null)} aria-label="Loka">×</button></h2>
+        <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 10 }}>{deptItem.name}</div>
+        {DEPARTMENTS.filter(d => d.key !== 'other').map(d => (
+          <button className="pick-row" key={d.key} onClick={() => { onRecategorize(deptItem, d.key); setDeptItem(null) }}>
+            <span>{d.icon} {d.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
   if (isTask) {
     const ordered = [...items].sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1))
+    const since = weekStartMs()
     const scores = members.map(m => ({
-      user_id: m.user_id, email: m.email,
-      points: items.filter(i => i.checked && i.completed_by === m.user_id).reduce((s, i) => s + (i.points ?? 10), 0),
+      ...m,
+      points: completions
+        .filter(c => c.user_id === m.user_id && (lbWindow === 'all' || new Date(c.completed_at).getTime() >= since))
+        .reduce((s, c) => s + (c.points || 0), 0),
     })).sort((a, b) => b.points - a.points)
 
     return (
@@ -107,12 +154,18 @@ export default function ListView({ items, listType = 'shopping', members = [], c
 
         {members.length > 1 && (
           <div className="leaderboard">
-            <div className="lb-title">🏆 Stigatafla</div>
+            <div className="lb-head">
+              <span className="lb-title">🏆 Stigatafla</span>
+              <div className="lb-toggle">
+                <button className={lbWindow === 'week' ? 'on' : ''} onClick={() => setLbWindow('week')}>Vika</button>
+                <button className={lbWindow === 'all' ? 'on' : ''} onClick={() => setLbWindow('all')}>Allt</button>
+              </div>
+            </div>
             {scores.map((s, idx) => (
               <div className="lb-row" key={s.user_id}>
                 <span className="lb-rank">{idx + 1}</span>
-                <span className="assign-chip" style={{ pointerEvents: 'none' }}>{initials(s.email)}</span>
-                <span className="lb-name">{s.email}{s.user_id === currentUserId ? ' (þú)' : ''}</span>
+                <span className="assign-chip" style={{ pointerEvents: 'none', background: s.color || undefined }}>{initialsOf(s)}</span>
+                <span className="lb-name">{displayName(s)}{s.user_id === currentUserId ? ' (þú)' : ''}</span>
                 <span className="lb-points">{s.points} stig</span>
               </div>
             ))}
@@ -124,12 +177,11 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           {ordered.map(it => itemRow(it, 'var(--accent)', true))}
         </div>
         {assignModal}
-        {pointsModal}
+        {settingsModal}
       </div>
     )
   }
 
-  // INNKAUPALISTI: flokkað eftir búðardeildum
   const groups = DEPARTMENTS
     .map(d => ({ ...d, items: items.filter(i => i.dept === d.key) }))
     .filter(g => g.items.length)
@@ -152,6 +204,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         </div>
       ))}
       {assignModal}
+      {deptModal}
     </div>
   )
 }
