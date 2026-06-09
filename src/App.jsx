@@ -129,19 +129,6 @@ export default function App() {
     })
   }, [session])
 
-  // Sækja generic myndir (Pexels) fyrir vörur á listanum sem vantar mynd
-  useEffect(() => {
-    if (!isCloud || !session || !list || list.type !== 'shopping') return
-    const missing = list.items
-      .filter(it => !it.image_url && !catalog[it.name] && !genericTried.current.has(it.name))
-      .slice(0, 10)
-    missing.forEach(it => {
-      genericTried.current.add(it.name)
-      store.ensureGenericImage(it.name)
-        .then(url => { if (url) setCatalog(prev => ({ ...prev, [it.name.toLowerCase().trim()]: url })) })
-        .catch(() => {})
-    })
-  }, [list, session, catalog])
   const saveToCatalog = ({ barcode, name, image }) => {
     if (!name) return
     store.upsertCatalog({ barcode, name, image: image || null, dept: departmentFor(name) }).catch(() => {})
@@ -159,6 +146,20 @@ export default function App() {
   const list = lists.find(l => l.id === currentId) || null
   const customDept = Object.fromEntries(customProducts.map(p => [p.name, p.dept]))
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400) }
+
+  // Sækja generic myndir (Pexels) fyrir vörur á listanum sem vantar mynd
+  useEffect(() => {
+    if (!isCloud || !session || !list || list.type !== 'shopping') return
+    const missing = list.items
+      .filter(it => !it.image_url && !catalog[it.name] && !genericTried.current.has(it.name))
+      .slice(0, 10)
+    missing.forEach(it => {
+      genericTried.current.add(it.name)
+      store.ensureGenericImage(it.name)
+        .then(url => { if (url) setCatalog(prev => ({ ...prev, [it.name.toLowerCase().trim()]: url })) })
+        .catch(() => {})
+    })
+  }, [list, session, catalog])
 
   // Taka við boðshlekk (?invite=token) eftir innskráningu
   useEffect(() => {
