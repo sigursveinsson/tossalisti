@@ -175,6 +175,16 @@ export const PRODUCTS = {
   'klórtöflur': 'cleaning', 'wc-hreinsir': 'cleaning', 'gluggahreinsir': 'cleaning', 'alhliða hreinsir': 'cleaning',
   'ajax': 'cleaning', 'neutral þvottaefni': 'cleaning', 'gúmmíhanskar': 'cleaning', 'klór': 'cleaning',
   'tuskur': 'cleaning', 'svampar': 'cleaning',
+  // Áfengi
+  'bjór': 'alcohol', 'bjor': 'alcohol', 'öl': 'alcohol', 'lager': 'alcohol', 'pilsner': 'alcohol',
+  'ipa': 'alcohol', 'stout': 'alcohol', 'vín': 'alcohol', 'rauðvín': 'alcohol', 'hvítvín': 'alcohol',
+  'rósavín': 'alcohol', 'freyðivín': 'alcohol', 'kampavín': 'alcohol', 'prosecco': 'alcohol', 'cava': 'alcohol',
+  'viskí': 'alcohol', 'viski': 'alcohol', 'whisky': 'alcohol', 'whiskey': 'alcohol', 'vodka': 'alcohol',
+  'gin': 'alcohol', 'romm': 'alcohol', 'rom': 'alcohol', 'tequila': 'alcohol', 'koníak': 'alcohol',
+  'konjak': 'alcohol', 'brennivín': 'alcohol', 'brennivin': 'alcohol', 'líkjör': 'alcohol', 'likjor': 'alcohol',
+  'sénever': 'alcohol', 'vermút': 'alcohol', 'aperól': 'alcohol', 'aperol': 'alcohol', 'campari': 'alcohol',
+  'baileys': 'alcohol', 'jägermeister': 'alcohol', 'sjúss': 'alcohol', 'áfengi': 'alcohol', 'afengi': 'alcohol',
+  'bourbon': 'alcohol', 'cider': 'alcohol', 'síder': 'alcohol', 'breezer': 'alcohol', 'gin og tónik': 'alcohol',
 }
 
 export const PRODUCT_NAMES = Object.keys(PRODUCTS)

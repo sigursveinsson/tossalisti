@@ -34,7 +34,7 @@ const MAP = [
 
 const DEPT = {
   produce: '🥬', meat: '🍖', dairy: '🥛', bakery: '🍞', pantry: '🥫', frozen: '🧊',
-  beverages: '🥤', snacks: '🍿', candy: '🍫', baking: '🧁', cleaning: '🧽',
+  beverages: '🥤', alcohol: '🍷', snacks: '🍿', candy: '🍫', baking: '🧁', cleaning: '🧽',
   personalcare: '🧴', household: '🧻', other: '🛒',
 }
 

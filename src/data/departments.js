@@ -8,6 +8,7 @@ export const DEPARTMENTS = [
   { key: 'pantry',      name: 'Þurrvara',           icon: '🥫', color: '#5b4bd1' },
   { key: 'baking',      name: 'Bökunarvörur',       icon: '🧁', color: '#b5651d' },
   { key: 'beverages',   name: 'Drykkjarvörur',      icon: '🥤', color: '#1f8ac0' },
+  { key: 'alcohol',     name: 'Áfengi',             icon: '🍷', color: '#7a1f3d' },
   { key: 'snacks',      name: 'Snakk',              icon: '🍿', color: '#d98c00' },
   { key: 'candy',       name: 'Sælgæti',            icon: '🍫', color: '#c0398c' },
   { key: 'cleaning',    name: 'Hreinlætisvörur',    icon: '🧽', color: '#14a37a' },

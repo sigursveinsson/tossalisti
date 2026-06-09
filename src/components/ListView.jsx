@@ -63,6 +63,9 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
   const sponSugg = (isTask || isSchedule) ? [] : sponsoredSuggest(text)
+  const catSugg = (isShopping && text.trim().length >= 2)
+    ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n)).slice(0, 5)
+    : []
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
 
@@ -209,7 +212,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
-      {(sugg.length > 0 || sponSugg.length > 0) && (
+      {(sugg.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
           {sponSugg.map(o => (
             <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name, o.image)}>
@@ -218,6 +221,12 @@ export default function ListView({ items, listType = 'shopping', members = [], c
               </span>
               <span className="spon-name">{o.name}</span>
               <span className="spon-tag">Kostað · {o.brand}</span>
+            </div>
+          ))}
+          {catSugg.map(n => (
+            <div key={'cat_' + n} className="suggest-off" onClick={() => add(n, catalog[n])}>
+              {catalog[n] && <img src={catalog[n]} alt="" />}
+              <span>{n}</span>
             </div>
           ))}
           {sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}

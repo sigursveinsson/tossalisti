@@ -115,18 +115,13 @@ export default function App() {
 
   // Sameiginlegur vörubanki (myndir úr skönnun)
   const [catalog, setCatalog] = useState({})
-  const genericTried = useRef(new Set())
   useEffect(() => {
     if (isCloud && !session) return
-    Promise.all([
-      store.getCatalogImages().catch(() => []),
-      store.getGenericImages().catch(() => []),
-    ]).then(([a, b]) => {
+    store.getCatalogImages().then(rows => {
       const m = {}
-      for (const r of a) if (r.image_url) m[r.name_norm] = r.image_url
-      for (const r of b) if (r.image_url) m[r.name_norm] = r.image_url
+      for (const r of rows) if (r.image_url) m[r.name_norm] = r.image_url
       setCatalog(m)
-    })
+    }).catch(() => {})
   }, [session])
 
   const saveToCatalog = ({ barcode, name, image }) => {
@@ -147,19 +142,6 @@ export default function App() {
   const customDept = Object.fromEntries(customProducts.map(p => [p.name, p.dept]))
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400) }
 
-  // Sækja generic myndir (Pexels) fyrir vörur á listanum sem vantar mynd
-  useEffect(() => {
-    if (!isCloud || !session || !list || list.type !== 'shopping') return
-    const missing = list.items
-      .filter(it => !it.image_url && !catalog[it.name] && !genericTried.current.has(it.name))
-      .slice(0, 10)
-    missing.forEach(it => {
-      genericTried.current.add(it.name)
-      store.ensureGenericImage(it.name)
-        .then(url => { if (url) setCatalog(prev => ({ ...prev, [it.name.toLowerCase().trim()]: url })) })
-        .catch(() => {})
-    })
-  }, [list, session, catalog])
 
   // Taka við boðshlekk (?invite=token) eftir innskráningu
   useEffect(() => {
