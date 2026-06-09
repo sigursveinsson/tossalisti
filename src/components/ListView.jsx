@@ -7,6 +7,7 @@ import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
 import ShelfView from './ShelfView.jsx'
+import ShoppingMode from './ShoppingMode.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
 import { useBackClose } from '../lib/backstack.js'
 
@@ -65,6 +66,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   useBackClose(scanning, closeScan)
 
   const [shelf, setShelf] = useState(false)
+  const [shopMode, setShopMode] = useState(false)
   const commitShelf = async (picks) => {
     for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image) }
   }
@@ -360,7 +362,10 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     <div>
       {addBar}
       <span className="badge">{open} vörur eftir</span>
-      <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Velja úr vöruhillu</button>
+      <div className="list-actions">
+        <button className="shop-go" onClick={() => setShopMode(true)}>🛒 Versla</button>
+        <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Vöruhilla</button>
+      </div>
       <AdBanner />
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {
@@ -392,6 +397,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {deptModal}
       {scanner}
       {shelf && <ShelfView catalog={catalog} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
+      {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onClose={() => setShopMode(false)} />}
     </div>
   )
 }
