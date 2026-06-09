@@ -3,6 +3,7 @@ import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
 import RecipesView from './components/RecipesView.jsx'
+import SpendingView from './components/SpendingView.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
@@ -23,6 +24,7 @@ import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
 import { suggestChorePoints } from './data/chores.js'
 import { departmentFor } from './data/products.js'
+import { matchListItems } from './lib/receipt.js'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -43,6 +45,7 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
   const [customProducts, setCustomProducts] = useState([])
+  const [purchases, setPurchases] = useState([])
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -103,6 +106,13 @@ export default function App() {
     store.getCustomProducts().then(setCustomProducts).catch(() => {})
   }, [session])
 
+  // Kvittanir / eyðsla
+  const loadPurchases = () => store.getPurchases().then(setPurchases).catch(() => setPurchases([]))
+  useEffect(() => {
+    if (isCloud && !session) return
+    loadPurchases()
+  }, [session])
+
   // Meðlimir og afrek núverandi lista (ábyrgðarmenn + stigatafla)
   useEffect(() => {
     if (!currentId) { setMembers([]); setCompletions([]); return }
@@ -148,6 +158,17 @@ export default function App() {
     const pts = isChore ? suggestChorePoints(name) : undefined
     const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || departmentFor(name)) : undefined
     await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image }); await reload(list.id)
+  }
+  const savePurchase = async (purchase) => {
+    await store.addPurchase({ ...purchase, list_id: list?.id || null })
+    // Merkja vörur á listanum sem keyptar ef þær passa við kvittunina
+    if (list && list.type === 'shopping') {
+      const ids = matchListItems(list.items, purchase.items)
+      const toCheck = list.items.filter(i => ids.includes(i.id) && !i.checked)
+      for (const it of toCheck) { try { await store.toggleItem(list.id, it) } catch (e) {} }
+      if (toCheck.length) { await reload(list.id); flash(toCheck.length + ' vörur merktar keyptar ✓') }
+    }
+    await loadPurchases()
   }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
@@ -309,12 +330,15 @@ export default function App() {
         <div className="tabs">
           <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
           {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
+          {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Eyðsla</button>}
         </div>
       </div>
       <div className="body">
         {tab === 'recipes' && isShopping
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+          : tab === 'spending' && isShopping
+            ? <SpendingView purchases={purchases} onSave={savePurchase} />
+            : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (

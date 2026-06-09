@@ -112,6 +112,19 @@ const local = {
     list.items = list.items.filter(i => i.id !== itemId); lsWrite(lists)
   },
   async addManyItems(listId, names) { for (const n of names) await local.addItem(listId, n) },
+  async getPurchases() {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    return all.sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
+  },
+  async addPurchase(p) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    const rec = {
+      id: uid(), list_id: p.list_id || null, store: p.store || '',
+      purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10),
+      total: p.total ?? null, items: p.items || [],
+    }
+    all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
+  },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -271,6 +284,28 @@ const cloud = {
   async addManyItems(listId, names) {
     const rows = names.map(n => ({ list_id: listId, name: n.toLowerCase().trim(), dept: departmentFor(n), checked: false }))
     await supabase.from('list_items').insert(rows)
+  },
+  async getPurchases() {
+    const { data: ps } = await supabase.from('purchases').select('*').order('purchased_at', { ascending: false })
+    if (!ps || !ps.length) return ps || []
+    const ids = ps.map(p => p.id)
+    const { data: its } = await supabase.from('purchase_items').select('*').in('purchase_id', ids)
+    const byP = {}
+    for (const it of (its || [])) { (byP[it.purchase_id] || (byP[it.purchase_id] = [])).push(it) }
+    return ps.map(p => ({ ...p, items: byP[p.id] || [] }))
+  },
+  async addPurchase(p) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: pr, error } = await supabase.from('purchases').insert({
+      user_id: user.id, list_id: p.list_id || null, store: p.store || null,
+      purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
+    }).select().single()
+    if (error) throw error
+    if (p.items && p.items.length) {
+      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null }))
+      await supabase.from('purchase_items').insert(rows)
+    }
+    return pr
   },
   async duplicateList(id, name) {
     const all = await cloud.getLists()
