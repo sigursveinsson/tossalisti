@@ -54,6 +54,9 @@ button { font-family: inherit; cursor: pointer; }
 .suggest div { padding: 12px 14px; font-size: 15px; border-bottom: 1px solid var(--line); text-transform: capitalize; color: var(--text); }
 .suggest div:last-child { border-bottom: none; }
 .suggest div:active { background: var(--chip); }
+.suggest .suggest-off { display: flex; align-items: center; gap: 10px; text-transform: none; }
+.suggest .suggest-off img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; background: #fff; flex: none; }
+.suggest .suggest-off span { text-transform: none; }
 
 .badge { display: inline-block; font-size: 11px; color: var(--muted); background: var(--chip); padding: 4px 10px; border-radius: 20px; margin: 8px 0 0; }
 .group { margin-top: 18px; }
