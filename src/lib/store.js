@@ -159,6 +159,11 @@ const local = {
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
     return Object.entries(c).map(([name_norm, v]) => ({ name_norm, image_url: v.image }))
   },
+  async getGenericImages() {
+    const g = JSON.parse(localStorage.getItem('korfan.generic') || '{}')
+    return Object.entries(g).filter(([, v]) => v).map(([name_norm, image_url]) => ({ name_norm, image_url }))
+  },
+  async ensureGenericImage() { return null },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -371,6 +376,23 @@ const cloud = {
   async getCatalogImages() {
     const { data } = await supabase.from('product_catalog').select('name_norm,image_url').not('image_url', 'is', null)
     return data || []
+  },
+  async getGenericImages() {
+    const { data } = await supabase.from('generic_images').select('name_norm,image_url').not('image_url', 'is', null)
+    return data || []
+  },
+  async ensureGenericImage(name) {
+    const nn = (name || '').toLowerCase().trim()
+    if (!nn) return null
+    const { data: existing } = await supabase.from('generic_images').select('image_url').eq('name_norm', nn).maybeSingle()
+    if (existing) return existing.image_url || null
+    let url = null
+    try {
+      const { data } = await supabase.functions.invoke('product-image', { body: { name } })
+      url = (data && data.url) || null
+    } catch (e) { url = null }
+    await supabase.from('generic_images').upsert({ name_norm: nn, image_url: url, updated_at: new Date().toISOString() }, { onConflict: 'name_norm' })
+    return url
   },
   async duplicateList(id, name) {
     const all = await cloud.getLists()

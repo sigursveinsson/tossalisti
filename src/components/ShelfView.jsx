@@ -2,16 +2,17 @@ import React, { useState, useMemo } from 'react'
 import { PRODUCTS, PRODUCT_NAMES } from '../data/products.js'
 import { DEPARTMENTS } from '../data/departments.js'
 import { CATEGORY_SPONSORS } from '../data/sponsors.js'
+import { productEmoji } from '../data/emoji.js'
 import { useBackClose } from '../lib/backstack.js'
 
 const norm = s => (s || '').toLowerCase().trim()
-const initials = (n) => (n.replace(/[^a-záéíóúýþæðö ]/gi, '').trim().slice(0, 2) || '?').toUpperCase()
 
 // Vöruhilla: flettu/leitaðu, veldu margar vörur, þær flytjast á listann.
 // Kostaðar vörur (Ölgerðin) fá heiðurssæti efst — sterkt fyrir product placement.
 export default function ShelfView({ onCommit, onClose, existing = [], catalog = {} }) {
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(() => new Set())
+  const [deptFilter, setDeptFilter] = useState(null)
   useBackClose(true, onClose)
 
   const have = useMemo(() => new Set(existing.map(norm)), [existing])
@@ -46,8 +47,8 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
       <button key={(opts.key || '') + name} className={'shelf-card' + (on ? ' on' : '') + (opts.spon ? ' spon' : '')} onClick={() => toggle(name)}>
         {opts.spon && <span className="shelf-badge">Kostað</span>}
         {on && <span className="shelf-check">✓</span>}
-        <span className="shelf-img" style={{ background: img ? '#fff' : color }}>
-          {img ? <img src={img} alt="" /> : initials(name)}
+        <span className="shelf-img" style={{ background: img ? '#fff' : '#f4f7fc' }}>
+          {img ? <img src={img} alt="" /> : <span className="shelf-emoji">{productEmoji(name, opts.dept)}</span>}
         </span>
         <span className="shelf-name">{name}</span>
         {have.has(k) && <span className="shelf-have">á lista</span>}
@@ -63,17 +64,28 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
           <button className="x" onClick={onClose} aria-label="Loka">×</button>
         </div>
 
+        <div className="shelf-filters">
+          <button className={!deptFilter ? 'on' : ''} onClick={() => setDeptFilter(null)}>Allt</button>
+          {sections.map(s => (
+            <button key={s.dept.key} className={deptFilter === s.dept.key ? 'on' : ''}
+              style={deptFilter === s.dept.key ? { borderColor: s.dept.color, color: s.dept.color } : undefined}
+              onClick={() => setDeptFilter(deptFilter === s.dept.key ? null : s.dept.key)}>
+              {s.dept.icon} {s.dept.name}
+            </button>
+          ))}
+        </div>
+
         <div className="shelf-body">
-          {sponList.length > 0 && (
+          {sponList.length > 0 && (!deptFilter || deptFilter === 'beverages') && (
             <>
               <div className="shelf-head">Kostað · {sponsor.brand}</div>
-              <div className="shelf-grid">{sponList.map(p => card(p.name, p.color, { spon: true, image: p.image, key: 'sp' }))}</div>
+              <div className="shelf-grid">{sponList.map(p => card(p.name, p.color, { spon: true, image: p.image, key: 'sp', dept: 'beverages' }))}</div>
             </>
           )}
-          {sections.map(s => (
+          {sections.filter(s => !deptFilter || s.dept.key === deptFilter).map(s => (
             <React.Fragment key={s.dept.key}>
               <div className="shelf-head">{s.dept.icon} {s.dept.name}</div>
-              <div className="shelf-grid">{s.items.map(n => card(n, s.dept.color))}</div>
+              <div className="shelf-grid">{s.items.map(n => card(n, s.dept.color, { dept: s.dept.key }))}</div>
             </React.Fragment>
           ))}
           {sponList.length === 0 && sections.length === 0 && <p className="empty">Engin vara fannst.</p>}
