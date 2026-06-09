@@ -164,6 +164,7 @@ const local = {
     return Object.entries(g).filter(([, v]) => v).map(([name_norm, image_url]) => ({ name_norm, image_url }))
   },
   async ensureGenericImage() { return null },
+  async adminStats() { return null },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -393,6 +394,11 @@ const cloud = {
     } catch (e) { url = null }
     await supabase.from('generic_images').upsert({ name_norm: nn, image_url: url, updated_at: new Date().toISOString() }, { onConflict: 'name_norm' })
     return url
+  },
+  async adminStats() {
+    const { data, error } = await supabase.rpc('admin_stats')
+    if (error) throw error
+    return data
   },
   async duplicateList(id, name) {
     const all = await cloud.getLists()

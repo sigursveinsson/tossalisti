@@ -4,6 +4,7 @@ import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
+import AdminView from './components/AdminView.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
@@ -44,6 +45,7 @@ export default function App() {
   const [dialog, setDialog] = useState(null)
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
+  const [showAdmin, setShowAdmin] = useState(false)
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
 
@@ -332,6 +334,7 @@ export default function App() {
   )
 
   const open = list.items.filter(i => !i.checked).length
+  const isAdmin = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
   const isShopping = list.type === 'shopping'
   const typeIcon = list.type === 'schedule' ? '📅' : list.type === 'task' ? '✅' : '🛒'
   const firstTabLabel = list.type === 'schedule' ? 'Skema' : list.type === 'task' ? 'Verkefni' : 'Innkaupalisti'
@@ -348,6 +351,7 @@ export default function App() {
             <span className="lists-ico">☰</span> {typeIcon} {list.name} <span className="chev">▾</span>
           </button>
           <span className="count">{open} eftir</span>
+          {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
         <div className="tabs">
           <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
@@ -409,6 +413,8 @@ export default function App() {
           onClose={() => setDialog(null)}
         />
       )}
+
+      {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
 
       {toast && <div className="toast">{toast}</div>}
     </div>
