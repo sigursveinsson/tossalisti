@@ -193,6 +193,8 @@ button { font-family: inherit; cursor: pointer; }
 .scan-feed-row.ok span { color: #16a34a; }
 .scan-feed-row.miss span, .scan-feed-row.dup span { color: var(--muted); }
 .scan-done { width: 100%; height: 48px; border: none; border-radius: 12px; background: var(--cta); color: var(--cta-ink); font-size: 16px; font-weight: 700; }
+.scan-photo { width: 100%; min-height: 46px; border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; background: rgba(0,0,0,0.45); color: #fff; font-size: 14px; font-weight: 600; padding: 8px 12px; }
+.scan-photo:disabled { opacity: 0.7; }
 .action-row { display: block; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; margin-bottom: 8px; font-size: 15px; color: var(--text); }
 .action-row.danger { color: #e05a5a; }
 .dialog-input { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; font-size: 16px; background: var(--surface); color: var(--text); margin-bottom: 14px; }
