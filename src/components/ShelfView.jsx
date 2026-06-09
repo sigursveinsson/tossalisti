@@ -32,6 +32,11 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
     items: PRODUCT_NAMES.filter(n => PRODUCTS[n] === d.key && (!query || n.includes(query))),
   })).filter(s => s.items.length)
 
+  // Skannaðar vörur úr vörubankanum (sem eru ekki í föstu orðabókinni)
+  const catMatches = query.length >= 2
+    ? Object.keys(catalog).filter(n => catalog[n] && !PRODUCTS[n] && n.includes(query)).slice(0, 12)
+    : []
+
   const commit = async () => {
     const sponByName = Object.fromEntries(sponsor.products.map(p => [norm(p.name), p]))
     const picks = [...sel].map(name => ({ name, image: (sponByName[name] && sponByName[name].image) || null }))
@@ -82,13 +87,19 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
               <div className="shelf-grid">{sponList.map(p => card(p.name, p.color, { spon: true, image: p.image, key: 'sp', dept: 'beverages' }))}</div>
             </>
           )}
+          {catMatches.length > 0 && (
+            <>
+              <div className="shelf-head">Úr vörubankanum</div>
+              <div className="shelf-grid">{catMatches.map(n => card(n, '#888', { dept: 'other', key: 'cat' }))}</div>
+            </>
+          )}
           {sections.filter(s => !deptFilter || s.dept.key === deptFilter).map(s => (
             <React.Fragment key={s.dept.key}>
               <div className="shelf-head">{s.dept.icon} {s.dept.name}</div>
               <div className="shelf-grid">{s.items.map(n => card(n, s.dept.color, { dept: s.dept.key }))}</div>
             </React.Fragment>
           ))}
-          {sponList.length === 0 && sections.length === 0 && <p className="empty">Engin vara fannst.</p>}
+          {sponList.length === 0 && sections.length === 0 && catMatches.length === 0 && <p className="empty">Engin vara fannst.</p>}
         </div>
 
         <div className="shelf-foot">

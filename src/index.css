@@ -275,6 +275,23 @@ button { font-family: inherit; cursor: pointer; }
 /* Kvittun + eyðsla */
 .muted-p { color: var(--muted); font-size: 14px; margin: 4px 0 14px; }
 
+/* Leiðsögn (onboarding) */
+.onb-modal { max-width: 420px; position: relative; text-align: center; }
+.onb-skip { position: absolute; top: 12px; right: 14px; background: transparent; border: none; color: var(--muted); font-size: 14px; }
+.onb-step { padding: 8px 4px 4px; }
+.onb-logo { display: flex; justify-content: center; margin: 8px 0 6px; }
+.onb-emoji { font-size: 48px; margin: 6px 0; }
+.onb-h { font-size: 22px; margin: 6px 0 8px; }
+.onb-p { color: var(--muted); font-size: 15px; margin: 0 0 14px; }
+.onb-list { list-style: none; padding: 0; margin: 0 0 18px; text-align: left; display: inline-block; }
+.onb-list li { font-size: 15px; padding: 7px 0; color: var(--text); }
+.onb-howto { background: var(--chip); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: var(--text); margin: 0 0 18px; }
+.onb-cta { width: 100%; height: 50px; border: none; border-radius: 13px; background: var(--cta); color: var(--cta-ink); font-size: 16px; font-weight: 700; }
+.onb-later { width: 100%; margin-top: 10px; background: transparent; border: none; color: var(--muted); font-size: 14px; padding: 8px; }
+.onb-dots { display: flex; gap: 7px; justify-content: center; margin-top: 16px; }
+.onb-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.onb-dots span.on { background: var(--cta); }
+
 /* Stjórnborð */
 .admin-btn { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); color: #fff; width: 34px; height: 34px; border-radius: 9px; font-size: 15px; flex: none; }
 .adm-modal { max-width: 480px; }

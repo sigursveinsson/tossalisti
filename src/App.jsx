@@ -5,6 +5,7 @@ import ListView from './components/ListView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
 import AdminView from './components/AdminView.jsx'
+import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
@@ -46,6 +47,7 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
 
@@ -96,6 +98,16 @@ export default function App() {
     if (!isCloud || !session) return
     store.getMyProfile().then(p => { setProfile(p); setProfileLoaded(true) }).catch(() => setProfileLoaded(true))
   }, [session])
+
+  // Leiðsögn fyrir nýja notendur (fyrsta heimsókn)
+  useEffect(() => {
+    if (isCloud && (!session || !profile || !profile.name)) return
+    try { if (!localStorage.getItem('korfan.onboarded')) setShowOnboarding(true) } catch (e) {}
+  }, [session, profile])
+  const finishOnboarding = () => {
+    try { localStorage.setItem('korfan.onboarded', '1') } catch (e) {}
+    setShowOnboarding(false)
+  }
 
   const saveProfile = async (name, color) => {
     await store.updateProfile({ name, color })
@@ -415,6 +427,8 @@ export default function App() {
       )}
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
+
+      {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 
       {toast && <div className="toast">{toast}</div>}
     </div>
