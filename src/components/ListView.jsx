@@ -4,6 +4,7 @@ import { suggest } from '../data/products.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
+import AdBanner from './AdBanner.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
 import { useBackClose } from '../lib/backstack.js'
 
@@ -337,6 +338,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     <div>
       {addBar}
       <span className="badge">{open} vörur eftir</span>
+      <AdBanner />
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => (
         <div className="group" key={g.key}>
