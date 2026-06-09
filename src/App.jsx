@@ -9,8 +9,14 @@ import ShareModal from './components/ShareModal.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
+import { useBackClose } from './lib/backstack.js'
 
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
+const readHash = () => {
+  const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  return { list: h.get('list') || null, tab: h.get('tab') || 'list' }
+}
+const HASH0 = readHash()
 const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString() }
 const startOfWeekISO = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - day); return d.toISOString() }
 import { ingredientLine } from './data/recipes.js'
@@ -22,8 +28,8 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [authReady, setAuthReady] = useState(!isCloud)
   const [lists, setLists] = useState([])
-  const [currentId, setCurrentId] = useState(null)
-  const [tab, setTab] = useState('list')
+  const [currentId, setCurrentId] = useState(HASH0.list)
+  const [tab, setTab] = useState(HASH0.tab)
   const [showLists, setShowLists] = useState(false)
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(true)
@@ -119,6 +125,22 @@ export default function App() {
       })
       .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
   }, [session])
+
+  // Geyma valinn lista + flipa í slóðinni svo refresh haldi sér.
+  useEffect(() => {
+    if (!currentId) return
+    const p = new URLSearchParams()
+    p.set('list', currentId)
+    if (tab && tab !== 'list') p.set('tab', tab)
+    const next = '#' + p.toString()
+    if (window.location.hash !== next) window.history.replaceState(window.history.state, '', next)
+  }, [currentId, tab])
+
+  // Vélræni „til baka"-hnappurinn lokar opnum glugga í stað þess að fara úr appinu.
+  useBackClose(showLists, () => setShowLists(false))
+  useBackClose(!!sharing, () => setSharing(null))
+  useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
+  useBackClose(!!dialog, () => setDialog(null))
 
   const addItem = async (name, weekday, time, assignee) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }

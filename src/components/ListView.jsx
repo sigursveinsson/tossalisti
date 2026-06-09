@@ -5,6 +5,7 @@ import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
+import { useBackClose } from '../lib/backstack.js'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
 const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
@@ -56,6 +57,8 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const scanLock = useRef({})
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
+  const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
+  useBackClose(scanning, closeScan)
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
   const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
@@ -88,7 +91,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   }
 
   const scanner = scanning && (
-    <BarcodeScanner onDetect={onScan} onClose={() => { setScanning(false); setScanFeed([]); scanLock.current = {} }}>
+    <BarcodeScanner onDetect={onScan} onClose={closeScan}>
       {scanFeed.length > 0 && (
         <div className="scan-feed">
           {scanFeed.map(f => (
@@ -99,7 +102,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           ))}
         </div>
       )}
-      <button className="scan-done" onClick={() => { setScanning(false); setScanFeed([]); scanLock.current = {} }}>Búinn</button>
+      <button className="scan-done" onClick={closeScan}>Búinn</button>
     </BarcodeScanner>
   )
 
