@@ -44,7 +44,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, catalog = {}, onCatalog, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
+export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -59,6 +59,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const [scanning, setScanning] = useState(false)
   const [scanFeed, setScanFeed] = useState([])
   const scanLock = useRef({})
+  const [linkScan, setLinkScan] = useState(null)
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
   const sponSugg = (isTask || isSchedule) ? [] : sponsoredSuggest(text)
@@ -79,7 +80,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     if (!v) return
     if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`, undefined, undefined, undefined, image)
     else onAdd(v, undefined, undefined, undefined, image)
-    setText(''); setQty(''); setOffSugg([])
+    setText(''); setQty('')
   }
 
   const onScan = async (code) => {
@@ -87,10 +88,11 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     if (scanLock.current[code] && now - scanLock.current[code] < 4000) return
     scanLock.current[code] = now
     setScanFeed(f => [{ id: now, txt: 'Leita…', kind: 'wait' }, ...f].slice(0, 6))
-    const res = await lookupBarcode(code)
+    const res = (onCatalogLookup && await onCatalogLookup(code)) || await lookupBarcode(code)
     setScanFeed(f => f.filter(x => x.id !== now))
-    if (!res) {
+    if (!res || !res.name) {
       setScanFeed(f => [{ id: now, txt: `Óþekkt vara (${code})`, kind: 'miss' }, ...f].slice(0, 6))
+      setLinkScan(code)
       return
     }
     const { name, image } = res
@@ -103,8 +105,42 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     setScanFeed(f => [{ id: now, txt: name, kind: 'ok', img: image }, ...f].slice(0, 6))
   }
 
+  const doLink = (it) => {
+    if (onCatalog && linkScan) onCatalog({ barcode: linkScan, name: it.name })
+    setScanFeed(f => [{ id: Date.now(), txt: `Tengt við ${it.name}`, kind: 'ok' }, ...f].slice(0, 6))
+    setLinkScan(null)
+  }
+
+  // #50: skanna meðan þú verslar — gefur skilaboð sem ShoppingMode birtir
+  const scanInStore = async (code) => {
+    const res = (onCatalogLookup && await onCatalogLookup(code)) || await lookupBarcode(code)
+    if (!res || !res.name) return { kind: 'miss', txt: 'Óþekkt vara' }
+    const { name, image } = res
+    if (image && onCatalog) onCatalog({ barcode: code, name, image })
+    const nn = name.toLowerCase().trim()
+    const existing = items.find(i => i.name === nn)
+    if (existing) {
+      if (!existing.checked) await onToggle(existing, false)
+      return { kind: 'ok', txt: name + ' ✓ í körfu', img: image }
+    }
+    await onAdd(name, undefined, undefined, undefined, image)
+    return { kind: 'add', txt: name + ' — bætt á lista', img: image }
+  }
+
   const scanner = scanning && (
     <BarcodeScanner onDetect={onScan} onClose={closeScan}>
+      {linkScan && (
+        <div className="scan-link">
+          <div className="scan-link-head">Óþekkt vara — tengdu hana við vöru á listanum:</div>
+          <div className="scan-link-items">
+            {items.filter(i => !i.checked).length === 0 && <div className="scan-link-empty">Engin vara á listanum til að tengja við.</div>}
+            {items.filter(i => !i.checked).map(it => (
+              <button key={it.id} onClick={() => doLink(it)}>{it.name}</button>
+            ))}
+          </div>
+          <button className="scan-link-skip" onClick={() => setLinkScan(null)}>Sleppa</button>
+        </div>
+      )}
       {scanFeed.length > 0 && (
         <div className="scan-feed">
           {scanFeed.map(f => (
@@ -151,6 +187,13 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
           {dueTag(it)}
         </span>
+        {!chore && onSetQty && (
+          <span className="qty-step" onClick={e => e.stopPropagation()}>
+            <button onClick={() => onSetQty(it, (it.qty ?? 1) - 1)} disabled={(it.qty ?? 1) <= 1} aria-label="Fækka">−</button>
+            <span className="qty-n">{it.qty ?? 1}</span>
+            <button onClick={() => onSetQty(it, (it.qty ?? 1) + 1)} aria-label="Fjölga">+</button>
+          </span>
+        )}
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
         {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
         {assignBtn(it)}
@@ -397,7 +440,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {deptModal}
       {scanner}
       {shelf && <ShelfView catalog={catalog} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
-      {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onClose={() => setShopMode(false)} />}
+      {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
   )
 }

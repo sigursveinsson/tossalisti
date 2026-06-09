@@ -1,11 +1,20 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { useBackClose } from '../lib/backstack.js'
+import BarcodeScanner from './BarcodeScanner.jsx'
 
 // Verslunarhamur: einfaldað heilskjás-útlit fyrir notkun inni í búð.
 // Stórir reitir, raðað eftir leið um búð, afgreitt færist neðst, skjár helst kveiktur.
-export default function ShoppingMode({ items, onToggle, onClose, catalog = {} }) {
+export default function ShoppingMode({ items, onToggle, onClose, onScanCode, catalog = {} }) {
   useBackClose(true, onClose)
+  const [scanning, setScanning] = useState(false)
+  const [scanMsg, setScanMsg] = useState(null)
+
+  const onDetect = async (code) => {
+    if (!onScanCode) return
+    const r = await onScanCode(code)
+    if (r) setScanMsg(r)
+  }
 
   useEffect(() => {
     let lock = null
@@ -35,6 +44,7 @@ export default function ShoppingMode({ items, onToggle, onClose, catalog = {} })
       <div className="shopmode-top">
         <button className="shopmode-x" onClick={onClose} aria-label="Loka">×</button>
         <span className="shopmode-title">Versla</span>
+        {onScanCode && <button className="shopmode-scan" onClick={() => setScanning(true)} aria-label="Skanna">📷</button>}
         <span className="shopmode-prog">{openItems.length} eftir</span>
       </div>
 
@@ -48,7 +58,7 @@ export default function ShoppingMode({ items, onToggle, onClose, catalog = {} })
               <button className="shopmode-item" key={it.id} onClick={() => onToggle(it, false)}>
                 <span className="shopmode-check" />
                 {imgOf(it) && <img className="shopmode-img" src={imgOf(it)} alt="" />}
-                <span className="shopmode-name">{it.name}</span>
+                <span className="shopmode-name">{it.name}{(it.qty ?? 1) > 1 ? ` × ${it.qty}` : ''}</span>
               </button>
             ))}
           </div>
@@ -66,6 +76,20 @@ export default function ShoppingMode({ items, onToggle, onClose, catalog = {} })
           </div>
         )}
       </div>
+
+      {scanning && (
+        <BarcodeScanner onDetect={onDetect} onClose={() => { setScanning(false); setScanMsg(null) }}>
+          {scanMsg && (
+            <div className="scan-feed">
+              <div className={'scan-feed-row ' + scanMsg.kind}>
+                {scanMsg.img && <img className="scan-feed-img" src={scanMsg.img} alt="" />}
+                {scanMsg.txt}
+              </div>
+            </div>
+          )}
+          <button className="scan-done" onClick={() => { setScanning(false); setScanMsg(null) }}>Búinn</button>
+        </BarcodeScanner>
+      )}
     </div>
   )
 }

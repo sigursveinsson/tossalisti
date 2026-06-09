@@ -46,13 +46,23 @@ const local = {
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
     const rec = weekday === 'daily' ? 'daily' : (weekday ? 'weekly' : 'none')
-    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, assignee: assignee || null, due_at: null, completed_by: null, image_url: image || null })
+    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, qty: 1, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, assignee: assignee || null, due_at: null, completed_by: null, image_url: image || null })
     lsWrite(lists)
   },
   async setItemDept(listId, itemId, dept) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.dept = dept; lsWrite(lists) }
+  },
+  async setQty(listId, itemId, qty) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
+    if (it) { it.qty = Math.max(1, qty); lsWrite(lists) }
+  },
+  async lookupCatalogBarcode(barcode) {
+    const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
+    for (const v of Object.values(c)) { if (v.barcode && String(v.barcode) === String(barcode)) return { name: v.name, image: v.image || null } }
+    return null
   },
   async setDue(listId, itemId, due) {
     const lists = lsRead() || []
@@ -140,9 +150,9 @@ const local = {
     localStorage.setItem('korfan.purchases', JSON.stringify(all))
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
-    if (!image || !name) return
+    if (!name) return
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
-    c[name.toLowerCase().trim()] = { image, barcode: barcode || null, dept: dept || null, name }
+    c[name.toLowerCase().trim()] = { image: image || null, barcode: barcode || null, dept: dept || null, name }
     localStorage.setItem('korfan.catalog', JSON.stringify(c))
   },
   async getCatalogImages() {
@@ -255,6 +265,13 @@ const cloud = {
   async setItemDept(listId, itemId, dept) {
     await supabase.from('list_items').update({ dept }).eq('id', itemId)
   },
+  async setQty(listId, itemId, qty) {
+    await supabase.from('list_items').update({ qty: Math.max(1, qty) }).eq('id', itemId)
+  },
+  async lookupCatalogBarcode(barcode) {
+    const { data } = await supabase.from('product_catalog').select('name,image_url').eq('barcode', String(barcode)).maybeSingle()
+    return data ? { name: data.name, image: data.image_url || null } : null
+  },
   async setDue(listId, itemId, due) {
     await supabase.from('list_items').update({ due_at: due || null }).eq('id', itemId)
   },
@@ -345,9 +362,9 @@ const cloud = {
     }
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
-    if (!barcode || !image || !name) return
+    if (!barcode || !name) return
     await supabase.from('product_catalog').upsert({
-      barcode, name, name_norm: name.toLowerCase().trim(), image_url: image, dept: dept || null,
+      barcode, name, name_norm: name.toLowerCase().trim(), image_url: image || null, dept: dept || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'barcode' })
   },
