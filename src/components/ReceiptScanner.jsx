@@ -26,6 +26,7 @@ export default function ReceiptScanner({ onSave, onClose }) {
     try {
       const res = await parseReceipt(file, setProgress)
       setStore(res.store || '')
+      if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '' }))
       )
       setTotal(res.total != null ? String(res.total) : '')
