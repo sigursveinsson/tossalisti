@@ -93,7 +93,19 @@ const local = {
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.recurrence = recurrence; lsWrite(lists) }
   },
-  async getCompletions() { return [] },
+  async getCompletions(listId) {
+    return (JSON.parse(localStorage.getItem('korfan.comp') || '[]')).filter(c => c.list_id === listId)
+  },
+  async completeItem(listId, item) {
+    const comp = JSON.parse(localStorage.getItem('korfan.comp') || '[]')
+    comp.push({ list_id: listId, item_id: item.id, user_id: 'me', points: item.points ?? 10, completed_at: new Date().toISOString() })
+    localStorage.setItem('korfan.comp', JSON.stringify(comp))
+  },
+  async uncompleteItem(listId, item, sinceISO) {
+    const comp = JSON.parse(localStorage.getItem('korfan.comp') || '[]')
+      .filter(c => !(c.item_id === item.id && c.user_id === 'me' && c.completed_at >= sinceISO))
+    localStorage.setItem('korfan.comp', JSON.stringify(comp))
+  },
   async removeItem(listId, itemId) {
     const lists = lsRead() || []
     const list = lists.find(l => l.id === listId); if (!list) return
@@ -243,8 +255,16 @@ const cloud = {
     await supabase.from('list_items').update({ recurrence }).eq('id', itemId)
   },
   async getCompletions(listId) {
-    const { data } = await supabase.from('completions').select('user_id,points,completed_at').eq('list_id', listId)
+    const { data } = await supabase.from('completions').select('item_id,user_id,points,completed_at').eq('list_id', listId)
     return data || []
+  },
+  async completeItem(listId, item) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('completions').insert({ list_id: listId, item_id: item.id, user_id: user?.id, points: item.points ?? 10 })
+  },
+  async uncompleteItem(listId, item, sinceISO) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('completions').delete().eq('item_id', item.id).eq('user_id', user?.id).gte('completed_at', sinceISO)
   },
   async removeItem(listId, itemId) { await supabase.from('list_items').delete().eq('id', itemId) },
   async addManyItems(listId, names) {

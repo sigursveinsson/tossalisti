@@ -11,6 +11,8 @@ import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
 
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
+const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString() }
+const startOfWeekISO = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - day); return d.toISOString() }
 import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
 import { suggestChorePoints } from './data/chores.js'
@@ -134,12 +136,22 @@ export default function App() {
     await reload(list.id)
     store.getCustomProducts().then(setCustomProducts).catch(() => {})
   }
-  const toggleItem = async (it) => {
-    const wasDone = it.checked
-    await store.toggleItem(list.id, it)
+  const toggleItem = async (it, done) => {
+    const recurring = it.recurrence && it.recurrence !== 'none'
+    if (recurring) {
+      if (done) {
+        await store.uncompleteItem(list.id, it, it.recurrence === 'daily' ? startOfTodayISO() : startOfWeekISO())
+      } else {
+        await store.completeItem(list.id, it)
+        flash('+' + (it.points ?? 10) + ' stig 🎉')
+      }
+    } else {
+      const wasDone = it.checked
+      await store.toggleItem(list.id, it)
+      if (!wasDone && list.type === 'task') flash('+' + (it.points ?? 10) + ' stig 🎉')
+    }
     await reload(list.id)
     store.getCompletions(list.id).then(setCompletions).catch(() => {})
-    if (!wasDone && list.type === 'task') flash('+' + (it.points ?? 10) + ' stig 🎉')
   }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
   const assignItem = async (it, userId) => { await store.assignItem(list.id, it.id, userId); await reload(list.id) }

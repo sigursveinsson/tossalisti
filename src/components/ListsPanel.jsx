@@ -18,6 +18,16 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
     if (!v) return
     onCreate(v, newType); setName(''); setCreating(false)
   }
+
+  const tellFriend = async () => {
+    const url = 'https://tossalisti.is'
+    const text = 'Ég nota Tossalista — íslenskt app fyrir innkaupa- og verkefnalista, deilanlegt með fjölskyldu og vinum. Prófaðu:'
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Tossalisti', text, url }) } catch (e) { /* hætt við */ }
+    } else {
+      try { await navigator.clipboard.writeText(text + ' ' + url) } catch (e) { /* clipboard læst */ }
+    }
+  }
   const tp = (l) => TYPE[l.type] || TYPE.shopping
 
   const row = (l) => (
@@ -70,6 +80,8 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
               ))}
             </div>
           )}
+
+          <button className="tellfriend-btn" onClick={tellFriend}>📲 Segðu vini frá Tossalista</button>
 
           {onSignOut && (
             <div className="sheet-footer">

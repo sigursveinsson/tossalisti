@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
-import { RECURRENCE_LABELS } from '../data/chores.js'
+import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
 import ScheduleForm from './ScheduleForm.jsx'
+import BarcodeScanner from './BarcodeScanner.jsx'
+import { lookupBarcode } from '../lib/barcode.js'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
 const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
@@ -49,7 +51,11 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const [editItem, setEditItem] = useState(null)
   const [deptItem, setDeptItem] = useState(null)
   const [lbWindow, setLbWindow] = useState('week')
+  const [scanning, setScanning] = useState(false)
+  const [scanFeed, setScanFeed] = useState([])
+  const scanLock = useRef({})
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
+  const isShopping = !isTask && !isSchedule
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
   const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
@@ -62,7 +68,51 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     setText(''); setQty('')
   }
 
-  const open = items.filter(i => !i.checked).length
+  const onScan = async (code) => {
+    const now = Date.now()
+    if (scanLock.current[code] && now - scanLock.current[code] < 4000) return
+    scanLock.current[code] = now
+    setScanFeed(f => [{ id: now, txt: 'Leita…', kind: 'wait' }, ...f].slice(0, 6))
+    const name = await lookupBarcode(code)
+    setScanFeed(f => f.filter(x => x.id !== now))
+    if (!name) {
+      setScanFeed(f => [{ id: now, txt: `Óþekkt vara (${code})`, kind: 'miss' }, ...f].slice(0, 6))
+      return
+    }
+    if (items.some(i => i.name === name.toLowerCase().trim())) {
+      setScanFeed(f => [{ id: now, txt: `${name} — þegar á lista`, kind: 'dup' }, ...f].slice(0, 6))
+      return
+    }
+    onAdd(name)
+    setScanFeed(f => [{ id: now, txt: name, kind: 'ok' }, ...f].slice(0, 6))
+  }
+
+  const scanner = scanning && (
+    <BarcodeScanner onDetect={onScan} onClose={() => { setScanning(false); setScanFeed([]); scanLock.current = {} }}>
+      {scanFeed.length > 0 && (
+        <div className="scan-feed">
+          {scanFeed.map(f => (
+            <div key={f.id} className={'scan-feed-row ' + f.kind}>
+              <span>{f.kind === 'ok' ? '✓' : f.kind === 'wait' ? '…' : f.kind === 'dup' ? '•' : '✕'}</span>
+              {f.txt}
+            </div>
+          ))}
+        </div>
+      )}
+      <button className="scan-done" onClick={() => { setScanning(false); setScanFeed([]); scanLock.current = {} }}>Búinn</button>
+    </BarcodeScanner>
+  )
+
+  const inPeriod = (iso, rec) => {
+    const d = new Date(iso)
+    if (rec === 'daily') { const t = new Date(); return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate() }
+    return d.getTime() >= weekStartMs()
+  }
+  const isDone = (it) => (it.recurrence && it.recurrence !== 'none')
+    ? completions.some(c => c.item_id === it.id && inPeriod(c.completed_at, it.recurrence))
+    : it.checked
+
+  const open = items.filter(i => !isDone(i)).length
 
   const assignBtn = (it) => {
     if (!canAssign) return null
@@ -71,28 +121,32 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta">＋</button>
   }
 
-  const itemRow = (it, color, chore) => (
-    <div className={'item' + (it.checked ? ' done' : '')} key={it.id}>
-      <div className="check" style={{ background: it.checked ? color : 'transparent', borderColor: it.checked ? color : undefined }} onClick={() => onToggle(it)}>{it.checked ? '✓' : ''}</div>
-      <span className="label" onClick={() => onToggle(it)}>
-        {chore && it.time && <span className="time-tag">{it.time}</span>}
-        {it.name}
-        {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
-        {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
-        {dueTag(it)}
-      </span>
-      {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
-      {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
-      {assignBtn(it)}
-      <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
-    </div>
-  )
+  const itemRow = (it, color, chore) => {
+    const done = isDone(it)
+    return (
+      <div className={'item' + (done ? ' done' : '')} key={it.id}>
+        <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
+        <span className="label" onClick={() => onToggle(it, done)}>
+          {chore && it.time && <span className="time-tag">{it.time}</span>}
+          {it.name}
+          {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
+          {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
+          {dueTag(it)}
+        </span>
+        {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
+        {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
+        {assignBtn(it)}
+        <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
+      </div>
+    )
+  }
 
   const addBar = (
     <div className="addbar">
       <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
       {!isTask && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
+      {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
       {sugg.length > 0 && <div className="suggest">{sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}</div>}
     </div>
@@ -134,7 +188,10 @@ export default function ListView({ items, listType = 'shopping', members = [], c
               {WEEKDAYS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
             <div className="modal-label">Tími</div>
-            <input className="dialog-input" type="time" value={editItem.time || ''} onChange={e => { onSetTime(editItem, e.target.value); setEditItem({ ...editItem, time: e.target.value }) }} />
+            <select className="list-select" value={editItem.time || ''} onChange={e => { onSetTime(editItem, e.target.value); setEditItem({ ...editItem, time: e.target.value }) }}>
+              <option value="">— enginn tími —</option>
+              {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </>
         ) : (
           <>
@@ -251,7 +308,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   }
 
   if (isTask) {
-    const ordered = [...items].sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1))
+    const ordered = [...items].sort((a, b) => { const da = isDone(a), db = isDone(b); return da === db ? 0 : da ? 1 : -1 })
     return (
       <div>
         {addBar}
@@ -286,6 +343,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       ))}
       {assignModal}
       {deptModal}
+      {scanner}
     </div>
   )
 }

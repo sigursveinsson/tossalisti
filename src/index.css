@@ -31,6 +31,7 @@ button { font-family: inherit; cursor: pointer; }
 .addbar input::placeholder { color: var(--faint); }
 .addbar input:focus { outline: none; border-color: var(--accent); }
 .addbar .add { width: 46px; border: none; background: var(--cta); color: var(--cta-ink); border-radius: 12px; font-size: 24px; line-height: 1; font-weight: 600; flex: none; }
+.addbar .scan-btn { width: 46px; flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; font-size: 20px; line-height: 1; }
 .addbar .qty-in { flex: none; width: 58px; text-align: center; }
 .addbar .unit-in { flex: none; width: 54px; text-align: center; }
 .recat-btn { background: none; border: none; font-size: 15px; padding: 4px; flex: none; }
@@ -173,6 +174,24 @@ button { font-family: inherit; cursor: pointer; }
 .ltype { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
 .linfo { flex: 1; min-width: 0; }
 .tpl-link { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; border: none; color: var(--text); font-size: 15px; padding: 14px 8px; border-top: 1px solid var(--line); margin-top: 10px; }
+.tellfriend-btn { width: 100%; margin-top: 16px; height: 44px; background: var(--chip); border: 1px solid var(--line); color: var(--navy); border-radius: 12px; font-size: 14px; font-weight: 600; }
+
+/* Strikamerkjaskanni */
+.scan-bg { position: fixed; inset: 0; z-index: 1000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.scan-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scan-frame { position: relative; width: 78%; max-width: 360px; aspect-ratio: 5 / 3; border: 2px solid rgba(255,255,255,0.9); border-radius: 16px; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.45); }
+.scan-line { position: absolute; left: 6%; right: 6%; top: 50%; height: 2px; background: var(--cta); box-shadow: 0 0 8px var(--cta); animation: scanmove 2s ease-in-out infinite; }
+@keyframes scanmove { 0%,100% { top: 12%; } 50% { top: 88%; } }
+.scan-close { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; font-size: 26px; line-height: 1; }
+.scan-hint { position: absolute; top: 22px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+.scan-error { position: absolute; bottom: 120px; left: 16px; right: 16px; text-align: center; color: #fff; background: rgba(180,40,40,0.92); padding: 12px 14px; border-radius: 12px; font-size: 14px; }
+.scan-panel { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.scan-feed { display: flex; flex-direction: column; gap: 6px; }
+.scan-feed-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.94); color: var(--navy); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.scan-feed-row span { font-weight: 700; }
+.scan-feed-row.ok span { color: #16a34a; }
+.scan-feed-row.miss span, .scan-feed-row.dup span { color: var(--muted); }
+.scan-done { width: 100%; height: 48px; border: none; border-radius: 12px; background: var(--cta); color: var(--cta-ink); font-size: 16px; font-weight: 700; }
 .action-row { display: block; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; margin-bottom: 8px; font-size: 15px; color: var(--text); }
 .action-row.danger { color: #e05a5a; }
 .dialog-input { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; font-size: 16px; background: var(--surface); color: var(--text); margin-bottom: 14px; }

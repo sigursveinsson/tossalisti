@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { TIME_OPTIONS } from '../data/chores.js'
 
 const DAYS = [
   ['mon', 'Mánudagur'], ['tue', 'Þriðjudagur'], ['wed', 'Miðvikudagur'], ['thu', 'Fimmtudagur'],
@@ -38,7 +39,10 @@ export default function ScheduleForm({ members = [], defaultDay = 'mon', onCreat
         )}
 
         <div className="modal-label">Tími (valfrjálst)</div>
-        <input className="dialog-input" type="time" value={time} onChange={e => setTime(e.target.value)} />
+        <select className="list-select" value={time} onChange={e => setTime(e.target.value)}>
+          <option value="">— enginn tími —</option>
+          {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
 
         {members.length > 1 && (
           <>
