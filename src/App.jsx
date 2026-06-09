@@ -113,6 +113,22 @@ export default function App() {
     loadPurchases()
   }, [session])
 
+  // Sameiginlegur vörubanki (myndir úr skönnun)
+  const [catalog, setCatalog] = useState({})
+  useEffect(() => {
+    if (isCloud && !session) return
+    store.getCatalogImages().then(rows => {
+      const m = {}
+      for (const r of rows) if (r.image_url) m[r.name_norm] = r.image_url
+      setCatalog(m)
+    }).catch(() => {})
+  }, [session])
+  const saveToCatalog = ({ barcode, name, image }) => {
+    if (!image || !name) return
+    store.upsertCatalog({ barcode, name, image, dept: departmentFor(name) }).catch(() => {})
+    setCatalog(prev => ({ ...prev, [name.toLowerCase().trim()]: image }))
+  }
+
   // Meðlimir og afrek núverandi lista (ábyrgðarmenn + stigatafla)
   useEffect(() => {
     if (!currentId) { setMembers([]); setCompletions([]); return }
@@ -338,7 +354,7 @@ export default function App() {
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
           : tab === 'spending' && isShopping
             ? <SpendingView purchases={purchases} onSave={savePurchase} />
-            : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+            : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} catalog={catalog} onCatalog={saveToCatalog} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (

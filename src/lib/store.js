@@ -125,6 +125,16 @@ const local = {
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
   },
+  async upsertCatalog({ barcode, name, image, dept } = {}) {
+    if (!image || !name) return
+    const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
+    c[name.toLowerCase().trim()] = { image, barcode: barcode || null, dept: dept || null, name }
+    localStorage.setItem('korfan.catalog', JSON.stringify(c))
+  },
+  async getCatalogImages() {
+    const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
+    return Object.entries(c).map(([name_norm, v]) => ({ name_norm, image_url: v.image }))
+  },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -306,6 +316,17 @@ const cloud = {
       await supabase.from('purchase_items').insert(rows)
     }
     return pr
+  },
+  async upsertCatalog({ barcode, name, image, dept } = {}) {
+    if (!barcode || !image || !name) return
+    await supabase.from('product_catalog').upsert({
+      barcode, name, name_norm: name.toLowerCase().trim(), image_url: image, dept: dept || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'barcode' })
+  },
+  async getCatalogImages() {
+    const { data } = await supabase.from('product_catalog').select('name_norm,image_url').not('image_url', 'is', null)
+    return data || []
   },
   async duplicateList(id, name) {
     const all = await cloud.getLists()

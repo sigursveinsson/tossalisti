@@ -43,7 +43,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
+export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, catalog = {}, onCatalog, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -92,6 +92,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       return
     }
     const { name, image } = res
+    if (image && onCatalog) onCatalog({ barcode: code, name, image })
     if (items.some(i => i.name === name.toLowerCase().trim())) {
       setScanFeed(f => [{ id: now, txt: `${name} — þegar á lista`, kind: 'dup', img: image }, ...f].slice(0, 6))
       return
@@ -140,7 +141,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     return (
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
         <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
-        {!chore && it.image_url && <img className="item-img" src={it.image_url} alt="" loading="lazy" />}
+        {!chore && (it.image_url || catalog[it.name]) && <img className="item-img" src={it.image_url || catalog[it.name]} alt="" loading="lazy" />}
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
@@ -390,7 +391,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {assignModal}
       {deptModal}
       {scanner}
-      {shelf && <ShelfView onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
+      {shelf && <ShelfView catalog={catalog} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
     </div>
   )
 }

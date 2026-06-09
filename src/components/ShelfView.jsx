@@ -9,7 +9,7 @@ const initials = (n) => (n.replace(/[^a-záéíóúýþæðö ]/gi, '').trim().s
 
 // Vöruhilla: flettu/leitaðu, veldu margar vörur, þær flytjast á listann.
 // Kostaðar vörur (Ölgerðin) fá heiðurssæti efst — sterkt fyrir product placement.
-export default function ShelfView({ onCommit, onClose, existing = [] }) {
+export default function ShelfView({ onCommit, onClose, existing = [], catalog = {} }) {
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(() => new Set())
   useBackClose(true, onClose)
@@ -41,12 +41,13 @@ export default function ShelfView({ onCommit, onClose, existing = [] }) {
   const card = (name, color, opts = {}) => {
     const k = norm(name)
     const on = sel.has(k)
+    const img = opts.image || catalog[k]
     return (
       <button key={(opts.key || '') + name} className={'shelf-card' + (on ? ' on' : '') + (opts.spon ? ' spon' : '')} onClick={() => toggle(name)}>
         {opts.spon && <span className="shelf-badge">Kostað</span>}
         {on && <span className="shelf-check">✓</span>}
-        <span className="shelf-img" style={{ background: color }}>
-          {opts.image ? <img src={opts.image} alt="" /> : initials(name)}
+        <span className="shelf-img" style={{ background: img ? '#fff' : color }}>
+          {img ? <img src={img} alt="" /> : initials(name)}
         </span>
         <span className="shelf-name">{name}</span>
         {have.has(k) && <span className="shelf-have">á lista</span>}
