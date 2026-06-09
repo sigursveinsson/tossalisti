@@ -19,14 +19,22 @@ export default function AdBanner({ ads = DEMO_ADS, interval = 4000 }) {
   return (
     <div className="ad-wrap">
       <div className="ad-label">Kostað</div>
-      <button key={ad.id} className="ad-banner" style={{ background: ad.bg, color: ad.fg }} onClick={next}>
-        <span className="ad-mark" style={{ background: ad.accent }}>{ad.brand.charAt(0)}</span>
-        <span className="ad-body">
-          <span className="ad-brand">{ad.brand}</span>
-          <span className="ad-text">{ad.text}</span>
-        </span>
-        <span className="ad-cta" style={{ borderColor: ad.fg }}>{ad.cta}</span>
-      </button>
+      {ad.image ? (
+        // Alvöru auglýsing: heil mynd frá auglýsanda
+        <button key={ad.id} className="ad-banner ad-image" onClick={next} aria-label={ad.brand}>
+          <img src={ad.image} alt={ad.brand} />
+        </button>
+      ) : (
+        // Stílað sýnishorn (þar til alvöru myndefni kemur)
+        <button key={ad.id} className="ad-banner" style={{ background: ad.bg, color: ad.fg }} onClick={next}>
+          <span className="ad-mark" style={{ background: ad.accent }}>{ad.brand.charAt(0)}</span>
+          <span className="ad-body">
+            <span className="ad-brand">{ad.brand}</span>
+            <span className="ad-text">{ad.text}</span>
+          </span>
+          <span className="ad-cta" style={{ borderColor: ad.fg }}>{ad.cta}</span>
+        </button>
+      )}
       <div className="ad-dots">{ads.map((a, idx) => <span key={a.id} className={idx === i ? 'on' : ''} />)}</div>
     </div>
   )

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
+import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
@@ -58,6 +59,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const scanLock = useRef({})
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
+  const sponSugg = (isTask || isSchedule) ? [] : sponsoredSuggest(text)
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
 
@@ -155,7 +157,16 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
-      {sugg.length > 0 && <div className="suggest">{sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}</div>}
+      {(sugg.length > 0 || sponSugg.length > 0) && (
+        <div className="suggest">
+          {sponSugg.map(o => (
+            <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name)}>
+              <span>{o.name}</span><span className="spon-tag">Kostað · {o.brand}</span>
+            </div>
+          ))}
+          {sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}
+        </div>
+      )}
     </div>
   )
 
@@ -340,15 +351,26 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       <span className="badge">{open} vörur eftir</span>
       <AdBanner />
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
-      {groups.map(g => (
-        <div className="group" key={g.key}>
-          <div className="group-head">
-            <span className="emoji">{g.icon}</span>
-            <span className="name" style={{ color: g.color }}>{g.name}</span>
+      {groups.map(g => {
+        const spon = CATEGORY_SPONSORS[g.key]
+        return (
+          <div className="group" key={g.key}>
+            <div className="group-head">
+              <span className="emoji">{g.icon}</span>
+              <span className="name" style={{ color: g.color }}>{g.name}</span>
+              {spon && <span className="spon-badge">{spon.tag}</span>}
+            </div>
+            {spon && (
+              <div className="spon-strip">
+                {spon.products.map(name => (
+                  <button key={name} className="spon-chip" onClick={() => add(name)}>+ {name}</button>
+                ))}
+              </div>
+            )}
+            {g.items.map(it => itemRow(it, g.color, false))}
           </div>
-          {g.items.map(it => itemRow(it, g.color, false))}
-        </div>
-      ))}
+        )
+      })}
       {assignModal}
       {deptModal}
       {scanner}
