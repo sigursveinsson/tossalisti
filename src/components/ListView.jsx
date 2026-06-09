@@ -160,8 +160,12 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {(sugg.length > 0 || sponSugg.length > 0) && (
         <div className="suggest">
           {sponSugg.map(o => (
-            <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name)}>
-              <span>{o.name}</span><span className="spon-tag">Kostað · {o.brand}</span>
+            <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name, o.image)}>
+              <span className="spon-mark" style={{ background: o.color }}>
+                {o.image ? <img src={o.image} alt="" /> : o.name.charAt(0)}
+              </span>
+              <span className="spon-name">{o.name}</span>
+              <span className="spon-tag">Kostað · {o.brand}</span>
             </div>
           ))}
           {sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}
@@ -362,8 +366,13 @@ export default function ListView({ items, listType = 'shopping', members = [], c
             </div>
             {spon && (
               <div className="spon-strip">
-                {spon.products.map(name => (
-                  <button key={name} className="spon-chip" onClick={() => add(name)}>+ {name}</button>
+                {spon.products.map(p => (
+                  <button key={p.name} className="spon-chip" onClick={() => add(p.name, p.image)}>
+                    <span className="spon-cmark" style={{ background: p.color }}>
+                      {p.image ? <img src={p.image} alt="" /> : p.name.charAt(0)}
+                    </span>
+                    {p.name}
+                  </button>
                 ))}
               </div>
             )}

@@ -6,3 +6,9 @@ dist
 
 # Local Netlify folder
 .netlify
+
+# Kynningar, QA-myndir og tímabundnar Office-skrár (eiga ekki í repo)
+*.pptx
+~$*
+_cmp*.jpg
+_qa/
