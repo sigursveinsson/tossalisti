@@ -186,6 +186,8 @@ export default function App() {
     }
     await loadPurchases()
   }
+  const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
+  const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
   const setTime = async (it, t) => { await store.setTime(list.id, it.id, t); await reload(list.id) }
@@ -353,7 +355,7 @@ export default function App() {
         {tab === 'recipes' && isShopping
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
           : tab === 'spending' && isShopping
-            ? <SpendingView purchases={purchases} onSave={savePurchase} />
+            ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
             : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} catalog={catalog} onCatalog={saveToCatalog} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 

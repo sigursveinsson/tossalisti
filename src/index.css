@@ -281,6 +281,13 @@ button { font-family: inherit; cursor: pointer; }
 .spend-lines { padding: 0 4px 12px; display: flex; flex-direction: column; gap: 6px; }
 .spend-line { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--text); }
 .spend-line.muted { color: var(--muted); }
+.spend-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.spend-actions button { flex: 1; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; }
+.spend-actions .spend-del { color: #c0392b; }
+.spend-confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }
+.spend-confirm span { flex: 1; }
+.spend-confirm .del-yes { background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 7px 14px; font-weight: 700; }
+.spend-confirm .del-no { background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 7px 14px; }
 
 /* Auglýsingabanner (rúllandi) */
 .ad-wrap { position: relative; margin: 12px 0 6px; }

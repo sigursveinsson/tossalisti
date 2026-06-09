@@ -125,6 +125,20 @@ const local = {
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
   },
+  async deletePurchase(id) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]').filter(p => p.id !== id)
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
+  async updatePurchase(id, patch) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    const p = all.find(x => x.id === id)
+    if (!p) return
+    if (patch.store != null) p.store = patch.store
+    if (patch.purchased_at) p.purchased_at = patch.purchased_at
+    if (patch.total !== undefined) p.total = patch.total
+    if (patch.items) p.items = patch.items
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
     if (!image || !name) return
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
@@ -316,6 +330,19 @@ const cloud = {
       await supabase.from('purchase_items').insert(rows)
     }
     return pr
+  },
+  async deletePurchase(id) {
+    await supabase.from('purchases').delete().eq('id', id)
+  },
+  async updatePurchase(id, patch) {
+    await supabase.from('purchases').update({
+      store: patch.store || null, purchased_at: patch.purchased_at, total: patch.total ?? null,
+    }).eq('id', id)
+    await supabase.from('purchase_items').delete().eq('purchase_id', id)
+    if (patch.items && patch.items.length) {
+      const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null }))
+      await supabase.from('purchase_items').insert(rows)
+    }
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
     if (!barcode || !image || !name) return
