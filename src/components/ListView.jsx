@@ -6,6 +6,7 @@ import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
+import ShelfView from './ShelfView.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
 import { useBackClose } from '../lib/backstack.js'
 
@@ -62,6 +63,11 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const sponSugg = (isTask || isSchedule) ? [] : sponsoredSuggest(text)
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
+
+  const [shelf, setShelf] = useState(false)
+  const commitShelf = async (picks) => {
+    for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image) }
+  }
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
   const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
@@ -353,6 +359,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     <div>
       {addBar}
       <span className="badge">{open} vörur eftir</span>
+      <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Velja úr vöruhillu</button>
       <AdBanner />
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {
@@ -383,6 +390,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {assignModal}
       {deptModal}
       {scanner}
+      {shelf && <ShelfView onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
     </div>
   )
 }
