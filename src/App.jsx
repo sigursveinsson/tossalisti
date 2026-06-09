@@ -142,12 +142,12 @@ export default function App() {
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
 
-  const addItem = async (name, weekday, time, assignee) => {
+  const addItem = async (name, weekday, time, assignee, image) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
     const isChore = list.type === 'task' || list.type === 'schedule'
     const pts = isChore ? suggestChorePoints(name) : undefined
     const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || departmentFor(name)) : undefined
-    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee }); await reload(list.id)
+    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image }); await reload(list.id)
   }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }

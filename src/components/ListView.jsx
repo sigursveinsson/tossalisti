@@ -76,18 +76,19 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     if (scanLock.current[code] && now - scanLock.current[code] < 4000) return
     scanLock.current[code] = now
     setScanFeed(f => [{ id: now, txt: 'Leita…', kind: 'wait' }, ...f].slice(0, 6))
-    const name = await lookupBarcode(code)
+    const res = await lookupBarcode(code)
     setScanFeed(f => f.filter(x => x.id !== now))
-    if (!name) {
+    if (!res) {
       setScanFeed(f => [{ id: now, txt: `Óþekkt vara (${code})`, kind: 'miss' }, ...f].slice(0, 6))
       return
     }
+    const { name, image } = res
     if (items.some(i => i.name === name.toLowerCase().trim())) {
-      setScanFeed(f => [{ id: now, txt: `${name} — þegar á lista`, kind: 'dup' }, ...f].slice(0, 6))
+      setScanFeed(f => [{ id: now, txt: `${name} — þegar á lista`, kind: 'dup', img: image }, ...f].slice(0, 6))
       return
     }
-    onAdd(name)
-    setScanFeed(f => [{ id: now, txt: name, kind: 'ok' }, ...f].slice(0, 6))
+    onAdd(name, undefined, undefined, undefined, image)
+    setScanFeed(f => [{ id: now, txt: name, kind: 'ok', img: image }, ...f].slice(0, 6))
   }
 
   const scanner = scanning && (
@@ -97,6 +98,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           {scanFeed.map(f => (
             <div key={f.id} className={'scan-feed-row ' + f.kind}>
               <span>{f.kind === 'ok' ? '✓' : f.kind === 'wait' ? '…' : f.kind === 'dup' ? '•' : '✕'}</span>
+              {f.img && <img className="scan-feed-img" src={f.img} alt="" />}
               {f.txt}
             </div>
           ))}
@@ -129,6 +131,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     return (
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
         <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
+        {!chore && it.image_url && <img className="item-img" src={it.image_url} alt="" loading="lazy" />}
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}

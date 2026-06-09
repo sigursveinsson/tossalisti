@@ -11,6 +11,10 @@ const FIELDS = [
   'generic_name',
   'abbreviated_product_name',
   'brands',
+  'image_front_small_url',
+  'image_small_url',
+  'image_front_url',
+  'image_url',
 ].join(',')
 
 function clean(name) {
@@ -40,7 +44,14 @@ export async function lookupBarcode(code) {
       p.brands ||
       ''
     const c = clean(name)
-    return c || null
+    if (!c) return null
+    const image =
+      p.image_front_small_url ||
+      p.image_small_url ||
+      p.image_front_url ||
+      p.image_url ||
+      null
+    return { name: c, image }
   } catch {
     return null
   }

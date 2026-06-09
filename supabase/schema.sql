@@ -53,6 +53,7 @@ create table if not exists public.list_items (
   due_at      date,
   weekday     text,
   completed_by uuid references auth.users(id) on delete set null,
+  image_url   text,
   created_at  timestamptz not null default now()
 );
 
