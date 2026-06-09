@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
@@ -6,7 +6,6 @@ import ScheduleForm from './ScheduleForm.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
 import { useBackClose } from '../lib/backstack.js'
-import { searchProducts } from '../lib/offsearch.js'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
 const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
@@ -60,19 +59,6 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const isShopping = !isTask && !isSchedule
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
-
-  // Leit í Open Food Facts á meðan skrifað er (aðeins innkaupalistar)
-  const [offSugg, setOffSugg] = useState([])
-  useEffect(() => {
-    if (!isShopping) { setOffSugg([]); return }
-    const q = text.trim()
-    if (q.length < 3) { setOffSugg([]); return }
-    const ctrl = new AbortController()
-    const t = setTimeout(() => {
-      searchProducts(q, ctrl.signal).then(setOffSugg).catch(() => {})
-    }, 350)
-    return () => { clearTimeout(t); ctrl.abort() }
-  }, [text, isShopping])
 
   const canAssign = members.length > 1 && typeof onAssign === 'function'
   const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
@@ -168,17 +154,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
-      {(sugg.length > 0 || offSugg.length > 0) && (
-        <div className="suggest">
-          {sugg.map(s => <div key={'l_' + s} onClick={() => add(s)}>{s}</div>)}
-          {offSugg.filter(o => !sugg.includes(o.name.toLowerCase())).map(o => (
-            <div key={'o_' + o.name} className="suggest-off" onClick={() => add(o.name, o.image)}>
-              {o.image && <img src={o.image} alt="" />}
-              <span>{o.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {sugg.length > 0 && <div className="suggest">{sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}</div>}
     </div>
   )
 
