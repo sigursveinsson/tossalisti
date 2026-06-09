@@ -137,6 +137,44 @@ export const PRODUCTS = {
   // Heimilið
   'ajax': 'household', 'neutral þvottaefni': 'household', 'libero bleiur': 'household',
   'lotus klósettpappír': 'household', 'blossi grillkol': 'household',
+
+  // === Endurflokkun í nýjar deildir (síðari lyklar ráða) ===
+  // Drykkjarvörur
+  'gos': 'beverages', 'sódavatn': 'beverages', 'safi': 'beverages', 'djús': 'beverages',
+  'orkudrykkur': 'beverages', 'malt': 'beverages', 'malt og appelsín': 'beverages', 'jólaöl': 'beverages',
+  'appelsín': 'beverages', 'egils appelsín': 'beverages', 'egils malt': 'beverages', 'kristall': 'beverages',
+  'kók': 'beverages', 'kóka kóla': 'beverages', 'coca cola': 'beverages', 'pepsi': 'beverages',
+  'pepsi max': 'beverages', 'sprite': 'beverages', 'fanta': 'beverages', '7up': 'beverages',
+  'svali': 'beverages', 'toppur': 'beverages', 'powerade': 'beverages', 'gatorade': 'beverages',
+  'nocco': 'beverages', 'collab': 'beverages', 'trópí': 'beverages', 'sódavatn með bragði': 'beverages',
+  'maltöl': 'beverages', 'vatn': 'beverages', 'íste': 'beverages', 'mysa': 'beverages',
+  // Sælgæti
+  'súkkulaði': 'candy', 'lakkrís': 'candy', 'tyggjó': 'candy', 'nóa kropp': 'candy',
+  'nóa konfekt': 'candy', 'prins póló': 'candy', 'síríus súkkulaði': 'candy', 'rís súkkulaði': 'candy',
+  'hraun': 'candy', 'lindubuff': 'candy', 'opal': 'candy', 'tópas': 'candy', 'pipp': 'candy',
+  'draumur': 'candy', 'freyju kropp': 'candy', 'bland í poka': 'candy', 'maltesers': 'candy',
+  'konfekt': 'candy', 'brjóstsykur': 'candy', 'karamellur': 'candy',
+  // Snakk
+  'snakk': 'snacks', 'kex': 'snacks', 'kremkex': 'snacks', 'kartöfluflögur': 'snacks',
+  'popp': 'snacks', 'doritos': 'snacks', 'pringles': 'snacks', 'ostapopp': 'snacks',
+  'cheez doodles': 'snacks', 'tortillaflögur': 'snacks', 'saltstangir': 'snacks', 'maísflögur': 'snacks',
+  'hnetur': 'snacks', 'jarðhnetur': 'snacks',
+  // Bökunarvörur
+  'hveiti': 'baking', 'heilhveiti': 'baking', 'spelt': 'baking', 'sykur': 'baking',
+  'púðursykur': 'baking', 'flórsykur': 'baking', 'lyftiduft': 'baking', 'matarsódi': 'baking',
+  'ger': 'baking', 'vanilludropar': 'baking', 'súkkulaðibitar': 'baking', 'kókosmjöl': 'baking',
+  'kakó': 'baking', 'bökunarpappír': 'baking', 'raspur': 'baking', 'möndlur': 'baking',
+  'marsipan': 'baking', 'kökuskraut': 'baking', 'flórsykur': 'baking',
+  // Snyrtivörur
+  'tannkrem': 'personalcare', 'tannbursti': 'personalcare', 'sjampó': 'personalcare', 'hárnæring': 'personalcare',
+  'handsápa': 'personalcare', 'sápa': 'personalcare', 'svitalyktareyðir': 'personalcare', 'dömubindi': 'personalcare',
+  'túrtappar': 'personalcare', 'blautþurrkur': 'personalcare', 'rakvél': 'personalcare', 'rakkrem': 'personalcare',
+  'húðkrem': 'personalcare', 'varasalvi': 'personalcare', 'eyrnapinnar': 'personalcare',
+  // Hreinlætisvörur
+  'uppþvottalögur': 'cleaning', 'uppþvottatöflur': 'cleaning', 'þvottaefni': 'cleaning', 'mýkingarefni': 'cleaning',
+  'klórtöflur': 'cleaning', 'wc-hreinsir': 'cleaning', 'gluggahreinsir': 'cleaning', 'alhliða hreinsir': 'cleaning',
+  'ajax': 'cleaning', 'neutral þvottaefni': 'cleaning', 'gúmmíhanskar': 'cleaning', 'klór': 'cleaning',
+  'tuskur': 'cleaning', 'svampar': 'cleaning',
 }
 
 export const PRODUCT_NAMES = Object.keys(PRODUCTS)
