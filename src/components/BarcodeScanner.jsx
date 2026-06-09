@@ -18,12 +18,23 @@ export default function BarcodeScanner({ onDetect, onClose, children }) {
       BarcodeFormat.UPC_E,
       BarcodeFormat.CODE_128,
     ])
+    hints.set(DecodeHintType.TRY_HARDER, true)
     const reader = new BrowserMultiFormatReader(hints)
+    reader.timeBetweenScansMillis = 150
     let stopped = false
+
+    const constraints = {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        advanced: [{ focusMode: 'continuous' }],
+      },
+    }
 
     reader
       .decodeFromConstraints(
-        { video: { facingMode: { ideal: 'environment' } } },
+        constraints,
         videoRef.current,
         (result) => {
           if (stopped || !result) return
