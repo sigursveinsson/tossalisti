@@ -61,7 +61,7 @@ const local = {
   },
   async lookupCatalogBarcode(barcode) {
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
-    for (const v of Object.values(c)) { if (v.barcode && String(v.barcode) === String(barcode)) return { name: v.name, image: v.image || null } }
+    for (const v of Object.values(c)) { if (v.barcode && String(v.barcode) === String(barcode)) return { name: v.name, image: v.image || null, dept: v.dept || null } }
     return null
   },
   async setDue(listId, itemId, due) {
@@ -275,8 +275,8 @@ const cloud = {
     await supabase.from('list_items').update({ qty: Math.max(1, qty) }).eq('id', itemId)
   },
   async lookupCatalogBarcode(barcode) {
-    const { data } = await supabase.from('product_catalog').select('name,image_url').eq('barcode', String(barcode)).maybeSingle()
-    return data ? { name: data.name, image: data.image_url || null } : null
+    const { data } = await supabase.from('product_catalog').select('name,image_url,dept').eq('barcode', String(barcode)).maybeSingle()
+    return data ? { name: data.name, image: data.image_url || null, dept: data.dept || null } : null
   },
   async setDue(listId, itemId, due) {
     await supabase.from('list_items').update({ due_at: due || null }).eq('id', itemId)

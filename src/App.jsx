@@ -138,9 +138,9 @@ export default function App() {
     }).catch(() => {})
   }, [session])
 
-  const saveToCatalog = ({ barcode, name, image }) => {
+  const saveToCatalog = ({ barcode, name, image, dept }) => {
     if (!name) return
-    store.upsertCatalog({ barcode, name, image: image || null, dept: departmentFor(name) }).catch(() => {})
+    store.upsertCatalog({ barcode, name, image: image || null, dept: dept || departmentFor(name) }).catch(() => {})
     if (image) setCatalog(prev => ({ ...prev, [name.toLowerCase().trim()]: image }))
   }
   const catalogLookup = (code) => store.lookupCatalogBarcode(code).catch(() => null)
@@ -185,11 +185,11 @@ export default function App() {
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
 
-  const addItem = async (name, weekday, time, assignee, image) => {
+  const addItem = async (name, weekday, time, assignee, image, scannedDept) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
     const isChore = list.type === 'task' || list.type === 'schedule'
     const pts = isChore ? suggestChorePoints(name) : undefined
-    const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || departmentFor(name)) : undefined
+    const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || scannedDept || departmentFor(name)) : undefined
     await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image }); await reload(list.id)
   }
   const savePurchase = async (purchase) => {

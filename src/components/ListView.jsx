@@ -98,13 +98,13 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       setLinkScan(code)
       return
     }
-    const { name, image } = res
-    if (image && onCatalog) onCatalog({ barcode: code, name, image })
+    const { name, image, dept } = res
+    if (onCatalog) onCatalog({ barcode: code, name, image, dept })
     if (items.some(i => i.name === name.toLowerCase().trim())) {
       setScanFeed(f => [{ id: now, txt: `${name} — þegar á lista`, kind: 'dup', img: image }, ...f].slice(0, 6))
       return
     }
-    onAdd(name, undefined, undefined, undefined, image)
+    onAdd(name, undefined, undefined, undefined, image, dept)
     setScanFeed(f => [{ id: now, txt: name, kind: 'ok', img: image }, ...f].slice(0, 6))
   }
 
@@ -118,15 +118,15 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const scanInStore = async (code) => {
     const res = (onCatalogLookup && await onCatalogLookup(code)) || await lookupBarcode(code)
     if (!res || !res.name) return { kind: 'miss', txt: 'Óþekkt vara' }
-    const { name, image } = res
-    if (image && onCatalog) onCatalog({ barcode: code, name, image })
+    const { name, image, dept } = res
+    if (onCatalog) onCatalog({ barcode: code, name, image, dept })
     const nn = name.toLowerCase().trim()
     const existing = items.find(i => i.name === nn)
     if (existing) {
       if (!existing.checked) await onToggle(existing, false)
       return { kind: 'ok', txt: name + ' ✓ í körfu', img: image }
     }
-    await onAdd(name, undefined, undefined, undefined, image)
+    await onAdd(name, undefined, undefined, undefined, image, dept)
     return { kind: 'add', txt: name + ' — bætt á lista', img: image }
   }
 
