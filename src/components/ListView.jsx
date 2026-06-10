@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
@@ -9,6 +9,7 @@ import KidsManager from './KidsManager.jsx'
 import GamePanel from './GamePanel.jsx'
 import KidProfile from './KidProfile.jsx'
 import RewardsManager from './RewardsManager.jsx'
+import GameGuide from './GameGuide.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
 import ShelfView from './ShelfView.jsx'
@@ -49,7 +50,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -63,6 +64,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [kidsOpen, setKidsOpen] = useState(false)
   const [profilePerson, setProfilePerson] = useState(null)
   const [rewardsOpen, setRewardsOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
   const [showImages, setShowImages] = useState(() => { try { return localStorage.getItem('korfan.hideImages') !== '1' } catch { return true } })
   const toggleImages = () => setShowImages(v => { const nv = !v; try { localStorage.setItem('korfan.hideImages', nv ? '0' : '1') } catch (e) {} return nv })
   const [lbWindow, setLbWindow] = useState('week')
@@ -86,6 +88,13 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   }
 
   const canManageKids = typeof onCreateKid === 'function'
+  // Sýna foreldra-leiðbeiningar sjálfkrafa í fyrsta sinn á verk-/skemalista.
+  useEffect(() => {
+    if (!canManageKids || !(isTask || isSchedule)) return
+    try { if (localStorage.getItem('korfan.gameguide.seen') === '1') return } catch (e) { return }
+    setGuideOpen(true)
+    try { localStorage.setItem('korfan.gameguide.seen', '1') } catch (e) {}
+  }, [])
   const canAssign = members.length > 1 && typeof onAssign === 'function'
   const personById = (id) => members.find(p => p.id === id) || null
   const assignedPerson = (it) => it.assignee_kid ? personById(it.assignee_kid) : (it.assignee ? personById(it.assignee) : null)
@@ -183,7 +192,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     if (rec === 'daily') { const t = new Date(); return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate() }
     return d.getTime() >= weekStartMs()
   }
-  const isDone = (it) => (it.recurrence && it.recurrence !== 'none')
+  // Í vikuskema er hvert verk sjálfstæð lína → haka er bundin línunni (it.checked).
+  // Annars (verkalisti með endurtekningu) telst verk búið ef afrek er á tímabilinu.
+  const isDone = (it) => (!isSchedule && it.recurrence && it.recurrence !== 'none')
     ? completions.some(c => c.item_id === it.id && inPeriod(c.completed_at, it.recurrence))
     : it.checked
 
@@ -356,7 +367,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   )
 
   const kidsBtn = canManageKids ? (
-    <button className="kids-btn" onClick={() => setKidsOpen(true)}>🧒 Krakkar</button>
+    <span className="top-btns">
+      <button className="kids-btn" onClick={() => setKidsOpen(true)}>🧒 Krakkar</button>
+      <button className="help-btn" onClick={() => setGuideOpen(true)} aria-label="Leiðbeiningar" title="Leiðbeiningar">?</button>
+    </span>
   ) : null
 
   const gamePanel = members.length > 0 && (
@@ -405,6 +419,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     />
   )
 
+  const guideModal = guideOpen && <GameGuide onClose={() => setGuideOpen(false)} />
+
   if (isSchedule) {
     const idx = DAY_KEYS.indexOf(viewDay)
     const go = (delta) => setViewDay(DAY_KEYS[(idx + delta + 7) % 7])
@@ -432,6 +448,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           <button onClick={() => go(1)} aria-label="Næsti dagur">›</button>
         </div>
         {gamePanel}
+        {onNewWeek && items.length > 0 && (
+          <button className="newweek-btn" onClick={() => { if (window.confirm('Byrja nýja viku? Öll verk verða af-hökuð — stigin og afrekin haldast.')) onNewWeek() }}>🔄 Byrja nýja viku</button>
+        )}
         {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við með „+ Nýtt verk".</p>}
         {timeless.length > 0 && (
           <div className="group">
@@ -454,13 +473,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         {kidsModal}
         {profileModal}
         {rewardsModal}
+        {guideModal}
         {showSchedForm && (
           <ScheduleForm
             members={members}
             currentUserId={currentUserId}
             defaultDay={viewDay}
             onManageKids={canManageKids ? () => { setShowSchedForm(false); setKidsOpen(true) } : null}
-            onCreate={(name, weekday, time, assignee, image) => { onAdd(name, weekday, time, assignee, image); setShowSchedForm(false) }}
+            onCreate={(name, days, time, assignee, image) => { onAddSchedule(name, days, time, assignee, image); setShowSchedForm(false) }}
             onClose={() => setShowSchedForm(false)}
           />
         )}
@@ -482,6 +502,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         {kidsModal}
         {profileModal}
         {rewardsModal}
+        {guideModal}
       </div>
     )
   }

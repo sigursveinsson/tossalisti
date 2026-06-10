@@ -44,8 +44,19 @@ Breyttar: `src/lib/store.js` (rewards+redemptions aðferðir, local+cloud), `src
 
 Staðfest: allar 5 nýju skrár + lib þýðast hreint (esbuild/node --check). Heildarbygging tókst ekki í Cowork (sama og síðast: `node_modules` er Windows-byggt og hluta-samstilling styttir skrár VM-megin) — host-skrárnar eru samt heilar og réttar. Laga þurfti `package.json` sem var stytt frá síðustu lotu.
 
+## Líka gert í lotu 2 — FORELDRA-LEIÐBEININGAR + SKEMA-ENDURHÖNNUN (BÍÐUR DEPLOY-S)
+8. **Foreldra-leiðbeiningar** (`GameGuide.jsx`) — útskýringaspjald um spilun (krakkar, stig, borð, raðir, merki, verðlaun, áskorun). Birtist sjálfkrafa í fyrsta sinn á verk-/skemalista (man í `localStorage` `korfan.gameguide.seen`) + lítill „?"-takki við hlið „🧒 Krakkar" til að opna aftur.
+9. **Skema = áþreifanleg vika** (lagaði seríu-galla). Áður var dagl./vikul. verk EIN sameiginleg lína → að breyta ábyrgð eða haka smitaði alla seríuna. Nú er hvert skema-verk **sjálfstæð lína** (recurrence 'none', eigin ábyrgð + eigin haki). „Daglega" býr til 7 línur (mán–sun). Nýr **„🔄 Byrja nýja viku"**-takki af-hakar allt en **heldur stigasögu** (afrekum). `isDone` í skema notar nú `it.checked` (per lína).
+
+Nýjar skrár (lota 2 framhald): `src/components/GameGuide.jsx`.
+Breyttar: `src/lib/store.js` (`addScheduleTasks`, `resetWeek` — local+cloud), `src/App.jsx` (`addSchedule`, `newWeek`), `src/components/ListView.jsx` (guide-modal, ?-takki, ný-vika takki, per-línu haka), `src/components/ScheduleForm.jsx` (daglega → 7 dagar), `src/index.css`.
+
+Engin ný Supabase-tafla þurfti (notar `list_items` eins og er; `dept` hefur sjálfgefið 'other'). Athugið: gömul skema-verk sem til eru í loftinu (recurrence 'daily'/'weekly') haldast sem ein lína þar til þau eru endurgerð — ný verk fá rétta hegðun strax. Best að nota „Byrja nýja viku" / endurstofna skema eftir deploy.
+
+Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/App/ListView/ScheduleForm yfirfarin host-megin (heil og jöfnuð). Heildarbygging enn ekki möguleg í Cowork (sama umhverfisbilun: Windows-`node_modules` + GitHub lokað af proxy + skemmdur git-index). **Deploy verður að koma frá þinni vél.**
+
 ## ÓGERT — næstu skref
-1. **DEPLOY** óútkeyrða kóðann (allt að ofan — bæði lota 1 og 2). `git add -A` + commit + push. Netlify byggir.
+1. **DEPLOY** óútkeyrða kóðann (allt að ofan — lota 1 + 2). `git add -A` + commit + push. Netlify byggir. Athugið: `node_modules` á þinni Windows-vél er rétt, svo `npm run build` virkar þar.
 2. **SEO + lén** — tengja `innkaupalisti.is` í Netlify sem 301-tilvísun á tossalisti.is; bæta meta/Open Graph-merkjum + sitemap/robots í `index.html`; Google Search Console.
 3. **Daglegt virkni-yfirlit** — skedúlera sjálfvirkt yfirlit úr Supabase (innskráningar, verk kláruð, útgjöld o.fl.). Ekki enn virkt.
 4. **Smávilla að skoða:** tvöfaldur sjálfgefinn „Vikuinnkaup"-listi getur orðið til við fyrstu innskráningu (race í `reload()` auto-create).

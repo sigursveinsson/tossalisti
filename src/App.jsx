@@ -216,6 +216,23 @@ export default function App() {
     if (isChore && !img) { const e = suggestChoreEmoji(name); if (e) img = makeEmojiImage(e) }
     await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image: img }); await reload(list.id)
   }
+  // Skema sem áþreifanleg vika: býr til sjálfstæð verk (daglega = 7 línur, eitt per dag).
+  const addSchedule = async (name, days, time, person, image) => {
+    if (!list) return
+    const pts = suggestChorePoints(name)
+    let img = image
+    if (!img) { const e = suggestChoreEmoji(name); if (e) img = makeEmojiImage(e) }
+    await store.addScheduleTasks(list.id, name, { days, time, assignee: person, points: pts, image: img })
+    await reload(list.id)
+  }
+  // Byrja nýja viku: af-haka allt en halda stigasögu (afrekum).
+  const newWeek = async () => {
+    if (!list) return
+    await store.resetWeek(list.id)
+    await reload(list.id)
+    store.getCompletions(list.id).then(setCompletions).catch(() => {})
+    flash('Ný vika — allt af-hakað ✓')
+  }
   const savePurchase = async (purchase) => {
     await store.addPurchase({ ...purchase, list_id: list?.id || null })
     // Merkja vörur á listanum sem keyptar ef þær passa við kvittunina
@@ -434,7 +451,7 @@ export default function App() {
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
           : tab === 'spending' && isShopping
             ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
-            : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+            : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (

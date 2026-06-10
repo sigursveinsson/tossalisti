@@ -30,7 +30,9 @@ export default function ScheduleForm({ members = [], currentUserId, defaultDay =
     if (!v) return
     let person = null
     if (assignee) { const [kind, id] = assignee.split(':'); person = { kind, id } }
-    onCreate(v, freq === 'daily' ? 'daily' : day, time, person, effImage)
+    // Daglega → eitt sjálfstætt verk á hvern dag vikunnar; vikulega → einn dagur.
+    const days = freq === 'daily' ? DAYS.map(d => d[0]) : [day]
+    onCreate(v, days, time, person, effImage)
   }
 
   return (

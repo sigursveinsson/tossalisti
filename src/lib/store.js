@@ -269,6 +269,25 @@ const local = {
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.image_url = image || null; lsWrite(lists) }
   },
+  // ---- Skema sem áþreifanleg vika (staðbundið) ----
+  // Býr til sjálfstæð verk (recurrence 'none') — daglega = ein lína á hvern valinn dag.
+  async addScheduleTasks(listId, name, { days = ['mon'], time, assignee, points, image } = {}) {
+    const lists = lsRead() || []
+    const list = lists.find(l => l.id === listId); if (!list) return
+    const n = (name || '').toLowerCase().trim(); if (!n) return
+    const a = personRef(assignee)
+    for (const wd of days) {
+      list.items.push({ id: uid(), name: n, dept: 'other', checked: false, qty: 1, points: points ?? 10, recurrence: 'none', weekday: wd, time: time || null, assignee: a.user, assignee_kid: a.kid, due_at: null, completed_by: null, completed_by_kid: null, image_url: image || null })
+    }
+    lsWrite(lists)
+  },
+  // Byrja nýja viku: af-haka öll verk en halda afrekum (stigasögu).
+  async resetWeek(listId) {
+    const lists = lsRead() || []
+    const list = lists.find(l => l.id === listId); if (!list) return
+    for (const it of list.items) { it.checked = false; it.completed_by = null; it.completed_by_kid = null }
+    lsWrite(lists)
+  },
   // ---- Verðlaunabúð (staðbundið) ----
   async getRewards(listId) {
     return (JSON.parse(localStorage.getItem('korfan.rewards') || '[]')).filter(r => r.list_id === listId && r.active !== false)
@@ -570,6 +589,21 @@ const cloud = {
   async deleteKid(id) { const { error } = await supabase.from('kids').delete().eq('id', id); if (error) throw error },
   async setItemImage(listId, itemId, image) {
     await supabase.from('list_items').update({ image_url: image || null }).eq('id', itemId)
+  },
+  // ---- Skema sem áþreifanleg vika (Supabase) ----
+  async addScheduleTasks(listId, name, { days = ['mon'], time, assignee, points, image } = {}) {
+    const a = personRef(assignee)
+    const base = { list_id: listId, name: (name || '').toLowerCase().trim(), checked: false, recurrence: 'none' }
+    if (points != null) base.points = points
+    if (time) base.time = time
+    if (a.user) base.assignee = a.user
+    if (a.kid) base.assignee_kid = a.kid
+    if (image) base.image_url = image
+    const rows = days.map(wd => ({ ...base, weekday: wd }))
+    await supabase.from('list_items').insert(rows)
+  },
+  async resetWeek(listId) {
+    await supabase.from('list_items').update({ checked: false, completed_by: null, completed_by_kid: null }).eq('list_id', listId)
   },
   // ---- Verðlaunabúð (Supabase) ----
   async getRewards(listId) {
