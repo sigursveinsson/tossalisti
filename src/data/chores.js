@@ -20,6 +20,45 @@ export function suggestChorePoints(name) {
   return 10
 }
 
+// Tákn fyrir verk — hjálpar þeim sem ekki lesa (t.d. 🐕 = fara út með hund).
+const CHORE_EMOJI = [
+  [['hund', 'labba', 'ganga með'], '🐕'],
+  [['rusl', 'sorp'], '🗑️'],
+  [['vaska', 'uppþvott', 'uppvask', 'diska'], '🍽️'],
+  [['þvott', 'þvo þvott', 'þvottavél'], '🧺'],
+  [['ryksug'], '🧹'],
+  [['skúra', 'moppa', 'gólf'], '🧽'],
+  [['baðherbergi', 'klósett', 'wc'], '🚽'],
+  [['elda', 'matseld', 'matur', 'undirbúa mat'], '🍳'],
+  [['baka'], '🧁'],
+  [['versla', 'innkaup', 'kaupa í matinn', 'búð'], '🛒'],
+  [['rúm', 'búa um'], '🛏️'],
+  [['blóm', 'vökva', 'planta'], '🪴'],
+  [['köttur', 'kisa', 'gefa dýr', 'gæludýr'], '🐈'],
+  [['fisk'], '🐟'],
+  [['tönn', 'bursta', 'tennur'], '🪥'],
+  [['gras', 'slá', 'garð'], '🌱'],
+  [['snjó', 'moka'], '❄️'],
+  [['bíl', 'þvo bíl'], '🚗'],
+  [['lestur', 'lesa', 'heimanám', 'læra'], '📚'],
+  [['æfing', 'íþrótt', 'fótbolt', 'sund'], '⚽'],
+]
+
+export function suggestChoreEmoji(name) {
+  const n = (name || '').toLowerCase().trim()
+  for (const [keys, emoji] of CHORE_EMOJI) {
+    if (keys.some(k => n.includes(k))) return emoji
+  }
+  return null
+}
+
+// Algeng tákn fyrir tákn-veljarann í verk-stillingum.
+export const EMOJI_CHOICES = [
+  '🐕', '🐈', '🐟', '🐹', '🗑️', '🍽️', '🧺', '🧹', '🧽', '🚽', '🛁',
+  '🍳', '🧁', '🥪', '🛒', '🛏️', '🪴', '🌱', '❄️', '🚗', '📚', '✏️',
+  '⚽', '🏀', '🎹', '🎨', '🦷', '🪥', '🚿', '👕', '🧸', '⭐',
+]
+
 export const TIME_OPTIONS = (() => {
   const a = []
   for (let h = 0; h < 24; h++) for (const m of ['00', '30']) a.push(String(h).padStart(2, '0') + ':' + m)

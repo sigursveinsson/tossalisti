@@ -5,7 +5,19 @@ import { supabase, isCloud } from './supabaseClient.js'
 import { departmentFor } from '../data/products.js'
 
 const LS_KEY = 'korfan.lists.v1'
+const KIDS_KEY = 'korfan.kids'
 const uid = () => Math.random().toString(36).slice(2, 10)
+
+// Tilvísun á einstakling: annað hvort innskráður notandi eða krakka-prófíll.
+//  - null/undefined  → enginn
+//  - strengur        → notanda-id (eldri kallanir)
+//  - { kind, id }     → 'user' eða 'kid'
+function personRef(ref) {
+  if (!ref) return { user: null, kid: null }
+  if (typeof ref === 'string') return { user: ref, kid: null }
+  if (ref.kind === 'kid') return { user: null, kid: ref.id }
+  return { user: ref.id || null, kid: null }
+}
 
 /* ---------------- Staðbundið (localStorage) ---------------- */
 function lsRead() {
@@ -46,7 +58,8 @@ const local = {
     const n = name.toLowerCase().trim()
     if (list.items.some(i => i.name === n)) return
     const rec = weekday === 'daily' ? 'daily' : (weekday ? 'weekly' : 'none')
-    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, qty: 1, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, assignee: assignee || null, due_at: null, completed_by: null, image_url: image || null })
+    const a = personRef(assignee)
+    list.items.push({ id: uid(), name: n, dept: dept || departmentFor(name), checked: false, qty: 1, points: points ?? 10, recurrence: rec, weekday: weekday || null, time: time || null, assignee: a.user, assignee_kid: a.kid, due_at: null, completed_by: null, completed_by_kid: null, image_url: image || null })
     lsWrite(lists)
   },
   async setItemDept(listId, itemId, dept) {
@@ -89,9 +102,20 @@ const local = {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === item.id)
     if (!it) return
-    if (it.recurrence && it.recurrence !== 'none') { it.checked = false }
-    else { it.checked = !it.checked; it.completed_by = it.checked ? 'me' : null }
-    lsWrite(lists)
+    const recurring = it.recurrence && it.recurrence !== 'none'
+    const kidId = it.assignee_kid || null
+    if (recurring) { it.checked = false; lsWrite(lists); return }
+    const comp = JSON.parse(localStorage.getItem('korfan.comp') || '[]')
+    if (!it.checked) {
+      it.checked = true; it.completed_by = kidId ? null : 'me'; it.completed_by_kid = kidId
+      lsWrite(lists)
+      comp.push({ list_id: listId, item_id: it.id, user_id: kidId ? null : 'me', kid_id: kidId, points: it.points ?? 10, completed_at: new Date().toISOString() })
+    } else {
+      it.checked = false; it.completed_by = null; it.completed_by_kid = null
+      lsWrite(lists)
+      for (let i = comp.length - 1; i >= 0; i--) { if (comp[i].item_id === it.id) { comp.splice(i, 1); break } }
+    }
+    localStorage.setItem('korfan.comp', JSON.stringify(comp))
   },
   async setPoints(listId, itemId, points) {
     const lists = lsRead() || []
@@ -107,13 +131,14 @@ const local = {
     return (JSON.parse(localStorage.getItem('korfan.comp') || '[]')).filter(c => c.list_id === listId)
   },
   async completeItem(listId, item) {
+    const kidId = item.assignee_kid || null
     const comp = JSON.parse(localStorage.getItem('korfan.comp') || '[]')
-    comp.push({ list_id: listId, item_id: item.id, user_id: 'me', points: item.points ?? 10, completed_at: new Date().toISOString() })
+    comp.push({ list_id: listId, item_id: item.id, user_id: kidId ? null : 'me', kid_id: kidId, points: item.points ?? 10, completed_at: new Date().toISOString() })
     localStorage.setItem('korfan.comp', JSON.stringify(comp))
   },
   async uncompleteItem(listId, item, sinceISO) {
     const comp = JSON.parse(localStorage.getItem('korfan.comp') || '[]')
-      .filter(c => !(c.item_id === item.id && c.user_id === 'me' && c.completed_at >= sinceISO))
+      .filter(c => !(c.item_id === item.id && c.completed_at >= sinceISO))
     localStorage.setItem('korfan.comp', JSON.stringify(comp))
   },
   async removeItem(listId, itemId) {
@@ -218,15 +243,40 @@ const local = {
     const list = JSON.parse(localStorage.getItem('korfan.recipes') || '[]').filter(r => r.id !== id)
     localStorage.setItem('korfan.recipes', JSON.stringify(list))
   },
-  async getListMembers() { return [] }, // engir aðrir meðlimir staðbundið
+  async getListMembers() { return [{ user_id: 'me', name: 'Ég' }] },
+  async getKids(listId) {
+    return (JSON.parse(localStorage.getItem(KIDS_KEY) || '[]')).filter(k => k.list_id === listId)
+  },
+  async createKid(listId, { name, color, avatar_url } = {}) {
+    const kids = JSON.parse(localStorage.getItem(KIDS_KEY) || '[]')
+    const k = { id: uid(), list_id: listId, name: (name || '').trim(), color: color || null, avatar_url: avatar_url || null }
+    kids.push(k); localStorage.setItem(KIDS_KEY, JSON.stringify(kids)); return k
+  },
+  async updateKid(id, patch = {}) {
+    const kids = JSON.parse(localStorage.getItem(KIDS_KEY) || '[]')
+    const k = kids.find(x => x.id === id); if (!k) return
+    if (patch.name != null) k.name = patch.name.trim()
+    if (patch.color !== undefined) k.color = patch.color
+    if (patch.avatar_url !== undefined) k.avatar_url = patch.avatar_url
+    localStorage.setItem(KIDS_KEY, JSON.stringify(kids))
+  },
+  async deleteKid(id) {
+    const kids = JSON.parse(localStorage.getItem(KIDS_KEY) || '[]').filter(x => x.id !== id)
+    localStorage.setItem(KIDS_KEY, JSON.stringify(kids))
+  },
+  async setItemImage(listId, itemId, image) {
+    const lists = lsRead() || []
+    const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
+    if (it) { it.image_url = image || null; lsWrite(lists) }
+  },
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
-  async assignItem(listId, itemId, userId) {
+  async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
-    if (it) { it.assignee = userId || null; lsWrite(lists) }
+    if (it) { const a = personRef(person); it.assignee = a.user; it.assignee_kid = a.kid; lsWrite(lists) }
   },
   async shareList() { throw new Error('local') }, // deiling krefst innskráningar
   subscribe() { return () => {} },
@@ -264,7 +314,9 @@ const cloud = {
     if (points != null) row.points = points
     if (weekday) { row.weekday = weekday; row.recurrence = weekday === 'daily' ? 'daily' : 'weekly' }
     if (time) row.time = time
-    if (assignee) row.assignee = assignee
+    const a = personRef(assignee)
+    if (a.user) row.assignee = a.user
+    if (a.kid) row.assignee_kid = a.kid
     if (image) row.image_url = image
     await supabase.from('list_items').insert(row)
   },
@@ -298,14 +350,23 @@ const cloud = {
   async toggleItem(listId, item) {
     const { data: { user } } = await supabase.auth.getUser()
     const recurring = item.recurrence && item.recurrence !== 'none'
+    const kidId = item.assignee_kid || null
     if (!item.checked) {
-      // Verk klárað → skrá afrek og gefa stig
-      await supabase.from('completions').insert({ list_id: listId, item_id: item.id, user_id: user?.id, points: item.points ?? 10 })
-      await supabase.from('list_items').update({ checked: recurring ? false : true, completed_by: user?.id }).eq('id', item.id)
+      // Verk klárað → skrá afrek og gefa stig (krakka ef verk er úthlutað á krakka)
+      const comp = { list_id: listId, item_id: item.id, points: item.points ?? 10 }
+      if (kidId) comp.kid_id = kidId; else comp.user_id = user?.id
+      await supabase.from('completions').insert(comp)
+      await supabase.from('list_items').update({
+        checked: recurring ? false : true,
+        completed_by: kidId ? null : user?.id,
+        completed_by_kid: kidId,
+      }).eq('id', item.id)
     } else {
       // Af-haka (einnota verk) → fjarlægja nýjasta afrek
-      await supabase.from('list_items').update({ checked: false, completed_by: null }).eq('id', item.id)
-      const { data: c } = await supabase.from('completions').select('id').eq('item_id', item.id).eq('user_id', user?.id).order('completed_at', { ascending: false }).limit(1)
+      await supabase.from('list_items').update({ checked: false, completed_by: null, completed_by_kid: null }).eq('id', item.id)
+      let q = supabase.from('completions').select('id').eq('item_id', item.id).order('completed_at', { ascending: false }).limit(1)
+      q = kidId ? q.eq('kid_id', kidId) : q.eq('user_id', user?.id)
+      const { data: c } = await q
       if (c && c[0]) await supabase.from('completions').delete().eq('id', c[0].id)
     }
   },
@@ -316,16 +377,22 @@ const cloud = {
     await supabase.from('list_items').update({ recurrence }).eq('id', itemId)
   },
   async getCompletions(listId) {
-    const { data } = await supabase.from('completions').select('item_id,user_id,points,completed_at').eq('list_id', listId)
+    const { data } = await supabase.from('completions').select('item_id,user_id,kid_id,points,completed_at').eq('list_id', listId)
     return data || []
   },
   async completeItem(listId, item) {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('completions').insert({ list_id: listId, item_id: item.id, user_id: user?.id, points: item.points ?? 10 })
+    const kidId = item.assignee_kid || null
+    const comp = { list_id: listId, item_id: item.id, points: item.points ?? 10 }
+    if (kidId) comp.kid_id = kidId; else comp.user_id = user?.id
+    await supabase.from('completions').insert(comp)
   },
   async uncompleteItem(listId, item, sinceISO) {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('completions').delete().eq('item_id', item.id).eq('user_id', user?.id).gte('completed_at', sinceISO)
+    const kidId = item.assignee_kid || null
+    let q = supabase.from('completions').delete().eq('item_id', item.id).gte('completed_at', sinceISO)
+    q = kidId ? q.eq('kid_id', kidId) : q.eq('user_id', user?.id)
+    await q
   },
   async removeItem(listId, itemId) { await supabase.from('list_items').delete().eq('id', itemId) },
   async addManyItems(listId, names) {
@@ -445,6 +512,30 @@ const cloud = {
   },
   async deleteRecipe(id) { const { error } = await supabase.from('recipes').delete().eq('id', id); if (error) throw error },
   async getListMembers(listId) { const { data } = await supabase.rpc('list_members_emails', { p_list: listId }); return data || [] },
+  async getKids(listId) {
+    const { data } = await supabase.from('kids').select('id,name,color,avatar_url').eq('list_id', listId).order('created_at')
+    return data || []
+  },
+  async createKid(listId, { name, color, avatar_url } = {}) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data, error } = await supabase.from('kids').insert({
+      list_id: listId, name: (name || '').trim(), color: color || null, avatar_url: avatar_url || null, created_by: user?.id,
+    }).select().single()
+    if (error) throw error
+    return data
+  },
+  async updateKid(id, patch = {}) {
+    const upd = {}
+    if (patch.name != null) upd.name = patch.name.trim()
+    if (patch.color !== undefined) upd.color = patch.color
+    if (patch.avatar_url !== undefined) upd.avatar_url = patch.avatar_url
+    const { error } = await supabase.from('kids').update(upd).eq('id', id)
+    if (error) throw error
+  },
+  async deleteKid(id) { const { error } = await supabase.from('kids').delete().eq('id', id); if (error) throw error },
+  async setItemImage(listId, itemId, image) {
+    await supabase.from('list_items').update({ image_url: image || null }).eq('id', itemId)
+  },
   async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
   async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
   async getMyProfile() {
@@ -458,8 +549,9 @@ const cloud = {
     const { error } = await supabase.from('profiles').upsert({ id: user.id, email: user.email, name, color })
     if (error) throw error
   },
-  async assignItem(listId, itemId, userId) {
-    await supabase.from('list_items').update({ assignee: userId || null }).eq('id', itemId)
+  async assignItem(listId, itemId, person) {
+    const a = personRef(person)
+    await supabase.from('list_items').update({ assignee: a.user, assignee_kid: a.kid }).eq('id', itemId)
   },
   // Deila lista með netfangi. Notar share_list fall í Supabase (sjá schema.sql).
   async shareList(listId, email) {

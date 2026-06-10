@@ -257,6 +257,44 @@ begin
 end; $$;
 
 -- ===========================================================================
+--  Krakka-prófílar (umsjár-meðlimir án innskráningar) — sjá migration
+--  add_managed_kids_profiles. Foreldri "stofnar krakka": nafn + litur + mynd
+--  (lítil data-URL í avatar_url). Verk má úthluta á krakka og afrek geta
+--  tilheyrt krakka í stað innskráðs notanda.
+-- ===========================================================================
+create table if not exists public.kids (
+  id         uuid primary key default gen_random_uuid(),
+  list_id    uuid not null references public.lists(id) on delete cascade,
+  name       text not null,
+  color      text,
+  avatar_url text,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists kids_list_idx on public.kids(list_id);
+alter table public.kids enable row level security;
+drop policy if exists kids_all on public.kids;
+create policy kids_all on public.kids for all
+  using (public.is_member(list_id)) with check (public.is_member(list_id));
+
+alter table public.list_items add column if not exists assignee_kid uuid references public.kids(id) on delete set null;
+alter table public.list_items add column if not exists completed_by_kid uuid references public.kids(id) on delete set null;
+alter table public.completions add column if not exists kid_id uuid references public.kids(id) on delete cascade;
+alter table public.completions alter column user_id drop not null;
+
+drop policy if exists completions_insert on public.completions;
+create policy completions_insert on public.completions for insert with check (
+  public.is_member(list_id) and (
+    user_id = auth.uid()
+    or (user_id is null and exists (select 1 from public.kids k where k.id = kid_id and k.list_id = completions.list_id))
+  )
+);
+drop policy if exists completions_delete on public.completions;
+create policy completions_delete on public.completions for delete using (
+  user_id = auth.uid() or (kid_id is not null and public.is_member(list_id))
+);
+
+-- ===========================================================================
 --  Rauntíma-samstilling
 -- ===========================================================================
 alter publication supabase_realtime add table public.list_items;

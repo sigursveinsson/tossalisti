@@ -393,7 +393,7 @@ export default function App() {
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
           : tab === 'spending' && isShopping
             ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
-            : <ListView items={list.items} listType={list.type} members={members} completions={completions} currentUserId={session?.user?.id} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+            : <ListView items={list.items} listType={list.type} members={people} kids={kids} completions={completions} currentUserId={isCloud ? session?.user?.id : 'me'} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (

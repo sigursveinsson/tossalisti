@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
-import { RECURRENCE_LABELS, TIME_OPTIONS } from '../data/chores.js'
+import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
+import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
 import ScheduleForm from './ScheduleForm.jsx'
+import KidsManager from './KidsManager.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
 import ShelfView from './ShelfView.jsx'
@@ -44,7 +46,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], completions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -55,6 +57,7 @@ export default function ListView({ items, listType = 'shopping', members = [], c
   const [assigning, setAssigning] = useState(null)
   const [editItem, setEditItem] = useState(null)
   const [deptItem, setDeptItem] = useState(null)
+  const [kidsOpen, setKidsOpen] = useState(false)
   const [lbWindow, setLbWindow] = useState('week')
   const [scanning, setScanning] = useState(false)
   const [scanFeed, setScanFeed] = useState([])
@@ -75,8 +78,17 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image) }
   }
 
+  const canManageKids = typeof onCreateKid === 'function'
   const canAssign = members.length > 1 && typeof onAssign === 'function'
-  const memberOf = (uid) => members.find(m => m.user_id === uid) || {}
+  const personById = (id) => members.find(p => p.id === id) || null
+  const assignedPerson = (it) => it.assignee_kid ? personById(it.assignee_kid) : (it.assignee ? personById(it.assignee) : null)
+  // Hringlaga mynd/upphafsstafir fyrir einstakling (krakka eða notanda)
+  const personChip = (p, opts = {}) => {
+    const cls = 'assign-chip' + (p && p.avatar_url ? ' has-avatar' : '')
+    const style = { ...(opts.static ? { pointerEvents: 'none' } : {}), background: (p && p.color) || undefined }
+    if (p && p.avatar_url) return <span className={cls} style={style}><img src={p.avatar_url} alt="" /></span>
+    return <span className={cls} style={style}>{initialsOf(p)}</span>
+  }
 
   const add = (name, image) => {
     const v = (name ?? text).trim()
@@ -172,8 +184,9 @@ export default function ListView({ items, listType = 'shopping', members = [], c
 
   const assignBtn = (it) => {
     if (!canAssign) return null
-    return it.assignee
-      ? <button className="assign-chip" style={{ background: memberOf(it.assignee).color || undefined }} onClick={() => setAssigning(it)} title={displayName(memberOf(it.assignee))}>{initialsOf(memberOf(it.assignee))}</button>
+    const p = assignedPerson(it)
+    return p
+      ? <button className="assign-chip-btn" onClick={() => setAssigning(it)} title={displayName(p)}>{personChip(p, { static: true })}</button>
       : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta">＋</button>
   }
 
@@ -182,7 +195,12 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     return (
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
         <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
-        {!chore && (it.image_url || catalog[it.name]) && <img className="item-img" src={it.image_url || catalog[it.name]} alt="" loading="lazy" />}
+        {(() => {
+          const img = it.image_url || (!chore ? catalog[it.name] : null)
+          if (!img) return null
+          if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
+          return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
+        })()}
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
@@ -240,13 +258,14 @@ export default function ListView({ items, listType = 'shopping', members = [], c
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2>Hver ber ábyrgð? <button className="x" onClick={() => setAssigning(null)} aria-label="Loka">×</button></h2>
         <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 10 }}>{assigning.name}</div>
-        {members.map(m => (
-          <button className="pick-row" key={m.user_id} onClick={() => { onAssign(assigning, m.user_id); setAssigning(null) }}>
-            <span>{displayName(m)}{m.user_id === currentUserId ? ' (þú)' : ''}</span>
-            <span className="assign-chip" style={{ pointerEvents: 'none', background: m.color || undefined }}>{initialsOf(m)}</span>
+        {members.map(p => (
+          <button className="pick-row" key={p.kind + p.id} onClick={() => { onAssign(assigning, { kind: p.kind, id: p.id }); setAssigning(null) }}>
+            <span>{displayName(p)}{p.kind === 'user' && p.id === currentUserId ? ' (þú)' : ''}</span>
+            {personChip(p, { static: true })}
           </button>
         ))}
         <button className="pick-row" onClick={() => { onAssign(assigning, null); setAssigning(null) }}><span>Enginn</span></button>
+        {canManageKids && <button className="pick-row add-kid-row" onClick={() => { setAssigning(null); setKidsOpen(true) }}><span>＋ Stofna krakka</span></button>}
       </div>
     </div>
   )
@@ -263,6 +282,26 @@ export default function ListView({ items, listType = 'shopping', members = [], c
             <button key={p} className={'points-opt' + ((editItem.points ?? 10) === p ? ' on' : '')} onClick={() => { onSetPoints(editItem, p); setEditItem({ ...editItem, points: p }) }}>{p}</button>
           ))}
         </div>
+
+        {onSetItemImage && (
+          <>
+            <div className="modal-label">Mynd eða tákn <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(fyrir þá sem ekki lesa)</span></div>
+            <div className="emoji-grid">
+              {EMOJI_CHOICES.map(e => (
+                <button key={e} className={'emoji-opt' + (emojiOf(editItem.image_url) === e ? ' on' : '')} onClick={() => { const v = makeEmojiImage(e); onSetItemImage(editItem, v); setEditItem({ ...editItem, image_url: v }) }}>{e}</button>
+              ))}
+            </div>
+            <div className="emoji-actions">
+              <label className="emoji-photo-btn">📷 Taka mynd
+                <input type="file" accept="image/*" capture="environment" hidden onChange={async ev => {
+                  const f = ev.target.files && ev.target.files[0]; if (!f) return
+                  try { const url = await resizeImageFile(f, 256); onSetItemImage(editItem, url); setEditItem({ ...editItem, image_url: url }) } catch (err) {}
+                }} />
+              </label>
+              {editItem.image_url && <button className="emoji-clear" onClick={() => { onSetItemImage(editItem, null); setEditItem({ ...editItem, image_url: null }) }}>Fjarlægja</button>}
+            </div>
+          </>
+        )}
 
         {isSchedule ? (
           <>
@@ -308,11 +347,15 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     </div>
   )
 
+  const kidsBtn = canManageKids ? (
+    <button className="kids-btn" onClick={() => setKidsOpen(true)}>🧒 Krakkar</button>
+  ) : null
+
   const leaderboard = members.length > 1 && (() => {
     const since = weekStartMs()
     const scores = members.map(m => ({
       ...m,
-      points: completions.filter(c => c.user_id === m.user_id && (lbWindow === 'all' || new Date(c.completed_at).getTime() >= since)).reduce((s, c) => s + (c.points || 0), 0),
+      points: completions.filter(c => (m.kind === 'kid' ? c.kid_id === m.id : c.user_id === m.id) && (lbWindow === 'all' || new Date(c.completed_at).getTime() >= since)).reduce((s, c) => s + (c.points || 0), 0),
     })).sort((a, b) => b.points - a.points)
     return (
       <div className="leaderboard">
@@ -324,16 +367,26 @@ export default function ListView({ items, listType = 'shopping', members = [], c
           </div>
         </div>
         {scores.map((s, idx) => (
-          <div className="lb-row" key={s.user_id}>
+          <div className="lb-row" key={s.kind + s.id}>
             <span className="lb-rank">{idx + 1}</span>
-            <span className="assign-chip" style={{ pointerEvents: 'none', background: s.color || undefined }}>{initialsOf(s)}</span>
-            <span className="lb-name">{displayName(s)}{s.user_id === currentUserId ? ' (þú)' : ''}</span>
+            {personChip(s, { static: true })}
+            <span className="lb-name">{displayName(s)}{s.kind === 'user' && s.id === currentUserId ? ' (þú)' : ''}</span>
             <span className="lb-points">{s.points} stig</span>
           </div>
         ))}
       </div>
     )
   })()
+
+  const kidsModal = kidsOpen && (
+    <KidsManager
+      kids={kids}
+      onCreate={onCreateKid}
+      onUpdate={onUpdateKid}
+      onDelete={onDeleteKid}
+      onClose={() => setKidsOpen(false)}
+    />
+  )
 
   if (isSchedule) {
     const idx = DAY_KEYS.indexOf(viewDay)
@@ -352,7 +405,10 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     const atHour = (h) => timed.filter(i => hourOf(i.time) === h).sort((a, b) => a.time.localeCompare(b.time))
     return (
       <div>
-        <button className="primary-btn" style={{ marginTop: 4 }} onClick={() => setShowSchedForm(true)}>+ Nýtt verk</button>
+        <div className="sched-top">
+          <button className="primary-btn" style={{ marginTop: 4 }} onClick={() => setShowSchedForm(true)}>+ Nýtt verk</button>
+          {kidsBtn}
+        </div>
         <div className="day-nav">
           <button onClick={() => go(-1)} aria-label="Fyrri dagur">‹</button>
           <span className="day-nav-label">{WEEKDAY_LABEL[viewDay]}{viewDay === todayKey() ? ' · í dag' : ''}</span>
@@ -378,11 +434,14 @@ export default function ListView({ items, listType = 'shopping', members = [], c
         )}
         {assignModal}
         {settingsModal}
+        {kidsModal}
         {showSchedForm && (
           <ScheduleForm
             members={members}
+            currentUserId={currentUserId}
             defaultDay={viewDay}
-            onCreate={(name, weekday, time, assignee) => { onAdd(name, weekday, time, assignee); setShowSchedForm(false) }}
+            onManageKids={canManageKids ? () => { setShowSchedForm(false); setKidsOpen(true) } : null}
+            onCreate={(name, weekday, time, assignee, image) => { onAdd(name, weekday, time, assignee, image); setShowSchedForm(false) }}
             onClose={() => setShowSchedForm(false)}
           />
         )}
@@ -395,12 +454,13 @@ export default function ListView({ items, listType = 'shopping', members = [], c
     return (
       <div>
         {addBar}
-        <span className="badge">{open} eftir</span>
+        <div className="sched-top"><span className="badge">{open} eftir</span>{kidsBtn}</div>
         {leaderboard}
         {items.length === 0 && <p className="empty">Listinn er tómur — bættu við verki að ofan.</p>}
         <div className="group">{ordered.map(it => itemRow(it, 'var(--accent)', true))}</div>
         {assignModal}
         {settingsModal}
+        {kidsModal}
       </div>
     )
   }

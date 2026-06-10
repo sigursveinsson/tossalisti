@@ -411,3 +411,38 @@ button { font-family: inherit; cursor: pointer; }
 .color-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 6px 0 14px; }
 .color-dot { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
 .color-dot.on { border-color: var(--navy); box-shadow: 0 0 0 2px #fff inset; }
+
+/* Krakka-prófílar + tákn á verk */
+.assign-chip.has-avatar { overflow: hidden; padding: 0; }
+.assign-chip img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.assign-chip-btn { background: none; border: none; padding: 0; flex: none; }
+.item-emoji { font-size: 30px; line-height: 1; width: 44px; text-align: center; flex: none; }
+.item-emoji.chore { font-size: 34px; width: 50px; }
+.item-img.chore { width: 44px; height: 44px; }
+.sched-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kids-btn { background: var(--chip); border: 1px solid var(--line); color: var(--navy); border-radius: 20px; font-size: 13px; font-weight: 600; padding: 7px 13px; white-space: nowrap; flex: none; }
+
+/* Tákn-veljari í verk-stillingum / nýju verki */
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin: 4px 0 8px; }
+.emoji-opt { aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; font-size: 20px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; }
+.emoji-opt.on { border-color: var(--accent); background: var(--chip); }
+.emoji-actions { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.emoji-photo-btn { background: var(--chip); border: 1px solid var(--line); color: var(--navy); border-radius: 10px; font-size: 14px; font-weight: 600; padding: 9px 13px; cursor: pointer; }
+.emoji-clear { background: transparent; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; padding: 0; }
+
+/* Krakka-umsjón (KidsManager) */
+.kid-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.kid-row-name { flex: 1; font-size: 15px; color: var(--text); }
+.kid-edit { background: none; border: none; font-size: 16px; padding: 4px; }
+.kid-form { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 10px 0; }
+.kid-form-top { display: flex; align-items: center; gap: 12px; }
+.kid-avatar-pick { position: relative; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 700; flex: none; overflow: hidden; cursor: pointer; }
+.kid-avatar-pick img { width: 100%; height: 100%; object-fit: cover; }
+.kid-avatar-pick .kid-cam { position: absolute; right: -2px; bottom: -2px; font-size: 14px; background: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.kid-form-top .dialog-input { flex: 1; margin: 0; }
+.kid-colors { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.kid-color { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
+.kid-color.on { border-color: var(--navy); box-shadow: 0 0 0 2px #fff inset; }
+.kid-form-actions { display: flex; gap: 10px; align-items: center; }
+.kid-cancel { background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.add-kid-row { color: var(--accent); font-weight: 600; }
