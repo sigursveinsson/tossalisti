@@ -24,7 +24,8 @@ const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); re
 const startOfWeekISO = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - day); return d.toISOString() }
 import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
-import { suggestChorePoints } from './data/chores.js'
+import { suggestChorePoints, suggestChoreEmoji } from './data/chores.js'
+import { makeEmojiImage } from './lib/img.js'
 import { departmentFor } from './data/products.js'
 import { matchListItems } from './lib/receipt.js'
 
@@ -40,6 +41,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [pendingRecipe, setPendingRecipe] = useState(null)
   const [members, setMembers] = useState([])
+  const [kids, setKids] = useState([])
   const [sharing, setSharing] = useState(null)
   const [inviteDone, setInviteDone] = useState(false)
   const [completions, setCompletions] = useState([])
@@ -145,12 +147,20 @@ export default function App() {
   }
   const catalogLookup = (code) => store.lookupCatalogBarcode(code).catch(() => null)
 
-  // Meðlimir og afrek núverandi lista (ábyrgðarmenn + stigatafla)
+  // Meðlimir, krakkar og afrek núverandi lista (ábyrgðarmenn + stigatafla)
+  const loadKids = (id) => store.getKids(id).then(setKids).catch(() => setKids([]))
   useEffect(() => {
-    if (!currentId) { setMembers([]); setCompletions([]); return }
+    if (!currentId) { setMembers([]); setKids([]); setCompletions([]); return }
     store.getListMembers(currentId).then(setMembers).catch(() => setMembers([]))
+    loadKids(currentId)
     store.getCompletions(currentId).then(setCompletions).catch(() => setCompletions([]))
   }, [currentId])
+
+  // Sameinaður listi af „fólki": innskráðir meðlimir + krakka-prófílar.
+  const people = [
+    ...members.map(m => ({ kind: 'user', id: m.user_id, name: m.name || null, email: m.email || null, color: m.color || null })),
+    ...kids.map(k => ({ kind: 'kid', id: k.id, name: k.name, color: k.color || null, avatar_url: k.avatar_url || null })),
+  ]
 
   const list = lists.find(l => l.id === currentId) || null
   const customDept = Object.fromEntries(customProducts.map(p => [p.name, p.dept]))
@@ -190,7 +200,10 @@ export default function App() {
     const isChore = list.type === 'task' || list.type === 'schedule'
     const pts = isChore ? suggestChorePoints(name) : undefined
     const dept = list.type === 'shopping' ? (customDept[name.toLowerCase().trim()] || scannedDept || departmentFor(name)) : undefined
-    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image }); await reload(list.id)
+    // Stinga upp á tákni fyrir verk (fyrir þá sem ekki lesa) ef ekkert var valið
+    let img = image
+    if (isChore && !img) { const e = suggestChoreEmoji(name); if (e) img = makeEmojiImage(e) }
+    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image: img }); await reload(list.id)
   }
   const savePurchase = async (purchase) => {
     await store.addPurchase({ ...purchase, list_id: list?.id || null })
@@ -233,9 +246,13 @@ export default function App() {
     store.getCompletions(list.id).then(setCompletions).catch(() => {})
   }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
-  const assignItem = async (it, userId) => { await store.assignItem(list.id, it.id, userId); await reload(list.id) }
+  const assignItem = async (it, person) => { await store.assignItem(list.id, it.id, person); await reload(list.id) }
   const setPoints = async (it, pts) => { await store.setPoints(list.id, it.id, pts); await reload(list.id) }
   const setRecurrence = async (it, rec) => { await store.setRecurrence(list.id, it.id, rec); await reload(list.id) }
+  const setItemImage = async (it, image) => { await store.setItemImage(list.id, it.id, image); await reload(list.id) }
+  const createKid = async (data) => { await store.createKid(list.id, data); await loadKids(list.id) }
+  const updateKid = async (id, patch) => { await store.updateKid(id, patch); await loadKids(list.id) }
+  const deleteKid = async (id) => { await store.deleteKid(id); await loadKids(list.id); await reload(list.id) }
 
   const confirmAddRecipe = async (recipe, listId, lines) => {
     const target = lists.find(l => l.id === listId)
