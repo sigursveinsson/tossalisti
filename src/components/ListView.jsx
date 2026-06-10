@@ -65,6 +65,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [profilePerson, setProfilePerson] = useState(null)
   const [rewardsOpen, setRewardsOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
+  const [schedView, setSchedView] = useState(() => { try { return localStorage.getItem('korfan.schedview') || 'week' } catch { return 'week' } })
+  const setSchedViewP = (v) => { setSchedView(v); try { localStorage.setItem('korfan.schedview', v) } catch (e) {} }
   const [showImages, setShowImages] = useState(() => { try { return localStorage.getItem('korfan.hideImages') !== '1' } catch { return true } })
   const toggleImages = () => setShowImages(v => { const nv = !v; try { localStorage.setItem('korfan.hideImages', nv ? '0' : '1') } catch (e) {} return nv })
   const [lbWindow, setLbWindow] = useState('week')
@@ -424,7 +426,99 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   if (isSchedule) {
     const idx = DAY_KEYS.indexOf(viewDay)
     const go = (delta) => setViewDay(DAY_KEYS[(idx + delta + 7) % 7])
-    const dayItems = items.filter(i => i.weekday === viewDay || (i.weekday || 'daily') === 'daily')
+    const dayBucket = (wd) => items.filter(i => i.weekday === wd || (i.weekday || 'daily') === 'daily')
+    const sortDay = (arr) => [...arr].sort((a, b) => {
+      if (!a.time && !b.time) return a.name.localeCompare(b.name)
+      if (!a.time) return 1
+      if (!b.time) return -1
+      return a.time.localeCompare(b.time)
+    })
+
+    const header = (
+      <>
+        <div className="sched-top">
+          <button className="primary-btn" style={{ marginTop: 4 }} onClick={() => setShowSchedForm(true)}>+ Nýtt verk</button>
+          {kidsBtn}
+        </div>
+        <div className="sched-viewtoggle">
+          <button className={schedView === 'week' ? 'on' : ''} onClick={() => setSchedViewP('week')}>📅 Vika</button>
+          <button className={schedView === 'day' ? 'on' : ''} onClick={() => setSchedViewP('day')}>📋 Dagur</button>
+        </div>
+        {gamePanel}
+        {onNewWeek && items.length > 0 && (
+          <button className="newweek-btn" onClick={() => { if (window.confirm('Byrja nýja viku? Öll verk verða af-hökuð — stigin og afrekin haldast.')) onNewWeek() }}>🔄 Byrja nýja viku</button>
+        )}
+      </>
+    )
+
+    const schedModals = (
+      <>
+        {assignModal}
+        {settingsModal}
+        {kidsModal}
+        {profileModal}
+        {rewardsModal}
+        {guideModal}
+        {showSchedForm && (
+          <ScheduleForm
+            members={members}
+            currentUserId={currentUserId}
+            defaultDay={viewDay}
+            onManageKids={canManageKids ? () => { setShowSchedForm(false); setKidsOpen(true) } : null}
+            onCreate={(name, days, time, assignee, image) => { onAddSchedule(name, days, time, assignee, image); setShowSchedForm(false) }}
+            onClose={() => setShowSchedForm(false)}
+          />
+        )}
+      </>
+    )
+
+    // ----- Vikuyfirlit (öll vikan í einu; lóðrétt í síma, 7 dálka grid á breiðum) -----
+    if (schedView === 'week') {
+      const weekTask = (it) => {
+        const done = isDone(it)
+        const p = assignedPerson(it)
+        const img = it.image_url
+        return (
+          <div className={'wk-task' + (done ? ' done' : '')} key={it.id} onClick={() => onToggle(it, done)}>
+            <span className="wk-check" style={{ background: done ? 'var(--accent)' : 'transparent', borderColor: done ? 'var(--accent)' : undefined }}>{done ? '✓' : ''}</span>
+            {it.time && <span className="wk-time">{it.time}</span>}
+            {img && (isEmojiImage(img) ? <span className="wk-emoji">{emojiOf(img)}</span> : <img className="wk-img" src={img} alt="" loading="lazy" />)}
+            <span className="wk-name">{it.name}</span>
+            {p && <span className="wk-chip">{personChip(p, { static: true })}</span>}
+          </div>
+        )
+      }
+      return (
+        <div>
+          {header}
+          {items.length === 0 && <p className="empty">Engin verk enn — bættu við með „+ Nýtt verk".</p>}
+          <div className="wk-week">
+            {DAY_KEYS.map(wd => {
+              const di = sortDay(dayBucket(wd))
+              const total = di.length
+              const done = di.filter(isDone).length
+              const isToday = wd === todayKey()
+              return (
+                <div className={'wk-day' + (isToday ? ' today' : '')} key={wd}>
+                  <button className="wk-day-head" onClick={() => { setViewDay(wd); setSchedViewP('day') }}>
+                    <span className="wk-day-name">{WEEKDAY_LABEL[wd]}{isToday ? ' · í dag' : ''}</span>
+                    {total > 0 && <span className={'wk-day-count' + (done === total ? ' all' : '')}>{done}/{total}</span>}
+                    <span className="wk-day-go">›</span>
+                  </button>
+                  <div className="wk-day-tasks">
+                    {total === 0 ? <div className="wk-empty">—</div> : di.map(weekTask)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {schedModals}
+        </div>
+      )
+    }
+
+    // ----- Dagssýn (einn dagur í fókus, tímalína) -----
+    const dayItems = dayBucket(viewDay)
     const timeless = dayItems.filter(i => !i.time).sort((a, b) => a.name.localeCompare(b.name))
     const timed = dayItems.filter(i => i.time)
     const hourOf = (t) => parseInt(t.slice(0, 2), 10)
@@ -438,19 +532,12 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const atHour = (h) => timed.filter(i => hourOf(i.time) === h).sort((a, b) => a.time.localeCompare(b.time))
     return (
       <div>
-        <div className="sched-top">
-          <button className="primary-btn" style={{ marginTop: 4 }} onClick={() => setShowSchedForm(true)}>+ Nýtt verk</button>
-          {kidsBtn}
-        </div>
+        {header}
         <div className="day-nav">
           <button onClick={() => go(-1)} aria-label="Fyrri dagur">‹</button>
           <span className="day-nav-label">{WEEKDAY_LABEL[viewDay]}{viewDay === todayKey() ? ' · í dag' : ''}</span>
           <button onClick={() => go(1)} aria-label="Næsti dagur">›</button>
         </div>
-        {gamePanel}
-        {onNewWeek && items.length > 0 && (
-          <button className="newweek-btn" onClick={() => { if (window.confirm('Byrja nýja viku? Öll verk verða af-hökuð — stigin og afrekin haldast.')) onNewWeek() }}>🔄 Byrja nýja viku</button>
-        )}
         {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við með „+ Nýtt verk".</p>}
         {timeless.length > 0 && (
           <div className="group">
@@ -468,22 +555,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             ))}
           </div>
         )}
-        {assignModal}
-        {settingsModal}
-        {kidsModal}
-        {profileModal}
-        {rewardsModal}
-        {guideModal}
-        {showSchedForm && (
-          <ScheduleForm
-            members={members}
-            currentUserId={currentUserId}
-            defaultDay={viewDay}
-            onManageKids={canManageKids ? () => { setShowSchedForm(false); setKidsOpen(true) } : null}
-            onCreate={(name, days, time, assignee, image) => { onAddSchedule(name, days, time, assignee, image); setShowSchedForm(false) }}
-            onClose={() => setShowSchedForm(false)}
-          />
-        )}
+        {schedModals}
       </div>
     )
   }

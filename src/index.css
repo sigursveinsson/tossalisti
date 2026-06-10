@@ -547,3 +547,36 @@ button { font-family: inherit; cursor: pointer; }
 .guide-text { font-size: 13.5px; color: var(--text); line-height: 1.45; margin-top: 2px; }
 .guide-foot { font-size: 12px; color: var(--faint); text-align: center; margin: 10px 0 0; }
 .newweek-btn { width: 100%; margin: 6px 0 4px; height: 40px; border: 1px solid var(--line); background: var(--surface); color: var(--navy); border-radius: 10px; font-size: 14px; font-weight: 600; }
+
+/* Skema: Vika/Dagur toggle + vikuyfirlit */
+.sched-viewtoggle { display: flex; gap: 0; margin: 12px 0 4px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.sched-viewtoggle button { flex: 1; height: 40px; border: none; background: var(--surface); color: var(--muted); font-size: 14px; font-weight: 600; }
+.sched-viewtoggle button.on { background: var(--navy); color: #fff; }
+
+.wk-week { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.wk-day { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.wk-day.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.wk-day-head { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--surface-2); border: none; padding: 9px 12px; text-align: left; }
+.wk-day.today .wk-day-head { background: var(--chip); }
+.wk-day-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--navy); }
+.wk-day-count { font-size: 12px; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 1px 8px; }
+.wk-day-count.all { color: #16a34a; border-color: #16a34a; }
+.wk-day-go { color: var(--faint); font-size: 16px; }
+.wk-day-tasks { display: flex; flex-direction: column; }
+.wk-task { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-top: 1px solid var(--line); cursor: pointer; }
+.wk-task:first-child { border-top: none; }
+.wk-task.done .wk-name { text-decoration: line-through; color: var(--muted); }
+.wk-check { width: 22px; height: 22px; flex: none; border: 2px solid var(--faint); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; }
+.wk-time { font-size: 11px; font-weight: 700; color: var(--accent); white-space: nowrap; flex: none; }
+.wk-emoji { font-size: 20px; line-height: 1; flex: none; }
+.wk-img { width: 26px; height: 26px; object-fit: contain; border-radius: 6px; background: #fff; flex: none; }
+.wk-name { flex: 1; min-width: 0; font-size: 14px; color: var(--text); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wk-chip { flex: none; }
+.wk-empty { padding: 10px 12px; color: var(--faint); font-size: 13px; }
+
+/* Breiður skjár: vikan verður 7 dálka stundatafla */
+@media (min-width: 720px) {
+  .wk-week { flex-direction: row; align-items: flex-start; overflow-x: auto; }
+  .wk-day { flex: 1 1 0; min-width: 132px; }
+  .wk-name { white-space: normal; }
+}

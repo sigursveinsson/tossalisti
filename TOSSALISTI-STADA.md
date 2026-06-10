@@ -53,6 +53,9 @@ Breyttar: `src/lib/store.js` (`addScheduleTasks`, `resetWeek` — local+cloud), 
 
 Engin ný Supabase-tafla þurfti (notar `list_items` eins og er; `dept` hefur sjálfgefið 'other'). Athugið: gömul skema-verk sem til eru í loftinu (recurrence 'daily'/'weekly') haldast sem ein lína þar til þau eru endurgerð — ný verk fá rétta hegðun strax. Best að nota „Byrja nýja viku" / endurstofna skema eftir deploy.
 
+10. **Bakk-hnappa villa löguð** (`src/lib/backstack.js`, `src/App.jsx`). Kvittana-skannarinn var tvískráður í bakk-staflann (bæði App og `ReceiptScanner`), og `ignoreNext` var bóóleani sem réð ekki við tvær samtímis-lokanir → notandi datt út úr appinu á tóma síðu þegar kvittana-glugga var lokað úr listavalmynd. Lagað: fjarlægði tvískráningu í App (lína 207) og breytti `ignoreNext` í teljara `ignoreCount`.
+11. **Vikusýn + Vika/Dagur toggle á skema** (`ListView.jsx`, `index.css`). Skema er nú almennt vikuplan — tímasettur tékklisti yfir vikuna, nýtist bæði fyrir krakka og fullorðna (stigatafla birtist bara þegar meðlimir/krakkar eru til). Toggle: **📅 Vika** = öll vikan í einu (lóðrétt agenda í síma, verður 7 dálka stundatafla á breiðum skjá ≥720px), hvert verk hakanlegt beint, smellur á dagshaus „zoom-ar" í daginn; **📋 Dagur** = núverandi ítarsýn með tímalínu. Valið vistast í `localStorage` (`korfan.schedview`). Athugið: `.app` er capp-að við 460px svo á breiðum skjá verður gridið lárrétt-skrollanlegt — má síðar lyfta cappi fyrir fullt grid.
+
 Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/App/ListView/ScheduleForm yfirfarin host-megin (heil og jöfnuð). Heildarbygging enn ekki möguleg í Cowork (sama umhverfisbilun: Windows-`node_modules` + GitHub lokað af proxy + skemmdur git-index). **Deploy verður að koma frá þinni vél.**
 
 ## ÓGERT — næstu skref

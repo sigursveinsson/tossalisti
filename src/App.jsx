@@ -204,7 +204,7 @@ export default function App() {
   useBackClose(!!sharing, () => setSharing(null))
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
-  useBackClose(showReceipt, () => setShowReceipt(false))
+  // ReceiptScanner skráir sig sjálfur í bakk-staflann (engin tvískráning hér).
 
   const addItem = async (name, weekday, time, assignee, image, scannedDept) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }

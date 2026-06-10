@@ -9,10 +9,13 @@ import { useEffect, useRef } from 'react'
 
 const stack = []
 let listening = false
-let ignoreNext = false
+// Teljari (ekki bóóleani): ef mörgum gluggum er lokað samtímis fara mörg
+// history.back() af stað og við þurfum að hunsa þau öll — annars getur óhunsuð
+// bakkfærsla fellt notandann út úr appinu.
+let ignoreCount = 0
 
 function onPop() {
-  if (ignoreNext) { ignoreNext = false; return }
+  if (ignoreCount > 0) { ignoreCount--; return }
   const top = stack.pop()
   if (top) { top.closing = true; top.close() }
 }
@@ -27,7 +30,7 @@ function pushOverlay(close) {
     if (idx === -1) return            // þegar fjarlægt af til-baka hnappi
     stack.splice(idx, 1)
     if (!entry.closing) {             // lokað með hnappi -> losum sögufærsluna
-      ignoreNext = true
+      ignoreCount++
       window.history.back()
     }
   }
