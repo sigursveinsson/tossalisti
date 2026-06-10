@@ -6,6 +6,9 @@ import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.j
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import KidsManager from './KidsManager.jsx'
+import GamePanel from './GamePanel.jsx'
+import KidProfile from './KidProfile.jsx'
+import RewardsManager from './RewardsManager.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
 import ShelfView from './ShelfView.jsx'
@@ -46,7 +49,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onRecategorize, onSetDue, onSetWeekday, onSetTime }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -58,6 +61,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [editItem, setEditItem] = useState(null)
   const [deptItem, setDeptItem] = useState(null)
   const [kidsOpen, setKidsOpen] = useState(false)
+  const [profilePerson, setProfilePerson] = useState(null)
+  const [rewardsOpen, setRewardsOpen] = useState(false)
+  const [showImages, setShowImages] = useState(() => { try { return localStorage.getItem('korfan.hideImages') !== '1' } catch { return true } })
+  const toggleImages = () => setShowImages(v => { const nv = !v; try { localStorage.setItem('korfan.hideImages', nv ? '0' : '1') } catch (e) {} return nv })
   const [lbWindow, setLbWindow] = useState('week')
   const [scanning, setScanning] = useState(false)
   const [scanFeed, setScanFeed] = useState([])
@@ -196,6 +203,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
         <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
         {(() => {
+          if (!chore && !showImages) return null
           const img = it.image_url || (!chore ? catalog[it.name] : null)
           if (!img) return null
           if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
@@ -351,32 +359,18 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     <button className="kids-btn" onClick={() => setKidsOpen(true)}>🧒 Krakkar</button>
   ) : null
 
-  const leaderboard = members.length > 1 && (() => {
-    const since = weekStartMs()
-    const scores = members.map(m => ({
-      ...m,
-      points: completions.filter(c => (m.kind === 'kid' ? c.kid_id === m.id : c.user_id === m.id) && (lbWindow === 'all' || new Date(c.completed_at).getTime() >= since)).reduce((s, c) => s + (c.points || 0), 0),
-    })).sort((a, b) => b.points - a.points)
-    return (
-      <div className="leaderboard">
-        <div className="lb-head">
-          <span className="lb-title">🏆 Stigatafla</span>
-          <div className="lb-toggle">
-            <button className={lbWindow === 'week' ? 'on' : ''} onClick={() => setLbWindow('week')}>Vika</button>
-            <button className={lbWindow === 'all' ? 'on' : ''} onClick={() => setLbWindow('all')}>Allt</button>
-          </div>
-        </div>
-        {scores.map((s, idx) => (
-          <div className="lb-row" key={s.kind + s.id}>
-            <span className="lb-rank">{idx + 1}</span>
-            {personChip(s, { static: true })}
-            <span className="lb-name">{displayName(s)}{s.kind === 'user' && s.id === currentUserId ? ' (þú)' : ''}</span>
-            <span className="lb-points">{s.points} stig</span>
-          </div>
-        ))}
-      </div>
-    )
-  })()
+  const gamePanel = members.length > 0 && (
+    <GamePanel
+      listId={listId}
+      people={members}
+      completions={completions}
+      rewards={rewards}
+      redemptions={redemptions}
+      currentUserId={currentUserId}
+      onOpenProfile={setProfilePerson}
+      onManageRewards={canManageKids ? () => setRewardsOpen(true) : null}
+    />
+  )
 
   const kidsModal = kidsOpen && (
     <KidsManager
@@ -385,6 +379,29 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       onUpdate={onUpdateKid}
       onDelete={onDeleteKid}
       onClose={() => setKidsOpen(false)}
+    />
+  )
+
+  const profileModal = profilePerson && (
+    <KidProfile
+      person={profilePerson}
+      completions={completions}
+      rewards={rewards}
+      redemptions={redemptions}
+      canRedeem={true}
+      onRedeem={(r, p) => { if (onRedeemReward) onRedeemReward(r, p) }}
+      onDeleteRedemption={canManageKids ? onDeleteRedemption : null}
+      onClose={() => setProfilePerson(null)}
+    />
+  )
+
+  const rewardsModal = rewardsOpen && (
+    <RewardsManager
+      rewards={rewards}
+      onCreate={onCreateReward}
+      onUpdate={onUpdateReward}
+      onDelete={onDeleteReward}
+      onClose={() => setRewardsOpen(false)}
     />
   )
 
@@ -414,7 +431,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           <span className="day-nav-label">{WEEKDAY_LABEL[viewDay]}{viewDay === todayKey() ? ' · í dag' : ''}</span>
           <button onClick={() => go(1)} aria-label="Næsti dagur">›</button>
         </div>
-        {leaderboard}
+        {gamePanel}
         {dayItems.length === 0 && <p className="empty">Engin verk á þessum degi — bættu við með „+ Nýtt verk".</p>}
         {timeless.length > 0 && (
           <div className="group">
@@ -435,6 +452,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         {assignModal}
         {settingsModal}
         {kidsModal}
+        {profileModal}
+        {rewardsModal}
         {showSchedForm && (
           <ScheduleForm
             members={members}
@@ -455,12 +474,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <div>
         {addBar}
         <div className="sched-top"><span className="badge">{open} eftir</span>{kidsBtn}</div>
-        {leaderboard}
+        {gamePanel}
         {items.length === 0 && <p className="empty">Listinn er tómur — bættu við verki að ofan.</p>}
         <div className="group">{ordered.map(it => itemRow(it, 'var(--accent)', true))}</div>
         {assignModal}
         {settingsModal}
         {kidsModal}
+        {profileModal}
+        {rewardsModal}
       </div>
     )
   }
@@ -477,6 +498,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <div className="list-actions">
         <button className="shop-go" onClick={() => setShopMode(true)}>🛒 Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Vöruhilla</button>
+        <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? '🖼️ Fela' : '🖼️ Sýna'}</button>
       </div>
       <AdBanner />
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}

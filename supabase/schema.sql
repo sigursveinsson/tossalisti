@@ -295,7 +295,46 @@ create policy completions_delete on public.completions for delete using (
 );
 
 -- ===========================================================================
+--  Verðlaunabúð (migration add_rewards_store). Foreldri skilgreinir umbun sem
+--  kostar stig; krakki/notandi "leysir út" og stigin dragast frá buddunni.
+--  Aflað stig (completions) standa óhögguð — aðeins ráðstöfunarstig lækka.
+-- ===========================================================================
+create table if not exists public.rewards (
+  id         uuid primary key default gen_random_uuid(),
+  list_id    uuid not null references public.lists(id) on delete cascade,
+  title      text not null,
+  emoji      text,
+  cost       int  not null default 50,
+  active     boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists rewards_list_idx on public.rewards(list_id);
+alter table public.rewards enable row level security;
+drop policy if exists rewards_all on public.rewards;
+create policy rewards_all on public.rewards for all
+  using (public.is_member(list_id)) with check (public.is_member(list_id));
+
+create table if not exists public.reward_redemptions (
+  id          uuid primary key default gen_random_uuid(),
+  list_id     uuid not null references public.lists(id) on delete cascade,
+  reward_id   uuid references public.rewards(id) on delete set null,
+  title       text,
+  cost        int not null default 0,
+  user_id     uuid references auth.users(id) on delete set null,
+  kid_id      uuid references public.kids(id) on delete cascade,
+  redeemed_at timestamptz not null default now()
+);
+create index if not exists redemptions_list_idx on public.reward_redemptions(list_id);
+alter table public.reward_redemptions enable row level security;
+drop policy if exists redemptions_all on public.reward_redemptions;
+create policy redemptions_all on public.reward_redemptions for all
+  using (public.is_member(list_id)) with check (public.is_member(list_id));
+
+-- ===========================================================================
 --  Rauntíma-samstilling
 -- ===========================================================================
 alter publication supabase_realtime add table public.list_items;
 alter publication supabase_realtime add table public.completions;
+alter publication supabase_realtime add table public.rewards;
+alter publication supabase_realtime add table public.reward_redemptions;

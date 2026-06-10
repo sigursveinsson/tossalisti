@@ -4,6 +4,7 @@ import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
+import ReceiptScanner from './components/ReceiptScanner.jsx'
 import AdminView from './components/AdminView.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
@@ -28,6 +29,8 @@ import { suggestChorePoints, suggestChoreEmoji } from './data/chores.js'
 import { makeEmojiImage } from './lib/img.js'
 import { departmentFor } from './data/products.js'
 import { matchListItems } from './lib/receipt.js'
+import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
+import { totalPoints, levelFor } from './lib/gamify.js'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -45,6 +48,8 @@ export default function App() {
   const [sharing, setSharing] = useState(null)
   const [inviteDone, setInviteDone] = useState(false)
   const [completions, setCompletions] = useState([])
+  const [rewards, setRewards] = useState([])
+  const [redemptions, setRedemptions] = useState([])
   const [dialog, setDialog] = useState(null)
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
@@ -52,6 +57,7 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
+  const [showReceipt, setShowReceipt] = useState(false)
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -149,11 +155,15 @@ export default function App() {
 
   // Meðlimir, krakkar og afrek núverandi lista (ábyrgðarmenn + stigatafla)
   const loadKids = (id) => store.getKids(id).then(setKids).catch(() => setKids([]))
+  const loadRewards = (id) => store.getRewards(id).then(setRewards).catch(() => setRewards([]))
+  const loadRedemptions = (id) => store.getRedemptions(id).then(setRedemptions).catch(() => setRedemptions([]))
   useEffect(() => {
-    if (!currentId) { setMembers([]); setKids([]); setCompletions([]); return }
+    if (!currentId) { setMembers([]); setKids([]); setCompletions([]); setRewards([]); setRedemptions([]); return }
     store.getListMembers(currentId).then(setMembers).catch(() => setMembers([]))
     loadKids(currentId)
     store.getCompletions(currentId).then(setCompletions).catch(() => setCompletions([]))
+    loadRewards(currentId)
+    loadRedemptions(currentId)
   }, [currentId])
 
   // Sameinaður listi af „fólki": innskráðir meðlimir + krakka-prófílar.
@@ -194,6 +204,7 @@ export default function App() {
   useBackClose(!!sharing, () => setSharing(null))
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
+  useBackClose(showReceipt, () => setShowReceipt(false))
 
   const addItem = async (name, weekday, time, assignee, image, scannedDept) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
@@ -216,6 +227,13 @@ export default function App() {
     }
     await loadPurchases()
   }
+  // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
+  const scanReceiptMenu = async (purchase) => {
+    await store.addPurchase({ ...purchase, list_id: null })
+    await loadPurchases()
+    setShowReceipt(false)
+    flash('Kvittun skráð ✓')
+  }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
   const setQty = async (it, qty) => { await store.setQty(list.id, it.id, qty); await reload(list.id) }
@@ -228,19 +246,33 @@ export default function App() {
     await reload(list.id)
     store.getCustomProducts().then(setCustomProducts).catch(() => {})
   }
+  const myId = isCloud ? session?.user?.id : 'me'
+  const personOf = (it) => it.assignee_kid
+    ? { kind: 'kid', id: it.assignee_kid }
+    : { kind: 'user', id: it.assignee || myId }
+  // Fögnuður þegar verk klárast: konfetti/hljóð + stig, og auka-fögnuður við level-up.
+  const cheerCompletion = (it) => {
+    const pts = it.points ?? 10
+    const person = personOf(it)
+    const before = totalPoints(completions, person)
+    const crossed = levelFor(before).level !== levelFor(before + pts).level
+    if (crossed) { celebrateLevelUp(); flash('🎉 Nýtt borð: ' + levelFor(before + pts).title + '!') }
+    else { celebrate(pts); flash('+' + pts + ' stig 🎉') }
+  }
   const toggleItem = async (it, done) => {
+    const isChore = list.type === 'task' || list.type === 'schedule'
     const recurring = it.recurrence && it.recurrence !== 'none'
     if (recurring) {
       if (done) {
         await store.uncompleteItem(list.id, it, it.recurrence === 'daily' ? startOfTodayISO() : startOfWeekISO())
       } else {
         await store.completeItem(list.id, it)
-        flash('+' + (it.points ?? 10) + ' stig 🎉')
+        cheerCompletion(it)
       }
     } else {
       const wasDone = it.checked
       await store.toggleItem(list.id, it)
-      if (!wasDone && list.type === 'task') flash('+' + (it.points ?? 10) + ' stig 🎉')
+      if (!wasDone && isChore) cheerCompletion(it)
     }
     await reload(list.id)
     store.getCompletions(list.id).then(setCompletions).catch(() => {})
@@ -253,6 +285,15 @@ export default function App() {
   const createKid = async (data) => { await store.createKid(list.id, data); await loadKids(list.id) }
   const updateKid = async (id, patch) => { await store.updateKid(id, patch); await loadKids(list.id) }
   const deleteKid = async (id) => { await store.deleteKid(id); await loadKids(list.id); await reload(list.id) }
+  const createReward = async (data) => { await store.createReward(list.id, data); await loadRewards(list.id) }
+  const updateReward = async (id, patch) => { await store.updateReward(id, patch); await loadRewards(list.id) }
+  const deleteReward = async (id) => { await store.deleteReward(id); await loadRewards(list.id) }
+  const redeemReward = async (reward, person) => {
+    await store.redeemReward(list.id, reward, person)
+    await loadRedemptions(list.id)
+    celebrate(20); flash('🎁 ' + reward.title + ' leyst út!')
+  }
+  const deleteRedemption = async (id) => { await store.deleteRedemption(id); await loadRedemptions(list.id) }
 
   const confirmAddRecipe = async (recipe, listId, lines) => {
     const target = lists.find(l => l.id === listId)
@@ -385,7 +426,7 @@ export default function App() {
         <div className="tabs">
           <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
           {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
-          {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Eyðsla</button>}
+          {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Útgjöld</button>}
         </div>
       </div>
       <div className="body">
@@ -393,7 +434,7 @@ export default function App() {
           ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
           : tab === 'spending' && isShopping
             ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
-            : <ListView items={list.items} listType={list.type} members={people} kids={kids} completions={completions} currentUserId={isCloud ? session?.user?.id : 'me'} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+            : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (
@@ -408,6 +449,7 @@ export default function App() {
           onRename={renameList}
           templates={TEMPLATES}
           onCreateFromTemplate={createFromTemplate}
+          onScanReceipt={() => { setShowLists(false); setShowReceipt(true) }}
           userEmail={session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onClose={() => setShowLists(false)}
@@ -442,6 +484,8 @@ export default function App() {
           onClose={() => setDialog(null)}
         />
       )}
+
+      {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onClose={() => setShowReceipt(false)} />}
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
 

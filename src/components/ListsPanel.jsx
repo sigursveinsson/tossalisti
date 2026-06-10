@@ -6,7 +6,7 @@ const TYPE = {
   schedule: { icon: '📅', tint: '#faeeda' },
 }
 
-export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, userEmail, onSignOut, onClose }) {
+export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, userEmail, onSignOut, onClose }) {
   const [name, setName] = useState('')
   const [newType, setNewType] = useState('shopping')
   const [creating, setCreating] = useState(false)
@@ -61,6 +61,10 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
                 <button onClick={create}>Búa til</button>
               </div>
             </div>
+          )}
+
+          {onScanReceipt && (
+            <button className="scan-receipt-btn" onClick={onScanReceipt}>🧾 Skrá kvittun</button>
           )}
 
           <div className="sheet-label">Mínir listar</div>

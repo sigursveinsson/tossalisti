@@ -17,18 +17,41 @@ export default function SpendingView({ purchases = [], onSave, onDelete, onUpdat
   const [editing, setEditing] = useState(null)
 
   const thisMonth = new Date().toISOString().slice(0, 7)
-  const monthTotal = purchases
-    .filter(p => monthKey(p.purchased_at) === thisMonth)
-    .reduce((a, p) => a + (Number(p.total) || 0), 0)
+  const monthPurchases = purchases.filter(p => monthKey(p.purchased_at) === thisMonth)
+  const monthTotal = monthPurchases.reduce((a, p) => a + (Number(p.total) || 0), 0)
+
+  // Sundurliðun mánaðarins eftir verslun (stærsta efst)
+  const byStore = {}
+  for (const p of monthPurchases) {
+    const s = (p.store || 'Annað').trim() || 'Annað'
+    byStore[s] = (byStore[s] || 0) + (Number(p.total) || 0)
+  }
+  const stores = Object.entries(byStore)
+    .map(([store, amt]) => ({ store, amt }))
+    .sort((a, b) => b.amt - a.amt)
+  const maxAmt = stores.length ? stores[0].amt : 0
 
   return (
     <div>
       <button className="primary-btn" onClick={() => setScanning(true)}>📸 Skrá kvittun</button>
 
       <div className="spend-summary">
-        <span className="spend-label">Eyðsla þennan mánuð</span>
+        <span className="spend-label">Útgjöld þennan mánuð</span>
         <span className="spend-big">{kr(monthTotal)}</span>
       </div>
+
+      {stores.length > 0 && (
+        <div className="spend-breakdown">
+          <div className="spend-bd-head">Eftir verslun</div>
+          {stores.map(s => (
+            <div className="spend-bd-row" key={s.store}>
+              <span className="spend-bd-name">{s.store}</span>
+              <div className="spend-bd-bar"><i style={{ width: (maxAmt ? Math.max(6, Math.round((s.amt / maxAmt) * 100)) : 0) + '%' }} /></div>
+              <span className="spend-bd-amt">{kr(s.amt)}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {purchases.length === 0 && <p className="empty">Engar kvittanir enn — skráðu þá fyrstu með „📸 Skrá kvittun".</p>}
 

@@ -47,11 +47,11 @@ export default function AdminView({ onClose }) {
               {metric('Vörur á listum', num(stats.items_total), '+' + num(stats.items_today) + ' í dag')}
               {metric('Vörur í banka', num(stats.catalog_total), '+' + num(stats.catalog_today) + ' í dag')}
             </div>
-            <div className="adm-head">Kvittanir & eyðsla</div>
+            <div className="adm-head">Kvittanir & útgjöld</div>
             <div className="adm-grid">
               {metric('Kvittanir', num(stats.receipts_total), '+' + num(stats.receipts_today) + ' í dag')}
-              {metric('Eyðsla (mánuður)', kr(stats.spend_month))}
-              {metric('Eyðsla alls', kr(stats.spend_total))}
+              {metric('Útgjöld (mánuður)', kr(stats.spend_month))}
+              {metric('Útgjöld alls', kr(stats.spend_total))}
             </div>
             <button className="adm-refresh" onClick={load}>↻ Uppfæra</button>
           </>

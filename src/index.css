@@ -69,7 +69,7 @@ button { font-family: inherit; cursor: pointer; }
 .spon-cmark img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
 
 /* Aðgerðir efst í lista */
-.list-actions { display: flex; gap: 8px; margin: 8px 0 4px; }
+.list-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
 .list-actions button { flex: 1; height: 46px; border-radius: 12px; font-size: 15px; font-weight: 700; }
 .shop-go { background: var(--cta); color: var(--cta-ink); border: none; }
 .shelf-open { background: var(--chip); border: 1px solid var(--line); color: var(--navy); font-weight: 600; }
@@ -227,6 +227,8 @@ button { font-family: inherit; cursor: pointer; }
 .sheet-label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 16px 2px 8px; }
 .primary-btn { width: 100%; height: 46px; background: var(--cta); color: var(--cta-ink); border: none; border-radius: 12px; font-size: 15px; font-weight: 600; }
 .create-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.scan-receipt-btn { width: 100%; margin-top: 10px; height: 46px; background: var(--surface); border: 1px solid var(--line); color: var(--navy); border-radius: 12px; font-size: 15px; font-weight: 600; }
+.scan-receipt-btn:active { border-color: var(--accent); }
 .lrow2 { display: flex; align-items: center; gap: 11px; padding: 9px 8px; border-radius: 12px; }
 .lrow2.active { background: var(--chip); }
 .ltype { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
@@ -321,6 +323,13 @@ button { font-family: inherit; cursor: pointer; }
 .spend-summary { display: flex; flex-direction: column; gap: 2px; background: var(--chip); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
 .spend-label { font-size: 13px; color: var(--muted); }
 .spend-big { font-size: 26px; font-weight: 800; color: var(--navy); }
+.spend-breakdown { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; }
+.spend-bd-head { font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.spend-bd-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 13px; color: var(--navy); }
+.spend-bd-name { width: 84px; flex: none; font-weight: 600; text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spend-bd-bar { flex: 1; height: 12px; background: var(--chip); border-radius: 7px; overflow: hidden; }
+.spend-bd-bar i { display: block; height: 100%; border-radius: 7px; background: linear-gradient(90deg, #23508c, var(--accent)); }
+.spend-bd-amt { width: 64px; flex: none; text-align: right; font-weight: 700; }
 .spend-item { border-bottom: 1px solid var(--line); }
 .spend-head { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; border: none; padding: 14px 4px; color: var(--text); font-size: 15px; }
 .spend-store { font-weight: 600; text-transform: capitalize; }
@@ -367,10 +376,10 @@ button { font-family: inherit; cursor: pointer; }
 .lrow .lcount { font-size: 12px; color: var(--muted); }
 .lrow .ico { background: none; border: none; color: var(--muted); font-size: 18px; padding: 4px; }
 .lrow .ico.share { color: var(--accent); }
-.newrow { display: flex; gap: 8px; margin-top: 12px; }
-.newrow input { flex: 1; height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; font-size: 16px; background: var(--surface-2); color: var(--text); }
+.newrow { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+.newrow input { flex: 1 1 auto; min-width: 0; height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; font-size: 16px; background: var(--surface-2); color: var(--text); }
 .newrow input:focus { outline: none; border-color: var(--accent); }
-.newrow button { background: var(--cta); color: var(--cta-ink); border: none; border-radius: 12px; padding: 0 16px; font-size: 15px; font-weight: 600; }
+.newrow button { flex: none; height: 44px; white-space: nowrap; background: var(--cta); color: var(--cta-ink); border: none; border-radius: 12px; padding: 0 16px; font-size: 15px; font-weight: 600; }
 .shared-tag { font-size: 10px; color: var(--accent); background: var(--chip); padding: 2px 7px; border-radius: 20px; margin-left: 6px; }
 .tpl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tpl-card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text); }
@@ -446,3 +455,79 @@ button { font-family: inherit; cursor: pointer; }
 .kid-form-actions { display: flex; gap: 10px; align-items: center; }
 .kid-cancel { background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
 .add-kid-row { color: var(--accent); font-weight: 600; }
+
+/* ===================== Spilun: stigatafla, level, merki, verðlaun ===================== */
+.gpanel { margin: 12px 0 6px; }
+
+/* Fjölskyldu-áskorun (vikulegt markmið) */
+.fam-challenge { background: linear-gradient(135deg, #2563eb, #06b6d4); color: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+.fam-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.fam-title { font-size: 13px; font-weight: 700; }
+.fam-edit { background: rgba(255,255,255,.22); border: none; color: #fff; font-size: 12px; font-weight: 600; border-radius: 8px; padding: 4px 9px; white-space: nowrap; }
+.fam-bar { height: 10px; border-radius: 6px; background: rgba(255,255,255,.28); overflow: hidden; }
+.fam-fill { height: 100%; border-radius: 6px; background: #fff; transition: width .4s ease; }
+.fam-fill.done { background: var(--cta); }
+
+/* Stigatafla raðir (smellanlegar) */
+.lb-row.tap { width: 100%; text-align: left; background: none; border: none; padding: 8px 0; border-top: 1px solid var(--line); }
+.lb-row.tap:first-of-type { border-top: none; }
+.lb-row.tap:active { background: var(--surface-2); }
+.lb-rank { width: 22px; font-size: 15px; text-align: center; color: var(--muted); font-weight: 700; flex: none; }
+.lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.lb-sub { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+.lb-lvl { font-weight: 600; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-streak { color: #e8615a; font-weight: 700; white-space: nowrap; }
+.lb-bal { color: var(--cta-ink); background: #fff5e0; border-radius: 10px; padding: 0 6px; font-weight: 700; white-space: nowrap; }
+.lb-points { font-size: 17px; font-weight: 800; color: var(--accent); white-space: nowrap; flex: none; }
+.lb-points small { font-size: 11px; font-weight: 600; color: var(--muted); }
+.rewards-manage-btn { width: 100%; margin-top: 10px; height: 40px; border: 1px dashed var(--line); background: var(--surface-2); color: var(--navy); border-radius: 10px; font-size: 14px; font-weight: 600; }
+
+/* Prófíl-sheet */
+.modal.profile { width: 360px; position: relative; }
+.modal.profile .x { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--muted); font-size: 24px; line-height: 1; }
+.prof-head { display: flex; align-items: center; gap: 12px; margin: 4px 0 14px; }
+.prof-avatar { width: 64px; height: 64px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 700; overflow: hidden; background: var(--accent); }
+.prof-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.prof-name { font-size: 20px; font-weight: 700; color: var(--text); }
+.prof-level { font-size: 14px; color: var(--muted); margin-top: 2px; }
+.prof-bar { height: 12px; border-radius: 7px; background: var(--surface-2); overflow: hidden; margin: 2px 0 4px; }
+.prof-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, #f5a623, #16a34a); transition: width .5s ease; }
+.prof-next { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 12px; }
+.prof-stats { display: flex; gap: 8px; margin-bottom: 6px; }
+.prof-stat { flex: 1; background: var(--surface-2); border-radius: 12px; padding: 10px 4px; text-align: center; }
+.prof-stat b { display: block; font-size: 17px; color: var(--navy); }
+.prof-stat span { font-size: 10px; color: var(--muted); }
+.prof-section { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin: 18px 0 8px; }
+
+/* Merki */
+.badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.badge-cell { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 4px; text-align: center; }
+.badge-cell.locked { opacity: .45; filter: grayscale(1); }
+.badge-ico { display: block; font-size: 24px; line-height: 1; }
+.badge-name { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.2; }
+
+/* Verðlauna-listi */
+.reward-list { display: flex; flex-direction: column; gap: 8px; }
+.reward-row { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.reward-row.poor { opacity: .7; }
+.reward-emoji { font-size: 22px; flex: none; }
+.reward-emoji.big { font-size: 34px; }
+.reward-title { flex: 1; min-width: 0; font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.reward-cost { font-size: 13px; font-weight: 700; color: var(--cta-ink); background: #fff5e0; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+.reward-redeem { border: none; background: var(--accent); color: #fff; border-radius: 9px; font-size: 13px; font-weight: 600; padding: 7px 11px; white-space: nowrap; }
+.reward-redeem:disabled { background: var(--line); color: var(--muted); }
+
+/* Innleyst saga */
+.redeem-hist { display: flex; flex-direction: column; gap: 4px; }
+.redeem-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 4px 0; }
+.redeem-title { flex: 1; min-width: 0; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.redeem-cost { font-weight: 600; color: #e8615a; }
+
+/* Verðlauna-form */
+.reward-form { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+.reward-form-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.emoji-pick { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 4px; }
+.emoji-opt { aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; font-size: 20px; line-height: 1; padding: 0; }
+.emoji-opt.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cost-row { display: flex; gap: 6px; }
+.kid-cancel { flex: none; height: 46px; padding: 0 16px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 10px; font-size: 14px; }

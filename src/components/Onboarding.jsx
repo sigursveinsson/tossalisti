@@ -27,7 +27,7 @@ export default function Onboarding({ onClose, onInvite }) {
               <li>📝 Skrifaðu innkaupa- og verkefnalista</li>
               <li>📷 Skannaðu vörur — birtast með mynd</li>
               <li>👨‍👩‍👧 Deildu með fjölskyldunni í rauntíma</li>
-              <li>🧾 Skannaðu kvittanir og fylgstu með eyðslu</li>
+              <li>🧾 Skannaðu kvittanir og fylgstu með útgjöldum</li>
             </ul>
             <button className="onb-cta" onClick={() => setStep(1)}>Áfram</button>
           </div>

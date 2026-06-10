@@ -269,6 +269,41 @@ const local = {
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
     if (it) { it.image_url = image || null; lsWrite(lists) }
   },
+  // ---- Verðlaunabúð (staðbundið) ----
+  async getRewards(listId) {
+    return (JSON.parse(localStorage.getItem('korfan.rewards') || '[]')).filter(r => r.list_id === listId && r.active !== false)
+  },
+  async createReward(listId, { title, emoji, cost } = {}) {
+    const all = JSON.parse(localStorage.getItem('korfan.rewards') || '[]')
+    const r = { id: uid(), list_id: listId, title: (title || '').trim(), emoji: emoji || null, cost: Math.max(0, cost ?? 50), active: true }
+    all.push(r); localStorage.setItem('korfan.rewards', JSON.stringify(all)); return r
+  },
+  async updateReward(id, patch = {}) {
+    const all = JSON.parse(localStorage.getItem('korfan.rewards') || '[]')
+    const r = all.find(x => x.id === id); if (!r) return
+    if (patch.title != null) r.title = patch.title.trim()
+    if (patch.emoji !== undefined) r.emoji = patch.emoji
+    if (patch.cost != null) r.cost = Math.max(0, patch.cost)
+    if (patch.active !== undefined) r.active = patch.active
+    localStorage.setItem('korfan.rewards', JSON.stringify(all))
+  },
+  async deleteReward(id) {
+    localStorage.setItem('korfan.rewards', JSON.stringify(
+      (JSON.parse(localStorage.getItem('korfan.rewards') || '[]')).filter(r => r.id !== id)))
+  },
+  async getRedemptions(listId) {
+    return (JSON.parse(localStorage.getItem('korfan.redemptions') || '[]')).filter(r => r.list_id === listId)
+  },
+  async redeemReward(listId, reward, person) {
+    const all = JSON.parse(localStorage.getItem('korfan.redemptions') || '[]')
+    const a = personRef(person)
+    const rec = { id: uid(), list_id: listId, reward_id: reward.id, title: reward.title, cost: reward.cost ?? 0, user_id: a.user, kid_id: a.kid, redeemed_at: new Date().toISOString() }
+    all.push(rec); localStorage.setItem('korfan.redemptions', JSON.stringify(all)); return rec
+  },
+  async deleteRedemption(id) {
+    localStorage.setItem('korfan.redemptions', JSON.stringify(
+      (JSON.parse(localStorage.getItem('korfan.redemptions') || '[]')).filter(r => r.id !== id)))
+  },
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
@@ -536,6 +571,43 @@ const cloud = {
   async setItemImage(listId, itemId, image) {
     await supabase.from('list_items').update({ image_url: image || null }).eq('id', itemId)
   },
+  // ---- Verðlaunabúð (Supabase) ----
+  async getRewards(listId) {
+    const { data } = await supabase.from('rewards').select('id,title,emoji,cost,active').eq('list_id', listId).eq('active', true).order('cost')
+    return data || []
+  },
+  async createReward(listId, { title, emoji, cost } = {}) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data, error } = await supabase.from('rewards').insert({
+      list_id: listId, title: (title || '').trim(), emoji: emoji || null, cost: Math.max(0, cost ?? 50), created_by: user?.id,
+    }).select().single()
+    if (error) throw error
+    return data
+  },
+  async updateReward(id, patch = {}) {
+    const upd = {}
+    if (patch.title != null) upd.title = patch.title.trim()
+    if (patch.emoji !== undefined) upd.emoji = patch.emoji
+    if (patch.cost != null) upd.cost = Math.max(0, patch.cost)
+    if (patch.active !== undefined) upd.active = patch.active
+    const { error } = await supabase.from('rewards').update(upd).eq('id', id)
+    if (error) throw error
+  },
+  async deleteReward(id) { const { error } = await supabase.from('rewards').delete().eq('id', id); if (error) throw error },
+  async getRedemptions(listId) {
+    const { data } = await supabase.from('reward_redemptions').select('id,reward_id,title,cost,user_id,kid_id,redeemed_at').eq('list_id', listId).order('redeemed_at', { ascending: false })
+    return data || []
+  },
+  async redeemReward(listId, reward, person) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const a = personRef(person)
+    const row = { list_id: listId, reward_id: reward.id, title: reward.title, cost: reward.cost ?? 0 }
+    if (a.kid) row.kid_id = a.kid; else row.user_id = a.user || user?.id
+    const { data, error } = await supabase.from('reward_redemptions').insert(row).select().single()
+    if (error) throw error
+    return data
+  },
+  async deleteRedemption(id) { const { error } = await supabase.from('reward_redemptions').delete().eq('id', id); if (error) throw error },
   async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
   async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
   async getMyProfile() {
