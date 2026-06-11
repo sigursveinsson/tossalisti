@@ -77,7 +77,8 @@ export default function App() {
       }
       setLists(all)
       setCurrentId(prev => {
-        const want = keepId ?? prev
+        // Varðveita valinn lista við refresh: keepId → núverandi → listinn úr slóðinni (#list=).
+        const want = keepId ?? prev ?? readHash().list
         if (want && all.some(l => l.id === want)) return want
         return all[0]?.id ?? null
       })
