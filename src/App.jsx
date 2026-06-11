@@ -109,6 +109,7 @@ export default function App() {
   // Heimaskjár: uppfæra við opnun og merkja virkni sem séða (ping hverfur).
   useEffect(() => {
     if (view !== 'home') return
+    setShowLists(false) // tryggja að listavalmyndin sé lokuð á heimaskjá (t.d. við innskráningu)
     if (isCloud) loadHome()
   }, [view])
   useEffect(() => {
@@ -528,10 +529,9 @@ export default function App() {
           ) : (
             <>
               <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
-              <button className="listbtn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan">
-                <span className="lists-ico">☰</span> {typeIcon} {list.name} <span className="chev">▾</span>
-              </button>
+              <button className="curtitle" onClick={() => setShowLists(true)} title="Skipta um lista">{typeIcon} {list.name}</button>
               <span className="count">{open} eftir</span>
+              <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
             </>
           )}
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
