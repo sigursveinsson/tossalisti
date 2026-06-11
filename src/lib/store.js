@@ -190,6 +190,7 @@ const local = {
   },
   async ensureGenericImage() { return null },
   async adminStats() { return null },
+  async adminActivity() { return [] },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -520,6 +521,11 @@ const cloud = {
     const { data, error } = await supabase.rpc('admin_stats')
     if (error) throw error
     return data
+  },
+  async adminActivity() {
+    const { data, error } = await supabase.rpc('admin_user_activity')
+    if (error) throw error
+    return data || []
   },
   async duplicateList(id, name) {
     const all = await cloud.getLists()

@@ -338,3 +338,48 @@ alter publication supabase_realtime add table public.list_items;
 alter publication supabase_realtime add table public.completions;
 alter publication supabase_realtime add table public.rewards;
 alter publication supabase_realtime add table public.reward_redemptions;
+
+-- ===========================================================================
+--  Stjórnborð: notenda-virknilogg (migration add_admin_user_activity).
+--  Aðeins admin-netfang fær aðgang. Skilar fylki af notendum (nýjastir efst)
+--  með virkni-talningu og síðustu virkni.
+-- ===========================================================================
+create or replace function public.admin_user_activity()
+returns jsonb
+language plpgsql
+security definer
+set search_path to 'public', 'auth'
+as $function$
+declare
+  email text := (auth.jwt() ->> 'email');
+  res jsonb;
+begin
+  if email is null or email not in ('sigursveinsson@gmail.com') then
+    raise exception 'not authorized';
+  end if;
+  select coalesce(jsonb_agg(row_to_json(t)), '[]'::jsonb) into res from (
+    select
+      u.email,
+      coalesce(p.name, '') as name,
+      u.created_at,
+      u.last_sign_in_at,
+      (select count(*) from public.lists l where l.owner = u.id) as lists_owned,
+      (select count(*) from public.list_members m where m.user_id = u.id) as memberships,
+      (select count(*) from public.list_items i join public.lists l on l.id = i.list_id where l.owner = u.id) as items,
+      (select count(*) from public.completions c where c.user_id = u.id) as completions,
+      (select count(*) from public.purchases pu where pu.user_id = u.id) as purchases,
+      (select count(*) from public.kids k join public.lists l on l.id = k.list_id where l.owner = u.id) as kids,
+      greatest(
+        u.last_sign_in_at,
+        (select max(c.completed_at) from public.completions c where c.user_id = u.id),
+        (select max(i.created_at) from public.list_items i join public.lists l on l.id = i.list_id where l.owner = u.id)
+      ) as last_activity
+    from auth.users u
+    left join public.profiles p on p.id = u.id
+    order by u.created_at desc
+    limit 200
+  ) t;
+  return res;
+end;
+$function$;
+grant execute on function public.admin_user_activity() to authenticated;
