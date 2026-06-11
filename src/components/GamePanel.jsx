@@ -50,6 +50,8 @@ export default function GamePanel({
   currentUserId, onOpenProfile, onManageRewards,
 }) {
   const [win, setWin] = useState('week')
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem('korfan.lb.open') === '1' } catch { return false } })
+  const toggleOpen = () => setOpen(o => { const n = !o; try { localStorage.setItem('korfan.lb.open', n ? '1' : '0') } catch (e) {} return n })
   const hasRewards = rewards.length > 0
   if (people.length === 0) return null
 
@@ -69,32 +71,41 @@ export default function GamePanel({
       <FamilyChallenge listId={listId} completions={completions} />
 
       <div className="leaderboard">
-        <div className="lb-head">
+        <button className="lb-head tap" onClick={toggleOpen} aria-expanded={open}>
           <span className="lb-title">🏆 Stigatafla</span>
-          <div className="lb-toggle">
-            <button className={win === 'week' ? 'on' : ''} onClick={() => setWin('week')}>Vika</button>
-            <button className={win === 'all' ? 'on' : ''} onClick={() => setWin('all')}>Allt</button>
-          </div>
-        </div>
+          {!open && scores[0] && (
+            <span className="lb-peek">{scores[0].level.icon} {displayName(scores[0])} · {scores[0].points} stig</span>
+          )}
+          <span className="lb-caret">{open ? '▾' : '▸'}</span>
+        </button>
 
-        {scores.map((s, idx) => (
-          <button className="lb-row tap" key={s.kind + s.id} onClick={() => onOpenProfile && onOpenProfile(s)}>
-            <span className="lb-rank">{idx < 3 ? MEDAL[idx] : idx + 1}</span>
-            <Chip p={s} />
-            <span className="lb-info">
-              <span className="lb-name">{displayName(s)}{s.kind === 'user' && s.id === currentUserId ? ' (þú)' : ''}</span>
-              <span className="lb-sub">
-                <span className="lb-lvl">{s.level.icon} {s.level.title}</span>
-                {s.streak > 0 && <span className="lb-streak">🔥 {s.streak}</span>}
-                {hasRewards && <span className="lb-bal">🪙 {s.bal}</span>}
-              </span>
-            </span>
-            <span className="lb-points">{s.points}<small> stig</small></span>
-          </button>
-        ))}
+        {open && (
+          <>
+            <div className="lb-toggle lb-toggle-row">
+              <button className={win === 'week' ? 'on' : ''} onClick={() => setWin('week')}>Vika</button>
+              <button className={win === 'all' ? 'on' : ''} onClick={() => setWin('all')}>Allt</button>
+            </div>
 
-        {onManageRewards && (
-          <button className="rewards-manage-btn" onClick={onManageRewards}>🎁 Verðlaun</button>
+            {scores.map((s, idx) => (
+              <button className="lb-row tap" key={s.kind + s.id} onClick={() => onOpenProfile && onOpenProfile(s)}>
+                <span className="lb-rank">{idx < 3 ? MEDAL[idx] : idx + 1}</span>
+                <Chip p={s} />
+                <span className="lb-info">
+                  <span className="lb-name">{displayName(s)}{s.kind === 'user' && s.id === currentUserId ? ' (þú)' : ''}</span>
+                  <span className="lb-sub">
+                    <span className="lb-lvl">{s.level.icon} {s.level.title}</span>
+                    {s.streak > 0 && <span className="lb-streak">🔥 {s.streak}</span>}
+                    {hasRewards && <span className="lb-bal">🪙 {s.bal}</span>}
+                  </span>
+                </span>
+                <span className="lb-points">{s.points}<small> stig</small></span>
+              </button>
+            ))}
+
+            {onManageRewards && (
+              <button className="rewards-manage-btn" onClick={onManageRewards}>🎁 Verðlaun</button>
+            )}
+          </>
         )}
       </div>
     </div>

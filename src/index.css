@@ -130,7 +130,11 @@ button { font-family: inherit; cursor: pointer; }
 .points-opt.on { border-color: var(--accent); color: var(--accent); background: var(--chip); }
 .leaderboard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 12px 0 6px; }
 .lb-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.lb-title { font-size: 13px; font-weight: 600; color: var(--navy); }
+.lb-head.tap { width: 100%; background: none; border: none; padding: 2px 0; margin-bottom: 0; gap: 8px; text-align: left; }
+.lb-peek { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.lb-caret { color: var(--faint); font-size: 12px; flex: none; }
+.lb-toggle-row { margin: 8px 0 4px; }
+.lb-title { font-size: 13px; font-weight: 600; color: var(--navy); flex: none; }
 .lb-toggle { display: flex; gap: 4px; }
 .lb-toggle button { height: 28px; padding: 0 10px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 8px; font-size: 12px; }
 .lb-toggle button.on { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
@@ -573,10 +577,3 @@ button { font-family: inherit; cursor: pointer; }
 .wk-name { flex: 1; min-width: 0; font-size: 14px; color: var(--text); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wk-chip { flex: none; }
 .wk-empty { padding: 10px 12px; color: var(--faint); font-size: 13px; }
-
-/* Breiður skjár: vikan verður 7 dálka stundatafla */
-@media (min-width: 720px) {
-  .wk-week { flex-direction: row; align-items: flex-start; overflow-x: auto; }
-  .wk-day { flex: 1 1 0; min-width: 132px; }
-  .wk-name { white-space: normal; }
-}
