@@ -191,6 +191,7 @@ const local = {
   async ensureGenericImage() { return null },
   async adminStats() { return null },
   async adminActivity() { return [] },
+  async homeSummary() { return { week_points: 0, week_done: 0, feed: [] } },
   async duplicateList(id, name) {
     const lists = lsRead() || []
     const src = lists.find(l => l.id === id)
@@ -365,7 +366,8 @@ const cloud = {
   async deleteList(id) { await supabase.from('lists').delete().eq('id', id) },
   async addItem(listId, name, opts = {}) {
     const { points, dept, weekday, time, assignee, image } = opts
-    const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false }
+    const { data: { user } } = await supabase.auth.getUser()
+    const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false, created_by: user?.id }
     if (points != null) row.points = points
     if (weekday) { row.weekday = weekday; row.recurrence = weekday === 'daily' ? 'daily' : 'weekly' }
     if (time) row.time = time
@@ -451,7 +453,8 @@ const cloud = {
   },
   async removeItem(listId, itemId) { await supabase.from('list_items').delete().eq('id', itemId) },
   async addManyItems(listId, names) {
-    const rows = names.map(n => ({ list_id: listId, name: n.toLowerCase().trim(), dept: departmentFor(n), checked: false }))
+    const { data: { user } } = await supabase.auth.getUser()
+    const rows = names.map(n => ({ list_id: listId, name: n.toLowerCase().trim(), dept: departmentFor(n), checked: false, created_by: user?.id }))
     await supabase.from('list_items').insert(rows)
   },
   async getPurchases() {
@@ -527,6 +530,11 @@ const cloud = {
     if (error) throw error
     return data || []
   },
+  async homeSummary() {
+    const { data, error } = await supabase.rpc('home_summary')
+    if (error) throw error
+    return data || { week_points: 0, week_done: 0, feed: [] }
+  },
   async duplicateList(id, name) {
     const all = await cloud.getLists()
     const src = all.find(l => l.id === id)
@@ -598,8 +606,9 @@ const cloud = {
   },
   // ---- Skema sem áþreifanleg vika (Supabase) ----
   async addScheduleTasks(listId, name, { days = ['mon'], time, assignee, points, image } = {}) {
+    const { data: { user } } = await supabase.auth.getUser()
     const a = personRef(assignee)
-    const base = { list_id: listId, name: (name || '').toLowerCase().trim(), checked: false, recurrence: 'none' }
+    const base = { list_id: listId, name: (name || '').toLowerCase().trim(), checked: false, recurrence: 'none', created_by: user?.id }
     if (points != null) base.points = points
     if (time) base.time = time
     if (a.user) base.assignee = a.user

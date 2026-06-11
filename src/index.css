@@ -589,3 +589,30 @@ button { font-family: inherit; cursor: pointer; }
 .wk-name { flex: 1; min-width: 0; font-size: 14px; color: var(--text); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wk-chip { flex: none; }
 .wk-empty { padding: 10px 12px; color: var(--faint); font-size: 13px; }
+
+/* Heimaskjár */
+.home-btn { position: relative; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); color: #fff; width: 34px; height: 34px; border-radius: 9px; font-size: 16px; flex: none; }
+.home-ping { position: absolute; top: -3px; right: -3px; width: 11px; height: 11px; border-radius: 50%; background: #e8615a; border: 2px solid var(--navy); }
+.home { padding: 4px 0 10px; display: flex; flex-direction: column; gap: 16px; }
+.home-hi { padding: 4px 2px 0; }
+.home-greet { font-size: 22px; font-weight: 700; color: var(--navy); }
+.home-ach { font-size: 14px; color: var(--text); margin-top: 4px; line-height: 1.5; }
+.home-ach b { color: var(--accent); }
+.home-sec-h { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 0 2px 8px; }
+.home-sec { display: flex; flex-direction: column; }
+.home-sec .home-row + .home-row { margin-top: 8px; }
+.home-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px; }
+.home-row:active { border-color: var(--accent); }
+.home-row-ic { font-size: 20px; flex: none; }
+.home-row-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-row-sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.home-row-go { color: var(--faint); font-size: 17px; flex: none; }
+.home-spend { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: linear-gradient(135deg, #15315e, #2563eb); border: none; border-radius: 14px; padding: 14px 16px; color: #fff; }
+.home-spend-label { font-size: 13px; opacity: .85; }
+.home-spend-val { font-size: 24px; font-weight: 800; margin-top: 2px; }
+.home-spend .home-row-go { color: rgba(255,255,255,.7); margin-left: auto; }
+.home-feed { display: flex; align-items: flex-start; gap: 10px; padding: 7px 2px; }
+.home-feed-ava { width: 30px; height: 30px; flex: none; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.home-feed-txt { font-size: 13px; color: var(--text); line-height: 1.45; }
+.home-feed-txt b { font-weight: 700; }
+.home-feed-time { display: block; font-size: 11px; color: var(--faint); margin-top: 1px; }

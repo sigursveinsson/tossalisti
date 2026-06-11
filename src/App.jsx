@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
+import HomeView from './components/HomeView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
@@ -18,7 +19,8 @@ import { useBackClose } from './lib/backstack.js'
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
 const readHash = () => {
   const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
-  return { list: h.get('list') || null, tab: h.get('tab') || 'list' }
+  const list = h.get('list') || null
+  return { view: h.get('view') || (list ? 'list' : 'home'), list, tab: h.get('tab') || 'list' }
 }
 const HASH0 = readHash()
 const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString() }
@@ -40,6 +42,9 @@ export default function App() {
   const [lists, setLists] = useState([])
   const [currentId, setCurrentId] = useState(HASH0.list)
   const [tab, setTab] = useState(HASH0.tab)
+  const [view, setView] = useState(HASH0.view) // 'home' | 'list'
+  const [homeSum, setHomeSum] = useState(null)
+  const [homeUnseen, setHomeUnseen] = useState(false)
   const [showLists, setShowLists] = useState(false)
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(true)
@@ -98,7 +103,20 @@ export default function App() {
   useEffect(() => {
     if (isCloud && !session) return
     reload()
+    if (isCloud) loadHome()
   }, [session])
+
+  // Heimaskjár: uppfæra við opnun og merkja virkni sem séða (ping hverfur).
+  useEffect(() => {
+    if (view !== 'home') return
+    if (isCloud) loadHome()
+  }, [view])
+  useEffect(() => {
+    if (view !== 'home' || !homeSum) return
+    const latest = homeSum.feed && homeSum.feed[0] && homeSum.feed[0].at
+    if (latest) { try { localStorage.setItem('korfan.home.seen', latest) } catch (e) {} }
+    setHomeUnseen(false)
+  }, [view, homeSum])
 
   // Rauntíma-samstilling (ský)
   useEffect(() => {
@@ -159,6 +177,15 @@ export default function App() {
   const catalogLookup = (code) => store.lookupCatalogBarcode(code).catch(() => null)
 
   // Meðlimir, krakkar og afrek núverandi lista (ábyrgðarmenn + stigatafla)
+  const loadHome = () => store.homeSummary().then(d => {
+    const data = d || { week_points: 0, week_done: 0, feed: [] }
+    setHomeSum(data)
+    const latest = (data.feed && data.feed[0] && data.feed[0].at) || ''
+    let seen = ''
+    try { seen = localStorage.getItem('korfan.home.seen') || '' } catch (e) {}
+    setHomeUnseen(!!latest && latest > seen)
+  }).catch(() => setHomeSum({ week_points: 0, week_done: 0, feed: [] }))
+
   const loadKids = (id) => store.getKids(id).then(setKids).catch(() => setKids([]))
   const loadRewards = (id) => store.getRewards(id).then(setRewards).catch(() => setRewards([]))
   const loadRedemptions = (id) => store.getRedemptions(id).then(setRedemptions).catch(() => setRedemptions([]))
@@ -198,6 +225,7 @@ export default function App() {
   const navRef = useRef({ first: true, fromPop: false })
   const currentIdRef = useRef(currentId); currentIdRef.current = currentId
   const tabRef = useRef(tab); tabRef.current = tab
+  const viewRef = useRef(view); viewRef.current = view
   const restoredRef = useRef(false)
 
   // Örugg endurheimt: þegar listar hafa hlaðist, gakktu úr skugga um að valinn listi
@@ -205,8 +233,9 @@ export default function App() {
   useEffect(() => {
     if (restoredRef.current || !lists.length) return
     restoredRef.current = true
-    if (HASH0.list && HASH0.list !== currentIdRef.current && lists.some(l => l.id === HASH0.list)) {
-      navRef.current.fromPop = true // ekki búa til nýja sögufærslu við endurheimt
+    navRef.current.fromPop = true // ekki búa til nýja sögufærslu við endurheimt
+    setView(HASH0.view)
+    if (HASH0.list && lists.some(l => l.id === HASH0.list)) {
       setCurrentId(HASH0.list)
       setTab(HASH0.tab)
     }
@@ -215,11 +244,14 @@ export default function App() {
   // Skrifa lista/flipa í slóðina. pushState við notenda-skipti (svo back/forward virki),
   // en replaceState við fyrstu hleðslu og þegar breytingin kom frá back/forward sjálfu.
   useEffect(() => {
-    if (!currentId) return
-    const p = new URLSearchParams()
-    p.set('list', currentId)
-    if (tab && tab !== 'list') p.set('tab', tab)
-    const next = '#' + p.toString()
+    let next
+    if (view === 'home') next = '#view=home'
+    else if (currentId) {
+      const p = new URLSearchParams()
+      p.set('list', currentId)
+      if (tab && tab !== 'list') p.set('tab', tab)
+      next = '#' + p.toString()
+    } else next = '#view=home'
     if (window.location.hash === next) { navRef.current.first = false; navRef.current.fromPop = false; return }
     if (navRef.current.first || navRef.current.fromPop) {
       window.history.replaceState(window.history.state, '', next)
@@ -228,17 +260,17 @@ export default function App() {
     }
     navRef.current.first = false
     navRef.current.fromPop = false
-  }, [currentId, tab])
+  }, [view, currentId, tab])
 
   // Back/forward: lesa lista/flipa úr slóðinni. Gluggar breyta ekki hash-inu, svo þetta
   // truflar ekki glugga-bakkstaflann (backstack.js) — hash breytist bara við listaskipti.
   useEffect(() => {
     const onPop = () => {
       const h = readHash()
-      if (!h.list) return
-      if (h.list !== currentIdRef.current || h.tab !== tabRef.current) {
+      if (h.view !== viewRef.current || h.list !== currentIdRef.current || h.tab !== tabRef.current) {
         navRef.current.fromPop = true
-        setCurrentId(h.list)
+        setView(h.view)
+        if (h.list) setCurrentId(h.list)
         setTab(h.tab)
       }
     }
@@ -387,7 +419,12 @@ export default function App() {
     if (tpl.items && tpl.items.length) await store.addManyItems(l.id, tpl.items)
     await reload(l.id); setShowLists(false); setTab('list'); flash('Listinn „' + tpl.name + '“ búinn til')
   }
-  const switchList = async (id) => { setCurrentId(id); setShowLists(false); setTab('list') }
+  const switchList = async (id) => { setView('list'); setCurrentId(id); setShowLists(false); setTab('list') }
+  const goHome = () => { setView('home') }
+  const openSpendingFromHome = () => {
+    const shop = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping')
+    if (shop) { setView('list'); setCurrentId(shop.id); setTab('spending') }
+  }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({
@@ -459,7 +496,7 @@ export default function App() {
       </div>
     </div>
   )
-  if (!list) return (
+  if (!list && view !== 'home') return (
     <div className="empty">
       <p>Enginn listi enn.</p>
       <button
@@ -469,11 +506,12 @@ export default function App() {
     </div>
   )
 
-  const open = list.items.filter(i => !i.checked).length
+  const showHome = view === 'home'
+  const open = list ? list.items.filter(i => !i.checked).length : 0
   const isAdmin = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
-  const isShopping = list.type === 'shopping'
-  const typeIcon = list.type === 'schedule' ? '📅' : list.type === 'task' ? '✅' : '🛒'
-  const firstTabLabel = list.type === 'schedule' ? 'Skema' : list.type === 'task' ? 'Verkefni' : 'Innkaupalisti'
+  const isShopping = list?.type === 'shopping'
+  const typeIcon = list?.type === 'schedule' ? '📅' : list?.type === 'task' ? '✅' : '🛒'
+  const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : 'Innkaupalisti'
 
   return (
     <div className="app">
@@ -483,24 +521,37 @@ export default function App() {
             <rect x="6" y="6" width="52" height="52" rx="14" fill="#ffffff" />
             <polyline points="20,33 29,42 45,24" fill="none" stroke="#f5a623" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <button className="listbtn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan">
-            <span className="lists-ico">☰</span> {typeIcon} {list.name} <span className="chev">▾</span>
-          </button>
-          <span className="count">{open} eftir</span>
+          {showHome ? (
+            <button className="listbtn" onClick={() => setShowLists(true)} title="Listarnir mínir">
+              <span className="lists-ico">☰</span> Heim <span className="chev">▾</span>
+            </button>
+          ) : (
+            <>
+              <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
+              <button className="listbtn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan">
+                <span className="lists-ico">☰</span> {typeIcon} {list.name} <span className="chev">▾</span>
+              </button>
+              <span className="count">{open} eftir</span>
+            </>
+          )}
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
-        <div className="tabs">
-          <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
-          {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
-          {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Útgjöld</button>}
-        </div>
+        {!showHome && (
+          <div className="tabs">
+            <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
+            {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
+            {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Útgjöld</button>}
+          </div>
+        )}
       </div>
       <div className="body">
-        {tab === 'recipes' && isShopping
-          ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
-          : tab === 'spending' && isShopping
-            ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
-            : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+        {showHome
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={openSpendingFromHome} />
+          : tab === 'recipes' && isShopping
+            ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
+            : tab === 'spending' && isShopping
+              ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (
