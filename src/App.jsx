@@ -81,8 +81,8 @@ export default function App() {
       }
       setLists(all)
       setCurrentId(prev => {
-        // Varðveita valinn lista við refresh: keepId → núverandi → listinn úr slóðinni (#list=).
-        const want = keepId ?? prev ?? readHash().list
+        // Varðveita valinn lista við refresh: keepId → núverandi → listinn úr upphafsslóðinni.
+        const want = keepId ?? prev ?? HASH0.list
         if (want && all.some(l => l.id === want)) return want
         return all[0]?.id ?? null
       })
@@ -194,18 +194,62 @@ export default function App() {
       .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
   }, [session])
 
-  // Geyma valinn lista + flipa í slóðinni svo refresh haldi sér.
+  // ---- Vafrasaga fyrir lista/flipa: refresh heldur sér, back/forward virkar ----
+  const navRef = useRef({ first: true, fromPop: false })
+  const currentIdRef = useRef(currentId); currentIdRef.current = currentId
+  const tabRef = useRef(tab); tabRef.current = tab
+  const restoredRef = useRef(false)
+
+  // Örugg endurheimt: þegar listar hafa hlaðist, gakktu úr skugga um að valinn listi
+  // sé sá úr upphafsslóðinni (varnar race í reload sem gæti fallið á all[0]).
+  useEffect(() => {
+    if (restoredRef.current || !lists.length) return
+    restoredRef.current = true
+    if (HASH0.list && HASH0.list !== currentIdRef.current && lists.some(l => l.id === HASH0.list)) {
+      navRef.current.fromPop = true // ekki búa til nýja sögufærslu við endurheimt
+      setCurrentId(HASH0.list)
+      setTab(HASH0.tab)
+    }
+  }, [lists])
+
+  // Skrifa lista/flipa í slóðina. pushState við notenda-skipti (svo back/forward virki),
+  // en replaceState við fyrstu hleðslu og þegar breytingin kom frá back/forward sjálfu.
   useEffect(() => {
     if (!currentId) return
     const p = new URLSearchParams()
     p.set('list', currentId)
     if (tab && tab !== 'list') p.set('tab', tab)
     const next = '#' + p.toString()
-    if (window.location.hash !== next) window.history.replaceState(window.history.state, '', next)
+    if (window.location.hash === next) { navRef.current.first = false; navRef.current.fromPop = false; return }
+    if (navRef.current.first || navRef.current.fromPop) {
+      window.history.replaceState(window.history.state, '', next)
+    } else {
+      window.history.pushState(window.history.state, '', next)
+    }
+    navRef.current.first = false
+    navRef.current.fromPop = false
   }, [currentId, tab])
 
+  // Back/forward: lesa lista/flipa úr slóðinni. Gluggar breyta ekki hash-inu, svo þetta
+  // truflar ekki glugga-bakkstaflann (backstack.js) — hash breytist bara við listaskipti.
+  useEffect(() => {
+    const onPop = () => {
+      const h = readHash()
+      if (!h.list) return
+      if (h.list !== currentIdRef.current || h.tab !== tabRef.current) {
+        navRef.current.fromPop = true
+        setCurrentId(h.list)
+        setTab(h.tab)
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
   // Vélræni „til baka"-hnappurinn lokar opnum glugga í stað þess að fara úr appinu.
-  useBackClose(showLists, () => setShowLists(false))
+  // Athugið: listavalmyndin er VILJANDI ekki í bakkstaflanum — listaskipti nota
+  // vafrasöguna (pushState) og það myndi kapphlaupa við glugga-bakk. Hún lokast
+  // samt með X eða með því að smella utan á hana.
   useBackClose(!!sharing, () => setSharing(null))
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
