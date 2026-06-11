@@ -23,6 +23,8 @@ const readHash = () => {
 const HASH0 = readHash()
 const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString() }
 const startOfWeekISO = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - day); return d.toISOString() }
+// Kemur í veg fyrir tvöfaldan sjálfgefinn lista ef reload() keyrir tvisvar samtímis við innskráningu.
+let defaultListPromise = null
 import { ingredientLine } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
 import { suggestChorePoints, suggestChoreEmoji } from './data/chores.js'
@@ -71,8 +73,10 @@ export default function App() {
     try {
       let all = await store.getLists()
       // Nýr ský-notandi á engan lista — búum til þann fyrsta sjálfkrafa.
+      // Deilum einni create-loforði svo samtímis-reload búi ekki til tvo lista.
       if (isCloud && all.length === 0) {
-        await store.createList('Vikuinnkaup')
+        if (!defaultListPromise) defaultListPromise = store.createList('Vikuinnkaup')
+        await defaultListPromise
         all = await store.getLists()
       }
       setLists(all)

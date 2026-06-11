@@ -35,7 +35,7 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
       <span className="ltype" style={{ background: tp(l).tint }}>{tp(l).icon}</span>
       <div className="linfo" onClick={() => onSwitch(l.id)}>
         <div className="lname">{l.name}{l.shared && <span className="shared-tag">deilt</span>}</div>
-        <div className="lcount">{l.items.length} {l.type === 'task' ? 'verk' : 'vörur'}</div>
+        <div className="lcount">{l.items.length} {l.type === 'shopping' ? 'vörur' : 'verk'}</div>
       </div>
       <button className="ico" onClick={() => setActionList(l)} aria-label="Aðgerðir">⋯</button>
     </div>
