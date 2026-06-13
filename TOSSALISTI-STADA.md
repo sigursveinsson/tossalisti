@@ -107,6 +107,11 @@ Engin ný Supabase-tafla þurfti (notar `list_items` eins og er; `dept` hefur sj
 
 Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/App/ListView/ScheduleForm yfirfarin host-megin (heil og jöfnuð). Heildarbygging enn ekki möguleg í Cowork (sama umhverfisbilun: Windows-`node_modules` + GitHub lokað af proxy + skemmdur git-index). **Deploy verður að koma frá þinni vél.**
 
+## Hugmyndir / síðar (minnislisti)
+- **Alþjóðleg útrás — skoða SÍÐAR.** Ákvörðun: einbeita okkur að Íslandi fyrst (lítill, hraður prófunarvöllur; sanna retention + orðspor). Þegar/ef við skoðum útrás: gera alvöru samkeppnis- og markaðsgreiningu (keppinautar: Cozi, Bring!, AnyList, Splitwise, Greenlight, OurHome; verðlagning; glufur), velja EINN skarpan fleyg (t.d. krakka-verk+verðlaun eða „kvittun→flokkað bókhald" galdurinn) og einn enskumælandi brúarhaus, og staðfæra kvittana-/vörugögn per markað.
+- **Bókhald V2:** „hver borgaði hvað" + skuldajöfnun (deildir hópar/ferðalög/veislur). Síðar: ójöfn/sérsniðin skipting.
+- **Stjórnenda-skilaboð** (messages-tafla) svo hægt sé að senda skilaboð á notendur úr stjórnborði.
+
 ## ÓGERT — næstu skref
 1. **DEPLOY** óútkeyrða kóðann (allt að ofan — lota 1 + 2). `git add -A` + commit + push. Netlify byggir. Athugið: `node_modules` á þinni Windows-vél er rétt, svo `npm run build` virkar þar.
 2. **SEO + lén** — tengja `innkaupalisti.is` í Netlify sem 301-tilvísun á tossalisti.is; bæta meta/Open Graph-merkjum + sitemap/robots í `index.html`; Google Search Console.
