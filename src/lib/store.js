@@ -181,6 +181,11 @@ const local = {
     p.category = category || null
     localStorage.setItem('korfan.purchases', JSON.stringify(all))
   },
+  async setItemCategory(itemId, category) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    for (const p of all) { const it = (p.items || []).find(i => i.id === itemId); if (it) { it.category = category || null; break } }
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
     if (!name) return
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
@@ -502,6 +507,10 @@ const cloud = {
   },
   async setPurchaseCategory(id, category) {
     const { error } = await supabase.from('purchases').update({ category: category || null }).eq('id', id)
+    if (error) throw error
+  },
+  async setItemCategory(itemId, category) {
+    const { error } = await supabase.from('purchase_items').update({ category: category || null }).eq('id', itemId)
     if (error) throw error
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {

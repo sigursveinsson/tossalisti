@@ -654,6 +654,17 @@ button { font-family: inherit; cursor: pointer; }
 .btx-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .btx-amt { font-size: 15px; font-weight: 800; color: var(--navy); }
 .btx-cat { background: none; border: none; padding: 0; }
+.bmode { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.bmode button { flex: 1; height: 38px; border: none; background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 600; }
+.bmode button.on { background: var(--navy); color: #fff; }
+.btx-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.btx-wrap .btx { border: none; border-radius: 0; background: none; }
+.btx-exp { width: 22px; flex: none; background: none; border: none; color: var(--faint); font-size: 13px; padding: 0; }
+.btx-items { border-top: 1px solid var(--line); padding: 4px 11px 8px 33px; display: flex; flex-direction: column; gap: 4px; }
+.bitem { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.bitem-name { flex: 1; min-width: 0; font-size: 13px; color: var(--text); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bitem-price { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.bitem-cat { flex: none; border: none; font-size: 10.5px; font-weight: 600; border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
 .bcat { font-size: 11px; font-weight: 600; border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
 .bcat.none { color: var(--muted); background: var(--chip); }
 .bcat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

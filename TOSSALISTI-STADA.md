@@ -57,6 +57,13 @@ Engin ný Supabase-tafla þurfti (notar `list_items` eins og er; `dept` hefur sj
 11. **Vikusýn + Vika/Dagur toggle á skema** (`ListView.jsx`, `index.css`). Skema er nú almennt vikuplan — tímasettur tékklisti yfir vikuna, nýtist bæði fyrir krakka og fullorðna (stigatafla birtist bara þegar meðlimir/krakkar eru til). Toggle: **📅 Vika** = öll vikan í einu (lóðrétt agenda, hvert verk hakanlegt beint, smellur á dagshaus „zoom-ar" í daginn); **📋 Dagur** = ítarsýn með tímalínu. Valið vistast í `localStorage` (`korfan.schedview`).
 14. **Notenda-virknilogg á Stjórnborði** (`AdminView.jsx`, `store.js`, ný Supabase-fall `admin_user_activity`). Nýtt fall (security definer, aðeins admin-netfang) skilar fylki af notendum — nýjastir efst — með nafni, netfangi, skráningardags, hvað þeir eiga/gerðu (listar, vörur/verk, ✓ kláruð, kvittanir, krakkar, deildir sem þeir gengu í) og hvenær síðast virkir. Birtist neðst á 📊 Stjórnborði með „NÝR" merki á þeim sem skráðu sig í dag. **Migration `add_admin_user_activity` ER KOMIN Í LOFTIÐ.** Til að bæta við fleiri admin-netföngum: breyta `in (...)` listanum í fallinu.
 
+20. **Bókhald: flokkun á undirliðum + yfirlit eftir verslun (lota 6c).** Notandi vildi flokka *línuliði* hverrar kvittunar (ein Krónu-kvittun → matur/drykkir/áfengi/hreinlæti) og sjá líka eftir verslun.
+    - **Migration `add_purchase_item_category` ER KOMIN Í LOFTIÐ** (`category` á `purchase_items`).
+    - `categories.js` endurskrifað: 14 sameinaðir flokkar; **`itemCategory(name)` nýtir `departmentFor` úr vörubankanum** (produce/beverages/alcohol/cleaning… → matur/drykkir/áfengi/hreinlæti). `effectiveItemCat` = handvirk yfirskrift annars sjálfvirk. `suggestCategory` nú verslunar-byggt fyrir heilar færslur.
+    - store: `setItemCategory`. App: `setItemCat` handler.
+    - `BudgetView` endurskrifað: rofi **„Eftir flokki" / „Eftir verslun"**; flokka-samtölur reiknaðar úr línuliðum (verslunar-samtölur úr heildum); kvittanir **útvíkkanlegar** → hver línuliður með flokka-chip sem má smella á til að breyta. Sía á yfirlit eftir flokki eða verslun.
+    - **ATH óprófað:** `purchase_items.price` er notað sem línuupphæð í flokka-samtölum — ef parserinn geymir einingaverð gæti þurft að margfalda með qty. Skoða eftir deploy með alvöru kvittun.
+
 19. **Bókhald endurhugsað → heildar-sýn (lota 6b).** Notandi vildi EKKI lista-tegund heldur eina greiningar-sýn ofan á ALLAR kvittanir. Breytt:
     - `BudgetView` sýnir nú allar færslur notandans (ekki bundinn lista). Ný efsta-sýn `view='budget'` (fléttuð í hash/back/forward, `#view=budget`).
     - Opnast af **„📒 Bókhald & útgjöld"** takka í listavalmynd (`onOpenBudget`) OG af „Útgjöld"-spjaldinu á heimaskjá (`goBudget`). Nýjar færslur úr bókhaldssýn eru persónulegar (`addExpense`, list_id null).

@@ -346,6 +346,7 @@ export default function App() {
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
   const setPurchaseCat = async (id, cat) => { await store.setPurchaseCategory(id, cat); await loadPurchases() }
+  const setItemCat = async (id, cat) => { await store.setItemCategory(id, cat); await loadPurchases() }
   const setQty = async (it, qty) => { await store.setQty(list.id, it.id, qty); await reload(list.id) }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
@@ -566,7 +567,7 @@ export default function App() {
         {showHome
           ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} />
           : showBudget
-          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping

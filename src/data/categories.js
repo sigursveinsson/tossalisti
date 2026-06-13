@@ -1,31 +1,54 @@
-// Útgjaldaflokkar fyrir bókhald.
+import { departmentFor } from './products.js'
+
+// Útgjaldaflokkar — nýtast bæði á undirliði kvittana og á heilar færslur.
 export const EXPENSE_CATEGORIES = [
   { key: 'matur', name: 'Matur', icon: '🍽️', color: '#e8954a' },
-  { key: 'heimili', name: 'Heimili', icon: '🏠', color: '#4a6fd0' },
+  { key: 'drykkir', name: 'Drykkir', icon: '🥤', color: '#1f8ac0' },
+  { key: 'afengi', name: 'Áfengi', icon: '🍷', color: '#7a1f3d' },
+  { key: 'snakk', name: 'Snakk & sælgæti', icon: '🍫', color: '#d98c00' },
+  { key: 'hreinlaeti', name: 'Hreinlæti', icon: '🧽', color: '#14a37a' },
+  { key: 'snyrti', name: 'Snyrtivörur', icon: '🧴', color: '#7a52cc' },
+  { key: 'heimili', name: 'Heimili', icon: '🧻', color: '#a83b66' },
+  { key: 'born', name: 'Barnavörur', icon: '🧸', color: '#e8c84a' },
   { key: 'ferdalog', name: 'Ferðalög', icon: '✈️', color: '#4aa6c8' },
-  { key: 'veisla', name: 'Veisla', icon: '🎉', color: '#d05a9a' },
   { key: 'samgongur', name: 'Samgöngur', icon: '🚗', color: '#5a9e5a' },
-  { key: 'born', name: 'Börn', icon: '🧸', color: '#e8c84a' },
-  { key: 'afthreying', name: 'Afþreying', icon: '🎬', color: '#9a5ad0' },
   { key: 'reikningar', name: 'Reikningar', icon: '🧾', color: '#6b7a93' },
   { key: 'heilsa', name: 'Heilsa', icon: '💊', color: '#e8615a' },
+  { key: 'afthreying', name: 'Afþreying', icon: '🎬', color: '#9a5ad0' },
   { key: 'annad', name: 'Annað', icon: '📦', color: '#9aa6ba' },
 ]
 
 export const CAT_BY_KEY = Object.fromEntries(EXPENSE_CATEGORIES.map(c => [c.key, c]))
 
-// Sjálfvirk flokkatillaga út frá verslun/heiti.
-const HINTS = [
-  [['bónus', 'bonus', 'krónan', 'kronan', 'nettó', 'netto', 'hagkaup', 'iceland', 'costco', 'kjörbúð', 'fjarðarkaup', 'pizza', 'veitinga', 'restaurant', 'kaffi', 'bakarí'], 'matur'],
-  [['n1', 'olís', 'olis', ' ob ', 'orkan', 'bensín', 'bensin', 'strætó', 'straeto', 'leigubíl', 'hopp', 'parka', 'bílastæði'], 'samgongur'],
+// Vörudeild → útgjaldaflokkur (nýtir flokkun vörubankans).
+const DEPT_TO_CAT = {
+  produce: 'matur', bakery: 'matur', meat: 'matur', dairy: 'matur', frozen: 'matur', pantry: 'matur', baking: 'matur',
+  beverages: 'drykkir', alcohol: 'afengi', snacks: 'snakk', candy: 'snakk',
+  cleaning: 'hreinlaeti', personalcare: 'snyrti', household: 'heimili', other: 'annad',
+}
+
+// Sjálfvirk flokkun á undirlið kvittunar út frá vöruheiti.
+export function itemCategory(name) {
+  return DEPT_TO_CAT[departmentFor(name)] || 'annad'
+}
+
+// Virkur flokkur línuliðs: handvirk yfirskrift annars sjálfvirk.
+export function effectiveItemCat(item) {
+  return item.category || itemCategory(item.name)
+}
+
+// Sjálfvirk flokkatillaga á heilli færslu út frá verslun/heiti (fyrir handvirkar færslur).
+const STORE_HINTS = [
+  [['n1', 'olís', 'olis', 'orkan', 'bensín', 'bensin', 'strætó', 'straeto', 'leigubíl', 'hopp', 'bílastæði'], 'samgongur'],
   [['icelandair', 'play', 'booking', 'airbnb', 'hótel', 'hotel', 'flug', 'expedia'], 'ferdalog'],
   [['apótek', 'apotek', 'læknir', 'laeknir', 'heilsu', 'sjúkra', 'tannlæknir'], 'heilsa'],
   [['rafmagn', 'hiti', 'veitur', 'sími', 'simi', 'internet', 'tryggingar', 'áskrift', 'askrift', 'netflix', 'spotify'], 'reikningar'],
-  [['ikea', 'húsasmiðjan', 'husasmidjan', 'byko', 'rúmfatalager', 'heimili'], 'heimili'],
+  [['bíó', 'bio', 'leikhús', 'tónleikar', 'sundlaug'], 'afthreying'],
+  [['vínbúð', 'vinbud', 'áfengi'], 'afengi'],
+  [['bónus', 'bonus', 'krónan', 'kronan', 'nettó', 'netto', 'hagkaup', 'iceland', 'kjörbúð', 'fjarðarkaup'], 'matur'],
 ]
-
 export function suggestCategory(text) {
   const t = ' ' + (text || '').toLowerCase() + ' '
-  for (const [keys, cat] of HINTS) if (keys.some(k => t.includes(k))) return cat
+  for (const [keys, cat] of STORE_HINTS) if (keys.some(k => t.includes(k))) return cat
   return null
 }
