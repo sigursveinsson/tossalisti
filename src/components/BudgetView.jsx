@@ -56,15 +56,14 @@ function TxForm({ initial, onSave, onClose }) {
   )
 }
 
-export default function BudgetView({ list, purchases = [], members = [], currentUserId, onSave, onUpdate, onDelete, onSetCategory, onScanReceipt }) {
-  const [period, setPeriod] = useState('all') // 'month' | 'all'
+export default function BudgetView({ purchases = [], members = [], currentUserId, onSave, onUpdate, onDelete, onSetCategory, onScanReceipt }) {
+  const [period, setPeriod] = useState('month') // 'month' | 'all'
   const [filter, setFilter] = useState('all')
   const [form, setForm] = useState(null)
   const [catFor, setCatFor] = useState(null)
 
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
   const all = purchases
-    .filter(p => p.list_id === list.id)
     .filter(p => period === 'all' || (p.purchased_at && new Date(p.purchased_at) >= monthStart))
     .sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
 

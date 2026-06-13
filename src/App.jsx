@@ -4,6 +4,7 @@ import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
 import HomeView from './components/HomeView.jsx'
 import BudgetView from './components/BudgetView.jsx'
+import BudgetIntro from './components/BudgetIntro.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
@@ -67,6 +68,7 @@ export default function App() {
   const [purchases, setPurchases] = useState([])
   const [showReceipt, setShowReceipt] = useState(false)
   const [receiptListId, setReceiptListId] = useState(null) // bókhald: tengja kvittun við hóp
+  const [showBudgetIntro, setShowBudgetIntro] = useState(false)
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -113,6 +115,11 @@ export default function App() {
     if (view !== 'home') return
     setShowLists(false) // tryggja að listavalmyndin sé lokuð á heimaskjá (t.d. við innskráningu)
     if (isCloud) loadHome()
+  }, [view])
+  // Bókhald: sýna kynningu í fyrsta sinn.
+  useEffect(() => {
+    if (view !== 'budget') return
+    try { if (!localStorage.getItem('korfan.budgetintro')) setShowBudgetIntro(true) } catch (e) {}
   }, [view])
   useEffect(() => {
     if (view !== 'home' || !homeSum) return
@@ -249,6 +256,7 @@ export default function App() {
   useEffect(() => {
     let next
     if (view === 'home') next = '#view=home'
+    else if (view === 'budget') next = '#view=budget'
     else if (currentId) {
       const p = new URLSearchParams()
       p.set('list', currentId)
@@ -425,10 +433,9 @@ export default function App() {
   }
   const switchList = async (id) => { setView('list'); setCurrentId(id); setShowLists(false); setTab('list') }
   const goHome = () => { setView('home') }
-  const openSpendingFromHome = () => {
-    const shop = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping')
-    if (shop) { setView('list'); setCurrentId(shop.id); setTab('spending') }
-  }
+  const goBudget = () => { setView('budget') }
+  // Bókhaldssýn: ný útgjaldafærsla er persónuleg (engum lista tengd).
+  const addExpense = async (data) => { await store.addPurchase({ ...data, list_id: null }); await loadPurchases() }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({
@@ -500,7 +507,7 @@ export default function App() {
       </div>
     </div>
   )
-  if (!list && view !== 'home') return (
+  if (!list && view !== 'home' && view !== 'budget') return (
     <div className="empty">
       <p>Enginn listi enn.</p>
       <button
@@ -511,6 +518,7 @@ export default function App() {
   )
 
   const showHome = view === 'home'
+  const showBudget = view === 'budget'
   const isBudget = list?.type === 'budget'
   const open = list ? list.items.filter(i => !i.checked).length : 0
   const isAdmin = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
@@ -530,6 +538,11 @@ export default function App() {
             <button className="listbtn" onClick={() => setShowLists(true)} title="Listarnir mínir">
               <span className="lists-ico">☰</span> Heim <span className="chev">▾</span>
             </button>
+          ) : showBudget ? (
+            <>
+              <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
+              <button className="curtitle" onClick={() => setShowLists(true)} title="Listarnir mínir">📒 Bókhald</button>
+            </>
           ) : (
             <>
               <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
@@ -541,7 +554,7 @@ export default function App() {
           )}
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
-        {!showHome && !isBudget && (
+        {!showHome && !showBudget && !isBudget && (
           <div className="tabs">
             <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
             {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
@@ -551,9 +564,9 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={openSpendingFromHome} />
-          : isBudget
-          ? <BudgetView list={list} purchases={purchases} members={people} currentUserId={myId} onSave={savePurchase} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onScanReceipt={() => { setReceiptListId(list.id); setShowReceipt(true) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} />
+          : showBudget
+          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping
@@ -573,7 +586,8 @@ export default function App() {
           onRename={renameList}
           templates={TEMPLATES}
           onCreateFromTemplate={createFromTemplate}
-          onScanReceipt={() => { setShowLists(false); setShowReceipt(true) }}
+          onScanReceipt={() => { setShowLists(false); setReceiptListId(null); setShowReceipt(true) }}
+          onOpenBudget={() => { setShowLists(false); goBudget() }}
           userEmail={session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onClose={() => setShowLists(false)}
@@ -610,6 +624,13 @@ export default function App() {
       )}
 
       {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} />}
+
+      {showBudgetIntro && (
+        <BudgetIntro
+          onScan={() => { try { localStorage.setItem('korfan.budgetintro', '1') } catch (e) {}; setShowBudgetIntro(false); setReceiptListId(null); setShowReceipt(true) }}
+          onClose={() => { try { localStorage.setItem('korfan.budgetintro', '1') } catch (e) {}; setShowBudgetIntro(false) }}
+        />
+      )}
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
 

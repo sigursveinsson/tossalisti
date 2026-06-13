@@ -662,3 +662,27 @@ button { font-family: inherit; cursor: pointer; }
 .bcat-opt.on { border-color: var(--accent); background: var(--chip); font-weight: 600; }
 .bform-row { display: flex; gap: 8px; margin-bottom: 4px; }
 .bform-row .dialog-input { flex: 1; min-width: 0; }
+
+/* Bókhalds-takki í listavalmynd */
+.budget-link-btn { width: 100%; margin-top: 8px; height: 46px; border: 1px solid var(--line); background: var(--surface-2); color: var(--navy); border-radius: 12px; font-size: 15px; font-weight: 600; }
+
+/* Bókhalds-kynning (BudgetIntro) með hreyfimynd */
+.modal.bintro { width: 360px; position: relative; text-align: center; }
+.modal.bintro .x { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--muted); font-size: 24px; }
+.bintro-anim { background: var(--surface-2); border-radius: 14px; padding: 16px; margin: 6px 0 14px; }
+.bintro-receipt { position: relative; width: 64px; height: 64px; margin: 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.bintro-rico { font-size: 30px; }
+.bintro-scanline { position: absolute; left: 8%; right: 8%; height: 3px; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: bscan 1.6s ease-in-out infinite; }
+@keyframes bscan { 0%, 100% { top: 14%; } 50% { top: 80%; } }
+.bintro-arrow { font-size: 18px; color: var(--muted); margin: 6px 0; }
+.bintro-bars { display: flex; flex-direction: column; gap: 7px; max-width: 220px; margin: 0 auto; }
+.bintro-bar { display: flex; align-items: center; gap: 8px; }
+.bintro-bar i { display: block; height: 12px; width: 0; border-radius: 6px; animation: bgrow .7s ease forwards; animation-delay: var(--d); }
+.bintro-bar b { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+@keyframes bgrow { to { width: var(--w); } }
+.bintro-h { font-size: 22px; margin: 4px 0 6px; color: var(--navy); }
+.bintro-p { font-size: 14px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+.bintro-steps { display: flex; flex-direction: column; gap: 8px; text-align: left; margin: 0 0 16px; }
+.bintro-steps div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); }
+.bintro-steps span { font-size: 20px; width: 28px; text-align: center; flex: none; }
+.bintro-skip { width: 100%; margin-top: 10px; background: transparent; border: none; color: var(--muted); font-size: 14px; padding: 8px; }

@@ -57,6 +57,13 @@ Engin ný Supabase-tafla þurfti (notar `list_items` eins og er; `dept` hefur sj
 11. **Vikusýn + Vika/Dagur toggle á skema** (`ListView.jsx`, `index.css`). Skema er nú almennt vikuplan — tímasettur tékklisti yfir vikuna, nýtist bæði fyrir krakka og fullorðna (stigatafla birtist bara þegar meðlimir/krakkar eru til). Toggle: **📅 Vika** = öll vikan í einu (lóðrétt agenda, hvert verk hakanlegt beint, smellur á dagshaus „zoom-ar" í daginn); **📋 Dagur** = ítarsýn með tímalínu. Valið vistast í `localStorage` (`korfan.schedview`).
 14. **Notenda-virknilogg á Stjórnborði** (`AdminView.jsx`, `store.js`, ný Supabase-fall `admin_user_activity`). Nýtt fall (security definer, aðeins admin-netfang) skilar fylki af notendum — nýjastir efst — með nafni, netfangi, skráningardags, hvað þeir eiga/gerðu (listar, vörur/verk, ✓ kláruð, kvittanir, krakkar, deildir sem þeir gengu í) og hvenær síðast virkir. Birtist neðst á 📊 Stjórnborði með „NÝR" merki á þeim sem skráðu sig í dag. **Migration `add_admin_user_activity` ER KOMIN Í LOFTIÐ.** Til að bæta við fleiri admin-netföngum: breyta `in (...)` listanum í fallinu.
 
+19. **Bókhald endurhugsað → heildar-sýn (lota 6b).** Notandi vildi EKKI lista-tegund heldur eina greiningar-sýn ofan á ALLAR kvittanir. Breytt:
+    - `BudgetView` sýnir nú allar færslur notandans (ekki bundinn lista). Ný efsta-sýn `view='budget'` (fléttuð í hash/back/forward, `#view=budget`).
+    - Opnast af **„📒 Bókhald & útgjöld"** takka í listavalmynd (`onOpenBudget`) OG af „Útgjöld"-spjaldinu á heimaskjá (`goBudget`). Nýjar færslur úr bókhaldssýn eru persónulegar (`addExpense`, list_id null).
+    - **Lista-tegundin 'budget' tekin út úr ListsPanel** (aftur í seg3). `category`-dálkurinn, RLS (sameiginleg sýnileiki) og ledger-viðmótið standa öll.
+    - **`BudgetIntro.jsx`** — animeruð fyrsta-skiptis kynning (kvittun með skann-línu → flokka-súlur vaxa) sem útskýrir flæðið og býður „📷 Skanna fyrstu kvittun". Vistað í `korfan.budgetintro`.
+    - **Deildir hópar + „hver borgaði hvað" bíða V2** — þá fá listar/hópar tilgang aftur (grúppun + meðlimir). **ÓPRÓFAÐ í Cowork.**
+
 18. **Hópa-bókhald V1 (lota 6)** — ný lista-tegund `budget` („📒 Bókhald") sem endurnýtir deilingu/meðlimi/rauntíma. Færslur = `purchases` tengdar bókhalds-lista. Nýtt:
     - Gagnagrunnur: `category` á `purchases`. **RLS endurskrifað:** meðlimir sjá nú kvittanir á deildum listum (persónulegar — enginn/ódeildur listi — haldast einkamál); eigandi einn breytir/eyðir. `purchase_items` fylgja. **Migration `add_budget_categories_shared` ER KOMIN Í LOFTIÐ.**
     - `src/data/categories.js`: 10 útgjaldaflokkar + sjálfvirk flokkatillaga úr verslunarnafni.
