@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { EXPENSE_CATEGORIES, CAT_BY_KEY, suggestCategory, effectiveItemCat } from '../data/categories.js'
+import { EXPENSE_CATEGORIES, CAT_BY_KEY, suggestCategory, effectiveItemCat, itemCategory } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
@@ -7,48 +7,78 @@ const today = () => new Date().toISOString().slice(0, 10)
 const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('is-IS', { day: 'numeric', month: 'short' }) } catch { return d } }
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || ''
 
+const num = (v) => parseFloat(String(v).replace(',', '.')) || 0
+
 function TxForm({ initial, onSave, onClose }) {
   const [store, setStore] = useState(initial?.store || '')
-  const [total, setTotal] = useState(initial?.total != null ? String(initial.total) : '')
   const [date, setDate] = useState(initial?.purchased_at || today())
-  const [cat, setCat] = useState(initial?.category || null)
-  const [touchedCat, setTouchedCat] = useState(!!initial?.category)
-  const hasItems = (initial?.items || []).length > 0
+  const [items, setItems] = useState(() => {
+    const init = (initial?.items || []).map(it => ({ name: it.name || '', price: it.price != null ? String(it.price) : '', category: it.category || null }))
+    return init.length ? init : [{ name: '', price: '', category: null }]
+  })
+  const [override, setOverride] = useState(initial?.id && !(initial?.items || []).length && initial?.total != null ? String(initial.total) : '')
+  const [catRow, setCatRow] = useState(null)
   useBackClose(true, onClose)
 
-  useEffect(() => { if (!touchedCat) { const s = suggestCategory(store); if (s) setCat(s) } }, [store, touchedCat])
+  const setItem = (i, patch) => setItems(arr => arr.map((it, idx) => idx === i ? { ...it, ...patch } : it))
+  const addRow = () => setItems(arr => [...arr, { name: '', price: '', category: null }])
+  const delRow = (i) => setItems(arr => arr.length > 1 ? arr.filter((_, idx) => idx !== i) : [{ name: '', price: '', category: null }])
+
+  const clean = items.filter(it => it.name.trim())
+  const sum = clean.reduce((s, it) => s + num(it.price), 0)
+  const total = override ? num(override) : sum
 
   const save = () => {
-    const amt = parseFloat(String(total).replace(',', '.')) || 0
-    if (!store.trim() && !amt) return
-    onSave({ store: store.trim(), total: amt, purchased_at: date, category: hasItems ? (initial?.category || null) : cat })
+    if (!store.trim()) return
+    const its = clean.map(it => ({ name: it.name.trim(), price: num(it.price), category: it.category || itemCategory(it.name) }))
+    onSave({ store: store.trim(), purchased_at: date, total: total || 0, items: its, category: null })
   }
 
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>{initial?.id ? 'Breyta færslu' : 'Ný færsla'} <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
-        <input className="dialog-input" autoFocus value={store} onChange={e => setStore(e.target.value)} placeholder="Verslun / heiti (t.d. Krónan)" />
-        <div className="bform-row">
-          <input className="dialog-input" style={{ margin: 0 }} value={total} onChange={e => setTotal(e.target.value)} placeholder="Upphæð" inputMode="decimal" />
-          <input className="dialog-input" style={{ margin: 0 }} type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <h2>{initial?.id ? 'Breyta færslu' : 'Skrá útgjöld'} <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <input className="dialog-input" autoFocus value={store} onChange={e => setStore(e.target.value)} placeholder="Söluaðili (t.d. Ísbúð Vesturbæjar)" />
+        <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
+
+        <div className="modal-label">Vörur</div>
+        <div className="bedit-items">
+          {items.map((it, i) => {
+            const c = CAT_BY_KEY[it.category || itemCategory(it.name)] || { icon: '📦', color: '#9aa6ba' }
+            return (
+              <div className="bedit-row" key={i}>
+                <input value={it.name} onChange={e => setItem(i, { name: e.target.value })} placeholder="Vara (t.d. stór ís)" />
+                <input className="bedit-price" value={it.price} onChange={e => setItem(i, { price: e.target.value })} placeholder="kr" inputMode="decimal" />
+                <button className="bedit-cat" style={{ color: c.color }} onClick={() => setCatRow(i)} title="Flokkur" disabled={!it.name.trim()}>{c.icon}</button>
+                <button className="bedit-del" onClick={() => delRow(i)} aria-label="Eyða línu">×</button>
+              </div>
+            )
+          })}
         </div>
-        {hasItems ? (
-          <p className="muted-p" style={{ marginTop: 10 }}>Þessi kvittun er með {initial.items.length} liði — flokkaðu þá hvern fyrir sig í yfirlitinu.</p>
-        ) : (
-          <>
-            <div className="modal-label">Flokkur</div>
+        <button className="bedit-add" onClick={addRow}>+ Bæta við vöru</button>
+
+        <div className="bedit-total">
+          <span>Upphæð</span>
+          <input className="dialog-input" style={{ margin: 0, width: 120, textAlign: 'right' }} value={override} onChange={e => setOverride(e.target.value)} placeholder={sum ? kr(sum) : '0 kr'} inputMode="decimal" />
+        </div>
+
+        <button className="add-recipe-btn" style={{ marginTop: 12 }} onClick={save} disabled={!store.trim() || (!clean.length && !override)}>Vista</button>
+      </div>
+
+      {catRow != null && (
+        <div className="sheet-bg center" onClick={() => setCatRow(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Flokkur <button className="x" onClick={() => setCatRow(null)} aria-label="Loka">×</button></h2>
             <div className="bcat-grid">
               {EXPENSE_CATEGORIES.map(c => (
-                <button key={c.key} className={'bcat-opt' + (cat === c.key ? ' on' : '')} onClick={() => { setCat(c.key); setTouchedCat(true) }}>
+                <button key={c.key} className="bcat-opt" onClick={() => { setItem(catRow, { category: c.key }); setCatRow(null) }}>
                   <span>{c.icon}</span>{c.name}
                 </button>
               ))}
             </div>
-          </>
-        )}
-        <button className="add-recipe-btn" style={{ marginTop: 12 }} onClick={save} disabled={!store.trim()}>Vista</button>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

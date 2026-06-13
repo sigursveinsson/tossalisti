@@ -156,7 +156,8 @@ const local = {
     const rec = {
       id: uid(), list_id: p.list_id || null, store: p.store || '',
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10),
-      total: p.total ?? null, category: p.category || null, user_id: 'me', items: p.items || [],
+      total: p.total ?? null, category: p.category || null, user_id: 'me',
+      items: (p.items || []).map(i => ({ id: uid(), name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null })),
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
   },
@@ -487,7 +488,7 @@ const cloud = {
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {
-      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null }))
+      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null }))
       await supabase.from('purchase_items').insert(rows)
     }
     return pr
@@ -501,7 +502,7 @@ const cloud = {
     await supabase.from('purchases').update(upd).eq('id', id)
     await supabase.from('purchase_items').delete().eq('purchase_id', id)
     if (patch.items && patch.items.length) {
-      const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null }))
+      const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null }))
       await supabase.from('purchase_items').insert(rows)
     }
   },
