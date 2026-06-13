@@ -4,6 +4,7 @@ const TYPE = {
   shopping: { icon: '🛒', tint: '#eef3fb' },
   task: { icon: '✅', tint: '#e1f5ee' },
   schedule: { icon: '📅', tint: '#faeeda' },
+  budget: { icon: '📒', tint: '#f1efe8' },
 }
 
 export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, userEmail, onSignOut, onClose }) {
@@ -35,7 +36,7 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
       <span className="ltype" style={{ background: tp(l).tint }}>{tp(l).icon}</span>
       <div className="linfo" onClick={() => onSwitch(l.id)}>
         <div className="lname">{l.name}{l.shared && <span className="shared-tag">deilt</span>}</div>
-        <div className="lcount">{l.items.length} {l.type === 'shopping' ? 'vörur' : 'verk'}</div>
+        <div className="lcount">{l.type === 'budget' ? 'Bókhald' : `${l.items.length} ${l.type === 'shopping' ? 'vörur' : 'verk'}`}</div>
       </div>
       <button className="ico" onClick={() => setActionList(l)} aria-label="Aðgerðir">⋯</button>
     </div>
@@ -51,13 +52,14 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
             <button className="primary-btn" onClick={() => setCreating(true)}>+ Nýr listi</button>
           ) : (
             <div className="create-box">
-              <div className="seg seg3" style={{ marginBottom: 8 }}>
+              <div className="seg seg4" style={{ marginBottom: 8 }}>
                 <button className={newType === 'shopping' ? 'on' : ''} onClick={() => setNewType('shopping')}>🛒 Innkaup</button>
                 <button className={newType === 'task' ? 'on' : ''} onClick={() => setNewType('task')}>✅ Verk</button>
                 <button className={newType === 'schedule' ? 'on' : ''} onClick={() => setNewType('schedule')}>📅 Skema</button>
+                <button className={newType === 'budget' ? 'on' : ''} onClick={() => setNewType('budget')}>📒 Bókhald</button>
               </div>
               <div className="newrow">
-                <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && create()} placeholder={newType === 'schedule' ? 't.d. Heimilisskema…' : newType === 'task' ? 't.d. Brúðkaup…' : 't.d. Matarboð…'} />
+                <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && create()} placeholder={newType === 'budget' ? 't.d. Heimilið, Ferðalag…' : newType === 'schedule' ? 't.d. Heimilisskema…' : newType === 'task' ? 't.d. Brúðkaup…' : 't.d. Matarboð…'} />
                 <button onClick={create}>Búa til</button>
               </div>
             </div>

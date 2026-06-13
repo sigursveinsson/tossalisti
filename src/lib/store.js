@@ -156,7 +156,7 @@ const local = {
     const rec = {
       id: uid(), list_id: p.list_id || null, store: p.store || '',
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10),
-      total: p.total ?? null, items: p.items || [],
+      total: p.total ?? null, category: p.category || null, user_id: 'me', items: p.items || [],
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
   },
@@ -171,7 +171,14 @@ const local = {
     if (patch.store != null) p.store = patch.store
     if (patch.purchased_at) p.purchased_at = patch.purchased_at
     if (patch.total !== undefined) p.total = patch.total
+    if (patch.category !== undefined) p.category = patch.category
     if (patch.items) p.items = patch.items
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
+  async setPurchaseCategory(id, category) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    const p = all.find(x => x.id === id); if (!p) return
+    p.category = category || null
     localStorage.setItem('korfan.purchases', JSON.stringify(all))
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
@@ -471,6 +478,7 @@ const cloud = {
     const { data: pr, error } = await supabase.from('purchases').insert({
       user_id: user.id, list_id: p.list_id || null, store: p.store || null,
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
+      category: p.category || null,
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {
@@ -483,14 +491,18 @@ const cloud = {
     await supabase.from('purchases').delete().eq('id', id)
   },
   async updatePurchase(id, patch) {
-    await supabase.from('purchases').update({
-      store: patch.store || null, purchased_at: patch.purchased_at, total: patch.total ?? null,
-    }).eq('id', id)
+    const upd = { store: patch.store || null, purchased_at: patch.purchased_at, total: patch.total ?? null }
+    if (patch.category !== undefined) upd.category = patch.category
+    await supabase.from('purchases').update(upd).eq('id', id)
     await supabase.from('purchase_items').delete().eq('purchase_id', id)
     if (patch.items && patch.items.length) {
       const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null }))
       await supabase.from('purchase_items').insert(rows)
     }
+  },
+  async setPurchaseCategory(id, category) {
+    const { error } = await supabase.from('purchases').update({ category: category || null }).eq('id', id)
+    if (error) throw error
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
     if (!barcode || !name) return

@@ -3,6 +3,7 @@ import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
 import ListView from './components/ListView.jsx'
 import HomeView from './components/HomeView.jsx'
+import BudgetView from './components/BudgetView.jsx'
 import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
@@ -65,6 +66,7 @@ export default function App() {
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
   const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptListId, setReceiptListId] = useState(null) // bókhald: tengja kvittun við hóp
 
   // Auðkenning (aðeins í ský-ham)
   useEffect(() => {
@@ -328,13 +330,14 @@ export default function App() {
   }
   // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
   const scanReceiptMenu = async (purchase) => {
-    await store.addPurchase({ ...purchase, list_id: null })
+    await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases()
-    setShowReceipt(false)
+    setShowReceipt(false); setReceiptListId(null)
     flash('Kvittun skráð ✓')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
+  const setPurchaseCat = async (id, cat) => { await store.setPurchaseCategory(id, cat); await loadPurchases() }
   const setQty = async (it, qty) => { await store.setQty(list.id, it.id, qty); await reload(list.id) }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
@@ -508,11 +511,12 @@ export default function App() {
   )
 
   const showHome = view === 'home'
+  const isBudget = list?.type === 'budget'
   const open = list ? list.items.filter(i => !i.checked).length : 0
   const isAdmin = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
   const isShopping = list?.type === 'shopping'
-  const typeIcon = list?.type === 'schedule' ? '📅' : list?.type === 'task' ? '✅' : '🛒'
-  const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : 'Innkaupalisti'
+  const typeIcon = list?.type === 'schedule' ? '📅' : list?.type === 'task' ? '✅' : list?.type === 'budget' ? '📒' : '🛒'
+  const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : list?.type === 'budget' ? 'Bókhald' : 'Innkaupalisti'
 
   return (
     <div className="app">
@@ -530,13 +534,14 @@ export default function App() {
             <>
               <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
               <button className="curtitle" onClick={() => setShowLists(true)} title="Skipta um lista">{typeIcon} {list.name}</button>
-              <span className="count">{open} eftir</span>
+              {!isBudget && <span className="count">{open} eftir</span>}
+              {isBudget && <span className="count">📒</span>}
               <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
             </>
           )}
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
-        {!showHome && (
+        {!showHome && !isBudget && (
           <div className="tabs">
             <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
             {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
@@ -547,6 +552,8 @@ export default function App() {
       <div className="body">
         {showHome
           ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={openSpendingFromHome} />
+          : isBudget
+          ? <BudgetView list={list} purchases={purchases} members={people} currentUserId={myId} onSave={savePurchase} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onScanReceipt={() => { setReceiptListId(list.id); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping
@@ -602,7 +609,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onClose={() => setShowReceipt(false)} />}
+      {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} />}
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
 

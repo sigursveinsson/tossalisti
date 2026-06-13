@@ -620,3 +620,45 @@ button { font-family: inherit; cursor: pointer; }
 .home-feed-txt { font-size: 13px; color: var(--text); line-height: 1.45; }
 .home-feed-txt b { font-weight: 700; }
 .home-feed-time { display: block; font-size: 11px; color: var(--faint); margin-top: 1px; }
+
+/* Lista-tegunda-val: 4 tegundir (2x2) */
+.seg4 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg4 button { height: 42px; font-size: 13px; padding: 0 6px; }
+
+/* Bókhald (BudgetView) */
+.budget { padding: 4px 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.bsum { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #15315e, #2563eb); border-radius: 14px; padding: 14px 16px; color: #fff; }
+.bsum-label { font-size: 13px; opacity: .85; }
+.bsum-val { font-size: 26px; font-weight: 800; margin-top: 2px; }
+.bperiod { display: flex; gap: 4px; }
+.bperiod button { height: 30px; padding: 0 10px; border: 1px solid rgba(255,255,255,.3); background: transparent; color: #fff; border-radius: 8px; font-size: 12px; }
+.bperiod button.on { background: #fff; color: var(--navy); font-weight: 700; border-color: #fff; }
+.bactions { display: flex; gap: 8px; }
+.bactions .primary-btn { flex: 1; height: 42px; }
+.bscan { flex: none; height: 42px; padding: 0 14px; border: 1px solid var(--line); background: var(--surface); color: var(--navy); border-radius: 12px; font-size: 14px; font-weight: 600; }
+.bbreak { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 6px 12px; }
+.bbreak-row { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; padding: 9px 0; border-top: 1px solid var(--line); }
+.bbreak-row:first-child { border-top: none; }
+.bbreak-ic { font-size: 17px; flex: none; }
+.bbreak-name { width: 92px; flex: none; text-align: left; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bbreak-bar { flex: 1; height: 10px; background: var(--chip); border-radius: 6px; overflow: hidden; }
+.bbreak-bar i { display: block; height: 100%; border-radius: 6px; }
+.bbreak-amt { flex: none; font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.bfilter-clear { align-self: flex-start; background: var(--chip); border: 1px solid var(--line); color: var(--accent); border-radius: 20px; font-size: 12px; font-weight: 600; padding: 5px 12px; }
+.btx-list { display: flex; flex-direction: column; gap: 8px; }
+.btx { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; }
+.btx-ic { width: 36px; height: 36px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.btx-main { flex: 1; min-width: 0; background: none; border: none; text-align: left; padding: 0; }
+.btx-store { display: block; font-size: 15px; font-weight: 600; color: var(--text); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btx-meta { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+.btx-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.btx-amt { font-size: 15px; font-weight: 800; color: var(--navy); }
+.btx-cat { background: none; border: none; padding: 0; }
+.bcat { font-size: 11px; font-weight: 600; border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+.bcat.none { color: var(--muted); background: var(--chip); }
+.bcat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bcat-opt { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; font-size: 14px; text-align: left; }
+.bcat-opt span { font-size: 18px; }
+.bcat-opt.on { border-color: var(--accent); background: var(--chip); font-weight: 600; }
+.bform-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.bform-row .dialog-input { flex: 1; min-width: 0; }
