@@ -22,12 +22,13 @@ const DEPT_TO_ICON = {
 
 export function iconKeyForDept(dept) { return DEPT_TO_ICON[dept] || 'bag' }
 
-export function CatIcon({ dept, size = 52, className = '', onClick }) {
+export function CatIcon({ dept, size = 52, fill = false, className = '', onClick }) {
   const key = iconKeyForDept(dept)
   const paths = PATHS[key] || PATHS.bag
-  const isz = Math.round(size * 0.56)
+  const spanStyle = fill ? undefined : { width: size, height: size }
+  const isz = fill ? '56%' : Math.round(size * 0.56)
   return (
-    <span className={'cat-icon ' + className} style={{ width: size, height: size }} onClick={onClick}>
+    <span className={'cat-icon ' + (fill ? 'cat-icon-fill ' : '') + className} style={spanStyle} onClick={onClick}>
       <svg width={isz} height={isz} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {paths.map((d, i) => <path key={i} d={d} />)}
         {key === 'meat' && <circle cx="8" cy="11.5" r="0.7" />}

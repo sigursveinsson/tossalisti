@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { PRODUCTS, PRODUCT_NAMES } from '../data/products.js'
 import { DEPARTMENTS } from '../data/departments.js'
 import { CATEGORY_SPONSORS } from '../data/sponsors.js'
-import { productEmoji } from '../data/emoji.js'
+import { CatIcon } from '../data/icons.jsx'
 import { useBackClose } from '../lib/backstack.js'
 
 const norm = s => (s || '').toLowerCase().trim()
@@ -52,8 +52,8 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
       <button key={(opts.key || '') + name} className={'shelf-card' + (on ? ' on' : '') + (opts.spon ? ' spon' : '')} onClick={() => toggle(name)}>
         {opts.spon && <span className="shelf-badge">Kostað</span>}
         {on && <span className="shelf-check">✓</span>}
-        <span className="shelf-img" style={{ background: img ? '#fff' : '#f4f7fc' }}>
-          {img ? <img src={img} alt="" /> : <span className="shelf-emoji">{productEmoji(name, opts.dept)}</span>}
+        <span className="shelf-img" style={{ background: img ? '#fff' : 'transparent' }}>
+          {img ? <img src={img} alt="" /> : <CatIcon dept={opts.dept} fill className="shelf-cat" />}
         </span>
         <span className="shelf-name">{name}</span>
         {have.has(k) && <span className="shelf-have">á lista</span>}

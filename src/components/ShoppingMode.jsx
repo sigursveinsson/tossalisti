@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
+import { CatIcon } from '../data/icons.jsx'
 import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
 
@@ -57,7 +58,7 @@ export default function ShoppingMode({ items, onToggle, onClose, onScanCode, cat
             {g.items.map(it => (
               <button className="shopmode-item" key={it.id} onClick={() => onToggle(it, false)}>
                 <span className="shopmode-check" />
-                {imgOf(it) && <img className="shopmode-img" src={imgOf(it)} alt="" />}
+                {imgOf(it) ? <img className="shopmode-img" src={imgOf(it)} alt="" /> : <CatIcon dept={it.dept} size={46} />}
                 <span className="shopmode-name">{it.name}{(it.qty ?? 1) > 1 ? ` × ${it.qty}` : ''}</span>
               </button>
             ))}
