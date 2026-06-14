@@ -58,7 +58,7 @@ export default function ShoppingMode({ items, onToggle, onClose, onScanCode, cat
             {g.items.map(it => (
               <button className="shopmode-item" key={it.id} onClick={() => onToggle(it, false)}>
                 <span className="shopmode-check" />
-                {imgOf(it) ? <img className="shopmode-img" src={imgOf(it)} alt="" /> : <CatIcon dept={it.dept} size={46} />}
+                {imgOf(it) ? <img className="shopmode-img" src={imgOf(it)} alt="" /> : <CatIcon name={it.name} dept={it.dept} size={46} />}
                 <span className="shopmode-name">{it.name}{(it.qty ?? 1) > 1 ? ` × ${it.qty}` : ''}</span>
               </button>
             ))}

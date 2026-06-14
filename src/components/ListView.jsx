@@ -224,7 +224,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
           }
           // Engin alvöru mynd → samræmt flokkaíkon (aðeins innkaup)
-          if (!chore) return <CatIcon dept={it.dept} size={52} className="item-cat" onClick={() => onToggle(it, done)} />
+          if (!chore) return <CatIcon name={it.name} dept={it.dept} size={52} className="item-cat" onClick={() => onToggle(it, done)} />
           return null
         })()}
         <span className="label" onClick={() => onToggle(it, done)}>
@@ -269,7 +269,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           ))}
           {catSugg.map(n => (
             <div key={'cat_' + n} className="suggest-off" onClick={() => add(n, catalog[n])}>
-              {catalog[n] ? <img src={catalog[n]} alt="" /> : <CatIcon dept={departmentFor(n)} size={34} />}
+              {catalog[n] ? <img src={catalog[n]} alt="" /> : <CatIcon name={n} dept={departmentFor(n)} size={34} />}
               <span>{n}</span>
             </div>
           ))}

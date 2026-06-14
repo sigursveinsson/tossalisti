@@ -53,7 +53,7 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
         {opts.spon && <span className="shelf-badge">Kostað</span>}
         {on && <span className="shelf-check">✓</span>}
         <span className="shelf-img" style={{ background: img ? '#fff' : 'transparent' }}>
-          {img ? <img src={img} alt="" /> : <CatIcon dept={opts.dept} fill className="shelf-cat" />}
+          {img ? <img src={img} alt="" /> : <CatIcon name={name} dept={opts.dept} fill className="shelf-cat" />}
         </span>
         <span className="shelf-name">{name}</span>
         {have.has(k) && <span className="shelf-have">á lista</span>}
