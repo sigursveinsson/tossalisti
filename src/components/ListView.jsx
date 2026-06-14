@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
-import { suggest } from '../data/products.js'
+import { suggest, departmentFor } from '../data/products.js'
 import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
 import { CatIcon } from '../data/icons.jsx'
@@ -215,7 +215,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const done = isDone(it)
     return (
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
-        <div className="check" style={{ background: done ? color : 'transparent', borderColor: done ? color : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
+        <div className="check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
         {(() => {
           if (!chore && !showImages) return null
           const img = it.image_url || (!chore ? catalog[it.name] : null)
@@ -269,7 +269,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           ))}
           {catSugg.map(n => (
             <div key={'cat_' + n} className="suggest-off" onClick={() => add(n, catalog[n])}>
-              {catalog[n] && <img src={catalog[n]} alt="" />}
+              {catalog[n] ? <img src={catalog[n]} alt="" /> : <CatIcon dept={departmentFor(n)} size={34} />}
               <span>{n}</span>
             </div>
           ))}
@@ -485,7 +485,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         const img = it.image_url
         return (
           <div className={'wk-task' + (done ? ' done' : '')} key={it.id} onClick={() => onToggle(it, done)}>
-            <span className="wk-check" style={{ background: done ? 'var(--accent)' : 'transparent', borderColor: done ? 'var(--accent)' : undefined }}>{done ? '✓' : ''}</span>
+            <span className="wk-check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }}>{done ? '✓' : ''}</span>
             {it.time && <span className="wk-time">{it.time}</span>}
             {img && (isEmojiImage(img) ? <span className="wk-emoji">{emojiOf(img)}</span> : <img className="wk-img" src={img} alt="" loading="lazy" />)}
             <span className="wk-name">{it.name}</span>
