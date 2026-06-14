@@ -3,6 +3,7 @@ import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest } from '../data/products.js'
 import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
+import { CatIcon } from '../data/icons.jsx'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import KidsManager from './KidsManager.jsx'
@@ -218,9 +219,13 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         {(() => {
           if (!chore && !showImages) return null
           const img = it.image_url || (!chore ? catalog[it.name] : null)
-          if (!img) return null
-          if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
-          return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
+          if (img) {
+            if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
+            return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
+          }
+          // Engin alvöru mynd → samræmt flokkaíkon (aðeins innkaup)
+          if (!chore) return <CatIcon dept={it.dept} size={52} className="item-cat" onClick={() => onToggle(it, done)} />
+          return null
         })()}
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
