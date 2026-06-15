@@ -187,6 +187,15 @@ const local = {
     for (const p of all) { const it = (p.items || []).find(i => i.id === itemId); if (it) { it.category = category || null; break } }
     localStorage.setItem('korfan.purchases', JSON.stringify(all))
   },
+  async getCustomCategories() { return JSON.parse(localStorage.getItem('korfan.expcats') || '[]') },
+  async addCustomCategory({ name, icon, color } = {}) {
+    const all = JSON.parse(localStorage.getItem('korfan.expcats') || '[]')
+    const c = { id: uid(), name: (name || '').trim(), icon: icon || '🏷️', color: color || '#6b7a93' }
+    all.push(c); localStorage.setItem('korfan.expcats', JSON.stringify(all)); return c
+  },
+  async deleteCustomCategory(id) {
+    localStorage.setItem('korfan.expcats', JSON.stringify((JSON.parse(localStorage.getItem('korfan.expcats') || '[]')).filter(c => c.id !== id)))
+  },
   async upsertCatalog({ barcode, name, image, dept } = {}) {
     if (!name) return
     const c = JSON.parse(localStorage.getItem('korfan.catalog') || '{}')
@@ -512,6 +521,23 @@ const cloud = {
   },
   async setItemCategory(itemId, category) {
     const { error } = await supabase.from('purchase_items').update({ category: category || null }).eq('id', itemId)
+    if (error) throw error
+  },
+  async getCustomCategories() {
+    const { data, error } = await supabase.from('expense_categories').select('id,name,icon,color').order('created_at')
+    if (error) return []
+    return data || []
+  },
+  async addCustomCategory({ name, icon, color } = {}) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data, error } = await supabase.from('expense_categories')
+      .insert({ user_id: user?.id, name: (name || '').trim(), icon: icon || '🏷️', color: color || '#6b7a93' })
+      .select('id,name,icon,color').single()
+    if (error) throw error
+    return data
+  },
+  async deleteCustomCategory(id) {
+    const { error } = await supabase.from('expense_categories').delete().eq('id', id)
     if (error) throw error
   },
   async upsertCatalog({ barcode, name, image, dept } = {}) {

@@ -686,6 +686,27 @@ button { font-family: inherit; cursor: pointer; }
 .bcat-opt { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; font-size: 14px; text-align: left; }
 .bcat-opt span { font-size: 18px; }
 .bcat-opt.on { border-color: var(--accent); background: var(--chip); font-weight: 600; }
+.bcat-new { border-style: dashed; border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.bcat-new span { font-size: 18px; }
+
+/* Nýr-flokks form */
+.bnewcat { display: flex; flex-direction: column; gap: 10px; }
+.bnewcat-emojis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.bemoji { height: 40px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; font-size: 20px; }
+.bemoji.on { border-color: var(--accent); background: var(--chip); }
+.bnewcat-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.bcolor { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; }
+.bcolor.on { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface) inset; }
+.bnewcat-actions { display: flex; gap: 8px; }
+.bnewcat-actions .ghost-btn, .bnewcat-actions .primary-btn { margin-top: 4px; flex: 1; }
+
+/* Flokka-stjórnun */
+.bmanage-cats { align-self: flex-start; margin: -2px 0 2px; background: transparent; border: none; color: var(--muted); font-size: 13px; padding: 4px 0; }
+.bcat-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.bcat-line { display: flex; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.bcat-line span { font-size: 18px; }
+.bcat-del { margin-left: auto; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+
 .bform-row { display: flex; gap: 8px; margin-bottom: 4px; }
 .bform-row .dialog-input { flex: 1; min-width: 0; }
 

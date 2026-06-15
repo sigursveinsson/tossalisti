@@ -168,6 +168,16 @@ export default function App() {
     loadPurchases()
   }, [session])
 
+  // Eigin útgjaldaflokkar notanda
+  const [customCats, setCustomCats] = useState([])
+  const loadCustomCats = () => store.getCustomCategories().then(setCustomCats).catch(() => setCustomCats([]))
+  useEffect(() => {
+    if (isCloud && !session) return
+    loadCustomCats()
+  }, [session])
+  const addCategory = async (data) => { const c = await store.addCustomCategory(data); await loadCustomCats(); return c }
+  const deleteCategory = async (id) => { await store.deleteCustomCategory(id); await loadCustomCats() }
+
   // Sameiginlegur vörubanki (myndir úr skönnun)
   const [catalog, setCatalog] = useState({})
   useEffect(() => {
@@ -567,7 +577,7 @@ export default function App() {
         {showHome
           ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} />
           : showBudget
-          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping

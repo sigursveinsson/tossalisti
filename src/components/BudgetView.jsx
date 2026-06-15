@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { EXPENSE_CATEGORIES, CAT_BY_KEY, suggestCategory, effectiveItemCat, itemCategory } from '../data/categories.js'
+import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
@@ -9,7 +9,49 @@ const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '
 
 const num = (v) => parseFloat(String(v).replace(',', '.')) || 0
 
-function TxForm({ initial, onSave, onClose }) {
+// Tákn og litir í boði þegar notandi býr til eigin flokk.
+const CAT_EMOJIS = ['🚗', '☕', '🎬', '🍺', '🅿️', '🏋️', '🎮', '🐶', '🌱', '🎸', '✂️', '💐', '📚', '🎨', '🛠️', '🚲', '🏥', '💻', '🎵', '🍕', '⛽', '🧥', '💅', '🎂']
+const CAT_COLORS = ['#e07b39', '#c0398c', '#3f8fd0', '#5a9e5a', '#d4537e', '#5a6fd0', '#8a6d3b', '#7a52cc', '#14a37a', '#e8615a', '#d98c00', '#6b7a93']
+
+function NewCatForm({ onCreate, onCancel }) {
+  const [name, setName] = useState('')
+  const [icon, setIcon] = useState(CAT_EMOJIS[0])
+  const [color, setColor] = useState(CAT_COLORS[0])
+  const save = () => { if (name.trim()) onCreate({ name: name.trim(), icon, color }) }
+  return (
+    <div className="bnewcat">
+      <input className="dialog-input" autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="Heiti flokks (t.d. Kaffihús)" />
+      <div className="bnewcat-emojis">
+        {CAT_EMOJIS.map(e => <button key={e} type="button" className={'bemoji' + (e === icon ? ' on' : '')} onClick={() => setIcon(e)}>{e}</button>)}
+      </div>
+      <div className="bnewcat-colors">
+        {CAT_COLORS.map(c => <button key={c} type="button" className={'bcolor' + (c === color ? ' on' : '')} style={{ background: c }} onClick={() => setColor(c)} aria-label="Litur" />)}
+      </div>
+      <div className="bnewcat-actions">
+        <button className="ghost-btn" onClick={onCancel}>Hætta við</button>
+        <button className="primary-btn" onClick={save} disabled={!name.trim()}>Búa til</button>
+      </div>
+    </div>
+  )
+}
+
+// Flokkaval: innbyggðir + eigin flokkar + „Nýr flokkur".
+function CatGrid({ cats, onPick, onAddCategory }) {
+  const [creating, setCreating] = useState(false)
+  if (creating) return <NewCatForm onCancel={() => setCreating(false)} onCreate={async d => { const c = await onAddCategory(d); setCreating(false); onPick((c && (c.id || c.key)) || null) }} />
+  return (
+    <div className="bcat-grid">
+      {cats.map(c => (
+        <button key={c.key} className="bcat-opt" onClick={() => onPick(c.key)}>
+          <span>{c.icon}</span>{c.name}
+        </button>
+      ))}
+      {onAddCategory && <button className="bcat-opt bcat-new" onClick={() => setCreating(true)}><span>＋</span>Nýr flokkur</button>}
+    </div>
+  )
+}
+
+function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
   const [store, setStore] = useState(initial?.store || '')
   const [date, setDate] = useState(initial?.purchased_at || today())
   const [items, setItems] = useState(() => {
@@ -44,7 +86,7 @@ function TxForm({ initial, onSave, onClose }) {
         <div className="modal-label">Vörur</div>
         <div className="bedit-items">
           {items.map((it, i) => {
-            const c = CAT_BY_KEY[it.category || itemCategory(it.name)] || { icon: '📦', color: '#9aa6ba' }
+            const c = catMap[it.category || itemCategory(it.name)] || { icon: '📦', color: '#9aa6ba' }
             return (
               <div className="bedit-row" key={i}>
                 <input value={it.name} onChange={e => setItem(i, { name: e.target.value })} placeholder="Vara (t.d. stór ís)" />
@@ -69,13 +111,7 @@ function TxForm({ initial, onSave, onClose }) {
         <div className="sheet-bg center" onClick={() => setCatRow(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h2>Flokkur <button className="x" onClick={() => setCatRow(null)} aria-label="Loka">×</button></h2>
-            <div className="bcat-grid">
-              {EXPENSE_CATEGORIES.map(c => (
-                <button key={c.key} className="bcat-opt" onClick={() => { setItem(catRow, { category: c.key }); setCatRow(null) }}>
-                  <span>{c.icon}</span>{c.name}
-                </button>
-              ))}
-            </div>
+            <CatGrid cats={cats} onAddCategory={onAddCategory} onPick={(key) => { setItem(catRow, { category: key }); setCatRow(null) }} />
           </div>
         </div>
       )}
@@ -83,7 +119,7 @@ function TxForm({ initial, onSave, onClose }) {
   )
 }
 
-export default function BudgetView({ purchases = [], members = [], currentUserId, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt }) {
+export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt }) {
   const [period, setPeriod] = useState('month')
   const [mode, setMode] = useState('cat') // 'cat' | 'store'
   const [filterCat, setFilterCat] = useState(null)
@@ -91,6 +127,12 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
   const [form, setForm] = useState(null)
   const [catForItem, setCatForItem] = useState(null)
   const [openIds, setOpenIds] = useState({})
+  const [manageCats, setManageCats] = useState(false)
+
+  // Sameinaðir flokkar: innbyggðir + eigin flokkar notanda.
+  const allCats = [...EXPENSE_CATEGORIES, ...customCats.map(c => ({ key: c.id, name: c.name, icon: c.icon, color: c.color, custom: true }))]
+  const catMap = Object.fromEntries(allCats.map(c => [c.key, c]))
+  const catOf = (k) => catMap[k] || { name: 'Annað', icon: '📦', color: '#9aa6ba' }
 
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
   const all = purchases
@@ -109,7 +151,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
   for (const p of all) { const s = (p.store || '').trim() || 'Annað'; storeTotals[s] = (storeTotals[s] || 0) + (Number(p.total) || 0) }
 
   const rows = mode === 'cat'
-    ? Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]).map(k => ({ key: k, label: (CAT_BY_KEY[k] || { name: 'Annað' }).name, icon: (CAT_BY_KEY[k] || { icon: '📦' }).icon, color: (CAT_BY_KEY[k] || { color: '#9aa6ba' }).color, amt: catTotals[k] }))
+    ? Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]).map(k => { const c = catOf(k); return { key: k, label: c.name, icon: c.icon, color: c.color, amt: catTotals[k] } })
     : Object.keys(storeTotals).sort((a, b) => storeTotals[b] - storeTotals[a]).map(k => ({ key: k, label: k, icon: '🏪', color: '#4a6fd0', amt: storeTotals[k] }))
   const maxAmt = Math.max(1, ...rows.map(r => r.amt))
 
@@ -130,7 +172,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
     else { setFilterCat(filterCat === r.key ? null : r.key); setFilterStore(null) }
   }
   const saveForm = async (data) => { if (form?.id) await onUpdate(form.id, data); else await onSave(data); setForm(null) }
-  const activeFilter = filterStore || (filterCat && (CAT_BY_KEY[filterCat] || {}).name)
+  const activeFilter = filterStore || (filterCat && catOf(filterCat).name)
 
   return (
     <div className="budget">
@@ -171,6 +213,10 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
         </div>
       )}
 
+      {mode === 'cat' && onAddCategory && (
+        <button className="bmanage-cats" onClick={() => setManageCats(true)}>⚙️ Flokkar</button>
+      )}
+
       {activeFilter && (
         <button className="bfilter-clear" onClick={() => { setFilterCat(null); setFilterStore(null) }}>Sýni: {activeFilter} — sýna allt ×</button>
       )}
@@ -194,7 +240,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
               {open && items.length > 0 && (
                 <div className="btx-items">
                   {items.map(it => {
-                    const c = CAT_BY_KEY[effectiveItemCat(it)] || { icon: '📦', name: 'Annað', color: '#9aa6ba' }
+                    const c = catOf(effectiveItemCat(it))
                     return (
                       <div className="bitem" key={it.id || it.name}>
                         <span className="bitem-name">{it.name}</span>
@@ -210,17 +256,35 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
         })}
       </div>
 
-      {form && <TxForm initial={form} onSave={saveForm} onClose={() => setForm(null)} />}
+      {form && <TxForm initial={form} catMap={catMap} cats={allCats} onAddCategory={onAddCategory} onSave={saveForm} onClose={() => setForm(null)} />}
 
       {catForItem && (
         <div className="sheet-bg center" onClick={() => setCatForItem(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h2>Flokkur á lið <button className="x" onClick={() => setCatForItem(null)} aria-label="Loka">×</button></h2>
-            <div className="bcat-grid">
+            <CatGrid cats={allCats} onAddCategory={onAddCategory} onPick={async (key) => { await onSetItemCategory(catForItem, key); setCatForItem(null) }} />
+          </div>
+        </div>
+      )}
+
+      {manageCats && (
+        <div className="sheet-bg center" onClick={() => setManageCats(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Flokkar <button className="x" onClick={() => setManageCats(false)} aria-label="Loka">×</button></h2>
+            <div className="modal-label">Innbyggðir</div>
+            <div className="bcat-list">
               {EXPENSE_CATEGORIES.map(c => (
-                <button key={c.key} className="bcat-opt" onClick={async () => { await onSetItemCategory(catForItem, c.key); setCatForItem(null) }}>
-                  <span>{c.icon}</span>{c.name}
-                </button>
+                <div className="bcat-line" key={c.key}><span style={{ color: c.color }}>{c.icon}</span> {c.name}</div>
+              ))}
+            </div>
+            <div className="modal-label">Þínir flokkar</div>
+            {customCats.length === 0 && <p className="empty" style={{ margin: '4px 0' }}>Engir enn — búðu til flokk þegar þú flokkar færslu.</p>}
+            <div className="bcat-list">
+              {customCats.map(c => (
+                <div className="bcat-line" key={c.id}>
+                  <span style={{ color: c.color }}>{c.icon}</span> {c.name}
+                  {onDeleteCategory && <button className="bcat-del" onClick={() => onDeleteCategory(c.id)} aria-label="Eyða flokki">×</button>}
+                </div>
               ))}
             </div>
           </div>

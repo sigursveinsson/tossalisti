@@ -15,6 +15,13 @@ export const EXPENSE_CATEGORIES = [
   { key: 'reikningar', name: 'Reikningar', icon: '🧾', color: '#6b7a93' },
   { key: 'heilsa', name: 'Heilsa', icon: '💊', color: '#e8615a' },
   { key: 'afthreying', name: 'Afþreying', icon: '🎬', color: '#9a5ad0' },
+  { key: 'veitingar', name: 'Veitingar & kaffihús', icon: '🍔', color: '#e07b39' },
+  { key: 'skemmtun', name: 'Skemmtun & barir', icon: '🍸', color: '#c0398c' },
+  { key: 'fot', name: 'Föt', icon: '👕', color: '#3f8fd0' },
+  { key: 'gjafir', name: 'Gjafir', icon: '🎁', color: '#d4537e' },
+  { key: 'tomstundir', name: 'Tómstundir & sport', icon: '⚽', color: '#5a9e5a' },
+  { key: 'askriftir', name: 'Áskriftir', icon: '📺', color: '#5a6fd0' },
+  { key: 'gaeludyr', name: 'Gæludýr', icon: '🐾', color: '#8a6d3b' },
   { key: 'annad', name: 'Annað', icon: '📦', color: '#9aa6ba' },
 ]
 
