@@ -32,6 +32,19 @@ const activitySummary = (u) => {
   if (u.memberships > u.lists_owned) parts.push('gekk í ' + (u.memberships - u.lists_owned) + ' deilda')
   return parts.length ? parts.join(' · ') : 'skráði sig, engin virkni enn'
 }
+// Uppruna-merki: hvaðan notandinn kom inn í kerfið
+const SRC = {
+  tossalisti: { letter: 'T', label: 'Tossalisti (boð frá notanda)', color: '#15315e' },
+  facebook: { letter: 'F', label: 'Facebook', color: '#1877F2' },
+  instagram: { letter: 'I', label: 'Instagram', color: '#E1306C' },
+  google: { letter: 'G', label: 'Google', color: '#4285F4' },
+  other: { letter: '↗', label: 'Annað', color: '#6b7a93' },
+  direct: { letter: 'B', label: 'Beint', color: '#9aa6ba' },
+}
+const srcBadge = (u) => {
+  const s = SRC[u.source] || SRC.direct
+  return { ...s, title: s.label + (u.utm_campaign ? ' · ' + u.utm_campaign : '') }
+}
 
 export default function AdminView({ onClose }) {
   const [stats, setStats] = useState(null)
@@ -96,6 +109,7 @@ export default function AdminView({ onClose }) {
                   <span className="adm-user-ava">{(u.name || u.email).slice(0, 2).toUpperCase()}</span>
                   <div className="adm-user-main">
                     <div className="adm-user-top">
+                      {(() => { const b = srcBadge(u); return <span className="adm-user-src" style={{ background: b.color }} title={b.title}>{b.letter}</span> })()}
                       <span className="adm-user-name">{u.name || u.email.split('@')[0]}</span>
                       {isToday(u.created_at) && <span className="adm-user-new">NÝR</span>}
                     </div>

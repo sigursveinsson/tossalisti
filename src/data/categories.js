@@ -59,3 +59,36 @@ export function suggestCategory(text) {
   for (const [keys, cat] of STORE_HINTS) if (keys.some(k => t.includes(k))) return cat
   return null
 }
+
+// Verslunarkeðjur — sameina mismunandi útibú („Krónan Skeifunni", „Krónan Granda" → „Krónan").
+const STORE_CHAINS = [
+  ['Krónan', ['krónan', 'kronan']],
+  ['Bónus', ['bónus', 'bonus']],
+  ['Nettó', ['nettó', 'netto']],
+  ['Hagkaup', ['hagkaup']],
+  ['Costco', ['costco']],
+  ['Iceland', ['iceland']],
+  ['Fjarðarkaup', ['fjarðarkaup', 'fjardarkaup']],
+  ['Kjörbúðin', ['kjörbúð', 'kjorbud']],
+  ['Krambúð', ['krambúð', 'krambud']],
+  ['10-11', ['10-11', '10/11', 'tíu ellefu']],
+  ['Extra', ['extra ']],
+  ['Vínbúðin', ['vínbúð', 'vinbud']],
+  ['Lyfja', ['lyfja']],
+  ['Apótekið', ['apótek', 'apotek']],
+  ['N1', ['n1']],
+  ['Olís', ['olís', 'olis']],
+  ['Orkan', ['orkan']],
+  ['ÓB', ['ób ']],
+  ['IKEA', ['ikea']],
+  ['ELKO', ['elko']],
+]
+
+// Skilar nafni keðju ef þekkt, annars upprunalega söluaðila-heitið.
+export function storeChain(name) {
+  const raw = (name || '').trim()
+  if (!raw) return 'Annað'
+  const t = ' ' + raw.toLowerCase() + ' '
+  for (const [chain, keys] of STORE_CHAINS) if (keys.some(k => t.includes(k))) return chain
+  return raw
+}

@@ -17,7 +17,9 @@ import ProfileSetup from './components/ProfileSetup.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
 import { useBackClose } from './lib/backstack.js'
+import { captureAttribution, getAttribution } from './lib/attribution.js'
 
+captureAttribution()
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
 const readHash = () => {
   const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
@@ -239,6 +241,14 @@ export default function App() {
         return reload(listId).then(() => { setCurrentId(listId); setTab('list'); flash('Þú gekkst í listann!') })
       })
       .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
+  }, [session])
+
+  // Skrá hvaðan notandinn kom (fyrsta-snerting) — aðeins fyrsta skipti per notanda
+  const attrDone = useRef(false)
+  useEffect(() => {
+    if (!isCloud || !session || attrDone.current) return
+    attrDone.current = true
+    store.recordAttribution(getAttribution()).catch(() => {})
   }, [session])
 
   // ---- Vafrasaga fyrir lista/flipa: refresh heldur sér, back/forward virkar ----

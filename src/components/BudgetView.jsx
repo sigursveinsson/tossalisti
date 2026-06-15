@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory } from '../data/categories.js'
+import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
@@ -148,7 +148,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
     else { const c = p.category || 'annad'; catTotals[c] = (catTotals[c] || 0) + (Number(p.total) || 0) }
   }
   const storeTotals = {}
-  for (const p of all) { const s = (p.store || '').trim() || 'Annað'; storeTotals[s] = (storeTotals[s] || 0) + (Number(p.total) || 0) }
+  for (const p of all) { const s = storeChain(p.store); storeTotals[s] = (storeTotals[s] || 0) + (Number(p.total) || 0) }
 
   const rows = mode === 'cat'
     ? Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]).map(k => { const c = catOf(k); return { key: k, label: c.name, icon: c.icon, color: c.color, amt: catTotals[k] } })
@@ -156,7 +156,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
   const maxAmt = Math.max(1, ...rows.map(r => r.amt))
 
   let shown = all
-  if (filterStore) shown = all.filter(p => ((p.store || '').trim() || 'Annað') === filterStore)
+  if (filterStore) shown = all.filter(p => storeChain(p.store) === filterStore)
   else if (filterCat) shown = all.filter(p => {
     const items = p.items || []
     return items.length ? items.some(it => effectiveItemCat(it) === filterCat) : (p.category || 'annad') === filterCat

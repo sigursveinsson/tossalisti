@@ -349,6 +349,7 @@ const local = {
   },
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
+  async recordAttribution() {},
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async assignItem(listId, itemId, person) {
@@ -707,6 +708,19 @@ const cloud = {
   async deleteRedemption(id) { const { error } = await supabase.from('reward_redemptions').delete().eq('id', id); if (error) throw error },
   async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
   async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
+  async recordAttribution(a) {
+    if (!a) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('signup_attribution').upsert({
+      user_id: user.id,
+      source: a.source || 'direct',
+      utm_source: a.utm_source || null,
+      utm_medium: a.utm_medium || null,
+      utm_campaign: a.utm_campaign || null,
+      referrer: a.referrer || null,
+    }, { onConflict: 'user_id', ignoreDuplicates: true })
+  },
   async getMyProfile() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
