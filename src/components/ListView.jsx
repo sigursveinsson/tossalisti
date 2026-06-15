@@ -61,6 +61,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [viewDay, setViewDay] = useState(todayKey())
   const [assigning, setAssigning] = useState(null)
   const [editItem, setEditItem] = useState(null)
+  const [remItem, setRemItem] = useState(null)
   const [deptItem, setDeptItem] = useState(null)
   const [kidsOpen, setKidsOpen] = useState(false)
   const [profilePerson, setProfilePerson] = useState(null)
@@ -242,7 +243,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </span>
         )}
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
-        {chore && onSetReminder && <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => onSetReminder(it, !it.reminder_enabled)} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Fá áminningu á tíma verksins'} aria-label="Áminning">{it.reminder_enabled ? '🔔' : '🔕'}</button>}
+        {chore && onSetReminder && (
+          <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => { if (it.reminder_enabled) onSetReminder(it, false); else setRemItem(it) }} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Stilla áminningu'} aria-label="Áminning">
+            {it.reminder_enabled ? <>🔔{it.time ? <span className="rem-time">{it.time}</span> : null}</> : '🔕'}
+          </button>
+        )}
         {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
         {assignBtn(it)}
         <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
@@ -360,6 +365,54 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     </div>
   )
 
+  // Samhengisháð áminning: vikuskema → tími; verklisti → dagur + tími.
+  const reminderSheet = remItem && (() => {
+    const r = remItem
+    const setR = (patch) => setRemItem(v => ({ ...v, ...patch }))
+    const wdLabel = (WEEKDAYS.find(([k]) => k === (r.weekday || 'daily')) || [, 'daglega'])[1]
+    const canSave = isSchedule ? !!r.time : (!!r.due_at && !!r.time)
+    const save = async () => {
+      if (isSchedule) {
+        await onSetTime(r, r.time)
+      } else {
+        await onSetDue(r, r.due_at || '')
+        await onSetTime(r, r.time || '')
+      }
+      await onSetReminder(r, true)
+      setRemItem(null)
+    }
+    return (
+      <div className="sheet-bg center" onClick={() => setRemItem(null)}>
+        <div className="modal" onClick={e => e.stopPropagation()}>
+          <h2>🔔 Áminning <button className="x" onClick={() => setRemItem(null)} aria-label="Loka">×</button></h2>
+          <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 12 }}>{r.name}</div>
+          {isSchedule ? (
+            <>
+              <div className="modal-label">Tími áminningar</div>
+              <select className="list-select" value={r.time || ''} onChange={e => setR({ time: e.target.value })}>
+                <option value="">— veldu tíma —</option>
+                {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <p className="ns-hint" style={{ marginTop: 10 }}>Áminning berst {wdLabel === 'daglega' ? 'daglega' : 'á ' + wdLabel.toLowerCase()} kl. {r.time || '…'}.</p>
+            </>
+          ) : (
+            <>
+              <div className="modal-label">Dagsetning</div>
+              <input className="dialog-input" type="date" value={r.due_at || ''} onChange={e => setR({ due_at: e.target.value })} />
+              <div className="modal-label">Tími</div>
+              <select className="list-select" value={r.time || ''} onChange={e => setR({ time: e.target.value })}>
+                <option value="">— veldu tíma —</option>
+                {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <p className="ns-hint" style={{ marginTop: 10 }}>Áminning berst {r.due_at || '…'} kl. {r.time || '…'}.</p>
+            </>
+          )}
+          <button className="add-recipe-btn" style={{ marginTop: 12 }} disabled={!canSave} onClick={save}>Kveikja á áminningu</button>
+        </div>
+      </div>
+    )
+  })()
+
   const deptModal = deptItem && (
     <div className="sheet-bg center" onClick={() => setDeptItem(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -461,6 +514,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <>
         {assignModal}
         {settingsModal}
+        {reminderSheet}
         {kidsModal}
         {profileModal}
         {rewardsModal}
@@ -577,6 +631,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <div className="group">{ordered.map(it => itemRow(it, 'var(--accent)', true))}</div>
         {assignModal}
         {settingsModal}
+        {reminderSheet}
         {kidsModal}
         {profileModal}
         {rewardsModal}

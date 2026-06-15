@@ -758,8 +758,9 @@ button { font-family: inherit; cursor: pointer; }
 .ns-hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 12px 2px 0; }
 
 /* Áminninga-bjalla á verk */
-.rem-bell { background: transparent; border: none; font-size: 16px; padding: 4px; opacity: .45; flex: none; line-height: 1; }
+.rem-bell { background: transparent; border: none; font-size: 16px; padding: 4px; opacity: .45; flex: none; line-height: 1; display: inline-flex; align-items: center; gap: 3px; }
 .rem-bell.on { opacity: 1; }
+.rem-time { font-size: 11px; font-weight: 700; color: var(--accent); }
 
 /* Heimaskjár — install-ábending */
 .home-install { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--accent); background: var(--chip); border-radius: 14px; text-align: left; }
