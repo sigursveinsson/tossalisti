@@ -9,6 +9,7 @@ import RecipesView from './components/RecipesView.jsx'
 import SpendingView from './components/SpendingView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
 import AdminView from './components/AdminView.jsx'
+import NotifSettings from './components/NotifSettings.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
@@ -65,6 +66,8 @@ export default function App() {
   const [profile, setProfile] = useState(null)
   const [profileLoaded, setProfileLoaded] = useState(!isCloud)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showNotif, setShowNotif] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
@@ -251,6 +254,19 @@ export default function App() {
     store.recordAttribution(getAttribution()).catch(() => {})
   }, [session])
 
+  // PWA install-ábending (eykur retention verulega — icon á heimaskjá)
+  useEffect(() => {
+    const onBip = (e) => { e.preventDefault(); setInstallPrompt(e) }
+    window.addEventListener('beforeinstallprompt', onBip)
+    return () => window.removeEventListener('beforeinstallprompt', onBip)
+  }, [])
+  const doInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    try { await installPrompt.userChoice } catch {}
+    setInstallPrompt(null)
+  }
+
   // ---- Vafrasaga fyrir lista/flipa: refresh heldur sér, back/forward virkar ----
   const navRef = useRef({ first: true, fromPop: false })
   const currentIdRef = useRef(currentId); currentIdRef.current = currentId
@@ -390,28 +406,37 @@ export default function App() {
     if (crossed) { celebrateLevelUp(); flash('🎉 Nýtt borð: ' + levelFor(before + pts).title + '!') }
     else { celebrate(pts); flash('+' + pts + ' stig 🎉') }
   }
+  const togglingRef = useRef(new Set())
   const toggleItem = async (it, done) => {
+    // Vörn gegn tvísmelli: hunsa endurtekinn smell á sama verk á meðan sá fyrri er í vinnslu.
+    if (togglingRef.current.has(it.id)) return
+    togglingRef.current.add(it.id)
     const isChore = list.type === 'task' || list.type === 'schedule'
     const recurring = it.recurrence && it.recurrence !== 'none'
-    if (recurring) {
-      if (done) {
-        await store.uncompleteItem(list.id, it, it.recurrence === 'daily' ? startOfTodayISO() : startOfWeekISO())
+    try {
+      if (recurring) {
+        if (done) {
+          await store.uncompleteItem(list.id, it, it.recurrence === 'daily' ? startOfTodayISO() : startOfWeekISO())
+        } else {
+          await store.completeItem(list.id, it)
+          cheerCompletion(it)
+        }
       } else {
-        await store.completeItem(list.id, it)
-        cheerCompletion(it)
+        const wasDone = it.checked
+        await store.toggleItem(list.id, it)
+        if (!wasDone && isChore) cheerCompletion(it)
       }
-    } else {
-      const wasDone = it.checked
-      await store.toggleItem(list.id, it)
-      if (!wasDone && isChore) cheerCompletion(it)
+      await reload(list.id)
+      store.getCompletions(list.id).then(setCompletions).catch(() => {})
+    } finally {
+      togglingRef.current.delete(it.id)
     }
-    await reload(list.id)
-    store.getCompletions(list.id).then(setCompletions).catch(() => {})
   }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
   const assignItem = async (it, person) => { await store.assignItem(list.id, it.id, person); await reload(list.id) }
   const setPoints = async (it, pts) => { await store.setPoints(list.id, it.id, pts); await reload(list.id) }
   const setRecurrence = async (it, rec) => { await store.setRecurrence(list.id, it.id, rec); await reload(list.id) }
+  const setReminder = async (it, enabled) => { await store.setItemReminder(it.id, { enabled, at: it.reminder_at || null }); await reload(list.id) }
   const setItemImage = async (it, image) => { await store.setItemImage(list.id, it.id, image); await reload(list.id) }
   const createKid = async (data) => { await store.createKid(list.id, data); await loadKids(list.id) }
   const updateKid = async (id, patch) => { await store.updateKid(id, patch); await loadKids(list.id) }
@@ -573,6 +598,7 @@ export default function App() {
               <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
             </>
           )}
+          <button className="admin-btn" onClick={() => setShowNotif(true)} title="Áminningar" aria-label="Áminningar">🔔</button>
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
         {!showHome && !showBudget && !isBudget && (
@@ -585,14 +611,14 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping
               ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
-              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
       {showLists && (
@@ -654,6 +680,7 @@ export default function App() {
       )}
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} />}
+      {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 

@@ -350,6 +350,19 @@ const local = {
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
   async recordAttribution() {},
+  async savePushSubscription() {},
+  async removePushSubscription() {},
+  async getNotifSettings() {
+    return JSON.parse(localStorage.getItem('korfan.notif') || 'null') || { push_enabled: false, daily_tasks: false, daily_tasks_hour: 16, weekly_summary: true, quiet_start: 21, quiet_end: 8 }
+  },
+  async setNotifSettings(patch) {
+    const cur = JSON.parse(localStorage.getItem('korfan.notif') || '{}')
+    localStorage.setItem('korfan.notif', JSON.stringify({ ...cur, ...patch }))
+  },
+  async setItemReminder(itemId, { enabled, at } = {}) {
+    const lists = lsRead() || []
+    for (const l of lists) { const it = (l.items || []).find(i => i.id === itemId); if (it) { it.reminder_enabled = !!enabled; it.reminder_at = at || null; lsWrite(lists); break } }
+  },
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async assignItem(listId, itemId, person) {
@@ -432,10 +445,26 @@ const cloud = {
     const recurring = item.recurrence && item.recurrence !== 'none'
     const kidId = item.assignee_kid || null
     if (!item.checked) {
-      // Verk klárað → skrá afrek og gefa stig (krakka ef verk er úthlutað á krakka)
-      const comp = { list_id: listId, item_id: item.id, points: item.points ?? 10 }
-      if (kidId) comp.kid_id = kidId; else comp.user_id = user?.id
-      await supabase.from('completions').insert(comp)
+      // Verk klárað → skrá afrek og gefa stig (krakka ef verk er úthlutað á krakka).
+      // Vörn gegn tvískráningu (tvísmellur / stöðu-tvíhleðsla):
+      if (!recurring) {
+        // Einnota verk: aðeins eitt afrek má vera til. Ef það er þegar skráð, ekki bæta öðru við.
+        let dq = supabase.from('completions').select('id').eq('item_id', item.id).limit(1)
+        dq = kidId ? dq.eq('kid_id', kidId) : dq.eq('user_id', user?.id)
+        const { data: dupe } = await dq
+        if (!dupe || !dupe.length) {
+          await supabase.from('completions').insert({ list_id: listId, item_id: item.id, points: item.points ?? 10, ...(kidId ? { kid_id: kidId } : { user_id: user?.id }) })
+        }
+      } else {
+        // Endurtekið verk: mörg afrek leyfð, en sleppa ef nákvæmlega eins færsla < 3 sek gömul (tvísmellur).
+        const since = new Date(Date.now() - 3000).toISOString()
+        let rq = supabase.from('completions').select('id').eq('item_id', item.id).gte('completed_at', since)
+        rq = kidId ? rq.eq('kid_id', kidId) : rq.eq('user_id', user?.id)
+        const { data: recent } = await rq
+        if (!recent || !recent.length) {
+          await supabase.from('completions').insert({ list_id: listId, item_id: item.id, points: item.points ?? 10, ...(kidId ? { kid_id: kidId } : { user_id: user?.id }) })
+        }
+      }
       await supabase.from('list_items').update({
         checked: recurring ? false : true,
         completed_by: kidId ? null : user?.id,
@@ -463,6 +492,12 @@ const cloud = {
   async completeItem(listId, item) {
     const { data: { user } } = await supabase.auth.getUser()
     const kidId = item.assignee_kid || null
+    // Vörn gegn tvískráningu: sleppa ef nákvæmlega eins færsla < 3 sek gömul.
+    const since = new Date(Date.now() - 3000).toISOString()
+    let rq = supabase.from('completions').select('id').eq('item_id', item.id).gte('completed_at', since)
+    rq = kidId ? rq.eq('kid_id', kidId) : rq.eq('user_id', user?.id)
+    const { data: recent } = await rq
+    if (recent && recent.length) return
     const comp = { list_id: listId, item_id: item.id, points: item.points ?? 10 }
     if (kidId) comp.kid_id = kidId; else comp.user_id = user?.id
     await supabase.from('completions').insert(comp)
@@ -720,6 +755,31 @@ const cloud = {
       utm_campaign: a.utm_campaign || null,
       referrer: a.referrer || null,
     }, { onConflict: 'user_id', ignoreDuplicates: true })
+  },
+  async savePushSubscription(sub) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !sub || !sub.endpoint) return
+    await supabase.from('push_subscriptions').upsert({
+      user_id: user.id, endpoint: sub.endpoint, subscription: sub, user_agent: navigator.userAgent,
+    }, { onConflict: 'endpoint' })
+  },
+  async removePushSubscription(endpoint) {
+    if (!endpoint) return
+    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
+  },
+  async getNotifSettings() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const { data } = await supabase.from('notification_settings').select('*').eq('user_id', user.id).maybeSingle()
+    return data || { push_enabled: false, daily_tasks: false, daily_tasks_hour: 16, weekly_summary: true, quiet_start: 21, quiet_end: 8 }
+  },
+  async setNotifSettings(patch) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('notification_settings').upsert({ user_id: user.id, ...patch, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+  },
+  async setItemReminder(itemId, { enabled, at } = {}) {
+    await supabase.from('list_items').update({ reminder_enabled: !!enabled, reminder_at: at || null, last_reminded_at: null }).eq('id', itemId)
   },
   async getMyProfile() {
     const { data: { user } } = await supabase.auth.getUser()

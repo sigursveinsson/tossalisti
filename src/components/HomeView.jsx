@@ -38,7 +38,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -70,6 +70,14 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             : <>👋 Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
+
+      {canInstall && (
+        <button className="home-install" onClick={() => onInstall && onInstall()}>
+          <span className="home-install-ic">📲</span>
+          <span className="home-install-txt"><b>Settu Tossalista á heimaskjáinn</b><small>Opnast eins og app — og þú getur fengið áminningar</small></span>
+          <span className="home-row-go">›</span>
+        </button>
+      )}
 
       {waiting.length > 0 && (
         <div className="home-sec">

@@ -51,7 +51,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -242,6 +242,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </span>
         )}
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
+        {chore && onSetReminder && <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => onSetReminder(it, !it.reminder_enabled)} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Fá áminningu á tíma verksins'} aria-label="Áminning">{it.reminder_enabled ? '🔔' : '🔕'}</button>}
         {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
         {assignBtn(it)}
         <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
