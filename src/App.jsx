@@ -592,33 +592,32 @@ export default function App() {
   return (
     <div className="app">
       <div className="header">
-        <div className="brand">
+        <div className="header-top">
           <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true" style={{ flex: 'none' }}>
             <rect x="6" y="6" width="52" height="52" rx="14" fill="#ffffff" />
             <polyline points="20,33 29,42 45,24" fill="none" stroke="#f5a623" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {showHome ? (
-            <button className="listbtn" onClick={() => setShowLists(true)} title="Listarnir mínir">
-              <span className="lists-ico">☰</span> Heim <span className="chev">▾</span>
-            </button>
-          ) : showBudget ? (
-            <>
-              <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
-              <button className="curtitle" onClick={() => setShowLists(true)} title="Listarnir mínir">📒 Bókhald</button>
-            </>
-          ) : (
-            <>
-              <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>
-              <button className="curtitle" onClick={() => setShowLists(true)} title="Skipta um lista">{typeIcon} {list.name}</button>
-              {!isBudget && <span className="count">{open} eftir</span>}
-              {isBudget && <span className="count">📒</span>}
-              <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
-              {!isBudget && <button className="share-btn" onClick={() => openShare(list)} title="Deila lista" aria-label="Deila lista">⤴</button>}
-            </>
-          )}
+          {showHome
+            ? <button className="listbtn" onClick={() => setShowLists(true)} title="Listarnir mínir"><span className="lists-ico">☰</span> Heim <span className="chev">▾</span></button>
+            : <button className="home-btn" onClick={goHome} title="Heim" aria-label="Heim">🏠{homeUnseen && <span className="home-ping" />}</button>}
+          <span className="header-spacer" />
           <button className="admin-btn" onClick={() => setShowNotif(true)} title="Áminningar" aria-label="Áminningar">🔔</button>
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð">📊</button>}
         </div>
+        {showBudget && (
+          <div className="header-title">
+            <button className="curtitle" onClick={() => setShowLists(true)} title="Listarnir mínir">📒 Bókhald</button>
+            <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
+          </div>
+        )}
+        {!showHome && !showBudget && (
+          <div className="header-title">
+            <button className="curtitle" onClick={() => setShowLists(true)} title="Skipta um lista">{typeIcon} {list.name}</button>
+            <span className="count">{isBudget ? '📒' : open + ' eftir'}</span>
+            <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
+            {!isBudget && <button className="share-btn" onClick={() => openShare(list)} title="Deila lista" aria-label="Deila lista">⤴</button>}
+          </div>
+        )}
         {!showHome && !showBudget && !isBudget && (
           <div className="tabs">
             <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
