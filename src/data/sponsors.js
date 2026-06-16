@@ -12,7 +12,7 @@ export const CATEGORY_SPONSORS = {
       { name: 'Egils Appelsín',  color: '#E8730C', image: null },
       { name: 'Egils Malt',      color: '#6B2A1B', image: null },
       { name: 'Egils Kristall',  color: '#2BA3D9', image: null },
-      { name: 'Pepsi Max',       color: '#0E4C92', image: null },
+      { name: 'Pepsi Max',       color: '#0E4C92', image: '/images.jpg' },
       { name: 'Pepsi',           color: '#1542A0', image: null },
       { name: '7UP',             color: '#2E9B57', image: null },
       { name: 'Collab orkudrykkur', color: '#16B7A8', image: null },
