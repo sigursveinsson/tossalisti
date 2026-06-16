@@ -5,7 +5,9 @@
 // í public/ads/). Þá birtir bannerinn heilu myndina í stað stílaða sýnishornsins.
 // Notaðu aðeins myndefni sem þú hefur leyfi fyrir (t.d. eigin vörur Ölgerðinnar).
 export const DEMO_ADS = [
-  { id: 'malt',    brand: 'Egils Malt',        text: 'Jólastemning allt árið — fáðu þér Malt.',         cta: 'Sjá nánar', bg: '#6B2A1B', fg: '#F7E6C4', accent: '#F5A623' },
-  { id: 'pepsi',   brand: 'Pepsi Max',         text: 'Hámarks bragð, núll sykur.',                       cta: 'Sjá nánar', bg: '#0E4C92', fg: '#FFFFFF', accent: '#E32934' },
-  { id: 'hatting', brand: 'Hatting pítubrauð', text: 'Mjúkt og fljótlegt — fullkomið í kvöldmatinn.',    cta: 'Sjá nánar', bg: '#9A6512', fg: '#FFF6E6', accent: '#F5A623' },
+  { id: 'appelsin', brand: 'Egils Appelsín',    text: 'Íslenski klassíkerinn — á hvert heimili.',        cta: 'Sjá nánar', bg: '#E8730C', fg: '#FFFFFF', accent: '#6B2A1B' },
+  { id: 'malt',     brand: 'Egils Malt',         text: 'Jólastemning allt árið — fáðu þér Malt.',         cta: 'Sjá nánar', bg: '#6B2A1B', fg: '#F7E6C4', accent: '#F5A623' },
+  { id: 'pepsi',    brand: 'Pepsi Max',          text: 'Hámarks bragð, núll sykur.',                      cta: 'Sjá nánar', bg: '#0E4C92', fg: '#FFFFFF', accent: '#E32934' },
+  { id: 'collab',   brand: 'Collab',             text: 'Orkudrykkurinn sem allir eru að tala um.',        cta: 'Sjá nánar', bg: '#16B7A8', fg: '#06231F', accent: '#0E4C92' },
+  { id: 'hatting',  brand: 'Hatting pítubrauð',  text: 'Mjúkt og fljótlegt — fullkomið í kvöldmatinn.',   cta: 'Sjá nánar', bg: '#9A6512', fg: '#FFF6E6', accent: '#F5A623' },
 ]

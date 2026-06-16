@@ -9,7 +9,7 @@ const norm = s => (s || '').toLowerCase().trim()
 
 // Vöruhilla: flettu/leitaðu, veldu margar vörur, þær flytjast á listann.
 // Kostaðar vörur (Ölgerðin) fá heiðurssæti efst — sterkt fyrir product placement.
-export default function ShelfView({ onCommit, onClose, existing = [], catalog = {} }) {
+export default function ShelfView({ onCommit, onClose, existing = [], catalog = {}, adsEnabled }) {
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(() => new Set())
   const [deptFilter, setDeptFilter] = useState(null)
@@ -25,7 +25,7 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
   })
 
   const sponsor = CATEGORY_SPONSORS.beverages
-  const sponList = sponsor.products.filter(p => !query || p.name.toLowerCase().includes(query))
+  const sponList = adsEnabled ? sponsor.products.filter(p => !query || p.name.toLowerCase().includes(query)) : []
 
   const sections = DEPARTMENTS.map(d => ({
     dept: d,

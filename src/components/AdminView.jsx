@@ -46,7 +46,7 @@ const srcBadge = (u) => {
   return { ...s, title: s.label + (u.utm_campaign ? ' · ' + u.utm_campaign : '') }
 }
 
-export default function AdminView({ onClose }) {
+export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
   const [err, setErr] = useState(false)
@@ -72,6 +72,16 @@ export default function AdminView({ onClose }) {
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal adm-modal" onClick={e => e.stopPropagation()}>
         <h2>📊 Stjórnborð <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+
+        {onToggleAds && (
+          <div className="adm-ads">
+            <div className="adm-ads-txt">
+              <b>Kostaðar auglýsingar</b>
+              <small>Auglýsingaborði, kostaðar vörutillögur og „Kostað"-hilla (Ölgerðin). {adsEnabled ? 'Sýnilegt notendum núna.' : 'Falið — kveiktu fyrir kynningu.'}</small>
+            </div>
+            <button className={'adm-ads-switch' + (adsEnabled ? ' on' : '')} onClick={onToggleAds} aria-label="Kveikja/slökkva á auglýsingum" />
+          </div>
+        )}
 
         {loading && <p className="muted-p">Sæki tölfræði…</p>}
         {err && <p className="muted-p">Næ ekki í tölfræði (ertu skráð(ur) inn sem stjórnandi?).</p>}

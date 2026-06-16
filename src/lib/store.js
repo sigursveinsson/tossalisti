@@ -366,6 +366,8 @@ const local = {
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async recordConsent(version) { const p = JSON.parse(localStorage.getItem('korfan.profile') || '{}'); p.consent_at = new Date().toISOString(); p.consent_version = version || 'v1'; localStorage.setItem('korfan.profile', JSON.stringify(p)) },
+  async getAppSettings() { return JSON.parse(localStorage.getItem('korfan.appsettings') || '{"ads_enabled":false}') },
+  async setAppSetting(key, value) { const s = JSON.parse(localStorage.getItem('korfan.appsettings') || '{}'); s[key] = value; localStorage.setItem('korfan.appsettings', JSON.stringify(s)) },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -797,6 +799,15 @@ const cloud = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('profiles').upsert({ id: user.id, email: user.email, consent_at: new Date().toISOString(), consent_version: version || 'v1' })
+  },
+  async getAppSettings() {
+    const { data } = await supabase.from('app_settings').select('key,value')
+    const out = {}; for (const r of (data || [])) out[r.key] = r.value
+    return out
+  },
+  async setAppSetting(key, value) {
+    const { error } = await supabase.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    if (error) throw error
   },
   async assignItem(listId, itemId, person) {
     const a = personRef(person)

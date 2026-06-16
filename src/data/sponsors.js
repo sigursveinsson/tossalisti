@@ -9,10 +9,14 @@ export const CATEGORY_SPONSORS = {
     brand: 'Ölgerðin',
     tag: 'Kostað · Ölgerðin',
     products: [
-      { name: 'Egils Malt',     color: '#6B2A1B', image: null },
-      { name: 'Egils Appelsín', color: '#E8730C', image: null },
-      { name: 'Pepsi Max',      color: '#0E4C92', image: null },
-      { name: 'Kristall',       color: '#2BA3D9', image: null },
+      { name: 'Egils Appelsín',  color: '#E8730C', image: null },
+      { name: 'Egils Malt',      color: '#6B2A1B', image: null },
+      { name: 'Egils Kristall',  color: '#2BA3D9', image: null },
+      { name: 'Pepsi Max',       color: '#0E4C92', image: null },
+      { name: 'Pepsi',           color: '#1542A0', image: null },
+      { name: '7UP',             color: '#2E9B57', image: null },
+      { name: 'Collab orkudrykkur', color: '#16B7A8', image: null },
+      { name: 'Florída Frískur', color: '#F0A52E', image: null },
     ],
   },
 }
@@ -20,6 +24,7 @@ export const CATEGORY_SPONSORS = {
 const BEVERAGE_TERMS = [
   'gos', 'drykk', 'kók', 'kok', 'pepsi', 'malt', 'appelsín', 'appelsin',
   'vatn', 'safi', 'djús', 'djus', 'sódavatn', 'sodavatn', 'kristall', 'orku', 'kristal',
+  '7up', 'sevenup', 'collab', 'florída', 'florida', 'frískur', 'friskur', 'egils',
 ]
 
 // Kostaðar tillögur þegar leitað er að drykk (eða nafn passar við kostaða vöru).

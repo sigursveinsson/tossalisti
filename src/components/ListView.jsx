@@ -51,7 +51,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -78,7 +78,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [linkScan, setLinkScan] = useState(null)
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
-  const sponSugg = (isTask || isSchedule) ? [] : sponsoredSuggest(text)
+  const sponSugg = (isTask || isSchedule || !adsEnabled) ? [] : sponsoredSuggest(text)
   const catSugg = (isShopping && text.trim().length >= 2)
     ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n)).slice(0, 5)
     : []
@@ -654,10 +654,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Vöruhilla</button>
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? '🖼️ Fela' : '🖼️ Sýna'}</button>
       </div>
-      <AdBanner />
+      {adsEnabled && <AdBanner />}
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {
-        const spon = CATEGORY_SPONSORS[g.key]
+        const spon = adsEnabled ? CATEGORY_SPONSORS[g.key] : null
         return (
           <div className="group" key={g.key}>
             <div className="group-head">
@@ -684,7 +684,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {assignModal}
       {deptModal}
       {scanner}
-      {shelf && <ShelfView catalog={catalog} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
+      {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
       {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
   )
