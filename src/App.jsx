@@ -596,6 +596,7 @@ export default function App() {
               {!isBudget && <span className="count">{open} eftir</span>}
               {isBudget && <span className="count">📒</span>}
               <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><span className="lists-ico">☰</span><span className="chev">▾</span></button>
+              {!isBudget && <button className="share-btn" onClick={() => openShare(list)} title="Deila lista" aria-label="Deila lista">⤴</button>}
             </>
           )}
           <button className="admin-btn" onClick={() => setShowNotif(true)} title="Áminningar" aria-label="Áminningar">🔔</button>
