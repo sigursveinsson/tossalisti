@@ -15,6 +15,7 @@ import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
+import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
 import { useBackClose } from './lib/backstack.js'
@@ -533,6 +534,9 @@ export default function App() {
   if (isCloud && !session) return <Auth />
   if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
     return <ProfileSetup initial={profile} onSave={saveProfile} />
+  }
+  if (isCloud && session && profileLoaded && profile && profile.name && !profile.consent_at) {
+    return <ConsentNotice onAccept={async () => { await store.recordConsent('v1'); setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1' })) }} />
   }
   if (loading) return <div className="empty">Hleð…</div>
   if (error && !list) return (

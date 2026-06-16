@@ -365,6 +365,7 @@ const local = {
   },
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
+  async recordConsent(version) { const p = JSON.parse(localStorage.getItem('korfan.profile') || '{}'); p.consent_at = new Date().toISOString(); p.consent_version = version || 'v1'; localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -784,13 +785,18 @@ const cloud = {
   async getMyProfile() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
-    const { data } = await supabase.from('profiles').select('id,email,name,color').eq('id', user.id).single()
+    const { data } = await supabase.from('profiles').select('id,email,name,color,consent_at,consent_version').eq('id', user.id).single()
     return data || { id: user.id, email: user.email }
   },
   async updateProfile({ name, color }) {
     const { data: { user } } = await supabase.auth.getUser()
     const { error } = await supabase.from('profiles').upsert({ id: user.id, email: user.email, name, color })
     if (error) throw error
+  },
+  async recordConsent(version) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('profiles').upsert({ id: user.id, email: user.email, consent_at: new Date().toISOString(), consent_version: version || 'v1' })
   },
   async assignItem(listId, itemId, person) {
     const a = personRef(person)
