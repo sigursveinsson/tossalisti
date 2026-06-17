@@ -37,6 +37,7 @@ import { TEMPLATES } from './data/templates.js'
 import { suggestChorePoints, suggestChoreEmoji } from './data/chores.js'
 import { makeEmojiImage } from './lib/img.js'
 import { departmentFor } from './data/products.js'
+import { setLearnedCategories } from './data/categories.js'
 import { matchListItems } from './lib/receipt.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -195,6 +196,12 @@ export default function App() {
   }, [session])
   const addCategory = async (data) => { const c = await store.addCustomCategory(data); await loadCustomCats(); return c }
   const deleteCategory = async (id) => { await store.deleteCustomCategory(id); await loadCustomCats() }
+
+  // Lærðir flokkar (kerfið man flokkun sem notandi leiðréttir)
+  useEffect(() => {
+    if (isCloud && !session) return
+    store.getLearnedCategories().then(setLearnedCategories).catch(() => {})
+  }, [session])
 
   // Sameiginlegur vörubanki (myndir úr skönnun)
   const [catalog, setCatalog] = useState({})
@@ -395,7 +402,15 @@ export default function App() {
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
   const setPurchaseCat = async (id, cat) => { await store.setPurchaseCategory(id, cat); await loadPurchases() }
-  const setItemCat = async (id, cat) => { await store.setItemCategory(id, cat); await loadPurchases() }
+  const setItemCat = async (id, cat, name) => {
+    await store.setItemCategory(id, cat)
+    if (name && cat) {
+      await store.learnCategory(name, cat)
+      const map = await store.getLearnedCategories().catch(() => null)
+      if (map) setLearnedCategories(map)
+    }
+    await loadPurchases()
+  }
   const setQty = async (it, qty) => { await store.setQty(list.id, it.id, qty); await reload(list.id) }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }

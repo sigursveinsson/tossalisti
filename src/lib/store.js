@@ -187,6 +187,12 @@ const local = {
     for (const p of all) { const it = (p.items || []).find(i => i.id === itemId); if (it) { it.category = category || null; break } }
     localStorage.setItem('korfan.purchases', JSON.stringify(all))
   },
+  async getLearnedCategories() { return JSON.parse(localStorage.getItem('korfan.learned') || '{}') },
+  async learnCategory(name, category) {
+    const nn = (name || '').toLowerCase().trim(); if (!nn || !category) return
+    const m = JSON.parse(localStorage.getItem('korfan.learned') || '{}'); m[nn] = category
+    localStorage.setItem('korfan.learned', JSON.stringify(m))
+  },
   async getCustomCategories() { return JSON.parse(localStorage.getItem('korfan.expcats') || '[]') },
   async addCustomCategory({ name, icon, color } = {}) {
     const all = JSON.parse(localStorage.getItem('korfan.expcats') || '[]')
@@ -561,6 +567,18 @@ const cloud = {
   async setItemCategory(itemId, category) {
     const { error } = await supabase.from('purchase_items').update({ category: category || null }).eq('id', itemId)
     if (error) throw error
+  },
+  async getLearnedCategories() {
+    const { data } = await supabase.from('learned_categories').select('name_norm,category')
+    const out = {}; for (const r of (data || [])) out[r.name_norm] = r.category
+    return out
+  },
+  async learnCategory(name, category) {
+    const nn = (name || '').toLowerCase().trim()
+    if (!nn || !category) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('learned_categories').upsert({ user_id: user.id, name_norm: nn, category, updated_at: new Date().toISOString() }, { onConflict: 'user_id,name_norm' })
   },
   async getCustomCategories() {
     const { data, error } = await supabase.from('expense_categories').select('id,name,icon,color').order('created_at')

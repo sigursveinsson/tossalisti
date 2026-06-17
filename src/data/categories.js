@@ -34,9 +34,17 @@ const DEPT_TO_CAT = {
   cleaning: 'hreinlaeti', personalcare: 'snyrti', household: 'heimili', other: 'annad',
 }
 
+// Lærðir flokkar: vöruheiti (normalíserað) → flokkur, kennt af notanda þegar hann
+// leiðréttir flokkun. Sett inn úr App við ræsingu (store.getLearnedCategories).
+let LEARNED = {}
+const normName = (s) => (s || '').toLowerCase().trim()
+export function setLearnedCategories(map) { LEARNED = map || {} }
+export function learnedCategoryFor(name) { return LEARNED[normName(name)] || null }
+
 // Sjálfvirk flokkun á undirlið kvittunar út frá vöruheiti.
+// Lærður flokkur (frá notanda) hefur forgang á sjálfvirku reglu-flokkunina.
 export function itemCategory(name) {
-  return DEPT_TO_CAT[departmentFor(name)] || 'annad'
+  return LEARNED[normName(name)] || DEPT_TO_CAT[departmentFor(name)] || 'annad'
 }
 
 // Virkur flokkur línuliðs: handvirk yfirskrift annars sjálfvirk.

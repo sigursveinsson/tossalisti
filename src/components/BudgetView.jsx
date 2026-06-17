@@ -245,7 +245,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
                       <div className="bitem" key={it.id || it.name}>
                         <span className="bitem-name">{it.name}</span>
                         <span className="bitem-price">{kr(it.price)}</span>
-                        <button className="bitem-cat" style={{ background: c.color + '22', color: c.color }} onClick={() => setCatForItem(it.id)}>{c.icon} {c.name}</button>
+                        <button className="bitem-cat" style={{ background: c.color + '22', color: c.color }} onClick={() => setCatForItem(it)}>{c.icon} {c.name}</button>
                       </div>
                     )
                   })}
@@ -262,7 +262,8 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
         <div className="sheet-bg center" onClick={() => setCatForItem(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h2>Flokkur á lið <button className="x" onClick={() => setCatForItem(null)} aria-label="Loka">×</button></h2>
-            <CatGrid cats={allCats} onAddCategory={onAddCategory} onPick={async (key) => { await onSetItemCategory(catForItem, key); setCatForItem(null) }} />
+            <div className="bcat-learn">Kerfið man þennan flokk fyrir „{catForItem.name}" næst þegar hann er skannaður.</div>
+            <CatGrid cats={allCats} onAddCategory={onAddCategory} onPick={async (key) => { await onSetItemCategory(catForItem.id, key, catForItem.name); setCatForItem(null) }} />
           </div>
         </div>
       )}
