@@ -4,6 +4,13 @@ import { useBackClose } from '../lib/backstack.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const sum = (items) => items.reduce((a, b) => a + (Number(b.price) || 0), 0)
+// OCR les oft ártal vitlaust. Flöggum ef dagsetning er meira en mánuður frá í dag (aftur í tímann eða fram).
+const dateLooksOff = (d) => {
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false
+  const diff = Math.abs(new Date(d + 'T00:00:00').getTime() - new Date(today() + 'T00:00:00').getTime())
+  return diff > 31 * 86400000
+}
+const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' }) } catch { return d } }
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
 export default function ReceiptScanner({ onSave, onClose }) {
@@ -85,6 +92,9 @@ export default function ReceiptScanner({ onSave, onClose }) {
               <input className="dialog-input" value={store} onChange={e => setStore(e.target.value)} placeholder="Verslun (t.d. Bónus)" />
               <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
+            {dateLooksOff(date) && (
+              <div className="receipt-datewarn">⚠️ Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</div>
+            )}
             {items.length === 0 && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
             <div className="receipt-items">
               {items.map(it => (
