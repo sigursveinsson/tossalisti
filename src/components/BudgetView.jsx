@@ -120,7 +120,7 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
 }
 
 export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt }) {
-  const [period, setPeriod] = useState('month')
+  const [period, setPeriod] = useState('all')
   const [mode, setMode] = useState('cat') // 'cat' | 'store'
   const [filterCat, setFilterCat] = useState(null)
   const [filterStore, setFilterStore] = useState(null)

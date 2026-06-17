@@ -6,7 +6,6 @@ import HomeView from './components/HomeView.jsx'
 import BudgetView from './components/BudgetView.jsx'
 import BudgetIntro from './components/BudgetIntro.jsx'
 import RecipesView from './components/RecipesView.jsx'
-import SpendingView from './components/SpendingView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
 import AdminView from './components/AdminView.jsx'
 import NotifSettings from './components/NotifSettings.jsx'
@@ -634,7 +633,7 @@ export default function App() {
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping
-              ? <SpendingView purchases={purchases} onSave={savePurchase} onDelete={deletePurchase} onUpdate={updatePurchase} />
+              ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
               : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} adsEnabled={adsEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} />}
       </div>
 
