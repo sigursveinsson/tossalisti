@@ -779,10 +779,12 @@ const cloud = {
   },
   async savePushSubscription(sub) {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || !sub || !sub.endpoint) return
-    await supabase.from('push_subscriptions').upsert({
+    if (!user) throw new Error('Ekki innskráð(ur)')
+    if (!sub || !sub.endpoint) throw new Error('Áskrift án endpoint')
+    const { error } = await supabase.from('push_subscriptions').upsert({
       user_id: user.id, endpoint: sub.endpoint, subscription: sub, user_agent: navigator.userAgent,
     }, { onConflict: 'endpoint' })
+    if (error) throw error
   },
   async removePushSubscription(endpoint) {
     if (!endpoint) return

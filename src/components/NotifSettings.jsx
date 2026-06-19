@@ -16,6 +16,16 @@ export default function NotifSettings({ onClose }) {
   const patch = async (p) => { setS(v => ({ ...v, ...p })); try { await store.setNotifSettings(p) } catch {} }
 
   const [testMsg, setTestMsg] = useState('')
+  const reSubscribe = async () => {
+    setErr(''); setTestMsg('Skrái tæki…')
+    let sub
+    try { sub = await enablePush() }
+    catch (e) { setErr('Undirskráning mistókst: ' + (e.name || '') + ' – ' + (e.message || '')); setTestMsg(''); return }
+    if (!sub || !sub.endpoint) { setErr('Áskrift skilaði engu endpoint (tækið styður ekki push).'); setTestMsg(''); return }
+    try { await store.savePushSubscription(sub); await store.setNotifSettings({ push_enabled: true }) }
+    catch (e) { setErr('Vistun í gagnagrunn mistókst: ' + (e.message || e)); setTestMsg(''); return }
+    setS(v => ({ ...v, push_enabled: true })); setTestMsg('Tæki skráð ✓ — prófaðu áminningu núna.')
+  }
   const sendTest = async () => {
     setTestMsg('')
     try {
@@ -60,6 +70,7 @@ export default function NotifSettings({ onClose }) {
 
         {s.push_enabled && (
           <>
+            <button className="ns-test" onClick={reSubscribe}>Skrá þetta tæki (laga áminningar)</button>
             <button className="ns-test" onClick={sendTest}>Senda prufu-tilkynningu</button>
             {testMsg && <p className="ns-hint" style={{ marginTop: 6 }}>{testMsg}</p>}
           </>
