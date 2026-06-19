@@ -15,6 +15,17 @@ export default function NotifSettings({ onClose }) {
 
   const patch = async (p) => { setS(v => ({ ...v, ...p })); try { await store.setNotifSettings(p) } catch {} }
 
+  const [testMsg, setTestMsg] = useState('')
+  const sendTest = async () => {
+    setTestMsg('')
+    try {
+      if (Notification.permission !== 'granted') { setTestMsg('Leyfi vantar — kveiktu á áminningum fyrst.'); return }
+      const reg = await navigator.serviceWorker.ready
+      await reg.showNotification('Tossalisti', { body: 'Prufa — tilkynningar virka! 🎉', icon: '/icon-192.png', badge: '/icon-192.png' })
+      setTestMsg('Sendi prufu — sérðu tilkynninguna?')
+    } catch (e) { setTestMsg('Tókst ekki: ' + (e.message || '')) }
+  }
+
   const toggleMaster = async () => {
     setErr('')
     if (!s) return
@@ -46,6 +57,13 @@ export default function NotifSettings({ onClose }) {
           <span className={'ns-switch' + (s.push_enabled ? ' on' : '')} aria-hidden="true" />
         </button>
         {err && <p className="ns-err">{err}</p>}
+
+        {s.push_enabled && (
+          <>
+            <button className="ns-test" onClick={sendTest}>Senda prufu-tilkynningu</button>
+            {testMsg && <p className="ns-hint" style={{ marginTop: 6 }}>{testMsg}</p>}
+          </>
+        )}
 
         {s.push_enabled && (
           <div className="ns-opts">

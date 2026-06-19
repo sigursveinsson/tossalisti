@@ -368,14 +368,16 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   // Samhengisháð áminning: vikuskema → tími; verklisti → dagur + tími.
   const reminderSheet = remItem && (() => {
     const r = remItem
+    const todayISO = new Date().toISOString().slice(0, 10)
     const setR = (patch) => setRemItem(v => ({ ...v, ...patch }))
     const wdLabel = (WEEKDAYS.find(([k]) => k === (r.weekday || 'daily')) || [, 'daglega'])[1]
-    const canSave = isSchedule ? !!r.time : (!!r.due_at && !!r.time)
+    const dueVal = r.due_at || todayISO
+    const canSave = !!r.time  // dagsetning er sjálfgefið í dag fyrir verklista
     const save = async () => {
       if (isSchedule) {
         await onSetTime(r, r.time)
       } else {
-        await onSetDue(r, r.due_at || '')
+        await onSetDue(r, dueVal)
         await onSetTime(r, r.time || '')
       }
       await onSetReminder(r, true)
@@ -398,13 +400,13 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           ) : (
             <>
               <div className="modal-label">Dagsetning</div>
-              <input className="dialog-input" type="date" value={r.due_at || ''} onChange={e => setR({ due_at: e.target.value })} />
+              <input className="dialog-input" type="date" value={dueVal} onChange={e => setR({ due_at: e.target.value })} />
               <div className="modal-label">Tími</div>
               <select className="list-select" value={r.time || ''} onChange={e => setR({ time: e.target.value })}>
                 <option value="">— veldu tíma —</option>
                 {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <p className="ns-hint" style={{ marginTop: 10 }}>Áminning berst {r.due_at || '…'} kl. {r.time || '…'}.</p>
+              <p className="ns-hint" style={{ marginTop: 10 }}>Áminning berst {dueVal} kl. {r.time || '…'}.</p>
             </>
           )}
           <button className="add-recipe-btn" style={{ marginTop: 12 }} disabled={!canSave} onClick={save}>Kveikja á áminningu</button>

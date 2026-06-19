@@ -764,6 +764,7 @@ button { font-family: inherit; cursor: pointer; }
 .ns-quiet-h { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .ns-quiet-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .ns-hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 12px 2px 0; }
+.ns-test { width: 100%; margin-top: 12px; height: 44px; border: 1px solid var(--accent); background: var(--chip); color: var(--accent); border-radius: 12px; font-size: 14px; font-weight: 600; }
 
 /* Áminninga-bjalla á verk */
 .rem-bell { background: transparent; border: none; font-size: 16px; padding: 4px; opacity: .45; flex: none; line-height: 1; display: inline-flex; align-items: center; gap: 3px; }
