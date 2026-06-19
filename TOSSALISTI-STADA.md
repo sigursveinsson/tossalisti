@@ -154,6 +154,7 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
 - **Stjórnenda-skilaboð** (messages-tafla) svo hægt sé að senda skilaboð á notendur úr stjórnborði.
 - **Deila-tákn á hverja röð í ListsPanel** (til viðbótar við gyllta deila-hnappinn í hausnum, lota 7c) — gera deilingu enn sýnilegri í listayfirlitinu.
 - **Auglýsinga-/kostunar-stjórnkerfi (CMS) fyrir admin.** Í dag eru auglýsingar (`data/ads.js`) og kostaðar vörur/flokkar (`data/sponsors.js`) HARÐKÓÐAÐAR; rofinn (lota 7e) kveikir/slekkur en ekki hægt að bæta við/breyta úr appinu. Síðar: stjórnborðs-viðmót til að stofna vörumerki, hlaða upp pakkamyndum, velja kostaðan flokk, setja borða-texta/hlekki, og telja birtingar/smelli — geymt í Supabase. ÁKVÖRÐUN (lota 7e): ekki byggja fyrr en fyrsti kostandinn er staðfestur; demo-gögn (Ölgerðin) duga fyrir Óla-fund.
+- **Notenda-sniðmát („vista sem sniðmát").** Leyfa notendum að vista eigin lista sem sniðmát (nefna, endurnota, jafnvel deila). ÁKVÖRÐUN (lota 7h): geymt — „afrita lista" (onDuplicate) leysir ~80% af þörfinni nú þegar. Innbyggðu sniðmátin útvíkkuð í staðinn (útilega → ~74 atriði úr REI-lista, lota 7h). Byggja fullt kerfi síðar ef eftirspurn.
 - **Fyllri persónuverndarsíða + hlekkur** úr samþykkis-skjánum (lota 7d) — formleg persónuverndarstefna (GDPR: réttindi, gagnaeyðing, niðurhal gagna, tengiliður) og hlekkur neðst í ConsentNotice + í stillingum.
 
 ## ÓGERT — næstu skref

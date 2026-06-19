@@ -8,8 +8,28 @@ export const TEMPLATES = [
   },
   {
     id: 'utilega', name: 'Útilega', emoji: '⛺', type: 'task',
-    items: ['Tjald', 'Svefnpokar', 'Dýnur', 'Prímus og gas', 'Vasaljós', 'Kælibox', 'Grill og kol',
-      'Sólarvörn', 'Skordýravörn', 'Sjúkrakassi', 'Vatnsbrúsi', 'Spil'],
+    items: [
+      // Tjald og svefn
+      'Tjald', 'Tjaldhælar og sleggja', 'Undirbreiðsla undir tjald', 'Svefnpokar', 'Svefndýnur',
+      'Koddar', 'Höfuðljós', 'Vasaljós', 'Aukarafhlöður', 'Útilegustólar', 'Ferðaborð', 'Lukt', 'Motta eða teppi',
+      // Verkfæri
+      'Fjölnota verkfæri', 'Límband', 'Snæri', 'Viðgerðarsett fyrir tjald', 'Öxi eða sög',
+      // Eldhús
+      'Prímus og gas', 'Eldspýtur eða kveikjari', 'Pottar', 'Panna', 'Hnífapör', 'Eldhúsáhöld',
+      'Upptakari og dósahnífur', 'Beittur hnífur', 'Diskar og skálar', 'Bollar og glös', 'Skurðarbretti',
+      'Kælibox', 'Klaki', 'Vatnsbrúsi', 'Uppþvottabali', 'Uppþvottalögur', 'Svampur', 'Viskustykki',
+      'Ruslapokar', 'Grill og kol', 'Álpappír', 'Kaffikanna',
+      // Föt
+      'Nærföt', 'Bolir', 'Buxur og stuttbuxur', 'Langermabolur', 'Flíspeysa', 'Hlý úlpa', 'Regngalli',
+      'Ullarnærföt', 'Gönguskór', 'Ullarsokkar', 'Náttföt', 'Vettlingar', 'Húfa', 'Sundföt', 'Inniskór eða sandalar',
+      // Heilsa og hreinlæti
+      'Klósettpappír', 'Handspritt', 'Tannbursti og tannkrem', 'Snyrtitaska', 'Handklæði', 'Dömubindi',
+      'Lyf', 'Sjúkrakassi', 'Sólarvörn', 'Sólgleraugu', 'Derhúfa', 'Varasalvi', 'Skordýravörn', 'Blautþurrkur',
+      // Persónulegt
+      'Greiðslukort og reiðufé', 'Skilríki', 'Sími og hleðslutæki', 'Hleðslubanki', 'Bókunarstaðfesting tjaldsvæðis',
+      // Afþreying
+      'Sjónauki', 'Kort og áttaviti', 'Bók', 'Spil', 'Leikföng',
+    ],
   },
   {
     id: 'solarfri', name: 'Sólarfrí', emoji: '🏖️', type: 'task',
