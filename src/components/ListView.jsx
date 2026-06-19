@@ -51,7 +51,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -62,6 +62,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [assigning, setAssigning] = useState(null)
   const [editItem, setEditItem] = useState(null)
   const [remItem, setRemItem] = useState(null)
+  const [remErr, setRemErr] = useState('')
   const [deptItem, setDeptItem] = useState(null)
   const [kidsOpen, setKidsOpen] = useState(false)
   const [profilePerson, setProfilePerson] = useState(null)
@@ -244,7 +245,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         )}
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
         {chore && onSetReminder && (
-          <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => { if (it.reminder_enabled) onSetReminder(it, false); else setRemItem(it) }} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Stilla áminningu'} aria-label="Áminning">
+          <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => { if (it.reminder_enabled) onSetReminder(it, false); else { setRemErr(''); setRemItem(it) } }} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Stilla áminningu'} aria-label="Áminning">
             {it.reminder_enabled ? <>🔔{it.time ? <span className="rem-time">{it.time}</span> : null}</> : '🔕'}
           </button>
         )}
@@ -374,14 +375,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const dueVal = r.due_at || todayISO
     const canSave = !!r.time  // dagsetning er sjálfgefið í dag fyrir verklista
     const save = async () => {
-      if (isSchedule) {
-        await onSetTime(r, r.time)
-      } else {
-        await onSetDue(r, dueVal)
-        await onSetTime(r, r.time || '')
-      }
-      await onSetReminder(r, true)
-      setRemItem(null)
+      setRemErr('')
+      try {
+        const data = isSchedule
+          ? { enabled: true, time: r.time }
+          : { enabled: true, time: r.time, due: dueVal }
+        await onSetReminderFull(r, data)
+        setRemItem(null)
+      } catch (e) { setRemErr('Tókst ekki að vista: ' + (e.message || e)) }
     }
     return (
       <div className="sheet-bg center" onClick={() => setRemItem(null)}>
@@ -409,6 +410,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               <p className="ns-hint" style={{ marginTop: 10 }}>Áminning berst {dueVal} kl. {r.time || '…'}.</p>
             </>
           )}
+          {remErr && <p className="ns-err" style={{ marginTop: 8 }}>{remErr}</p>}
           <button className="add-recipe-btn" style={{ marginTop: 12 }} disabled={!canSave} onClick={save}>Kveikja á áminningu</button>
         </div>
       </div>

@@ -369,6 +369,10 @@ const local = {
     const lists = lsRead() || []
     for (const l of lists) { const it = (l.items || []).find(i => i.id === itemId); if (it) { it.reminder_enabled = !!enabled; it.reminder_at = at || null; lsWrite(lists); break } }
   },
+  async setItemReminderFull(itemId, { enabled, time, due, weekday } = {}) {
+    const lists = lsRead() || []
+    for (const l of lists) { const it = (l.items || []).find(i => i.id === itemId); if (it) { it.reminder_enabled = !!enabled; if (time !== undefined) it.time = time || null; if (due !== undefined) it.due_at = due || null; if (weekday !== undefined) it.weekday = weekday || null; lsWrite(lists); break } }
+  },
   async getMyProfile() { return JSON.parse(localStorage.getItem('korfan.profile') || 'null') },
   async updateProfile(p) { localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async recordConsent(version) { const p = JSON.parse(localStorage.getItem('korfan.profile') || '{}'); p.consent_at = new Date().toISOString(); p.consent_version = version || 'v1'; localStorage.setItem('korfan.profile', JSON.stringify(p)) },
@@ -803,6 +807,15 @@ const cloud = {
   },
   async setItemReminder(itemId, { enabled, at } = {}) {
     await supabase.from('list_items').update({ reminder_enabled: !!enabled, reminder_at: at || null, last_reminded_at: null }).eq('id', itemId)
+  },
+  async setItemReminderFull(itemId, { enabled, time, due, weekday } = {}) {
+    const patch = { reminder_enabled: !!enabled, last_reminded_at: null }
+    if (time !== undefined) patch.time = time || null
+    if (due !== undefined) patch.due_at = due || null
+    if (weekday !== undefined) patch.weekday = weekday || null
+    const { data, error } = await supabase.from('list_items').update(patch).eq('id', itemId).select('id')
+    if (error) throw error
+    if (!data || !data.length) throw new Error('Engin lína uppfærð (RLS?)')
   },
   async getMyProfile() {
     const { data: { user } } = await supabase.auth.getUser()
