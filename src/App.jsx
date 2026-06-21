@@ -18,7 +18,7 @@ import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth from './components/Auth.jsx'
 import { useBackClose } from './lib/backstack.js'
-import { captureAttribution, getAttribution } from './lib/attribution.js'
+import { captureAttribution, getAttribution, pageContext } from './lib/attribution.js'
 
 captureAttribution()
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
@@ -203,6 +203,21 @@ export default function App() {
     store.getLearnedCategories().then(setLearnedCategories).catch(() => {})
   }, [session])
 
+  // Á notandinn deildan lista? (fyrir „bjóddu heimilisfólki"-hvata)
+  const [hasShared, setHasShared] = useState(true)
+  const loadShared = () => store.hasSharedList().then(setHasShared).catch(() => setHasShared(true))
+  useEffect(() => { if (isCloud && !session) return; loadShared() }, [session])
+  const inviteHousehold = async () => {
+    const l = lists.find(x => x.owner === myId) || lists[0]
+    if (!l) return
+    try {
+      const token = await store.createInvite(l.id)
+      const url = `${location.origin}/?invite=${token}`
+      if (navigator.share) { try { await navigator.share({ title: 'Tossalisti', text: 'Komdu með mér á listann í Tossalista 🛒', url }) } catch {} }
+      else { openShare(l) }
+    } catch { openShare(l) }
+  }
+
   // Sameiginlegur vörubanki (myndir úr skönnun)
   const [catalog, setCatalog] = useState({})
   useEffect(() => {
@@ -273,6 +288,9 @@ export default function App() {
     attrDone.current = true
     store.recordAttribution(getAttribution()).catch(() => {})
   }, [session])
+
+  // Skrá nafnlausa heimsókn (gesta-teljari) — einu sinni á hverja hleðslu
+  useEffect(() => { store.logPageview(pageContext()) }, [])
 
   // PWA install-ábending (eykur retention verulega — icon á heimaskjá)
   useEffect(() => {
@@ -643,7 +661,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping

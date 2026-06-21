@@ -331,6 +331,9 @@ button { font-family: inherit; cursor: pointer; }
 .adm-user-name { font-size: 14px; font-weight: 700; color: var(--navy); }
 .adm-user-new { font-size: 9px; font-weight: 800; color: var(--cta-ink); background: var(--cta); border-radius: 20px; padding: 1px 6px; letter-spacing: .04em; }
 .adm-user-src { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 800; flex: none; }
+.adm-src-rows { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; }
+.adm-src-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text); }
+.adm-src-row b { color: var(--navy); }
 .adm-user-email { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-user-act { font-size: 12px; color: var(--text); margin-top: 3px; }
 .adm-user-time { flex: none; text-align: right; font-size: 10px; color: var(--muted); white-space: nowrap; }
@@ -772,6 +775,12 @@ button { font-family: inherit; cursor: pointer; }
 .rem-time { font-size: 11px; font-weight: 700; color: var(--accent); }
 
 /* Heimaskjár — install-ábending */
+.home-invite { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--cta); background: #fff7e8; border-radius: 14px; text-align: left; }
+.home-invite-ic { font-size: 26px; flex: none; }
+.home-invite-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.home-invite-txt b { font-size: 14px; color: var(--navy); }
+.home-invite-txt small { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
 .home-install { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--accent); background: var(--chip); border-radius: 14px; text-align: left; }
 .home-install-ic { font-size: 26px; flex: none; }
 .home-install-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }

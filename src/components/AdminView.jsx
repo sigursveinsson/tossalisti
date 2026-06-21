@@ -41,6 +41,7 @@ const SRC = {
   other: { letter: '↗', label: 'Annað', color: '#6b7a93' },
   direct: { letter: 'B', label: 'Beint', color: '#9aa6ba' },
 }
+const SRC_LABEL = { facebook: 'Facebook', instagram: 'Instagram', google: 'Google', tossalisti: 'Boð frá notanda', direct: 'Beint', beint: 'Beint', other: 'Annað' }
 const srcBadge = (u) => {
   const s = SRC[u.source] || SRC.direct
   return { ...s, title: s.label + (u.utm_campaign ? ' · ' + u.utm_campaign : '') }
@@ -49,6 +50,7 @@ const srcBadge = (u) => {
 export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
+  const [pv, setPv] = useState(null)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   useBackClose(true, onClose)
@@ -57,6 +59,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
     setLoading(true); setErr(false)
     store.adminStats().then(s => { setStats(s); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
     store.adminActivity().then(setActivity).catch(() => setActivity([]))
+    store.adminPageviews().then(setPv).catch(() => setPv(null))
   }
   useEffect(load, [])
 
@@ -85,6 +88,25 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
 
         {loading && <p className="muted-p">Sæki tölfræði…</p>}
         {err && <p className="muted-p">Næ ekki í tölfræði (ertu skráð(ur) inn sem stjórnandi?).</p>}
+
+        {pv && (
+          <>
+            <div className="adm-head">Umferð (gestir á síðuna)</div>
+            <div className="adm-grid">
+              {metric('Heimsóknir í dag', num(pv.views_24h))}
+              {metric('Heimsóknir 7 daga', num(pv.views_7d))}
+              {metric('Einstakir gestir 7d', num(pv.visitors_7d))}
+              {metric('Skráningar 7d', num(pv.signups_7d), (pv.visitors_7d >= pv.signups_7d && pv.visitors_7d > 0) ? Math.round(pv.signups_7d / pv.visitors_7d * 100) + '% breyting' : null)}
+            </div>
+            {pv.by_source && pv.by_source.length > 0 && (
+              <div className="adm-src-rows">
+                {pv.by_source.map(r => (
+                  <div className="adm-src-row" key={r.source}><span>{SRC_LABEL[r.source] || r.source}</span><b>{num(r.n)}</b></div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
         {stats && (
           <>

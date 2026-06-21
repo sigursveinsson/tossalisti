@@ -38,7 +38,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -70,6 +70,14 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             : <>👋 Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
+
+      {!hasSharedList && onInvite && (
+        <button className="home-invite" onClick={() => onInvite()}>
+          <span className="home-invite-ic">👨‍👩‍👧</span>
+          <span className="home-invite-txt"><b>Bjóddu heimilisfólki á listann</b><small>Tossalisti er bestur þegar fjölskyldan deilir — sjáið innkaup og verk uppfærast í rauntíma</small></span>
+          <span className="home-row-go">›</span>
+        </button>
+      )}
 
       {canInstall && (
         <button className="home-install" onClick={() => onInstall && onInstall()}>

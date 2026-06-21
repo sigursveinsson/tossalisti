@@ -54,3 +54,18 @@ export function captureAttribution() {
 export function getAttribution() {
   try { const a = JSON.parse(localStorage.getItem(KEY) || 'null'); if (a) delete a._soft; return a } catch { return null }
 }
+
+// Nafnlaust gesta-auðkenni (engin vafrakaka, bara slembi-id í localStorage) til að telja einstaka gesti.
+export function visitorId() {
+  try {
+    let v = localStorage.getItem('korfan.vid')
+    if (!v) { v = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2)); localStorage.setItem('korfan.vid', v) }
+    return v
+  } catch { return null }
+}
+
+// Samhengi þessarar heimsóknar (fyrir gesta-teljara) — uppruni þessarar hleðslu.
+export function pageContext() {
+  const a = detect()
+  return { source: a.source, utm_campaign: a.utm_campaign, referrer: a.referrer, path: (location.pathname + location.hash).slice(0, 200), visitor: visitorId() }
+}

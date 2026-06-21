@@ -355,6 +355,7 @@ const local = {
   },
   async createInvite() { throw new Error('local') },
   async acceptInvite() { return null },
+  async hasSharedList() { return false },
   async recordAttribution() {},
   async savePushSubscription() {},
   async removePushSubscription() {},
@@ -378,6 +379,8 @@ const local = {
   async recordConsent(version) { const p = JSON.parse(localStorage.getItem('korfan.profile') || '{}'); p.consent_at = new Date().toISOString(); p.consent_version = version || 'v1'; localStorage.setItem('korfan.profile', JSON.stringify(p)) },
   async getAppSettings() { return JSON.parse(localStorage.getItem('korfan.appsettings') || '{"ads_enabled":false}') },
   async setAppSetting(key, value) { const s = JSON.parse(localStorage.getItem('korfan.appsettings') || '{}'); s[key] = value; localStorage.setItem('korfan.appsettings', JSON.stringify(s)) },
+  async logPageview() {},
+  async adminPageviews() { return null },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -768,6 +771,19 @@ const cloud = {
   async deleteRedemption(id) { const { error } = await supabase.from('reward_redemptions').delete().eq('id', id); if (error) throw error },
   async createInvite(listId) { const { data, error } = await supabase.rpc('create_invite', { p_list: listId }); if (error) throw error; return data },
   async acceptInvite(token) { const { data, error } = await supabase.rpc('accept_invite', { p_token: token }); if (error) throw error; return data },
+  async hasSharedList() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+    // (a) ég er meðlimur á lista einhvers annars
+    const { count: asMember } = await supabase.from('list_members').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    if (asMember && asMember > 0) return true
+    // (b) ég á lista sem einhverjum hefur verið boðið á
+    const { data: myLists } = await supabase.from('lists').select('id').eq('owner', user.id)
+    const ids = (myLists || []).map(l => l.id)
+    if (!ids.length) return false
+    const { count: invitees } = await supabase.from('list_members').select('*', { count: 'exact', head: true }).in('list_id', ids)
+    return !!(invitees && invitees > 0)
+  },
   async recordAttribution(a) {
     if (!a) return
     const { data: { user } } = await supabase.auth.getUser()
@@ -841,6 +857,19 @@ const cloud = {
   async setAppSetting(key, value) {
     const { error } = await supabase.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
     if (error) throw error
+  },
+  async logPageview(ctx = {}) {
+    try {
+      await supabase.from('pageviews').insert({
+        path: ctx.path || null, source: ctx.source || null, utm_campaign: ctx.utm_campaign || null,
+        referrer: ctx.referrer || null, visitor: ctx.visitor || null,
+      })
+    } catch {}
+  },
+  async adminPageviews() {
+    const { data, error } = await supabase.rpc('admin_pageviews')
+    if (error) throw error
+    return data
   },
   async assignItem(listId, itemId, person) {
     const a = personRef(person)
