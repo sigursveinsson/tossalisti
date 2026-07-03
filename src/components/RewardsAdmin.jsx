@@ -25,6 +25,7 @@ export default function RewardsAdmin({ onClose }) {
   const [no, setNo] = useState({ title: '', threshold: '', reward_desc: '' })
   const [scanning, setScanning] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [looking, setLooking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const fileRef = useRef(null)
@@ -51,6 +52,28 @@ export default function RewardsAdmin({ onClose }) {
     try { const url = await store.uploadRewardImage(file); setNp(v => ({ ...v, image_url: url })) }
     catch (err) { setMsg('Náði ekki að hlaða upp mynd: ' + (err.message || err)) }
     setUploading(false)
+  }
+
+  // Sækir heiti/stærð/mynd úr Open Food Facts eftir strikamerki (fyllir aðeins auða reiti).
+  const lookup = async (code) => {
+    const bc = (code || '').trim()
+    if (!bc) return
+    setLooking(true); setMsg('')
+    try {
+      const info = await store.lookupBarcode(bc)
+      if (info && (info.name || info.image_url || info.size)) {
+        setNp(v => ({
+          ...v,
+          name: v.name || info.name || '',
+          size: v.size || info.size || '',
+          image_url: v.image_url || info.image_url || '',
+        }))
+        setMsg(info.name ? `Sótt úr Open Food Facts: ${info.name}` : 'Vara fannst (án heitis).')
+      } else {
+        setMsg('Fannst ekki í Open Food Facts — fylltu inn handvirkt.')
+      }
+    } catch { setMsg('Náði ekki í Open Food Facts.') }
+    setLooking(false)
   }
 
   const setField = async (p, patch) => { await store.updateRewardProduct(p.id, patch); load() }
@@ -128,7 +151,10 @@ export default function RewardsAdmin({ onClose }) {
           <div className="rw-add-row">
             <input placeholder="Stærð (t.d. 330 ml)" value={np.size} onChange={e => setNameOrSize({ size: e.target.value })} />
             <input placeholder="Strikamerki (EAN)" value={np.barcode} onChange={e => setNp({ ...np, barcode: e.target.value })} inputMode="numeric" />
+          </div>
+          <div className="rw-add-row">
             <button className="rw-scanbtn" onClick={() => setScanning(true)}>📷 Skanna</button>
+            <button className="rw-scanbtn" onClick={() => lookup(np.barcode)} disabled={looking || !np.barcode}>{looking ? 'Sæki…' : '🔍 Sækja úr Open Food Facts'}</button>
           </div>
           <div className="rw-kwrow">
             <input placeholder="Leitarorð (passa öll við kvittun)" value={kwValue} onChange={e => { setKwEdited(true); setNp({ ...np, keywords: e.target.value }) }} />
@@ -167,7 +193,7 @@ export default function RewardsAdmin({ onClose }) {
       {scanning && (
         <div onClick={e => e.stopPropagation()}>
           <BarcodeScanner
-            onDetect={(code) => { setNp(v => ({ ...v, barcode: code })); setScanning(false) }}
+            onDetect={(code) => { setNp(v => ({ ...v, barcode: code })); setScanning(false); lookup(code) }}
             onClose={() => setScanning(false)}
           />
         </div>

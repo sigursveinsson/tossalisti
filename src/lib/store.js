@@ -62,6 +62,26 @@ function matchRewards(items, products) {
   return out
 }
 
+// Sækir vöruupplýsingar (heiti, stærð, mynd) úr Open Food Facts eftir strikamerki.
+async function offLookup(barcode) {
+  const code = (barcode || '').replace(/\D/g, '')
+  if (!code) return null
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,generic_name,brands,quantity,image_front_url,image_url`)
+    const j = await r.json()
+    if (!j || j.status !== 1 || !j.product) return null
+    const p = j.product
+    const brand = (p.brands || '').split(',')[0].trim()
+    const name = (p.product_name || p.generic_name || '').trim()
+    return {
+      name: name || brand || '',
+      size: (p.quantity || '').trim(),
+      image_url: p.image_front_url || p.image_url || '',
+      brand,
+    }
+  } catch { return null }
+}
+
 function lsSeed() {
   const lists = [
     {
@@ -428,6 +448,7 @@ const local = {
   async addRewardBrand() {}, async addRewardProduct() {}, async updateRewardProduct() {},
   async deleteRewardProduct() {}, async addRewardOffer() {}, async deleteRewardOffer() {},
   async uploadRewardImage() { throw new Error('local') },
+  async lookupBarcode(bc) { return offLookup(bc) },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -980,6 +1001,7 @@ const cloud = {
     const { data } = supabase.storage.from('reward-products').getPublicUrl(path)
     return data.publicUrl
   },
+  async lookupBarcode(bc) { return offLookup(bc) },
   async updateRewardProduct(id, patch) {
     const { error } = await supabase.from('reward_products').update(patch).eq('id', id)
     if (error) throw error
