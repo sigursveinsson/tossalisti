@@ -4,13 +4,19 @@ import { useBackClose } from '../lib/backstack.js'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
 
+const rewardText = (p) => p.reward_type === 'percent' ? `${p.reward_value}%` : `+${kr(p.reward_value)}`
+
 export default function RewardsView({ onClose }) {
   const [r, setR] = useState(null)
   const [offers, setOffers] = useState([])
+  const [products, setProducts] = useState([])
   useBackClose(true, onClose)
   useEffect(() => {
     store.getMyRewards().then(setR).catch(() => setR({ balance: 0, pending: 0, items: [] }))
-    store.getRewardData().then(d => setOffers(d.offers || [])).catch(() => {})
+    store.getRewardData().then(d => {
+      setOffers(d.offers || [])
+      setProducts((d.products || []).filter(p => p.active !== false))
+    }).catch(() => {})
   }, [])
   if (!r) return null
   return (
@@ -22,6 +28,22 @@ export default function RewardsView({ onClose }) {
           <div className="rv-bal-val">{kr(r.balance)}</div>
           <div className="rv-bal-lbl">safnað cashback{r.pending > 0 ? ` · ${kr(r.pending)} í bið` : ''}</div>
         </div>
+
+        {products.length > 0 && (
+          <>
+            <div className="modal-label">Vörur sem gefa cashback</div>
+            <div className="rv-catalog">
+              {products.map(p => (
+                <div className="rv-cat-item" key={p.id}>
+                  {p.image_url ? <img className="rv-cat-img" src={p.image_url} alt="" /> : <div className="rv-cat-img rv-cat-ph">🛒</div>}
+                  <div className="rv-cat-txt"><b>{p.name}</b>{p.size && <small>{p.size}</small>}</div>
+                  <span className="rv-cat-reward">{rewardText(p)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="rv-note">Kauptu þessar vörur og skannaðu kvittunina — cashback bætist sjálfkrafa við.</p>
+          </>
+        )}
 
         {offers.length > 0 && (
           <>

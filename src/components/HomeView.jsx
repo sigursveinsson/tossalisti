@@ -38,7 +38,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -71,10 +71,12 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </div>
       </div>
 
-      {cashback > 0 && onOpenRewards && (
-        <button className="home-cashback" onClick={() => onOpenRewards()}>
+      {onOpenRewards && (cashback > 0 || rewardsEnabled) && (
+        <button className={'home-cashback' + (cashback > 0 ? '' : ' promo')} onClick={() => onOpenRewards()}>
           <span className="home-cashback-ic">🎁</span>
-          <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
+          {cashback > 0
+            ? <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
+            : <span className="home-cashback-txt"><small>Nýtt: Gríptu cashback</small><b>Fáðu til baka af innkaupum</b></span>}
           <span className="home-row-go">›</span>
         </button>
       )}

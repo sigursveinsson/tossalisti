@@ -818,6 +818,8 @@ button { font-family: inherit; cursor: pointer; }
 .home-cashback-txt small { font-size: 12px; color: #cdd9ee; }
 .home-cashback-txt b { font-size: 22px; color: var(--cta); }
 .home-cashback .home-row-go { color: #cdd9ee; }
+.home-cashback.promo .home-cashback-txt b { font-size: 16px; color: #fff; }
+.home-cashback.promo .home-cashback-txt small { color: var(--cta); font-weight: 700; }
 
 /* RewardsView */
 .rv-balance { background: linear-gradient(120deg, #15315e, #2a5a9e); border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 14px; }
@@ -832,6 +834,15 @@ button { font-family: inherit; cursor: pointer; }
 .rv-list { display: flex; flex-direction: column; gap: 2px; }
 .rv-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .rv-item-val { font-weight: 700; color: var(--done); }
+.rv-catalog { display: flex; flex-direction: column; gap: 8px; }
+.rv-cat-item { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; }
+.rv-cat-img { width: 46px; height: 46px; border-radius: 9px; object-fit: cover; background: var(--surface-2); flex: none; }
+.rv-cat-ph { display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.rv-cat-txt { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.rv-cat-txt b { font-size: 14px; color: var(--navy); }
+.rv-cat-txt small { font-size: 12px; color: var(--muted); }
+.rv-cat-reward { font-size: 15px; font-weight: 800; color: var(--done); flex: none; }
+.rv-note { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 8px 2px 0; }
 
 .home-invite { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--cta); background: #fff7e8; border-radius: 14px; text-align: left; }
 .home-invite-ic { font-size: 26px; flex: none; }
