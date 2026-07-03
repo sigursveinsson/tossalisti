@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:bg>
+      <p:bgPr>
+        <a:solidFill>
+          <a:srgbClr val="FFFFFF"/>
+        </a:solidFill>
+        <a:effectLst/>
+      </p:bgPr>
+    </p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="2" name="Rectangle 1"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="640080" y="566928"/>
+            <a:ext cx="292608" cy="292608"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:srgbClr val="F5A623"/>
+          </a:solidFill>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:style>
+          <a:lnRef idx="1">
+            <a:schemeClr val="accent1"/>
+          </a:lnRef>
+          <a:fillRef idx="3">
+            <a:schemeClr val="accent1"/>
+          </a:fillRef>
+          <a:effectRef idx="2">
+            <a:schemeClr val="accent1"/>
+          </a:effectRef>
+          <a:fontRef idx="minor">
+            <a:schemeClr val="lt1"/>
+          </a:fontRef>
+        </p:style>
+        <p:txBody>
+          <a:bodyPr rtlCol="0" anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="3" name="TextBox 2"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="1024128" y="548640"/>
+            <a:ext cx="10515600" cy="365760"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" anchor="t" lIns="0" rIns="0" tIns="0" bIns="0">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="l">
+              <a:spcAft>
+                <a:spcPts val="600"/>
+              </a:spcAft>
+            </a:pPr>
+            <a:r>
+              <a:rPr sz="1300" b="1" i="0">
+                <a:solidFill>
+                  <a:srgbClr val="F5A623"/>
+                </a:solidFill>
+                <a:latin typeface="Calibri"/>
+              </a:rPr>
+              <a:t>SAMSTARF</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="4" name="TextBox 3"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="640080" y="960120"/>
+            <a:ext cx="10881360" cy="1097280"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" anchor="t" lIns="0" rIns="0" tIns="0" bIns="0">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="l">
+              <a:lnSpc>
+                <a:spcPct val="100000"/>
+              </a:lnSpc>
+              <a:spcAft>
+                <a:spcPts val="600"/>
+              </a:spcAft>
+            </a:pPr>
+            <a:r>
+              <a:rPr sz="3000" b="1" i="0">
+                <a:solidFill>
+                  <a:srgbClr val="15315E"/>
+                </a:solidFill>
+                <a:latin typeface="Georgia"/>
+              </a:rPr>
+              <a:t>Leiðir til samstarfs (dæmi)</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:graphicFrame>
+        <p:nvGraphicFramePr>
+          <p:cNvPr id="5" name="Table 4"/>
+          <p:cNvGraphicFramePr>
+            <a:graphicFrameLocks noGrp="1"/>
+          </p:cNvGraphicFramePr>
+          <p:nvPr/>
+        </p:nvGraphicFramePr>
+        <p:xfrm>
+          <a:off x="640080" y="1965960"/>
+          <a:ext cx="10908792" cy="3200400"/>
+        </p:xfrm>
+        <a:graphic>
+          <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+            <a:tbl>
+              <a:tblPr firstRow="1" bandRow="1">
+                <a:tableStyleId>{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}</a:tableStyleId>
+              </a:tblPr>
+              <a:tblGrid>
+                <a:gridCol w="1691640"/>
+                <a:gridCol w="3072384"/>
+                <a:gridCol w="3072384"/>
+                <a:gridCol w="3072384"/>
+              </a:tblGrid>
+              <a:tr h="502920">
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t/>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="15315E"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Brons – Kynning</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="15315E"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Silfur – Kostaðar vörur</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="15315E"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="15315E"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Gull – Stofnaðili</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="F5A623"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+              </a:tr>
+              <a:tr h="502920">
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1200" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="6B7A93"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Verð (dæmi)</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="15315E"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>150.000 kr/mán</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="15315E"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>350.000 kr/mán</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="ctr"/>
+                      <a:r>
+                        <a:rPr sz="1400" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="F5A623"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>750.000 kr/mán</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="EEF3FB"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+              </a:tr>
+              <a:tr h="274320">
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="600" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t/>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="600" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t/>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="600" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t/>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="600" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="FFFFFF"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t/>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+              </a:tr>
+              <a:tr h="1920240">
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1200" b="1">
+                          <a:solidFill>
+                            <a:srgbClr val="6B7A93"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Hvað fylgir</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1200" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="1B2A41"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Vörumerki sýnilegt í viðeigandi flokki. Mánaðarleg yfirlitsskýrsla.</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1200" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="1B2A41"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Kostaðar vörur efst í leit. Flokkakostun. Innsýn í eftirspurn.</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="FFFFFF"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+                <a:tc>
+                  <a:txBody>
+                    <a:bodyPr wrap="square"/>
+                    <a:lstStyle/>
+                    <a:p>
+                      <a:pPr algn="l"/>
+                      <a:r>
+                        <a:rPr sz="1200" b="0">
+                          <a:solidFill>
+                            <a:srgbClr val="1B2A41"/>
+                          </a:solidFill>
+                          <a:latin typeface="Calibri"/>
+                        </a:rPr>
+                        <a:t>Einkaréttur í drykkjarflokki. Hámarks sýnileiki. Full innsýn. Samsköpun. Fyrstur inn.</a:t>
+                      </a:r>
+                    </a:p>
+                  </a:txBody>
+                  <a:tcPr marL="109728" marR="109728" marT="54864" marB="54864" anchor="ctr">
+                    <a:solidFill>
+                      <a:srgbClr val="EEF3FB"/>
+                    </a:solidFill>
+                  </a:tcPr>
+                </a:tc>
+              </a:tr>
+            </a:tbl>
+          </a:graphicData>
+        </a:graphic>
+      </p:graphicFrame>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="6" name="TextBox 5"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="640080" y="5440680"/>
+            <a:ext cx="10881360" cy="457200"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" anchor="t" lIns="0" rIns="0" tIns="0" bIns="0">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="l">
+              <a:spcAft>
+                <a:spcPts val="0"/>
+              </a:spcAft>
+            </a:pPr>
+            <a:r>
+              <a:rPr sz="1300" b="0" i="1">
+                <a:solidFill>
+                  <a:srgbClr val="6B7A93"/>
+                </a:solidFill>
+                <a:latin typeface="Calibri"/>
+              </a:rPr>
+              <a:t>Dæmi til viðmiðunar — stillanlegt eftir markmiðum og umfangi.</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping/>
+  </p:clrMapOvr>
+</p:sld>
