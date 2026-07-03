@@ -16,6 +16,7 @@ import AdBanner from './AdBanner.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
+import { rewardForName, normMatch } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
@@ -51,7 +52,7 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -80,9 +81,18 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const sugg = (isTask || isSchedule) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule
   const sponSugg = (isTask || isSchedule || !adsEnabled) ? [] : sponsoredSuggest(text)
-  const catSugg = (isShopping && text.trim().length >= 2)
-    ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n)).slice(0, 5)
+  const rewardFor = (name) => (rewardProducts && rewardProducts.length) ? rewardForName(name, rewardProducts) : null
+  const rewardLabel = (p) => p.reward_type === 'percent' ? `🎁 ${p.reward_value}%` : `🎁 +${p.reward_value} kr`
+  // Skráðar verðlaunavörur birtast sem fyrsta flokks tillögur (heiti + mynd + cashback).
+  const rq = normMatch(text)
+  const rewardSugg = (isShopping && rq.length >= 2 && rewardProducts && rewardProducts.length)
+    ? rewardProducts.filter(p => p.active !== false && (normMatch(p.name).includes(rq) || (p.match_keywords || []).some(k => normMatch(k).includes(rq))))
     : []
+  const rewardNames = new Set(rewardSugg.map(p => normMatch(p.name)))
+  const catSugg = (isShopping && text.trim().length >= 2)
+    ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n) && !rewardNames.has(normMatch(n))).slice(0, 5)
+    : []
+  const suggFiltered = sugg.filter(s => !rewardNames.has(normMatch(s)))
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
 
@@ -263,8 +273,15 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
       <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
-      {(sugg.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
+      {(rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
+          {rewardSugg.map(p => (
+            <div key={'rw_' + p.id} className="suggest-off suggest-reward" onClick={() => add(p.name, p.image_url)}>
+              {p.image_url ? <img src={p.image_url} alt="" /> : <CatIcon name={p.name} dept={departmentFor(p.name)} size={34} />}
+              <span>{p.name}{p.size ? ` · ${p.size}` : ''}</span>
+              <span className="sugg-cashback">{rewardLabel(p)}</span>
+            </div>
+          ))}
           {sponSugg.map(o => (
             <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name, o.image)}>
               <span className="spon-mark" style={{ background: o.color }}>
@@ -274,13 +291,25 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               <span className="spon-tag">Kostað · {o.brand}</span>
             </div>
           ))}
-          {catSugg.map(n => (
-            <div key={'cat_' + n} className="suggest-off" onClick={() => add(n, catalog[n])}>
-              {catalog[n] ? <img src={catalog[n]} alt="" /> : <CatIcon name={n} dept={departmentFor(n)} size={34} />}
-              <span>{n}</span>
-            </div>
-          ))}
-          {sugg.map(s => <div key={s} onClick={() => add(s)}>{s}</div>)}
+          {catSugg.map(n => {
+            const rp = rewardFor(n)
+            return (
+              <div key={'cat_' + n} className="suggest-off" onClick={() => add(n, catalog[n])}>
+                {catalog[n] ? <img src={catalog[n]} alt="" /> : <CatIcon name={n} dept={departmentFor(n)} size={34} />}
+                <span>{n}</span>
+                {rp && <span className="sugg-cashback">{rewardLabel(rp)}</span>}
+              </div>
+            )
+          })}
+          {suggFiltered.map(s => {
+            const rp = rewardFor(s)
+            return (
+              <div key={s} className="suggest-plain" onClick={() => add(s)}>
+                <span>{s}</span>
+                {rp && <span className="sugg-cashback">{rewardLabel(rp)}</span>}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

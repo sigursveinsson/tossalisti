@@ -134,7 +134,12 @@ export default function RewardsAdmin({ onClose }) {
               <span className="rw-unit">{p.reward_type === 'percent' ? '%' : 'kr'}</span>
               <label className="rw-active"><input type="checkbox" checked={p.active} onChange={e => setField(p, { active: e.target.checked })} /> virk</label>
             </div>
-            {(p.match_keywords || []).length > 0 && <div className="rw-kw">Passar við: {(p.match_keywords || []).join(' + ')}</div>}
+            <div className="rw-kwedit-row">
+              <span className="rw-kwlbl">Passar við</span>
+              <input className="rw-kwedit" defaultValue={(p.match_keywords || []).join(', ')}
+                onBlur={e => { const kws = e.target.value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean); setField(p, { match_keywords: kws }) }}
+                placeholder="orð eins og þau standa á kvittun (t.d. ritz)" />
+            </div>
           </div>
         ))}
 

@@ -41,16 +41,30 @@ export function purchaseFingerprint(p = {}) {
 }
 
 // Para kvittanalínur við verðlaunavörur og reikna cashback (föst upphæð eða hlutfall).
+// Normaliserar texta fyrir samanburð: lágstafir, íslenskir stafir einfaldaðir, allt nema a-z0-9 burt.
+export function normMatch(s) {
+  return (s || '').toLowerCase()
+    .replace(/[áàâä]/g, 'a').replace(/[éèê]/g, 'e').replace(/[íìî]/g, 'i')
+    .replace(/[óòô]/g, 'o').replace(/[úùû]/g, 'u').replace(/ý/g, 'y')
+    .replace(/þ/g, 'th').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/ö/g, 'o')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+// Finnur verðlaunavöru sem passar við vöruheiti — öll leitarorð verða að finnast eftir normaliseringu.
+export function rewardForName(name, products) {
+  const n = normMatch(name)
+  if (!n) return null
+  return (products || []).find(p => {
+    if (p.active === false) return false
+    const kws = (p.match_keywords || []).filter(Boolean)
+    return kws.length > 0 && kws.every(k => n.includes(normMatch(k)))
+  }) || null
+}
+
 function matchRewards(items, products) {
   const out = []
   for (const it of (items || [])) {
-    const name = (it.name || '').toLowerCase().trim()
-    if (!name) continue
-    const prod = (products || []).find(p => {
-      if (p.active === false) return false
-      const kws = (p.match_keywords || []).filter(Boolean)
-      return kws.length > 0 && kws.every(k => name.includes(k))
-    })
+    const prod = rewardForName(it.name, products)
     if (!prod) continue
     const qty = Number(it.qty) || 1
     const price = Number(it.price) || 0
@@ -449,6 +463,7 @@ const local = {
   async deleteRewardProduct() {}, async addRewardOffer() {}, async deleteRewardOffer() {},
   async uploadRewardImage() { throw new Error('local') },
   async lookupBarcode(bc) { return offLookup(bc) },
+  async getRewardCatalog() { return [] },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -1002,6 +1017,10 @@ const cloud = {
     return data.publicUrl
   },
   async lookupBarcode(bc) { return offLookup(bc) },
+  async getRewardCatalog() {
+    const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true)
+    return data || []
+  },
   async updateRewardProduct(id, patch) {
     const { error } = await supabase.from('reward_products').update(patch).eq('id', id)
     if (error) throw error
