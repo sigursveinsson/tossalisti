@@ -46,7 +46,11 @@ function matchRewards(items, products) {
   for (const it of (items || [])) {
     const name = (it.name || '').toLowerCase().trim()
     if (!name) continue
-    const prod = (products || []).find(p => p.active !== false && (p.match_keywords || []).some(k => k && name.includes(k)))
+    const prod = (products || []).find(p => {
+      if (p.active === false) return false
+      const kws = (p.match_keywords || []).filter(Boolean)
+      return kws.length > 0 && kws.every(k => name.includes(k))
+    })
     if (!prod) continue
     const qty = Number(it.qty) || 1
     const price = Number(it.price) || 0
@@ -423,6 +427,7 @@ const local = {
   async getMyRewards() { return { balance: 0, pending: 0, approved: 0, items: [] } },
   async addRewardBrand() {}, async addRewardProduct() {}, async updateRewardProduct() {},
   async deleteRewardProduct() {}, async addRewardOffer() {}, async deleteRewardOffer() {},
+  async uploadRewardImage() { throw new Error('local') },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -962,8 +967,18 @@ const cloud = {
     const { error } = await supabase.from('reward_products').insert({
       brand_id: p.brand_id, name: (p.name || '').trim(), match_keywords: p.match_keywords || [],
       reward_type: p.reward_type || 'fixed', reward_value: Number(p.reward_value) || 0, active: true,
+      barcode: (p.barcode || '').trim() || null, size: (p.size || '').trim() || null, image_url: p.image_url || null,
     })
     if (error) throw error
+  },
+  async uploadRewardImage(file) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const ext = ((file.name || 'img.jpg').split('.').pop() || 'jpg').toLowerCase()
+    const path = `${user?.id || 'anon'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const { error } = await supabase.storage.from('reward-products').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' })
+    if (error) throw error
+    const { data } = supabase.storage.from('reward-products').getPublicUrl(path)
+    return data.publicUrl
   },
   async updateRewardProduct(id, patch) {
     const { error } = await supabase.from('reward_products').update(patch).eq('id', id)
