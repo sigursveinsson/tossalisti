@@ -13,7 +13,7 @@ const dateLooksOff = (d) => {
 const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' }) } catch { return d } }
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
-export default function ReceiptScanner({ onSave, onClose }) {
+export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
   const fileRef = useRef(null)
   const [phase, setPhase] = useState('capture') // capture | reading | review
   const [progress, setProgress] = useState(0)
@@ -22,6 +22,7 @@ export default function ReceiptScanner({ onSave, onClose }) {
   const [items, setItems] = useState([])
   const [total, setTotal] = useState('')
   const [saving, setSaving] = useState(false)
+  const [dup, setDup] = useState(null)
 
   useBackClose(true, onClose)
 
@@ -51,14 +52,19 @@ export default function ReceiptScanner({ onSave, onClose }) {
     const clean = items
       .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price) }))
       .filter(it => it.name)
+    const payload = {
+      store: store.trim(),
+      purchased_at: date,
+      total: total === '' ? sum(clean) : Number(total),
+      items: clean,
+    }
     setSaving(true)
     try {
-      await onSave({
-        store: store.trim(),
-        purchased_at: date,
-        total: total === '' ? sum(clean) : Number(total),
-        items: clean,
-      })
+      if (!dup && onCheckDuplicate) {
+        const existing = await onCheckDuplicate(payload)
+        if (existing) { setDup(existing); setSaving(false); return }
+      }
+      await onSave(payload)
       onClose()
     } catch (e) {
       setSaving(false)
@@ -111,7 +117,10 @@ export default function ReceiptScanner({ onSave, onClose }) {
               <input value={total} onChange={e => setTotal(e.target.value)} placeholder={String(sum(items.map(i => ({ price: i.price }))))} inputMode="decimal" />
               <span>kr</span>
             </div>
-            <button className="add-recipe-btn" onClick={save} disabled={saving}>{saving ? 'Vista…' : 'Vista kvittun'}</button>
+            {dup && (
+              <div className="receipt-datewarn">⚠️ Þessi kvittun virðist þegar skráð{dup.purchased_at ? ' (' + dup.store + ', ' + fmtDate(dup.purchased_at) + ')' : ''}. Ef hún er ný, ýttu aftur á „Vista samt".</div>
+            )}
+            <button className="add-recipe-btn" onClick={save} disabled={saving}>{saving ? 'Vista…' : (dup ? 'Vista samt' : 'Vista kvittun')}</button>
           </>
         )}
       </div>

@@ -25,6 +25,39 @@ function lsRead() {
 }
 function lsWrite(lists) { localStorage.setItem(LS_KEY, JSON.stringify(lists)) }
 
+// Kvittana-fingrafar til að þekkja tvítekningar (sama kvittun skönnuð oft).
+// Byggt á verslun + dagsetningu + upphæð + vörulínum, svo aðeins SAMA kvittun rekst á.
+function fnv1a(str) {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) }
+  return (h >>> 0).toString(16).padStart(8, '0')
+}
+export function purchaseFingerprint(p = {}) {
+  const store = (p.store || '').toLowerCase().trim()
+  const date = p.purchased_at || ''
+  const total = Math.round(Number(p.total) || 0)
+  const items = (p.items || []).map(i => `${(i.name || '').toLowerCase().trim()}:${Math.round(Number(i.price) || 0)}`).sort().join('|')
+  return fnv1a(`${store}|${date}|${total}|${(p.items || []).length}|${items}`)
+}
+
+// Para kvittanalínur við verðlaunavörur og reikna cashback (föst upphæð eða hlutfall).
+function matchRewards(items, products) {
+  const out = []
+  for (const it of (items || [])) {
+    const name = (it.name || '').toLowerCase().trim()
+    if (!name) continue
+    const prod = (products || []).find(p => p.active !== false && (p.match_keywords || []).some(k => k && name.includes(k)))
+    if (!prod) continue
+    const qty = Number(it.qty) || 1
+    const price = Number(it.price) || 0
+    const value = prod.reward_type === 'percent'
+      ? Math.round(price * (Number(prod.reward_value) || 0) / 100)
+      : (Number(prod.reward_value) || 0) * qty
+    if (value > 0) out.push({ product_id: prod.id, product_name: prod.name, brand_id: prod.brand_id, qty, value })
+  }
+  return out
+}
+
 function lsSeed() {
   const lists = [
     {
@@ -151,12 +184,17 @@ const local = {
     const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
     return all.sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
   },
+  async checkDuplicatePurchase(p) {
+    const fp = purchaseFingerprint(p)
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    return all.find(x => x.fingerprint === fp) || null
+  },
   async addPurchase(p) {
     const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
     const rec = {
       id: uid(), list_id: p.list_id || null, store: p.store || '',
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10),
-      total: p.total ?? null, category: p.category || null, user_id: 'me',
+      total: p.total ?? null, category: p.category || null, user_id: 'me', fingerprint: purchaseFingerprint(p),
       items: (p.items || []).map(i => ({ id: uid(), name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null })),
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
@@ -381,6 +419,10 @@ const local = {
   async setAppSetting(key, value) { const s = JSON.parse(localStorage.getItem('korfan.appsettings') || '{}'); s[key] = value; localStorage.setItem('korfan.appsettings', JSON.stringify(s)) },
   async logPageview() {},
   async adminPageviews() { return null },
+  async getRewardData() { return { brands: [], products: [], offers: [] } },
+  async getMyRewards() { return { balance: 0, pending: 0, approved: 0, items: [] } },
+  async addRewardBrand() {}, async addRewardProduct() {}, async updateRewardProduct() {},
+  async deleteRewardProduct() {}, async addRewardOffer() {}, async deleteRewardOffer() {},
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -540,19 +582,51 @@ const cloud = {
     for (const it of (its || [])) { (byP[it.purchase_id] || (byP[it.purchase_id] = [])).push(it) }
     return ps.map(p => ({ ...p, items: byP[p.id] || [] }))
   },
+  async checkDuplicatePurchase(p) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const fp = purchaseFingerprint(p)
+    const { data } = await supabase.from('purchases').select('id,store,purchased_at,total').eq('user_id', user.id).eq('fingerprint', fp).limit(1)
+    return (data && data[0]) || null
+  },
   async addPurchase(p) {
     const { data: { user } } = await supabase.auth.getUser()
     const { data: pr, error } = await supabase.from('purchases').insert({
       user_id: user.id, list_id: p.list_id || null, store: p.store || null,
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
-      category: p.category || null,
+      category: p.category || null, fingerprint: purchaseFingerprint(p),
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {
       const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null }))
       await supabase.from('purchase_items').insert(rows)
     }
-    return pr
+    // Verðlaun (cashback) — aðeins ef kveikt er á kerfinu
+    let earned = 0
+    try {
+      const { data: rs } = await supabase.from('app_settings').select('value').eq('key', 'rewards_enabled').maybeSingle()
+      if (rs && rs.value === true) {
+        const { data: prods } = await supabase.from('reward_products').select('id,name,brand_id,match_keywords,reward_type,reward_value,active').eq('active', true)
+        const matches = matchRewards(p.items, prods || [])
+        if (matches.length) {
+          await supabase.from('reward_earnings').insert(matches.map(m => ({
+            user_id: user.id, purchase_id: pr.id, brand_id: m.brand_id, product_id: m.product_id,
+            product_name: m.product_name, qty: m.qty, value: m.value, status: 'pending',
+          })))
+          earned = matches.reduce((s, m) => s + m.value, 0)
+        }
+      }
+    } catch {}
+    return { ...pr, earned }
+  },
+  async getMyRewards() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { balance: 0, pending: 0, approved: 0, items: [] }
+    const { data } = await supabase.from('reward_earnings').select('product_name,value,status,created_at').eq('user_id', user.id).order('created_at', { ascending: false })
+    const items = data || []
+    const sum = (st) => items.filter(i => i.status === st).reduce((s, i) => s + Number(i.value), 0)
+    const pending = sum('pending'), approved = sum('approved'), redeemed = sum('redeemed')
+    return { pending, approved, redeemed, balance: pending + approved - redeemed, items }
   },
   async deletePurchase(id) {
     await supabase.from('purchases').delete().eq('id', id)
@@ -870,6 +944,45 @@ const cloud = {
     const { data, error } = await supabase.rpc('admin_pageviews')
     if (error) throw error
     return data
+  },
+  // ---- Verðlaunakerfi (admin CMS) ----
+  async getRewardData() {
+    const [{ data: brands }, { data: products }, { data: offers }] = await Promise.all([
+      supabase.from('reward_brands').select('*').order('name'),
+      supabase.from('reward_products').select('*').order('name'),
+      supabase.from('reward_offers').select('*').order('threshold'),
+    ])
+    return { brands: brands || [], products: products || [], offers: offers || [] }
+  },
+  async addRewardBrand(name) {
+    const { data, error } = await supabase.from('reward_brands').insert({ name: (name || '').trim() }).select().single()
+    if (error) throw error; return data
+  },
+  async addRewardProduct(p) {
+    const { error } = await supabase.from('reward_products').insert({
+      brand_id: p.brand_id, name: (p.name || '').trim(), match_keywords: p.match_keywords || [],
+      reward_type: p.reward_type || 'fixed', reward_value: Number(p.reward_value) || 0, active: true,
+    })
+    if (error) throw error
+  },
+  async updateRewardProduct(id, patch) {
+    const { error } = await supabase.from('reward_products').update(patch).eq('id', id)
+    if (error) throw error
+  },
+  async deleteRewardProduct(id) {
+    const { error } = await supabase.from('reward_products').delete().eq('id', id)
+    if (error) throw error
+  },
+  async addRewardOffer(o) {
+    const { error } = await supabase.from('reward_offers').insert({
+      brand_id: o.brand_id || null, title: (o.title || '').trim(), threshold: Number(o.threshold) || 0,
+      reward_desc: o.reward_desc || null, kind: o.kind || 'giftcard', active: true,
+    })
+    if (error) throw error
+  },
+  async deleteRewardOffer(id) {
+    const { error } = await supabase.from('reward_offers').delete().eq('id', id)
+    if (error) throw error
   },
   async assignItem(listId, itemId, person) {
     const a = personRef(person)

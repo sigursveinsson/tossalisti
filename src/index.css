@@ -334,6 +334,29 @@ button { font-family: inherit; cursor: pointer; }
 .adm-src-rows { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; }
 .adm-src-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--text); }
 .adm-src-row b { color: var(--navy); }
+
+/* Verðlauna-stjórnborð */
+.adm-rewards-btn { width: 100%; margin-bottom: 14px; height: 48px; border: 1px solid var(--cta); background: #fff7e8; color: var(--navy); border-radius: 12px; font-size: 15px; font-weight: 600; }
+.rw-prod { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.rw-prod-top { display: flex; align-items: center; justify-content: space-between; }
+.rw-prod-top b { font-size: 15px; color: var(--navy); }
+.rw-prod-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.rw-prod-row select, .rw-add-row select { height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0 8px; font-size: 14px; }
+.rw-val { width: 78px; height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; font-size: 14px; }
+.rw-unit { color: var(--muted); font-size: 14px; }
+.rw-active { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); }
+.rw-active input { width: 18px; height: 18px; accent-color: var(--done); }
+.rw-kw { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.rw-add { background: var(--surface-2); border-radius: 12px; padding: 12px; margin: 6px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.rw-add input { height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; font-size: 14px; background: var(--surface); }
+.rw-add-row { display: flex; gap: 8px; align-items: center; }
+.rw-add-row input { flex: 1; min-width: 0; }
+.rw-addbtn { width: auto; flex: none; height: 40px; padding: 0 16px; }
+.rw-offer { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.rw-offer-txt { display: flex; flex-direction: column; gap: 2px; }
+.rw-offer-txt b { font-size: 15px; color: var(--navy); }
+.rw-offer-txt small { font-size: 12px; color: var(--muted); }
+.rw-del { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; flex: none; }
 .adm-user-email { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adm-user-act { font-size: 12px; color: var(--text); margin-top: 3px; }
 .adm-user-time { flex: none; text-align: right; font-size: 10px; color: var(--muted); white-space: nowrap; }
@@ -775,6 +798,27 @@ button { font-family: inherit; cursor: pointer; }
 .rem-time { font-size: 11px; font-weight: 700; color: var(--accent); }
 
 /* Heimaskjár — install-ábending */
+.home-cashback { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: none; background: linear-gradient(120deg, #15315e, #2a5a9e); color: #fff; border-radius: 14px; text-align: left; }
+.home-cashback-ic { font-size: 28px; flex: none; }
+.home-cashback-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.home-cashback-txt small { font-size: 12px; color: #cdd9ee; }
+.home-cashback-txt b { font-size: 22px; color: var(--cta); }
+.home-cashback .home-row-go { color: #cdd9ee; }
+
+/* RewardsView */
+.rv-balance { background: linear-gradient(120deg, #15315e, #2a5a9e); border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 14px; }
+.rv-bal-val { font-size: 34px; font-weight: 800; color: var(--cta); }
+.rv-bal-lbl { font-size: 13px; color: #cdd9ee; margin-top: 4px; }
+.rv-offer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.rv-offer-txt { display: flex; flex-direction: column; gap: 2px; }
+.rv-offer-txt b { font-size: 14px; color: var(--navy); }
+.rv-offer-txt small { font-size: 12px; color: var(--muted); }
+.rv-th { font-size: 13px; color: var(--muted); }
+.rv-reached { font-size: 13px; font-weight: 700; color: var(--done); }
+.rv-list { display: flex; flex-direction: column; gap: 2px; }
+.rv-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.rv-item-val { font-weight: 700; color: var(--done); }
+
 .home-invite { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; margin-bottom: 14px; border: 1px solid var(--cta); background: #fff7e8; border-radius: 14px; text-align: left; }
 .home-invite-ic { font-size: 26px; flex: none; }
 .home-invite-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }

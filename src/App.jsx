@@ -9,6 +9,7 @@ import RecipesView from './components/RecipesView.jsx'
 import ReceiptScanner from './components/ReceiptScanner.jsx'
 import AdminView from './components/AdminView.jsx'
 import NotifSettings from './components/NotifSettings.jsx'
+import RewardsView from './components/RewardsView.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
@@ -202,6 +203,12 @@ export default function App() {
     if (isCloud && !session) return
     store.getLearnedCategories().then(setLearnedCategories).catch(() => {})
   }, [session])
+
+  // Verðlaun (cashback)
+  const [myRewards, setMyRewards] = useState(null)
+  const [showRewards, setShowRewards] = useState(false)
+  const loadRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
+  useEffect(() => { if (isCloud && !session) return; loadRewards() }, [session])
 
   // Á notandinn deildan lista? (fyrir „bjóddu heimilisfólki"-hvata)
   const [hasShared, setHasShared] = useState(true)
@@ -412,10 +419,11 @@ export default function App() {
   }
   // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
   const scanReceiptMenu = async (purchase) => {
-    await store.addPurchase({ ...purchase, list_id: receiptListId || null })
-    await loadPurchases()
+    const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
+    await loadPurchases(); loadRewards()
     setShowReceipt(false); setReceiptListId(null)
-    flash('Kvittun skráð ✓')
+    if (r && r.earned > 0) flash(`🎁 Þú vannst þér inn ${Math.round(r.earned)} kr cashback!`)
+    else flash('Kvittun skráð ✓')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
@@ -528,7 +536,7 @@ export default function App() {
   const goHome = () => { setView('home') }
   const goBudget = () => { setView('budget') }
   // Bókhaldssýn: ný útgjaldafærsla er persónuleg (engum lista tengd).
-  const addExpense = async (data) => { await store.addPurchase({ ...data, list_id: null }); await loadPurchases() }
+  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadRewards(); if (r && r.earned > 0) flash(`🎁 +${Math.round(r.earned)} kr cashback!`) }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({
@@ -661,7 +669,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -720,7 +728,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} />}
+      {showReceipt && <ReceiptScanner onSave={scanReceiptMenu} onCheckDuplicate={(p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} />}
 
       {showBudgetIntro && (
         <BudgetIntro
@@ -731,6 +739,7 @@ export default function App() {
 
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} />}
       {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
+      {showRewards && <RewardsView onClose={() => setShowRewards(false)} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 

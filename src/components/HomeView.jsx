@@ -38,7 +38,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -70,6 +70,14 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             : <>👋 Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
+
+      {cashback > 0 && onOpenRewards && (
+        <button className="home-cashback" onClick={() => onOpenRewards()}>
+          <span className="home-cashback-ic">🎁</span>
+          <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
+          <span className="home-row-go">›</span>
+        </button>
+      )}
 
       {!hasSharedList && onInvite && (
         <button className="home-invite" onClick={() => onInvite()}>
