@@ -207,8 +207,8 @@ export default function App() {
   // Verðlaun (cashback)
   const [myRewards, setMyRewards] = useState(null)
   const [showRewards, setShowRewards] = useState(false)
-  const loadRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
-  useEffect(() => { if (isCloud && !session) return; loadRewards() }, [session])
+  const loadMyRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
+  useEffect(() => { if (isCloud && !session) return; loadMyRewards() }, [session])
 
   // Á notandinn deildan lista? (fyrir „bjóddu heimilisfólki"-hvata)
   const [hasShared, setHasShared] = useState(true)
@@ -420,7 +420,7 @@ export default function App() {
   // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
   const scanReceiptMenu = async (purchase) => {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
-    await loadPurchases(); loadRewards()
+    await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
     if (r && r.earned > 0) flash(`🎁 Þú vannst þér inn ${Math.round(r.earned)} kr cashback!`)
     else flash('Kvittun skráð ✓')
@@ -536,7 +536,7 @@ export default function App() {
   const goHome = () => { setView('home') }
   const goBudget = () => { setView('budget') }
   // Bókhaldssýn: ný útgjaldafærsla er persónuleg (engum lista tengd).
-  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadRewards(); if (r && r.earned > 0) flash(`🎁 +${Math.round(r.earned)} kr cashback!`) }
+  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadMyRewards(); if (r && r.earned > 0) flash(`🎁 +${Math.round(r.earned)} kr cashback!`) }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({
