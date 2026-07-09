@@ -4,15 +4,18 @@ import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
 
 // Býr til leitarorð úr heiti + stærð (t.d. "Pepsi Max" + "330 ml" → pepsi, max, 330).
-const STOP = new Set(['ml', 'cl', 'dl', 'og', 'the', 'kg', 'stk'])
+const STOP = new Set(['ml', 'cl', 'dl', 'og', 'the', 'kg', 'gr', 'stk', 'dos', 'dós', 'box', 'pk', 'pakki'])
+const isSize = (w) => /^\d+([.,]\d+)?(ml|cl|dl|l|g|gr|kg|stk|x)?$/.test(w)
 function kwFromText(...parts) {
   return [...new Set(
     parts.join(' ').toLowerCase()
       .replace(/[^0-9a-záðéíóúýþæö\s]/gi, ' ')
       .split(/\s+/)
-      .filter(w => w.length >= 2 && !STOP.has(w))
+      .filter(w => w.length >= 2 && !STOP.has(w) && !isSize(w))
   )]
 }
+// Breytir raunverulegri kvittanalínu í hrein leitarorð.
+const cleanReceiptTokens = (line) => kwFromText(line)
 
 const EMPTY = { name: '', barcode: '', size: '', keywords: '', image_url: '', reward_type: 'fixed', reward_value: '' }
 
@@ -26,6 +29,8 @@ export default function RewardsAdmin({ onClose }) {
   const [scanning, setScanning] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [looking, setLooking] = useState(false)
+  const [rcptQ, setRcptQ] = useState('')
+  const [rcptTerms, setRcptTerms] = useState([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const fileRef = useRef(null)
@@ -33,6 +38,13 @@ export default function RewardsAdmin({ onClose }) {
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
   useEffect(() => { load(); store.getAppSettings().then(s => setEnabled(s.rewards_enabled === true)).catch(() => {}) }, [])
+  // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
+  useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
+  useEffect(() => {
+    let live = true
+    store.getReceiptTerms(rcptQ).then(r => { if (live) setRcptTerms(r || []) }).catch(() => { if (live) setRcptTerms([]) })
+    return () => { live = false }
+  }, [rcptQ])
   const toggleEnabled = async () => { const next = !enabled; setEnabled(next); try { await store.setAppSetting('rewards_enabled', next) } catch {} }
 
   if (!data) return null
@@ -76,6 +88,9 @@ export default function RewardsAdmin({ onClose }) {
     setLooking(false)
   }
 
+  // Notar raunverulega kvittanalínu sem leitarorð (hreinsuð).
+  const applyReceiptTerm = (line) => { setKwEdited(true); setNp(v => ({ ...v, keywords: cleanReceiptTokens(line).join(', ') })) }
+
   const setField = async (p, patch) => { await store.updateRewardProduct(p.id, patch); load() }
 
   const addProduct = async () => {
@@ -115,6 +130,7 @@ export default function RewardsAdmin({ onClose }) {
         </div>
 
         <div className="adm-head">Verðlaunavörur</div>
+        <div className="rw-prodlist">
         {data.products.map(p => (
           <div className="rw-prod" key={p.id}>
             <div className="rw-prod-top">
@@ -142,6 +158,7 @@ export default function RewardsAdmin({ onClose }) {
             </div>
           </div>
         ))}
+        </div>
 
         <div className="rw-add">
           <div className="rw-newhead">Ný vara</div>
@@ -165,7 +182,19 @@ export default function RewardsAdmin({ onClose }) {
             <input placeholder="Leitarorð (passa öll við kvittun)" value={kwValue} onChange={e => { setKwEdited(true); setNp({ ...np, keywords: e.target.value }) }} />
             {kwEdited && <button className="rw-reset" onClick={() => setKwEdited(false)} title="Aftur í sjálfvirkt">↺</button>}
           </div>
-          <div className="rw-hint">Öll leitarorð verða að finnast í línu kvittunar. Fleiri orð = nákvæmara.</div>
+          <div className="rw-hint">Öll leitarorð verða að finnast í línu kvittunar. Færri orð = víðtækara (nær yfir fleiri búðir).</div>
+          {rcptTerms.length > 0 && (
+            <div className="rw-rcpt">
+              <div className="rw-rcpt-lbl">Úr kvittunum — smelltu til að nota eins og varan birtist á strimli:</div>
+              <div className="rw-chips">
+                {rcptTerms.map(t => (
+                  <button key={t.name} type="button" className="rw-chip" onClick={() => applyReceiptTerm(t.name)}>
+                    {t.name}{t.count > 1 ? <small> ·{t.count}</small> : null}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="rw-add-row">
             <select value={np.reward_type} onChange={e => setNp({ ...np, reward_type: e.target.value })}>
               <option value="fixed">kr</option><option value="percent">%</option>

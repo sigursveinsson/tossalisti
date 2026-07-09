@@ -464,6 +464,7 @@ const local = {
   async uploadRewardImage() { throw new Error('local') },
   async lookupBarcode(bc) { return offLookup(bc) },
   async getRewardCatalog() { return [] },
+  async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
     const it = lists.find(l => l.id === listId)?.items.find(i => i.id === itemId)
@@ -1020,6 +1021,22 @@ const cloud = {
   async getRewardCatalog() {
     const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true)
     return data || []
+  },
+  // Sækir raunverulegar kvittanalínur (til að stinga upp á leitarorðum) — eigin + deildar kvittanir.
+  async getReceiptTerms(query) {
+    const q = (query || '').trim()
+    if (q.length < 2) return []
+    const { data } = await supabase.from('purchase_items')
+      .select('name, created_at').ilike('name', `%${q}%`)
+      .order('created_at', { ascending: false }).limit(200)
+    const freq = new Map(), disp = new Map()
+    for (const r of (data || [])) {
+      const nm = (r.name || '').trim(); if (!nm) continue
+      const k = nm.toLowerCase()
+      freq.set(k, (freq.get(k) || 0) + 1)
+      if (!disp.has(k)) disp.set(k, nm)
+    }
+    return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, c]) => ({ name: disp.get(k), count: c }))
   },
   async updateRewardProduct(id, patch) {
     const { error } = await supabase.from('reward_products').update(patch).eq('id', id)
