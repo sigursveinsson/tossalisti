@@ -1,19 +1,39 @@
-const CACHE = 'tossalisti-v2'
+const CACHE = 'tossalisti-v3'
 
 self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()))
+
+self.addEventListener('activate', (e) => e.waitUntil(
+  caches.keys()
+    .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    .then(() => self.clients.claim())
+))
 
 self.addEventListener('fetch', (e) => {
   const req = e.request
   if (req.method !== 'GET') return
+
+  // HTML/leiðsögn: network-first — svo ný útgáfa (og réttar hash-skrár) hlaðist alltaf ferskt.
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {}) }
+          return res
+        })
+        .catch(() => caches.match(req).then((r) => r || caches.match('/')))
+    )
+    return
+  }
+
+  // Eignir (hash-nefndar, óbreytanlegar): cache-first, sækja af neti ef vantar. Aldrei cache-a 404/villusvör.
   e.respondWith(
-    fetch(req)
-      .then((res) => {
+    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+      if (res && res.ok && res.type === 'basic') {
         const copy = res.clone()
         caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {})
-        return res
-      })
-      .catch(() => caches.match(req).then((r) => r || caches.match('/')))
+      }
+      return res
+    }))
   )
 })
 
