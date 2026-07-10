@@ -896,33 +896,10 @@ button { font-family: inherit; cursor: pointer; }
 .adm-ads-switch.on::after { left: 21px; }
 
 /* ============ Skrifborðs-útlit (breiður skjár) ============ */
+/* Einn hóflega breiður dálkur — EKKI fjöl-dálka. Fjöl-dálka/dashboard útlit er geymt þar til
+   alvöru desktop-útgáfa er þróuð (með alltaf-opinni listavalmynd sem nýtir breiddina). */
 @media (min-width: 900px) {
-  .app { max-width: 1200px; padding: 0 28px; }
-
-  /* Heimaskjár sem stjórnborð — tveir dálkar */
-  .home { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; align-items: start; }
-  .home-hi, .home-cashback, .home-invite, .home-install { grid-column: 1 / -1; }
-  .home-sec, .home-spend { margin: 0; }
-
-  /* Innkaupa-/verkefnalistar — fjöldálka rúða innan hvers flokks */
-  .group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 20px; align-items: start; }
-  .group-head { grid-column: 1 / -1; margin-top: 8px; }
-  .group .item { margin: 0; }
-
-  /* Bæta-við röð haldist í hóflegri breidd (og tillögu-fellilisti með) */
-  .addbar { max-width: 680px; }
-  .addbar .qty-in { width: 84px; font-size: 15px; }
-  .addbar .unit-in { width: 80px; font-size: 15px; }
-
-  /* Vikuplan — sjö daga rúða eins og dagatal */
-  .wk-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; align-items: start; }
-  .wk-day { display: flex; flex-direction: column; }
-  .wk-day-tasks { min-height: 54px; }
-  .wk-task { flex-wrap: wrap; }
-  .wk-task .wk-name { white-space: normal; overflow: visible; text-overflow: clip; }
-
-  /* Stjórnborð verðlaunakerfis — breiðara og vörur í tveimur dálkum */
-  .adm-modal { max-width: 920px; }
-  .rw-prodlist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
-  .rw-prodlist .rw-prod { margin: 0; }
+  .app { max-width: 640px; padding: 0 20px; }
+  .addbar .qty-in { width: 72px; font-size: 15px; }
+  .addbar .unit-in { width: 68px; font-size: 15px; }
 }
