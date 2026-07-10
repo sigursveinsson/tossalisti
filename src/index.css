@@ -43,8 +43,8 @@ button { font-family: inherit; cursor: pointer; }
 .addbar input:focus { outline: none; border-color: var(--accent); }
 .addbar .add { width: 46px; border: none; background: var(--cta); color: var(--cta-ink); border-radius: 12px; font-size: 24px; line-height: 1; font-weight: 600; flex: none; }
 .addbar .scan-btn { width: 46px; flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; font-size: 20px; line-height: 1; }
-.addbar .qty-in { flex: none; width: 58px; text-align: center; }
-.addbar .unit-in { flex: none; width: 54px; text-align: center; }
+.addbar .qty-in { flex: none; width: 56px; text-align: center; padding: 0 6px; font-size: 13.5px; }
+.addbar .unit-in { flex: none; width: 54px; text-align: center; padding: 0 6px; font-size: 13.5px; }
 .recat-btn { background: none; border: none; font-size: 15px; padding: 4px; flex: none; }
 .addbar .day-in { flex: none; width: 74px; height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 0 8px; font-size: 14px; background: var(--surface); color: var(--text); }
 .due-tag { font-size: 11px; color: var(--accent); margin-left: 8px; white-space: nowrap; }
@@ -268,6 +268,10 @@ button { font-family: inherit; cursor: pointer; }
 .scan-feed-row span { font-weight: 700; }
 .scan-feed-img { width: 28px; height: 28px; object-fit: contain; border-radius: 6px; background: #fff; flex: none; }
 .item-img { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid var(--line); flex: none; padding: 3px; }
+.item-img, .item-cat { transition: transform .14s ease, box-shadow .14s ease; transform-origin: left center; }
+@media (hover: hover) {
+  .item-img:hover, .item-cat:hover { transform: scale(2.8); position: relative; z-index: 40; box-shadow: 0 10px 28px rgba(21, 49, 94, .35); border-radius: 12px; }
+}
 .cat-icon { display: inline-flex; align-items: center; justify-content: center; background: var(--navy); border-radius: 13px; flex: none; box-shadow: 0 4px 12px rgba(21,49,94,.16); }
 .cat-icon-fill { width: 100%; aspect-ratio: 1 / 1; box-shadow: none; }
 .cat-icon-fill svg { width: 58%; height: 58%; }
@@ -906,7 +910,9 @@ button { font-family: inherit; cursor: pointer; }
   .group .item { margin: 0; }
 
   /* Bæta-við röð haldist í hóflegri breidd (og tillögu-fellilisti með) */
-  .addbar { max-width: 620px; }
+  .addbar { max-width: 680px; }
+  .addbar .qty-in { width: 84px; font-size: 15px; }
+  .addbar .unit-in { width: 80px; font-size: 15px; }
 
   /* Vikuplan — sjö daga rúða eins og dagatal */
   .wk-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; align-items: start; }

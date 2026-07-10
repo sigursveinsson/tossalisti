@@ -195,6 +195,7 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
 2. **SEO + lén** — tengja `innkaupalisti.is` í Netlify sem 301-tilvísun á tossalisti.is; bæta meta/Open Graph-merkjum + sitemap/robots í `index.html`; Google Search Console.
 3. **Daglegt virkni-yfirlit** — skedúlera sjálfvirkt yfirlit úr Supabase (innskráningar, verk kláruð, útgjöld o.fl.). Ekki enn virkt.
 4. **Smávilla að skoða:** tvöfaldur sjálfgefinn „Vikuinnkaup"-listi getur orðið til við fyrstu innskráningu (race í `reload()` auto-create).
+5. **PRÓFA kvittanalestur-hraða (eftir deploy).** Búið að laga: þrálátur Tesseract-worker (`receipt.js`) svo íslenski málgangurinn sækist/hlaðist aðeins einu sinni í stað þess að endur-hlaðast í hvert skipti; „fyrsta skipti"-skilaboð sýnast nú aðeins raunverulega fyrsta sinni (localStorage-flagg). **Verkefni: skanna tvær kvittanir í röð og staðfesta að sú seinni sé áberandi hraðari og án skilaboða.** EF seinni er enn jafn hæg → grafa dýpra hvort flöskuhálsinn sé myndvinnslan (`preprocess`) eða vision-hlutinn (`parseReceiptVision`), ekki OCR-uppsetningin.
 
 ## Umhverfis-athugasemd
 Í þessari lotu varð Linux-vinnuumhverfi Cowork óstöðugt (skemmt git-index, hluta-samstilling, npm lokað, rangt `node_modules`), svo ekki tókst að byggja/deploya úr Cowork. Allar **skráabreytingar eru samt réttar og vistaðar** á vélinni. Öruggast að keyra deploy á eigin vél, eða prófa ferskt Cowork-umhverfi (Netlify byggir við push svo `git push` einn dugar ef git virkar).

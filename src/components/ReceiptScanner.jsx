@@ -23,6 +23,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
   const [total, setTotal] = useState('')
   const [saving, setSaving] = useState(false)
   const [dup, setDup] = useState(null)
+  const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
 
   useBackClose(true, onClose)
 
@@ -38,6 +39,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '' }))
       )
       setTotal(res.total != null ? String(res.total) : '')
+      try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
+      setScannedOnce(true)
     } catch (err) {
       setItems([])
     }
@@ -88,7 +91,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
           <div className="receipt-reading">
             <p>Les kvittun… {Math.round(progress * 100)}%</p>
             <div className="progress-bar"><div style={{ width: Math.round(progress * 100) + '%' }} /></div>
-            <p className="muted-p">Fyrsta skipti tekur lengri tíma (sækir íslenskt málgagn).</p>
+            {!scannedOnce && <p className="muted-p">Fyrsta skipti tekur lengri tíma (sækir íslenskt málgagn).</p>}
           </div>
         )}
 

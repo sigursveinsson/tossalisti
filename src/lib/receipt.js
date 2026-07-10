@@ -93,16 +93,50 @@ function fileToBase64(file) {
   })
 }
 
+// Þjappar mynd niður (stærð + JPEG) áður en hún er send í vision-líkanið — minni upphleðsla, hraðara.
+async function compressForVision(file, maxW = 1400, quality = 0.72) {
+  try {
+    const img = await loadImage(file)
+    const scale = img.width > maxW ? maxW / img.width : 1
+    const w = Math.round(img.width * scale), h = Math.round(img.height * scale)
+    const c = document.createElement('canvas'); c.width = w; c.height = h
+    c.getContext('2d').drawImage(img, 0, 0, w, h)
+    URL.revokeObjectURL(img.src)
+    return (c.toDataURL('image/jpeg', quality).split(',')[1]) || ''
+  } catch (e) { return fileToBase64(file) }
+}
+
 export async function parseReceiptVision(file) {
   if (!supabase || !supabase.functions) return null
-  const image = await fileToBase64(file)
-  const { data, error } = await supabase.functions.invoke('parse-receipt', { body: { image, mime: file.type || 'image/jpeg' } })
+  const image = await compressForVision(file)
+  const { data, error } = await supabase.functions.invoke('parse-receipt', { body: { image, mime: 'image/jpeg' } })
   if (error || !data || data.error) return null
   const items = Array.isArray(data.items)
     ? data.items.map(i => ({ name: String(i.name || '').trim(), price: i.price == null ? null : Number(i.price) })).filter(i => i.name)
     : []
   return { store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null }
 }
+
+// Þrálátur Tesseract-worker — búinn til EINU sinni og endurnýttur.
+// Þannig er íslenski málgangurinn sóttur/hlaðinn aðeins einu sinni (ekki í hvert skipti).
+let _ocrWorker = null
+let _ocrProgress = null
+let _ocrReady = false
+function getOcrWorker() {
+  if (!_ocrWorker) {
+    _ocrWorker = (async () => {
+      const { createWorker } = await import('tesseract.js')
+      const w = await createWorker('isl', 1, {
+        logger: (m) => { if (m.status === 'recognizing text' && _ocrProgress) _ocrProgress(m.progress) },
+      })
+      _ocrReady = true
+      return w
+    })()
+  }
+  return _ocrWorker
+}
+// Satt þegar OCR-worker er tilbúinn (málgangur hlaðinn) — notað til að fela „fyrsta skipti“ skilaboð.
+export function ocrIsReady() { return _ocrReady }
 
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
 export async function parseReceipt(file, onProgress) {
@@ -111,13 +145,14 @@ export async function parseReceipt(file, onProgress) {
     if (ai && ai.items && ai.items.length) return ai
   } catch (e) { /* fall back */ }
 
-  const Tesseract = (await import('tesseract.js')).default
   let image = file
   try { image = await preprocess(file) } catch (e) { image = file }
-  const { data } = await Tesseract.recognize(image, 'isl', {
-    logger: (m) => { if (onProgress && m.status === 'recognizing text') onProgress(m.progress) },
-  })
-  return parseReceiptText(data.text || '')
+  _ocrProgress = onProgress
+  try {
+    const worker = await getOcrWorker()
+    const { data } = await worker.recognize(image)
+    return parseReceiptText(data.text || '')
+  } finally { _ocrProgress = null }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---
