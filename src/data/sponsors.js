@@ -33,8 +33,8 @@ export const CATEGORY_SPONSORS = {
     tag: 'Kostað · Nathan',
     terms: ['vaseline', 'krem', 'húðkrem', 'hudkrem', 'rakakrem', 'varasalvi', 'body', 'lotion', 'húð', 'hud'],
     products: [
-      { name: 'Vaseline Intensive Care', color: '#1F3B9B', image: null },
-      { name: 'Vaseline varasalvi',      color: '#2B57C0', image: null },
+      { name: 'Vaseline Intensive Care', color: '#1F3B9B', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F340175.png' },
+      { name: 'Vaseline varasalvi',      color: '#2B57C0', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F340280.png' },
     ],
   },
   pantry: {
@@ -42,8 +42,8 @@ export const CATEGORY_SPONSORS = {
     tag: 'Kostað · Nathan',
     terms: ['nutella', 'súkkulaðismjör', 'sukkuladismjor', 'knorr', 'teningur', 'teningar', 'kjötkraftur', 'kjotkraftur', 'krydd', 'sósa', 'sosa'],
     products: [
-      { name: 'Nutella súkkulaðismjör', color: '#5B2C1A', image: null },
-      { name: 'Knorr teningar',         color: '#2E7D32', image: null },
+      { name: 'Nutella súkkulaðismjör', color: '#5B2C1A', image: 'https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.400.jpg' },
+      { name: 'Knorr teningar',         color: '#2E7D32', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F304051.jpg' },
     ],
   },
   dairy: {
@@ -51,7 +51,7 @@ export const CATEGORY_SPONSORS = {
     tag: 'Kostað · Nathan',
     terms: ['sproud', 'hafradrykkur', 'hafra', 'plöntumjólk', 'plontumjolk', 'haframjólk', 'haframjolk', 'plöntu', 'plontu'],
     products: [
-      { name: 'Sproud hafradrykkur', color: '#8BBF6A', image: null },
+      { name: 'Sproud hafradrykkur', color: '#8BBF6A', image: 'https://images.openfoodfacts.org/images/products/734/015/080/0819/front_en.20.400.jpg' },
     ],
   },
 }
@@ -65,8 +65,8 @@ const EXTRA_SUGGEST = [
     dept: 'beverages',
     terms: ['lucky', 'saint', 'oddbird', 'perchs', 'sparkling', 'áfengislaus', 'afengislaus', 'óáfeng', 'oafeng', 'te'],
     products: [
-      { name: 'Lucky Saint óáfengur bjór', color: '#C9A227', image: null },
-      { name: 'Oddbird óáfengt vín',       color: '#7A1F3D', image: null },
+      { name: 'Lucky Saint óáfengur bjór', color: '#C9A227', image: 'https://images.openfoodfacts.org/images/products/506/062/116/0113/front_en.3.400.jpg' },
+      { name: 'Oddbird óáfengt vín',       color: '#7A1F3D', image: 'https://images.openfoodfacts.org/images/products/735/006/773/2226/front_en.3.400.jpg' },
       { name: 'A.C. Perchs te',            color: '#1F6F4F', image: null },
     ],
   },
