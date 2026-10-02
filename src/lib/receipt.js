@@ -59,18 +59,41 @@ function loadImage(file) {
   })
 }
 
-async function preprocess(file) {
+// Afkóðar mynd EINU SINNI í minnkaðri útgáfu með sem minnstu minnisálagi.
+// iOS Safari drepur ferlið ef heil 12–48MP myndavélarmynd er afkóðuð í striga;
+// createImageBitmap með resizeWidth afkóðar beint í minni stærð þar sem það er stutt,
+// með mun lægra minnistoppi en new Image() + canvas.
+async function loadDownscaledCanvas(file, maxW) {
+  let bmp = null
+  if (typeof createImageBitmap === 'function') {
+    try {
+      bmp = await createImageBitmap(file, { resizeWidth: maxW, resizeQuality: 'medium' })
+    } catch (e1) {
+      try { bmp = await createImageBitmap(file) } catch (e2) { bmp = null }
+    }
+  }
+  if (bmp) {
+    const scale = bmp.width > maxW ? maxW / bmp.width : 1
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale)
+    const c = document.createElement('canvas'); c.width = w; c.height = h
+    c.getContext('2d').drawImage(bmp, 0, 0, w, h)
+    if (bmp.close) bmp.close()
+    return c
+  }
+  // Varaleið (hærra minnisálag): Image + object URL.
   const img = await loadImage(file)
-  const targetW = 1500
-  const scale = img.width > targetW ? targetW / img.width : (img.width < 900 ? 1.6 : 1)
-  const w = Math.round(img.width * scale)
-  const h = Math.round(img.height * scale)
-  const c = document.createElement('canvas')
-  c.width = w; c.height = h
-  const ctx = c.getContext('2d')
-  ctx.drawImage(img, 0, 0, w, h)
+  const scale = img.width > maxW ? maxW / img.width : 1
+  const w = Math.round(img.width * scale), h = Math.round(img.height * scale)
+  const c = document.createElement('canvas'); c.width = w; c.height = h
+  c.getContext('2d').drawImage(img, 0, 0, w, h)
   URL.revokeObjectURL(img.src)
-  const imgData = ctx.getImageData(0, 0, w, h)
+  return c
+}
+
+// Grátóna + birtuskil á ÞEGAR-minnkuðum striga (fyrir Tesseract). Breytir striganum á staðnum.
+function enhanceForOcr(canvas) {
+  const ctx = canvas.getContext('2d')
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const a = imgData.data
   const contrast = 1.6
   for (let i = 0; i < a.length; i += 4) {
@@ -80,7 +103,7 @@ async function preprocess(file) {
     a[i] = a[i + 1] = a[i + 2] = g
   }
   ctx.putImageData(imgData, 0, 0)
-  return c
+  return canvas
 }
 
 // Sjónlíkan (Supabase Edge Function -> Gemini). Skilar skipulögðum gögnum.
@@ -93,28 +116,32 @@ function fileToBase64(file) {
   })
 }
 
-// Þjappar mynd niður (stærð + JPEG) áður en hún er send í vision-líkanið — minni upphleðsla, hraðara.
-async function compressForVision(file, maxW = 1400, quality = 0.72) {
-  try {
-    const img = await loadImage(file)
-    const scale = img.width > maxW ? maxW / img.width : 1
-    const w = Math.round(img.width * scale), h = Math.round(img.height * scale)
-    const c = document.createElement('canvas'); c.width = w; c.height = h
-    c.getContext('2d').drawImage(img, 0, 0, w, h)
-    URL.revokeObjectURL(img.src)
-    return (c.toDataURL('image/jpeg', quality).split(',')[1]) || ''
-  } catch (e) { return fileToBase64(file) }
+// Striga → base64 JPEG fyrir sjónlíkanið (striginn er þegar minnkaður).
+function canvasToVisionBase64(canvas, quality = 0.7) {
+  return (canvas.toDataURL('image/jpeg', quality).split(',')[1]) || ''
 }
 
-export async function parseReceiptVision(file) {
-  if (!supabase || !supabase.functions) return null
-  const image = await compressForVision(file)
-  const { data, error } = await supabase.functions.invoke('parse-receipt', { body: { image, mime: 'image/jpeg' } })
+// Kallar edge-fallið og vinnur úr svarinu.
+async function visionInvoke(image, mime) {
+  const { data, error } = await supabase.functions.invoke('parse-receipt', { body: { image, mime } })
   if (error || !data || data.error) return null
   const items = Array.isArray(data.items)
     ? data.items.map(i => ({ name: String(i.name || '').trim(), price: i.price == null ? null : Number(i.price) })).filter(i => i.name)
     : []
   return { store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null }
+}
+
+export async function parseReceiptVision(file) {
+  if (!supabase || !supabase.functions) return null
+  let image, mime = 'image/jpeg'
+  try {
+    const c = await loadDownscaledCanvas(file, 1100)
+    image = canvasToVisionBase64(c, 0.7)
+  } catch (e) {
+    // Afkóðun klikkaði (t.d. minnislaust) — sendu hráu skrána, netþjónninn afkóðar.
+    image = await fileToBase64(file); mime = file.type || 'image/jpeg'
+  }
+  return visionInvoke(image, mime)
 }
 
 // Þrálátur Tesseract-worker — búinn til EINU sinni og endurnýttur.
@@ -140,19 +167,36 @@ export function ocrIsReady() { return _ocrReady }
 
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
 export async function parseReceipt(file, onProgress) {
+  // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
+  // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
+  let canvas = null, image = null, mime = 'image/jpeg'
   try {
-    const ai = await parseReceiptVision(file)
-    if (ai && ai.items && ai.items.length) return ai
-  } catch (e) { /* fall back */ }
+    canvas = await loadDownscaledCanvas(file, 1100)
+    image = canvasToVisionBase64(canvas, 0.7)
+  } catch (e) {
+    try { image = await fileToBase64(file); mime = file.type || 'image/jpeg' } catch (e2) { image = null }
+  }
 
-  let image = file
-  try { image = await preprocess(file) } catch (e) { image = file }
-  _ocrProgress = onProgress
-  try {
-    const worker = await getOcrWorker()
-    const { data } = await worker.recognize(image)
-    return parseReceiptText(data.text || '')
-  } finally { _ocrProgress = null }
+  // 1) Sjónlíkan (nákvæmt). Virkar líka þegar afkóðun klikkaði — hráa skráin fer á netþjóninn.
+  if (image && supabase && supabase.functions) {
+    try {
+      const ai = await visionInvoke(image, mime)
+      if (ai && ai.items && ai.items.length) return ai
+    } catch (e) { /* fall back */ }
+  }
+
+  // 2) Tesseract-vara — aðeins ef afkóðun tókst (annars myndi full upplausn sprengja minnið aftur).
+  if (canvas) {
+    _ocrProgress = onProgress
+    try {
+      const worker = await getOcrWorker()
+      const { data } = await worker.recognize(enhanceForOcr(canvas))
+      return parseReceiptText(data.text || '')
+    } catch (e) { /* skila tómu */ } finally { _ocrProgress = null }
+  }
+
+  // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu.
+  return { store: '', items: [], total: null, date: null }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---
