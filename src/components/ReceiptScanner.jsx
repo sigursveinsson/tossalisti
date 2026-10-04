@@ -1,5 +1,14 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { parseReceipt } from '../lib/receipt.js'
+import { store as db } from '../lib/store.js'
+
+// Texti á pörunar-merki: „🎁 Nathan · Nutella · +50 kr"
+const matchLabel = (p) => {
+  if (!p) return ''
+  const v = Number(p.reward_value) || 0
+  const val = p.reward_type === 'percent' ? `${v}% til baka` : `+${v} kr`
+  return `🎁 ${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
+}
 import { useBackClose } from '../lib/backstack.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -27,16 +36,26 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
 
   useBackClose(true, onClose)
 
+  // Tilboðsvörur fyrir AI-pörun — sóttar strax þegar glugginn opnast (tilbúnar áður en mynd er tekin).
+  const matchRef = useRef(null)
+  if (!matchRef.current) {
+    matchRef.current = (db.getRewardMatchList ? db.getRewardMatchList() : Promise.resolve([])).catch(() => [])
+  }
+  const [matchList, setMatchList] = useState([])
+  useEffect(() => { matchRef.current.then(l => setMatchList(l || [])) }, [])
+  const prodById = (id) => (id ? matchList.find(p => p.id === id) : null)
+
   const onFile = async (e) => {
     const file = e.target.files && e.target.files[0]
     e.target.value = ''
     if (!file) return
     setPhase('reading'); setProgress(0)
     try {
-      const res = await parseReceipt(file, setProgress)
+      const prods = await matchRef.current
+      const res = await parseReceipt(file, setProgress, prods)
       setStore(res.store || '')
       if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
-      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '' }))
+      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null }))
       )
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
@@ -53,7 +72,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
 
   const save = async () => {
     const clean = items
-      .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price) }))
+      .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price), reward_product_id: it.reward_product_id || null }))
       .filter(it => it.name)
     const payload = {
       store: store.trim(),
@@ -106,13 +125,19 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
             )}
             {items.length === 0 && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
             <div className="receipt-items">
-              {items.map(it => (
-                <div className="receipt-row" key={it.id}>
-                  <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
-                  <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
-                  <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða">×</button>
-                </div>
-              ))}
+              {items.map(it => {
+                const mp = prodById(it.reward_product_id)
+                return (
+                  <React.Fragment key={it.id}>
+                    <div className={'receipt-row' + (mp ? ' is-match' : '')}>
+                      <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
+                      <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
+                      <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða">×</button>
+                    </div>
+                    {mp && <div className="receipt-match">{matchLabel(mp)}</div>}
+                  </React.Fragment>
+                )
+              })}
             </div>
             <button className="receipt-addrow" onClick={addRow}>+ Bæta við línu</button>
             <div className="receipt-total">

@@ -63,8 +63,10 @@ export function rewardForName(name, products) {
 
 function matchRewards(items, products) {
   const out = []
+  const byId = new Map((products || []).filter(p => p.active !== false).map(p => [p.id, p]))
   for (const it of (items || [])) {
-    const prod = rewardForName(it.name, products)
+    // 1) AI-pörun úr kvittanalestrinum (Gemini merkti línuna), 2) leitarorð til vara.
+    const prod = (it.reward_product_id && byId.get(it.reward_product_id)) || rewardForName(it.name, products)
     if (!prod) continue
     const qty = Number(it.qty) || 1
     const price = Number(it.price) || 0
@@ -464,6 +466,7 @@ const local = {
   async uploadRewardImage() { throw new Error('local') },
   async lookupBarcode(bc) { return offLookup(bc) },
   async getRewardCatalog() { return [] },
+  async getRewardMatchList() { return [] },
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
@@ -1021,6 +1024,15 @@ const cloud = {
   async getRewardCatalog() {
     const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true)
     return data || []
+  },
+  // Listi fyrir AI-pörun í kvittanalestri: [{ id, name, brand, image_url, reward_type, reward_value }].
+  async getRewardMatchList() {
+    const [{ data: prods }, { data: brands }] = await Promise.all([
+      supabase.from('reward_products').select('id,name,brand_id,image_url,reward_type,reward_value').eq('active', true),
+      supabase.from('reward_brands').select('id,name'),
+    ])
+    const bn = new Map((brands || []).map(b => [b.id, b.name]))
+    return (prods || []).map(p => ({ ...p, brand: bn.get(p.brand_id) || '' }))
   },
   // Sækir raunverulegar kvittanalínur (til að stinga upp á leitarorðum) — eigin + deildar kvittanir.
   async getReceiptTerms(query) {

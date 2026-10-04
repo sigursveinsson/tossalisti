@@ -53,17 +53,26 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
     const t0 = Date.now()
-    const { image, mime } = await req.json()
+    const { image, mime, products } = await req.json()
     if (!image) return json({ error: 'no image' }, 400)
+
+    // AI-pörun: valkvæður listi yfir tilboðsvörur. Stuttir kóðar (P1, P2…) í stað uuid
+    // svo líkanið rugli þeim ekki; netþjónninn varpar til baka og hafnar ógildum kóðum.
+    const prods = (Array.isArray(products) ? products : [])
+      .filter((p: any) => p && p.id && p.name)
+      .slice(0, 200)
+      .map((p: any, i: number) => ({ code: 'P' + (i + 1), id: String(p.id), name: String(p.name).slice(0, 80), brand: String(p.brand || '').slice(0, 40) }))
+    const codeToId = new Map<string, string>(prods.map((p) => [p.code, p.id] as [string, string]))
     const key = Deno.env.get('GEMINI_API_KEY')
     if (!key) return json({ error: 'missing GEMINI_API_KEY' }, 500)
 
     const today = new Date()
     const todayStr = iso(today)
 
+    const itemShape = prods.length ? '{"name":"","price":0,"pid":null}' : '{"name":"","price":0}'
     const prompt = [
       'Þú lest íslenska kassakvittun af mynd.',
-      'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","items":[{"name":"","price":0}],"total":0}',
+      'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","items":[' + itemShape + '],"total":0}',
       '',
       'DAGSETNING — MIKILVÆGT:',
       '- Íslenskar kvittanir rita dagsetningu ALLTAF með DAGINN FYRST: DD.MM.YYYY, DD.MM.YY eða DD/MM/YYYY.',
@@ -78,6 +87,17 @@ Deno.serve(async (req) => {
       '- Verð eru heiltölur í íslenskum krónum.',
       '- Settu hverja keypta vöru í items með hreinu nafni.',
       '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items.',
+      ...(prods.length ? [
+        '',
+        'TILBOÐSVÖRUR — pörun:',
+        'Hér fyrir neðan er listi yfir vörur sem gefa cashback (kóði | vörumerki | heiti).',
+        'Fyrir HVERJA línu í items: settu "pid" = kóði vörunnar (t.d. "P3") ef línan er GREINILEGA sú vara, annars "pid": null.',
+        '- Sama vörumerki OG sama vörutegund. Stærð, magn og pakkning mega vera aðrar (t.d. "NUTELLA 400G" = Nutella).',
+        '- Íslenskar kvittanir stytta heiti oft (t.d. "EGILS APP 2L" = Egils Appelsín, "RITZ SALTKEX" = Ritz). Notaðu skynsemi.',
+        '- Ólíkar vörur sama framleiðanda eru EKKI sama vara (Egils Malt er ekki Egils Appelsín).',
+        '- Ef þú ert í vafa: null. Röng pörun er verri en engin.',
+        ...prods.map((p) => p.code + ' | ' + (p.brand || '-') + ' | ' + p.name),
+      ] : []),
       '',
       'Ekkert nema JSON.',
     ].join('\n')
@@ -87,7 +107,7 @@ Deno.serve(async (req) => {
       generationConfig: {
         temperature: 0,
         responseMimeType: 'application/json',
-        maxOutputTokens: 2048,
+        maxOutputTokens: 3072,
         thinkingConfig: { thinkingBudget: 0 }, // slekkur á "thinking" — sparar ~8 sek
       },
     }
@@ -106,7 +126,18 @@ Deno.serve(async (req) => {
         }
         const before = parsed.date
         parsed.date = fixDate(parsed.date, today)
+        // Varpa pid-kóðum í raunveruleg vöru-id; hafna öllu sem ekki var í listanum.
+        let matched = 0
+        if (Array.isArray(parsed.items)) {
+          parsed.items = (parsed.items as any[]).map((it) => {
+            const { pid, ...rest } = it || {}
+            const id = typeof pid === 'string' ? codeToId.get(pid.trim().toUpperCase()) : undefined
+            if (id) matched++
+            return id ? { ...rest, reward_product_id: id } : rest
+          })
+        }
         console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) +
+          ' prods=' + prods.length + ' matched=' + matched +
           ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
         return json(parsed)
       }

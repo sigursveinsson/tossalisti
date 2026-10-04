@@ -402,6 +402,10 @@ button { font-family: inherit; cursor: pointer; }
 .receipt-row input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font-size: 15px; background: var(--surface); color: var(--text); }
 .receipt-row .receipt-price { flex: none; width: 74px; text-align: right; }
 .receipt-del { flex: none; width: 34px; height: 34px; border: none; background: var(--surface-2); color: var(--muted); border-radius: 9px; font-size: 18px; }
+/* AI-pörun: lína sem gervigreindin þekkti sem tilboðsvöru */
+.receipt-row.is-match input:not(.receipt-price) { border-color: var(--done); background: #f2fcf8; }
+.receipt-match { align-self: flex-start; margin: -2px 0 4px 4px; font-size: 12px; font-weight: 700; color: #12795b; background: #e6f9f2; border: 1px solid rgba(46,211,164,.45); border-radius: 999px; padding: 3px 10px; animation: rm-pop .35s ease-out; }
+@keyframes rm-pop { from { transform: scale(.85); opacity: 0 } to { transform: scale(1); opacity: 1 } }
 .receipt-addrow { width: 100%; margin-top: 8px; height: 40px; background: transparent; border: 1px dashed var(--line); border-radius: 10px; color: var(--accent); font-size: 14px; font-weight: 600; }
 .receipt-total { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-weight: 700; }
 .receipt-total span:first-child { flex: 1; }

@@ -110,16 +110,23 @@ function canvasToVisionBase64(canvas, quality = 0.7) {
 }
 
 // Kallar edge-fallið og vinnur úr svarinu.
-async function visionInvoke(image, mime) {
-  const { data, error } = await supabase.functions.invoke('parse-receipt', { body: { image, mime } })
+// products (valkvætt): tilboðsvörur [{id,name,brand}] sem gervigreindin parar kvittanalínur við.
+async function visionInvoke(image, mime, products) {
+  const prods = (products || []).filter(p => p && p.id && p.name).map(p => ({ id: p.id, name: p.name, brand: p.brand || '' }))
+  const body = prods.length ? { image, mime, products: prods } : { image, mime }
+  const { data, error } = await supabase.functions.invoke('parse-receipt', { body })
   if (error || !data || data.error) return null
   const items = Array.isArray(data.items)
-    ? data.items.map(i => ({ name: String(i.name || '').trim(), price: i.price == null ? null : Number(i.price) })).filter(i => i.name)
+    ? data.items.map(i => ({
+        name: String(i.name || '').trim(),
+        price: i.price == null ? null : Number(i.price),
+        reward_product_id: i.reward_product_id || null,
+      })).filter(i => i.name)
     : []
   return { store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null }
 }
 
-export async function parseReceiptVision(file) {
+export async function parseReceiptVision(file, products) {
   if (!supabase || !supabase.functions) return null
   let image, mime = 'image/jpeg'
   try {
@@ -129,7 +136,7 @@ export async function parseReceiptVision(file) {
     // Afkóðun klikkaði (t.d. minnislaust) — sendu hráu skrána, netþjónninn afkóðar.
     image = await fileToBase64(file); mime = file.type || 'image/jpeg'
   }
-  return visionInvoke(image, mime)
+  return visionInvoke(image, mime, products)
 }
 
 // Þrálátur Tesseract-worker — búinn til EINU sinni og endurnýttur.
@@ -154,7 +161,7 @@ function getOcrWorker() {
 export function ocrIsReady() { return _ocrReady }
 
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
-export async function parseReceipt(file, onProgress) {
+export async function parseReceipt(file, onProgress, products) {
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
   let canvas = null, image = null, mime = 'image/jpeg'
@@ -174,7 +181,7 @@ export async function parseReceipt(file, onProgress) {
   // 1) Sjónlíkan (nákvæmt). Virkar líka þegar afkóðun klikkaði — hráa skráin fer á netþjóninn.
   if (image && supabase && supabase.functions) {
     try {
-      const ai = await visionInvoke(image, mime)
+      const ai = await visionInvoke(image, mime, products)
       if (ai && ai.items && ai.items.length) return ai
     } catch (e) { /* fall back */ }
   }
