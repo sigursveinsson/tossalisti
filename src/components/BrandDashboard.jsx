@@ -97,7 +97,8 @@ export default function BrandDashboard({ onClose }) {
   const periodLabel = (PERIODS.find(p => p[0] === days) || [0, days + ' dagar'])[1].toLowerCase()
 
   return (
-    <div className="bd-wrap">
+    // stopPropagation: mælaborðið er teiknað inni í bakgrunni Stjórnborðsins, sem lokar við smell.
+    <div className="bd-wrap" onClick={e => e.stopPropagation()}>
       <div className="bd-inner">
         <div className="bd-top">
           <button className="bd-back" onClick={onClose}>← Stjórnborð</button>

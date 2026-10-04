@@ -116,7 +116,7 @@ export default function RewardsAdmin({ onClose }) {
   }
 
   return (
-    <div className="sheet-bg center" onClick={onClose}>
+    <div className="sheet-bg center" onClick={e => { e.stopPropagation(); onClose() }}>
       <div className="modal adm-modal" onClick={e => e.stopPropagation()}>
         <h2>🎁 Verðlaunakerfi <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
         <p className="muted-p">Vörumerki: <b>{brand?.name || '—'}</b>. Skráðu hverja vöru með strikamerki, stærð og mynd svo cashback lendi á réttri vöru — t.d. Pepsi Max 330 ml, ekki bara „Pepsi".</p>
