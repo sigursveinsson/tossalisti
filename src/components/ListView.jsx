@@ -18,6 +18,7 @@ import ShoppingMode from './ShoppingMode.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
+import { canRecord, startRecording, parseVoice } from '../lib/voice.js'
 
 const displayName = (m) => (m && (m.name || (m.email || '').split('@')[0])) || '?'
 const initialsOf = (m) => displayName(m).slice(0, 2).toUpperCase()
@@ -95,6 +96,139 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const suggFiltered = sugg.filter(s => !rewardNames.has(normMatch(s)))
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
+
+  // ── Raddstýring (🎤): tala → gervigreind skilar vörulista → staðfesta → bætt á lista ──
+  const [voiceState, setVoiceState] = useState(null) // null | 'rec' | 'think' | 'review' | 'error'
+  const [voiceSecs, setVoiceSecs] = useState(0)
+  const [voiceLevel, setVoiceLevel] = useState(0)
+  const [voiceRes, setVoiceRes] = useState(null)
+  const [voiceErr, setVoiceErr] = useState('')
+  const recRef = useRef(null)
+  const voiceTimer = useRef(null)
+  const VOICE_MAX = 30
+  const micAvailable = isShopping && canRecord()
+  const stopVoiceTimer = () => { if (voiceTimer.current) { clearInterval(voiceTimer.current); voiceTimer.current = null } }
+  const cancelVoice = () => {
+    stopVoiceTimer()
+    if (recRef.current) { recRef.current.cancel(); recRef.current = null }
+    setVoiceState(null); setVoiceRes(null); setVoiceLevel(0)
+  }
+  useBackClose(!!voiceState, cancelVoice)
+  useEffect(() => () => { stopVoiceTimer(); if (recRef.current) recRef.current.cancel() }, [])
+  const finishVoice = async () => {
+    stopVoiceTimer()
+    const rec = recRef.current
+    recRef.current = null
+    if (!rec) return
+    setVoiceState('think'); setVoiceLevel(0)
+    try {
+      const { base64, seconds, mime } = await rec.stop()
+      if (seconds < 0.6) { setVoiceState(null); return }
+      const openItems = items.filter(i => !i.checked)
+      const res = await parseVoice({ audio: base64, mime, products: rewardProducts, existing: openItems.map(i => i.name) })
+      const have = new Set(openItems.map(i => normMatch(i.name)))
+      setVoiceRes({
+        transcript: res.transcript,
+        items: res.items.map((it, k) => { const dup = have.has(normMatch(it.name)); return { ...it, key: k, dup, sel: !dup } }),
+      })
+      setVoiceState('review')
+    } catch (e) {
+      setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota raddstýringu.' : 'Náði ekki að hlusta núna — reyndu aftur.')
+      setVoiceState('error')
+    }
+  }
+  const startVoice = async () => {
+    setVoiceErr(''); setVoiceRes(null); setVoiceSecs(0)
+    try {
+      recRef.current = await startRecording({ onLevel: setVoiceLevel })
+      setVoiceState('rec')
+      const t0 = Date.now()
+      voiceTimer.current = setInterval(() => {
+        const s = Math.floor((Date.now() - t0) / 1000)
+        setVoiceSecs(s)
+        if (s >= VOICE_MAX) finishVoice()
+      }, 250)
+    } catch (e) {
+      setVoiceErr(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')
+        ? 'Leyfðu aðgang að hljóðnemanum í vafranum til að tala inn á listann.'
+        : 'Gat ekki opnað hljóðnemann.')
+      setVoiceState('error')
+    }
+  }
+  const toggleVoiceItem = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, sel: !i.sel } : i) }))
+  const voiceReward = (it) => (it.reward_product_id && (rewardProducts || []).find(p => p.id === it.reward_product_id)) || rewardFor(it.name)
+  const commitVoice = async () => {
+    const picks = (voiceRes ? voiceRes.items : []).filter(i => i.sel)
+    setVoiceState(null)
+    for (const p of picks) {
+      const full = p.qty ? `${p.name} ${p.qty}${p.unit ? ' ' + p.unit : ''}` : p.name
+      const rp = voiceReward(p)
+      await onAdd(full, undefined, undefined, undefined, (rp && rp.image_url) || undefined)
+    }
+    setVoiceRes(null)
+  }
+  const fmtSecs = (s) => `0:${String(Math.min(s, VOICE_MAX)).padStart(2, '0')}`
+  const voiceModal = voiceState && (
+    <div className="sheet-bg center" onClick={voiceState === 'rec' || voiceState === 'think' ? undefined : cancelVoice}>
+      <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+        {voiceState === 'rec' && (
+          <>
+            <div className="voice-orb rec" style={{ transform: `scale(${1 + voiceLevel * 0.5})` }}>🎤</div>
+            <div className="voice-hint">Segðu hvað á að fara á listann…</div>
+            <div className="voice-eg">t.d. „mjólk, tvö kíló af kartöflum og taco fyrir sex"</div>
+            <div className="voice-secs">{fmtSecs(voiceSecs)} / {fmtSecs(VOICE_MAX)}</div>
+            <div className="voice-actions">
+              <button className="voice-cancel" onClick={cancelVoice}>Hætta við</button>
+              <button className="voice-done" onClick={finishVoice}>Klára ✓</button>
+            </div>
+          </>
+        )}
+        {voiceState === 'think' && (
+          <>
+            <div className="voice-orb think">🪿</div>
+            <div className="voice-hint">Gríptu hlustar…</div>
+          </>
+        )}
+        {voiceState === 'error' && (
+          <>
+            <div className="voice-orb">🎤</div>
+            <div className="voice-hint">{voiceErr}</div>
+            <div className="voice-actions">
+              <button className="voice-cancel" onClick={cancelVoice}>Loka</button>
+              <button className="voice-done" onClick={startVoice}>Reyna aftur</button>
+            </div>
+          </>
+        )}
+        {voiceState === 'review' && voiceRes && (
+          <>
+            <h2>Bæta á listann <button className="x" onClick={cancelVoice} aria-label="Loka">×</button></h2>
+            {voiceRes.transcript && <div className="voice-transcript">„{voiceRes.transcript}"</div>}
+            {voiceRes.items.length === 0 && <p className="muted-p">Ég heyrði engar vörur — reyndu aftur.</p>}
+            <div className="voice-items">
+              {voiceRes.items.map(it => {
+                const rp = voiceReward(it)
+                return (
+                  <label key={it.key} className={'voice-item' + (it.sel ? ' on' : '')}>
+                    <input type="checkbox" checked={it.sel} onChange={() => toggleVoiceItem(it.key)} />
+                    <span className="vi-name">{it.name}</span>
+                    {it.qty && <span className="vi-qty">{it.qty}{it.unit ? ' ' + it.unit : ''}</span>}
+                    {rp && <span className="sugg-cashback">{rewardLabel(rp)}</span>}
+                    {it.dup && <span className="vi-dup">á lista</span>}
+                  </label>
+                )
+              })}
+            </div>
+            <div className="voice-actions">
+              <button className="voice-cancel" onClick={startVoice}>🎤 Aftur</button>
+              <button className="voice-done" onClick={commitVoice} disabled={!voiceRes.items.some(i => i.sel)}>
+                Bæta {voiceRes.items.filter(i => i.sel).length} við
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
 
   const [shelf, setShelf] = useState(false)
   const [shopMode, setShopMode] = useState(false)
@@ -272,7 +406,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {!isTask && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
       {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
-      <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>
+      {micAvailable && !text.trim()
+        ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann">🎤</button>
+        : <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>}
       {(rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
           {rewardSugg.map(p => (
@@ -717,6 +853,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {assignModal}
       {deptModal}
       {scanner}
+      {voiceModal}
       {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
       {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
