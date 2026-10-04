@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import RewardsAdmin from './RewardsAdmin.jsx'
+import BrandDashboard from './BrandDashboard.jsx'
 
 const kr = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr')
 const num = (n) => (n == null ? '—' : Number(n).toLocaleString('is-IS'))
@@ -55,6 +56,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showRewards, setShowRewards] = useState(false)
+  const [showBrand, setShowBrand] = useState(false)
   useBackClose(true, onClose)
 
   const load = () => {
@@ -79,6 +81,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
         <h2>📊 Stjórnborð <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
 
         <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}>🎁 Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
+        <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}>📈 Vörumerkja-mælaborð (innsýn fyrir heildsala)</button>
 
         {onToggleAds && (
           <div className="adm-ads">
@@ -164,6 +167,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
         )}
       </div>
       {showRewards && <RewardsAdmin onClose={() => setShowRewards(false)} />}
+      {showBrand && <BrandDashboard onClose={() => setShowBrand(false)} />}
     </div>
   )
 }

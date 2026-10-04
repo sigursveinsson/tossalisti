@@ -467,6 +467,9 @@ const local = {
   async lookupBarcode(bc) { return offLookup(bc) },
   async getRewardCatalog() { return [] },
   async getRewardMatchList() { return [] },
+  async getRewardBrands() { return [] },
+  async brandDashboard() { return null },
+  async brandInsights() { return null },
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
@@ -643,8 +646,10 @@ const cloud = {
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {
-      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null }))
-      await supabase.from('purchase_items').insert(rows)
+      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null, reward_product_id: i.reward_product_id || null }))
+      const { error: ie } = await supabase.from('purchase_items').insert(rows)
+      // Varaleið: ef dálkurinn er ekki til (eldri gagnagrunnur) — vista án AI-pörunar.
+      if (ie) await supabase.from('purchase_items').insert(rows.map(({ reward_product_id, ...r }) => r))
     }
     // Verðlaun (cashback) — aðeins ef kveikt er á kerfinu
     let earned = 0
@@ -1024,6 +1029,22 @@ const cloud = {
   async getRewardCatalog() {
     const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true)
     return data || []
+  },
+  async getRewardBrands() {
+    const { data } = await supabase.from('reward_brands').select('id,name').order('name')
+    return data || []
+  },
+  // Vörumerkja-mælaborð: allar tölur reiknaðar í gagnagrunninum (k-nafnleysi, aðeins stjórnandi).
+  async brandDashboard(brandId, days = 90, min = 5) {
+    const { data, error } = await supabase.rpc('brand_dashboard', { p_brand_id: brandId, p_days: days, p_min: min })
+    if (error) throw error
+    return data
+  },
+  // AI-innsýn: { bullets, action } eða { answer } ef spurning fylgir. Gögnin eru samantekin (ekkert persónugreinanlegt).
+  async brandInsights(data, { demo = false, question = '' } = {}) {
+    const { data: res, error } = await supabase.functions.invoke('brand-insights', { body: { data, demo, ...(question ? { question } : {}) } })
+    if (error || !res || res.error) throw new Error((res && res.error) || 'insights')
+    return res
   },
   // Listi fyrir AI-pörun í kvittanalestri: [{ id, name, brand, image_url, reward_type, reward_value }].
   async getRewardMatchList() {
