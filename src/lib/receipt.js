@@ -64,29 +64,17 @@ function loadImage(file) {
 // createImageBitmap með resizeWidth afkóðar beint í minni stærð þar sem það er stutt,
 // með mun lægra minnistoppi en new Image() + canvas.
 async function loadDownscaledCanvas(file, maxW) {
-  let bmp = null
-  if (typeof createImageBitmap === 'function') {
-    try {
-      bmp = await createImageBitmap(file, { resizeWidth: maxW, resizeQuality: 'medium' })
-    } catch (e1) {
-      try { bmp = await createImageBitmap(file) } catch (e2) { bmp = null }
-    }
-  }
-  if (bmp) {
-    const scale = bmp.width > maxW ? maxW / bmp.width : 1
-    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale)
-    const c = document.createElement('canvas'); c.width = w; c.height = h
-    c.getContext('2d').drawImage(bmp, 0, 0, w, h)
-    if (bmp.close) bmp.close()
-    return c
-  }
-  // Varaleið (hærra minnisálag): Image + object URL.
-  const img = await loadImage(file)
-  const scale = img.width > maxW ? maxW / img.width : 1
-  const w = Math.round(img.width * scale), h = Math.round(img.height * scale)
+  // AÐEINS niðurkvörðuð afkóðun (createImageBitmap með resizeWidth) — JPEG afkóðast
+  // beint í minni stærð svo minnistoppurinn er lágur. ENGIN full-afkóðunar-varaleið:
+  // hún gæti sprengt minnið og Android/iOS drepur þá síðuna (ógrípanlegt). Ef þetta
+  // bregst kastar fallið villu og kallandinn sendir hráu skrána á netþjóninn í staðinn.
+  if (typeof createImageBitmap !== 'function') throw new Error('no createImageBitmap')
+  const bmp = await createImageBitmap(file, { resizeWidth: maxW, resizeQuality: 'medium' })
+  const scale = bmp.width > maxW ? maxW / bmp.width : 1
+  const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale)
   const c = document.createElement('canvas'); c.width = w; c.height = h
-  c.getContext('2d').drawImage(img, 0, 0, w, h)
-  URL.revokeObjectURL(img.src)
+  c.getContext('2d').drawImage(bmp, 0, 0, w, h)
+  if (bmp.close) bmp.close()
   return c
 }
 
@@ -170,10 +158,16 @@ export async function parseReceipt(file, onProgress) {
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
   let canvas = null, image = null, mime = 'image/jpeg'
-  try {
-    canvas = await loadDownscaledCanvas(file, 1100)
-    image = canvasToVisionBase64(canvas, 0.7)
-  } catch (e) {
+  // Mjög stór mynd (líklega há-upplausnar myndavélarmynd) → EKKI afkóða í síma,
+  // senda hráu skrána beint; netþjónninn afkóðar. Varnar OOM-endurhleðslu.
+  const BIG = 6 * 1024 * 1024
+  if (file.size && file.size <= BIG) {
+    try {
+      canvas = await loadDownscaledCanvas(file, 1100)
+      image = canvasToVisionBase64(canvas, 0.7)
+    } catch (e) { canvas = null; image = null }
+  }
+  if (!image) {
     try { image = await fileToBase64(file); mime = file.type || 'image/jpeg' } catch (e2) { image = null }
   }
 
