@@ -376,6 +376,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
+          {!chore && (() => { const rp = rewardFor(it.name); return rp ? <span className="item-reward" title={`Cashback frá ${rp.name} — skannaðu kvittunina`}>{rewardLabel(rp)}</span> : null })()}
           {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
           {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
           {dueTag(it)}

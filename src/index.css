@@ -133,6 +133,9 @@ button { font-family: inherit; cursor: pointer; }
 .item { display: flex; align-items: center; gap: 12px; padding: 13px 4px; border-bottom: 1px solid var(--line); }
 .check { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--faint); display: flex; align-items: center; justify-content: center; flex: none; color: #fff; font-size: 14px; }
 .item .label { flex: 1; font-size: 16px; text-transform: capitalize; color: var(--text); }
+/* Tryggðarvara á lista → cashback-merki við hlið vörunnar */
+.item .label .item-reward { display: inline-block; margin-left: 8px; vertical-align: 2px; font-size: 11.5px; font-weight: 800; color: #12795b; background: #e6f9f2; border: 1px solid rgba(46,211,164,.45); padding: 1px 8px; border-radius: 999px; text-transform: none; white-space: nowrap; }
+.item.done .label .item-reward { opacity: .55; }
 .item.done .label { text-decoration: line-through; color: var(--faint); }
 .item .del { color: var(--faint); font-size: 20px; background: none; border: none; padding: 4px; }
 .assign-chip { width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff; border: none; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none; }

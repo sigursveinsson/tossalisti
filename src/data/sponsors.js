@@ -70,6 +70,15 @@ const EXTRA_SUGGEST = [
       { name: 'A.C. Perchs te',            color: '#1F6F4F', image: null },
     ],
   },
+  {
+    // Morgunkorn frá Nathan — birtist t.d. þegar leitað er að „morgunkorni".
+    brand: 'Nathan',
+    dept: 'pantry',
+    terms: ['morgunkorn', 'cheerios', 'cheerio', 'seríós', 'serios', 'seríos', 'hafrahring', 'kornflex', 'cornflakes', 'corn flakes', 'múslí', 'musli', 'cereal'],
+    products: [
+      { name: 'Cheerios', color: '#F2C200', image: 'https://images.openfoodfacts.org/images/products/006/563/313/2818/front_en.4.400.jpg' },
+    ],
+  },
 ]
 
 // Kostaðar tillögur þegar leitað er að vöru (nafn passar, eða leitarorð blokkar passar).
