@@ -86,10 +86,13 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const rewardLabel = (p) => p.reward_type === 'percent' ? `🎁 ${p.reward_value}%` : `🎁 +${p.reward_value} kr`
   // Skráðar verðlaunavörur birtast sem fyrsta flokks tillögur (heiti + mynd + cashback).
   const rq = normMatch(text)
-  const rewardSugg = (isShopping && rq.length >= 2 && rewardProducts && rewardProducts.length)
+  const rewardSuggAll = (isShopping && rq.length >= 2 && rewardProducts && rewardProducts.length)
     ? rewardProducts.filter(p => p.active !== false && (normMatch(p.name).includes(rq) || (p.match_keywords || []).some(k => normMatch(k).includes(rq))))
     : []
-  const rewardNames = new Set(rewardSugg.map(p => normMatch(p.name)))
+  // Ef varan er líka kostuð birtist hún einu sinni — sem kostuð lína MEÐ cashback-merki.
+  const sponNames = new Set(sponSugg.map(o => normMatch(o.name)))
+  const rewardSugg = rewardSuggAll.filter(p => !sponNames.has(normMatch(p.name)))
+  const rewardNames = new Set([...rewardSuggAll.map(p => normMatch(p.name)), ...sponNames])
   const catSugg = (isShopping && text.trim().length >= 2)
     ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n) && !rewardNames.has(normMatch(n))).slice(0, 5)
     : []
@@ -419,15 +422,19 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               <span className="sugg-cashback">{rewardLabel(p)}</span>
             </div>
           ))}
-          {sponSugg.map(o => (
-            <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name, o.image)}>
-              <span className="spon-mark" style={{ background: o.color }}>
-                {o.image ? <img src={o.image} alt="" /> : o.name.charAt(0)}
-              </span>
-              <span className="spon-name">{o.name}</span>
-              <span className="spon-tag">Kostað · {o.brand}</span>
-            </div>
-          ))}
+          {sponSugg.map(o => {
+            const rp = rewardFor(o.name)
+            return (
+              <div key={'sp_' + o.name} className="suggest-spon" onClick={() => add(o.name, o.image)}>
+                <span className="spon-mark" style={{ background: o.color }}>
+                  {o.image ? <img src={o.image} alt="" /> : o.name.charAt(0)}
+                </span>
+                <span className="spon-name">{o.name}</span>
+                {rp && <span className="sugg-cashback spon-cashback">{rewardLabel(rp)}</span>}
+                <span className="spon-tag">Kostað · {o.brand}</span>
+              </div>
+            )
+          })}
           {catSugg.map(n => {
             const rp = rewardFor(n)
             return (
