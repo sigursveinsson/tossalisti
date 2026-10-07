@@ -10,7 +10,20 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash']
+// gemini-2.5-flash-lite var lagt niður (okt 2026) — 3.5-flash-lite fyrst, 2.5-flash til vara.
+const MODELS = ['gemini-2.5-flash', 'gemini-3.5-flash'] // 2.5-flash-lite lagt niður
+
+// Gemini 3.x notar thinkingLevel (minimal); 2.5 notar thinkingBudget:0. Röng stilling → 400.
+// Lágt hitastig er sent til allra líkana: sjálfgefið (1,0) á Gemini 3 gaf brenglaða íslensku.
+function genConfig(model: string, base: Record<string, unknown>, temperature?: number) {
+  const g3 = /^gemini-3/.test(model)
+  return {
+    ...base,
+    ...(temperature === undefined ? {} : { temperature }),
+    thinkingConfig: g3 ? { thinkingLevel: 'minimal' } : { thinkingBudget: 0 },
+  }
+}
+
 
 function jwtRole(req: Request): string | null {
   const tok = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
@@ -64,14 +77,11 @@ Deno.serve(async (req) => {
       'Ekkert nema JSON.',
     ].join('\n')
 
-    const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, responseMimeType: 'application/json', maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
-    }
 
     let lastErr = ''
     for (const model of MODELS) {
       const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
+      const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 1024 }, 0.3) }
       const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const d = await r.json()
       const out = d?.candidates?.[0]?.content?.parts?.[0]?.text

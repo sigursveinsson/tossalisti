@@ -171,6 +171,37 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
 
 ## Hugmyndir / síðar (minnislisti)
 
+- **★★ VEGVÍSIR — ÞRÓUN KERFISINS ÁFRAM (7. okt 2026).**
+  - **⛔ ÁKVÖRÐUN:** EKKI útfæra cashback-kjarnann (útreikning á netþjóni, útleysingu, reikningagerð til vörumerkja, tilboðstegundir) fyrr en samtal við heildsala hefur farið fram um hvernig þeir vilja hafa það. Hanna eftir þeirra þörfum, ekki ágiskun. Demo-útgáfan (cashback reiknað í síma, „í bið") dugar þangað til.
+  - **❓ Spurningar til heildsala (Nathan / Ölgerðin) — svörin ráða hönnun cashback:**
+    1. Fjármögnun: fastur pottur fyrir tímabil, eða greitt per staðfest kaup? Hámark á mánuði?
+    2. Tegund verðlauna: föst upphæð, % af verði, „keyptu X fáðu Y", tvöföld stig, aðeins nýir kaupendur?
+    3. Hvaða vörur fyrst — allur vörulistinn eða valdar vörur/flokkar? Vilja þeir einkarétt í flokki?
+    4. Útleysing: gjafabréf (hvaða?), eigin vörur, góðgerðarmál, happdrætti? Skiptir máli að verðlaunin beini fólki aftur að þeirra vöru?
+    5. Hvaða gögn/skýrslur skipta þá mestu (endurkaup, nýir kaupendur, keðjur, karfa)? Hversu oft?
+    6. Hversu mikla svikavörn/samþykkt vilja þeir sjá áður en greitt er? Hver samþykkir?
+    7. Reikningagerð: mánaðarlega, per herferð? Hver er tengiliður (markaður eða sala)?
+    8. Pilot: fjöldi heimila, lengd, árangursmælikvarðar sem þeir samþykkja FYRIRFRAM.
+    9. Sambúð við keppinauta á torginu — í lagi, eða eingöngu í sínum flokki?
+    10. Samband við verslanir (Krónan/Hagar): einhverjar áhyggjur sem þarf að tækla?
+  - **🔒 BÍÐUR SAMTALS VIÐ HEILDSALA (cashback-kjarni):**
+    - Cashback reiknað á NETÞJÓNI (gagnagrunnur/edge-fall) í stað síma — í dag getur tæknivæddur notandi skrifað eigin færslur í `reward_earnings`.
+    - Svikavörn þvert á notendur (sama kvittun hjá tveimur, of margar/dag, ótrúverðug dagsetning/upphæð); fingrafar kvittana til staðar.
+    - Útleysing frá upphafi til enda: samþykkt stjórnanda → gjafabréf/góðgerð → bókhald.
+    - Tilboðstegundir (nýir kaupendur, magn, conquesting, tvöföld stig).
+    - Vörumerkja-innskráning: eigið mælaborð + eigin tilboð með fjárhagsþaki.
+    - Mæling með samanburðarhópi (holdout) — raunveruleg söluaukning (eins og KPMG-vottun Fetch).
+    - Reikningagerð per staðfest kaup + útflutningur skýrslu.
+  - **✅ MÁ GERA STRAX (óháð samtalinu):**
+    - **Öryggi/kostnaður AI:** dagsþak + innskráningarkrafa á `parse-receipt`; dagsþak á `parse-voice`/`brand-insights`; kostnaðarþak hjá Google; greitt Gemini-stig (notandi).
+    - **Persónuvernd:** samþykkisskjár sem nær yfir gervigreind + nafnlausar tölur til vörumerkja; persónuverndarsíða; eyðing og útflutningur gagna (lögfræðiyfirferð).
+    - **Neytandi — ástæða til að koma aftur:** grunnstig per kvittun tengd stigum/röðum (vana-vél Fetch); listi sem fyllir sig sjálfur (kauptaktur); mánaðaryfirlit á mannamáli (tilkynning); „bjóddu vini, fáðu stig".
+    - **Skönnunar-augnablikið** (gæs + konfetti + samtala og ein lína per vörumerki, „bætist við inneignina") + „▶ Sýna augnablikið" varahnappur í Stjórnborði. Prófa á ALVÖRU kvittun (kaupa Nathan- og Ölgerðar-vörur) — AI-pörun hefur bara verið prófuð á gervikvittun. Hreinsa prófunarkvittanir eftir æfingu.
+    - **Gögnin sem eign:** sameiginleg vöruskrá (sama vara þvert á verslanir, tengd strikamerki) — grunnur að greiningu, vex með hverri kvittun.
+    - **Innlestur vörulista** (CSV/verðlisti → AI-pörun) — undirbúningur, nýtist strax þegar heildsali réttir lista.
+    - **Fundarundirbúningur:** eins-síðu pilot-tillaga; minnisblað „hver spyr um hvað"; glæra „Takk/Krónuappið vs Gríptu"; herferðar-aðstoðarmaður í mælaborði; conquesting-demo; vikuáskorun frá vörumerki.
+    - **Smátt:** íhuga að færa 🖼️ Fela/Sýna-takkann eða staðfesta áður en myndir eru faldar (gleymist auðveldlega).
+
 - **★ LAGAÐ (lota 8, 2. okt 2026) — kvittanaskönnun felldi símann (OOM) — DEPLOYAÐ.** Notandi (Android Chrome): við skönnun fór appið aftur á heimaskjáinn + „Lítið minni veldur því að ekki er hægt að ljúka aðgerð". Rót: `receipt.js` afkóðaði myndavélarmyndina í FULLRI upplausn tvisvar (sjónlíkan + OCR) → minnistoppur sprengdi flipann (Chrome/Safari OOM endurhleður → heimaskjár). Loggar staðfestu NÚLL `parse-receipt` köll (brotnaði í síma áður en náði netþjóni). Lagað: nýtt `loadDownscaledCanvas()` afkóðar EINU SINNI með `createImageBitmap(file,{resizeWidth:1100})` (lágur minnistoppur), `enhanceForOcr()` vinnur á minnkaða striganum, `visionInvoke()` deilt; `parseReceipt` afkóðar einu sinni + endurnýtir fyrir vision+OCR, og **ef afkóðun klikkar sendir hráu skrána beint á netþjóninn** (mime úr file.type) svo síminn afkóðar ekki neitt. Þung OCR-vara sleppt ef afkóðun mistókst. Fjarlægði `compressForVision`/`preprocess`. Aðeins framendi (engin edge breyting). Node-check hreint.
   - **EFTIRFYLGNI (4. okt) — OOM kom aftur á stórri mynd, lagað betur (ÓÚTGEFIÐ, þarf deploy).** Fyrsta lagfæringin dugði fyrir venjulegar/krumpaðar kvittanir en féll aftur á stórri mynd. Rót: `loadDownscaledCanvas` hafði FULL-afkóðunar-varaleiðir (`createImageBitmap(file)` án resize + `loadImage`) sem keyrðu ef resize-afkóðun brást → sprengdu minnið (Android drepur síðuna, ógrípanlegt, svo raw-fallback náði ekki að virkja → 0 köll í netþjón, staðfest í loggum). Lagað: `loadDownscaledCanvas` gerir NÚ aðeins resize-`createImageBitmap` og kastar villu annars (engin full afkóðun). `parseReceipt` fékk stærðar-vörn: mynd > 6MB fer BEINT hrá á netþjóninn (enginn afkóðun í síma); annars létt niðurkvörðun og ef hún bregst → hrá skrá. `loadImage` nú ónotað (skaðlaust).
 
@@ -210,7 +241,16 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
   - **TODO 2 — Kostnaðarþak hjá Google (notandi gerir):** fjárhagsviðvörun + hámark í Google Cloud Billing fyrir Gemini-lykilinn.
   - **TODO 3 — Persónuvernd (notandi athugar):** staðfesta að GEMINI_API_KEY sé á GREIDDU stigi. Á ókeypis stigi má Google nota innsend gögn til vöruþróunar — óásættanlegt fyrir kvittanir/raddupptökur notenda.
 
-- **★ TÉKKLISTI FYRIR NATHAN-FUND (skoða áður en farið er á fundinn).** Deploy 4. okt komið inn (receipt.js OOM-eftirfylgni + Nathan kostunarvörur).
+- **★ SPURNINGAR FYRIR NATHAN-FUND (7. okt 2026) — DRÖG, má bæta við.** Regla: **spyrja fyrst, sýna svo** — sýna síðan þann hluta kerfisins sem leysir það sem þau nefna. Hlusta meira en tala („segðu mér meira"), skrifa svörin niður (hluti 3 = hönnunarskjal cashback-kjarnans).
+  1. **Þeirra heimur (áður en sýnt er):** (Hildur) Hvernig mælið þið í dag hvort markaðsaðgerð skilaði sölu? · (Arnar) Hvaða sölugögn fáið þið frá verslunum, og hvað vantar? · (Arnar) Hvar eruð þið að vinna/tapa hlutdeild, hvaða vörur eruð þið að koma á framfæri? · (Hildur) Hvernig skiptist markaðsféð (auglýsingar / tilboð í verslun / vörukynningar)? · (Mikael) Stærstu áskoranir framundan, hvar sjáið þið vöxtinn? · (Allir) Fáið þið eitthvað út úr Krónuappinu eða Takk?
+  2. **Eftir sýningu — viðbrögð:** Hvað skiptir mestu/minnstu máli? · Ef þið hefðuð mælaborðið á morgun, hvaða spurningu mynduð þið spyrja fyrst? · Hvaða vöru mynduð þið prófa fyrst og af hverju?
+  3. **Hvernig þau vilja cashback:** Fastur pottur eða greitt per staðfest kaup? · Föst upphæð / % / „keyptu þrjár" / aðeins nýir kaupendur? · Útleysing: gjafabréf, eigin vörur, góðgerðarmál? · Einkaréttur í flokki eða í lagi með keppinauta á torginu? · Hversu oft skýrslur og hver notar þær? (Sjá líka 10 spurningar í VEGVÍSI.)
+  4. **Hindranir (mikilvægast):** Hvað gæti komið í veg fyrir að þið prófið þetta? · Áhyggjur af viðbrögðum verslana? · Hverjir aðrir koma að ákvörðun?
+  5. **Næstu skref:** Hvaða tala eftir 3 mánuði sannaði vel heppnaðan pilot? · Hvað þyrftuð þið að sjá til að segja já? · Hvernig er ákvörðunarferlið og hvenær hittumst við næst?
+  - **TODO fyrir fund:** fara yfir spurningarnar með Sverri og bæta við; gera eins síðu útprentanlegt skjal með plássi fyrir svör.
+
+- **★ TÉKKLISTI FYRIR NATHAN-FUND (skoða áður en farið er á fundinn).**
+  000. **🗣️ FARA YFIR SPURNINGARNAR (sjá „SPURNINGAR FYRIR NATHAN-FUND" að ofan) og bæta við — prenta eins síðu skjal með plássi fyrir svör.** Deploy 4. okt komið inn (receipt.js OOM-eftirfylgni + Nathan kostunarvörur).
   00. **Sýna vörumerkja-mælaborðið** (📊 Stjórnborð → 📈): byrja á „Raungögn" (heiðarlegt: „of fá gögn enn — svona virkar persónuverndin"), skipta yfir í **🧪 Sýnidæmi** og segja skýrt að þetta séu tilbúin gögn sem sýna hvað Nathan fengi með nokkur hundruð notendum. Spyrja gervigreindina í beinni (t.d. „hvaða samtilboð mælirðu með?"). Best á tölvu/skjávarpa (breiðara útlit).
   0. **Æfa raddstýringu (🎤) á símanum** — t.d. „Nutella, Sproud og það sem þarf í pönnukökur fyrir fjóra". Sýna Nathan: Nutella/Sproud fá 🎁-merki strax í tillögunum. Kveikja á Verðlaunakerfi svo merkin birtist.
   1. **Prófa skönnun á stórri/há-upplausnar mynd** í Android-símanum — staðfesta að appið falli ekki (OOM). Ef það fellur enn: láta ALLAR myndir fara hráar á netþjóninn (ekkert afkóðað í síma) — bulletproof.
@@ -219,6 +259,9 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
   4. **Athuga að vörumyndir birtist** (hotlinkaðar af nathan.is + OFF). A.C. Perchs vantar mynd.
   5. **Fundarmenn:** Mikael (forstjóri — áhætta/stefna), Arnar (sala — magn, gögn, samband við verslanir), Hildur (markaður — budget, CSR/gefa-vinkill). Vita hver á budgetið.
   6. Hafa `griptu-app-mockup.html` + heildsalar-deckið tilbúin.
+
+- **★ KOSTAÐAR STAÐGENGILSVÖRUR Í RADDSTÝRINGU (7. okt 2026).** „Taco veisla fyrir 6" → gervigreindin leggur til taco skeljar → ef kostun er til verður það **„Old El Paso taco skeljar · Kostað · Nathan"** (mynd af nathan.is, vara 120330). Fyrir demo aðeins EIN vara (skeljarnar) í `sponsors.js` (reitur `generic: 'Taco skeljar'`; `sponsoredForAI()`). **Heiðarleiki tryggður í kóða:** `parse-voice` v11 (LIFANDI, innskráning) býr listann til í skrefi 1 ÁN vitneskju um kostun; skref 2 (`sponsorMap`) má aðeins merkja línur sem eru þegar til, og netþjónninn staðfestir (heiti línu verður að passa + deila orðstofni með vörutegundinni — greip villu þar sem „nautahakk" var merkt). Notandi nefnir annað vörumerki (t.d. Santa Maria) → engin kostun. Kostuð vara alltaf merkt og „↺ almennt"-hnappur skiptir aftur í almenna vöru. Aðeins virkt þegar Kostaðar auglýsingar eru á. Framendi (`voice.js`, `ListView.jsx`, `index.css`) **þarf deploy**. Viðbótarvörur (tortillur, taco sósa — myndir fundnar á OFF) má bæta við síðar með einni línu hver.
+  - **⚠️ GEMINI-LÍKÖN (7. okt):** Google lagði niður `gemini-2.5-flash-lite` (404 „no longer available"). Öll föll féllu á varalíkanið (2.5-flash) — virkuðu en hægar. `gemini-3.5-flash-lite` skrifaði brenglaða íslensku („rivinn ostur", „rifsrómur") → EKKI nota fyrir íslenskan texta. Gemini 3 krefst `thinkingConfig.thinkingLevel: 'minimal'` í stað `thinkingBudget: 0` (annars 400) — `genConfig(model, …)` sér um það í öllum föllum. **parse-voice:** `gemini-3.5-flash` → 2.5-flash (hrein íslenska, ~4 sek). **parse-receipt + brand-insights:** uppfærð á disk í `['gemini-2.5-flash', 'gemini-3.5-flash']` en **EKKI ENN DEPLOYUÐ** (útgáfur í loftinu reyna dauða líkanið fyrst og falla svo á 2.5-flash — virka, ~150 ms sóun). Deploya þau næst + prófa kvittun.
 
 - **★ CHEERIOS + CASHBACK-MERKI Á LISTA (6. okt 2026).** Nathan selur Cheerios (staðfest á nathan.is: 350 g, 570 g, Honey Nut — engar myndir þar). **Tryggðarvara (LIFANDI í DB):** Nathan → „Cheerios" +60 kr, leitarorð `cheerios` (nær líka Honey Nut), mynd af OFF (General Mills 350 g gulur pakki, strikamerki 0065633132818). **Kostuð tillaga (`sponsors.js`, þarf deploy):** ný EXTRA_SUGGEST-blokk, birtist við „morgunkorn/morgunkorni/cheerios/seríós/kornflex/múslí…" (prófað). **Cashback-merki á innkaupalista (`ListView` itemRow, þarf deploy):** hver vara á lista sem passar við tryggðarvöru fær grænt merki „🎁 +60 kr" / „🎁 15%" við hlið nafnsins (dofnar þegar hakað). Gildir um ALLAR tryggðarvörur (Nathan + Ölgerðin). Birtist aðeins þegar Verðlaunakerfi er á; kostaða tillagan aðeins þegar Kostaðar auglýsingar eru á. ✅ Staðfest á síma eftir að kveikt var á Verðlaunakerfi (`rewards_enabled` var false — það var orsökin þegar merkið sást ekki).
   - **Cashback-merki í leitarglugga (6. okt, þarf deploy):** kostaðar tillögur fá nú líka „🎁 +60 kr" (áður bara „Kostað · Nathan") → „morgunkorn" sýnir Cheerios með cashback. Vara sem er bæði kostuð og tryggðarvara birtist EINU sinni (kostuð lína + cashback-merki) í stað tvisvar.

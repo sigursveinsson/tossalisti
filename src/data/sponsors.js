@@ -71,6 +71,16 @@ const EXTRA_SUGGEST = [
     ],
   },
   {
+    // Old El Paso (Nathan) — taco/mexíkóskt. `generic` = almennt heiti sem gervigreindin
+    // getur skipt út fyrir kostuðu vöruna í raddstýringu („taco veisla fyrir 6").
+    brand: 'Nathan',
+    dept: 'pantry',
+    terms: ['taco', 'tako', 'tortill', 'vefju', 'mexík', 'mexik', 'burrito', 'fajita', 'quesadilla'],
+    products: [
+      { name: 'Old El Paso taco skeljar', generic: 'Taco skeljar', color: '#C8102E', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F120330.jpg' },
+    ],
+  },
+  {
     // Morgunkorn frá Nathan — birtist t.d. þegar leitað er að „morgunkorni".
     brand: 'Nathan',
     dept: 'pantry',
@@ -80,6 +90,15 @@ const EXTRA_SUGGEST = [
     ],
   },
 ]
+
+// Kostaðar vörur sem gervigreindin má nota SEM STAÐGENGLA fyrir almenna vöru í raddstýringu.
+// Aðeins vörur með `generic`. [{ name, brand, generic, image, color }]
+export function sponsoredForAI() {
+  const blocks = [...Object.values(CATEGORY_SPONSORS), ...EXTRA_SUGGEST]
+  const out = []
+  for (const s of blocks) for (const p of s.products) if (p.generic) out.push({ name: p.name, brand: s.brand, generic: p.generic, image: p.image, color: p.color })
+  return out
+}
 
 // Kostaðar tillögur þegar leitað er að vöru (nafn passar, eða leitarorð blokkar passar).
 export function sponsoredSuggest(query, limit = 4) {

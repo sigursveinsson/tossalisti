@@ -9,7 +9,20 @@ const cors = {
 }
 
 // Hraðasta líkanið fyrst. Kvittanalestur er beinn útdráttur — engin rökhugsun þarf.
-const MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest']
+// gemini-2.5-flash-lite var lagt niður (okt 2026) — 3.5-flash-lite fyrst, 2.5-flash til vara.
+const MODELS = ['gemini-2.5-flash', 'gemini-3.5-flash'] // 2.5-flash-lite lagt niður; 2.5-flash les íslensku vel
+
+// Gemini 3.x notar thinkingLevel (minimal); 2.5 notar thinkingBudget:0. Röng stilling → 400.
+// Lágt hitastig er sent til allra líkana: sjálfgefið (1,0) á Gemini 3 gaf brenglaða íslensku.
+function genConfig(model: string, base: Record<string, unknown>, temperature?: number) {
+  const g3 = /^gemini-3/.test(model)
+  return {
+    ...base,
+    ...(temperature === undefined ? {} : { temperature }),
+    thinkingConfig: g3 ? { thinkingLevel: 'minimal' } : { thinkingBudget: 0 },
+  }
+}
+
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const daysBetween = (a: Date, b: Date) => Math.round((a.getTime() - b.getTime()) / 86400000)
@@ -102,19 +115,15 @@ Deno.serve(async (req) => {
       'Ekkert nema JSON.',
     ].join('\n')
 
-    const body = {
-      contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mime || 'image/jpeg', data: image } }] }],
-      generationConfig: {
-        temperature: 0,
-        responseMimeType: 'application/json',
-        maxOutputTokens: 3072,
-        thinkingConfig: { thinkingBudget: 0 }, // slekkur á "thinking" — sparar ~8 sek
-      },
-    }
 
     let lastErr = ''
     for (const model of MODELS) {
       const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
+      // Lágmarks-„hugsun" — kvittanalestur er beinn útdráttur (sparar sekúndur).
+      const body = {
+        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mime || 'image/jpeg', data: image } }] }],
+        generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 3072 }, 0),
+      }
       const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const data = await r.json()
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text

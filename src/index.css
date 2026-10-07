@@ -508,6 +508,11 @@ button { font-family: inherit; cursor: pointer; }
 .voice-item .vi-qty { font-size: 13px; color: var(--muted); white-space: nowrap; }
 .voice-item .vi-dup { font-size: 11px; font-weight: 700; color: var(--muted); background: var(--surface-2); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .voice-item .sugg-cashback { margin-left: 0; }
+/* Kostuð staðgengilsvara í raddtillögum (t.d. Old El Paso taco skeljar) */
+.voice-item.spon { border-color: var(--cta); background: #fff8ec; }
+.voice-item .vi-img { width: 34px; height: 34px; object-fit: contain; border-radius: 6px; background: #fff; flex: none; }
+.voice-item .vi-spon { display: block; font-size: 11px; font-weight: 700; color: var(--cta-ink); background: var(--cta); border-radius: 999px; padding: 1px 8px; width: fit-content; margin-top: 3px; }
+.voice-item .vi-swap { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 3px 8px; white-space: nowrap; }
 
 /* AI-pörun: lína sem gervigreindin þekkti sem tilboðsvöru */
 .receipt-row.is-match input:not(.receipt-price) { border-color: var(--done); background: #f2fcf8; }

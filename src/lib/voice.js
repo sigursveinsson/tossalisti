@@ -88,7 +88,7 @@ export async function startRecording({ onLevel } = {}) {
 }
 
 // Sendir hljóð (eða texta) í gervigreindina. Skilar { transcript, items:[{name,qty,unit,reward_product_id?}] }.
-export async function parseVoice({ audio, mime, text, products, existing }) {
+export async function parseVoice({ audio, mime, text, products, existing, sponsored }) {
   if (!supabase || !supabase.functions) throw new Error('offline')
   const prods = (products || []).filter(p => p && p.id && p.name && p.active !== false)
     .map(p => ({ id: p.id, name: p.name, brand: p.brand || '' }))
@@ -96,6 +96,8 @@ export async function parseVoice({ audio, mime, text, products, existing }) {
     ...(audio ? { audio, mime: mime || 'audio/wav' } : { text }),
     ...(prods.length ? { products: prods } : {}),
     ...(existing && existing.length ? { existing: existing.slice(0, 150) } : {}),
+    // Kostaðar staðgengilsvörur — netþjónninn merkir þær aðeins á TILBÚINN lista (bætir aldrei við).
+    ...(sponsored && sponsored.length ? { sponsored: sponsored.map(s => ({ name: s.name, brand: s.brand, generic: s.generic })) } : {}),
   }
   const { data, error } = await supabase.functions.invoke('parse-voice', { body })
   if (error) {

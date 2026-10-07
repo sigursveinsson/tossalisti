@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest, departmentFor } from '../data/products.js'
-import { CATEGORY_SPONSORS, sponsoredSuggest } from '../data/sponsors.js'
+import { CATEGORY_SPONSORS, sponsoredSuggest, sponsoredForAI } from '../data/sponsors.js'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
 import { CatIcon } from '../data/icons.jsx'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
@@ -128,11 +128,17 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       const { base64, seconds, mime } = await rec.stop()
       if (seconds < 0.6) { setVoiceState(null); return }
       const openItems = items.filter(i => !i.checked)
-      const res = await parseVoice({ audio: base64, mime, products: rewardProducts, existing: openItems.map(i => i.name) })
+      const spons = adsEnabled ? sponsoredForAI() : []
+      const res = await parseVoice({ audio: base64, mime, products: rewardProducts, existing: openItems.map(i => i.name), sponsored: spons })
       const have = new Set(openItems.map(i => normMatch(i.name)))
       setVoiceRes({
         transcript: res.transcript,
-        items: res.items.map((it, k) => { const dup = have.has(normMatch(it.name)); return { ...it, key: k, dup, sel: !dup } }),
+        items: res.items.map((it, k) => {
+          const dup = have.has(normMatch(it.name))
+          // Kostuð staðgengilsvara: bæta við mynd úr sponsors.js; sjálfgefið notuð (useSpon), má skipta í almennt.
+          const sp = it.sponsored ? spons.find(s => s.name === it.sponsored.name) : null
+          return { ...it, key: k, dup, sel: !dup, sponsored: sp || null, useSpon: !!sp }
+        }),
       })
       setVoiceState('review')
     } catch (e) {
@@ -160,13 +166,17 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   }
   const toggleVoiceItem = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, sel: !i.sel } : i) }))
   const voiceReward = (it) => (it.reward_product_id && (rewardProducts || []).find(p => p.id === it.reward_product_id)) || rewardFor(it.name)
+  const toggleVoiceSpon = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, useSpon: !i.useSpon } : i) }))
   const commitVoice = async () => {
     const picks = (voiceRes ? voiceRes.items : []).filter(i => i.sel)
     setVoiceState(null)
     for (const p of picks) {
-      const full = p.qty ? `${p.name} ${p.qty}${p.unit ? ' ' + p.unit : ''}` : p.name
-      const rp = voiceReward(p)
-      await onAdd(full, undefined, undefined, undefined, (rp && rp.image_url) || undefined)
+      const useSp = p.sponsored && p.useSpon
+      const base = useSp ? p.sponsored.name : p.name
+      const full = p.qty ? `${base} ${p.qty}${p.unit ? ' ' + p.unit : ''}` : base
+      const rp = voiceReward(useSp ? { name: base } : p)
+      const img = (useSp && p.sponsored.image) || (rp && rp.image_url) || undefined
+      await onAdd(full, undefined, undefined, undefined, img)
     }
     setVoiceRes(null)
   }
@@ -209,11 +219,22 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             {voiceRes.items.length === 0 && <p className="muted-p">Ég heyrði engar vörur — reyndu aftur.</p>}
             <div className="voice-items">
               {voiceRes.items.map(it => {
-                const rp = voiceReward(it)
+                const useSp = it.sponsored && it.useSpon
+                const rp = voiceReward(useSp ? { name: it.sponsored.name } : it)
                 return (
-                  <label key={it.key} className={'voice-item' + (it.sel ? ' on' : '')}>
+                  <label key={it.key} className={'voice-item' + (it.sel ? ' on' : '') + (useSp ? ' spon' : '')}>
                     <input type="checkbox" checked={it.sel} onChange={() => toggleVoiceItem(it.key)} />
-                    <span className="vi-name">{it.name}</span>
+                    {useSp && it.sponsored.image && <img className="vi-img" src={it.sponsored.image} alt="" />}
+                    <span className="vi-name">
+                      {useSp ? it.sponsored.name : it.name}
+                      {useSp && <span className="vi-spon">Kostað · {it.sponsored.brand}</span>}
+                    </span>
+                    {it.sponsored && (
+                      <button type="button" className="vi-swap" onClick={e => { e.preventDefault(); toggleVoiceSpon(it.key) }}
+                        title={useSp ? 'Nota almenna vöru' : 'Nota ' + it.sponsored.name}>
+                        {useSp ? '↺ almennt' : '↺ ' + it.sponsored.brand}
+                      </button>
+                    )}
                     {it.qty && <span className="vi-qty">{it.qty}{it.unit ? ' ' + it.unit : ''}</span>}
                     {rp && <span className="sugg-cashback">{rewardLabel(rp)}</span>}
                     {it.dup && <span className="vi-dup">á lista</span>}
