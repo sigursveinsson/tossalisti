@@ -677,7 +677,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping

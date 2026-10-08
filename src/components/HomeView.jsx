@@ -1,6 +1,6 @@
 import React from 'react'
 import AdBanner from './AdBanner.jsx'
-import { IconGift, IconUsers, IconDeviceMobile, IconShoppingCart, IconChecklist, IconCalendar, IconChevronRight } from '@tabler/icons-react'
+import { IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShoppingCart, IconUsers } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -38,7 +38,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, onScanReceipt }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -78,6 +78,17 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           {cashback > 0
             ? <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
             : <span className="home-cashback-txt"><small>Nýtt: Gríptu cashback</small><b>Fáðu til baka af innkaupum</b></span>}
+          <Go />
+        </button>
+      )}
+
+      {onScanReceipt && (
+        <button className="home-invite home-scan" onClick={() => onScanReceipt()}>
+          <span className="home-invite-ic"><IconReceipt size={22} stroke={1.75} /></span>
+          <span className="home-invite-txt">
+            <b>{purchases.length ? 'Skannaðu kvittun' : 'Prófaðu að skanna kvittun'}</b>
+            <small>Taktu mynd — gervigreindin les vörurnar, flokkar útgjöldin{rewardsEnabled ? ' og finnur cashback' : ''}</small>
+          </span>
           <Go />
         </button>
       )}
