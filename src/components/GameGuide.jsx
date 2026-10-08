@@ -1,5 +1,6 @@
 import React from 'react'
 import { useBackClose } from '../lib/backstack.js'
+import { IconX } from '@tabler/icons-react'
 
 // Stutt leiðsögn fyrir foreldra sem sjá verk/skema + spilun í fyrsta sinn.
 const POINTS = [
@@ -16,7 +17,7 @@ export default function GameGuide({ onClose }) {
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal guide" onClick={e => e.stopPropagation()}>
-        <button className="x" onClick={onClose} aria-label="Loka">×</button>
+        <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button>
         <div className="guide-emoji">🌟</div>
         <h2 className="guide-h">Verk og verðlaun</h2>
         <p className="guide-lead">Gerðu heimilisverkin að leik. Svona virkar það:</p>

@@ -3,6 +3,7 @@ import { RECIPES, fmtQty, RECIPE_CATEGORIES } from '../data/recipes.js'
 import { store } from '../lib/store.js'
 import RecipeForm from './RecipeForm.jsx'
 import Dialog from './Dialog.jsx'
+import { IconArrowLeft, IconCheck, IconLock } from '@tabler/icons-react'
 
 function StarRow({ value, count }) {
   if (!value) return <span className="stars muted">Engin einkunn enn</span>
@@ -79,7 +80,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
     const a = stats.avg[r.id]
     return (
       <div>
-        <button className="back" onClick={() => setOpen(null)}>← Til baka</button>
+        <button className="back" onClick={() => setOpen(null)}><IconArrowLeft size={18} stroke={1.9} /> Til baka</button>
         <div className="recipe-hero">{r.emoji}</div>
         <h2 className="recipe-h">{r.name}</h2>
         <div className="recipe-sub2">{r.time}</div>
@@ -88,7 +89,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
             {r.authorType === 'web'
               ? <>Af vefnum: <a href={r.sourceUrl} target="_blank" rel="noreferrer">{r.authorName || r.sourceUrl}</a></>
               : <>Höfundur: {r.authorName || 'Notandi'}</>}
-            {r.isPublic === false ? ' · 🔒 einka' : ''}
+            {r.isPublic === false ? <> · <IconLock size={12} stroke={2} /> einka</> : ''}
           </div>
         )}
         <div style={{ margin: '6px 0 2px' }}><StarRow value={a?.avg} count={a?.num} /></div>
@@ -146,7 +147,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
     <div className="recipe" key={r.id} onClick={() => openRecipe(r)} style={{ cursor: 'pointer', marginTop: 10 }}>
       <div className="icon">{r.emoji}</div>
       <div className="meta">
-        <div className="title">{r.name}{r.isPublic === false ? ' 🔒' : ''}</div>
+        <div className="title">{r.name}{r.isPublic === false ? <IconLock size={13} stroke={2} className="inline-ico" /> : ''}</div>
         <div className="sub">{r.time ? r.time + ' · ' : ''}{r.serves} skammtar · {r.ingredients.length} hráefni</div>
         <StarRow value={stats.avg[r.id]?.avg} count={stats.avg[r.id]?.num} />
         {extra}
@@ -194,7 +195,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
       {results.map(({ r, matches }) => card(
         r,
         matches > 0 && terms.length > 0
-          ? <div className="match-tag">✓ {matches} {matches === 1 ? 'hráefni passar' : 'hráefni passa'}</div>
+          ? <div className="match-tag"><IconCheck size={13} stroke={2.5} /> {matches} {matches === 1 ? 'hráefni passar' : 'hráefni passa'}</div>
           : null,
       ))}
     </div>

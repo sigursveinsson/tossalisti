@@ -2,14 +2,15 @@ import React, { useEffect, useRef, useState } from 'react'
 import { parseReceipt } from '../lib/receipt.js'
 import { store as db } from '../lib/store.js'
 
-// Texti á pörunar-merki: „🎁 Nathan · Nutella · +50 kr"
+// Texti á pörunar-merki: „Nathan · Nutella · +50 kr" (gjafatákn birt í JSX)
 const matchLabel = (p) => {
   if (!p) return ''
   const v = Number(p.reward_value) || 0
   const val = p.reward_type === 'percent' ? `${v}% til baka` : `+${v} kr`
-  return `🎁 ${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
+  return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'
+import { IconAlertTriangle, IconCamera, IconGift, IconX } from '@tabler/icons-react'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const sum = (items) => items.reduce((a, b) => a + (Number(b.price) || 0), 0)
@@ -96,13 +97,13 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal receipt-modal" onClick={e => e.stopPropagation()}>
-        <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         {phase === 'capture' && (
           <>
             <p className="muted-p">Taktu mynd af kassakvittuninni. Appið les vörur og verð — þú getur lagað áður en þú vistar.</p>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
-            <button className="add-recipe-btn" onClick={() => fileRef.current && fileRef.current.click()}>📸 Taka mynd af kvittun</button>
+            <button className="add-recipe-btn" onClick={() => fileRef.current && fileRef.current.click()}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
           </>
         )}
 
@@ -121,7 +122,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
               <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
             {dateLooksOff(date) && (
-              <div className="receipt-datewarn">⚠️ Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</div>
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</span></div>
             )}
             {items.length === 0 && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
             <div className="receipt-items">
@@ -132,9 +133,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
                     <div className={'receipt-row' + (mp ? ' is-match' : '')}>
                       <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
                       <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
-                      <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða">×</button>
+                      <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða"><IconX size={16} stroke={1.75} /></button>
                     </div>
-                    {mp && <div className="receipt-match">{matchLabel(mp)}</div>}
+                    {mp && <div className="receipt-match"><IconGift size={13} stroke={2} />{matchLabel(mp)}</div>}
                   </React.Fragment>
                 )
               })}
@@ -146,7 +147,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
               <span>kr</span>
             </div>
             {dup && (
-              <div className="receipt-datewarn">⚠️ Þessi kvittun virðist þegar skráð{dup.purchased_at ? ' (' + dup.store + ', ' + fmtDate(dup.purchased_at) + ')' : ''}. Ef hún er ný, ýttu aftur á „Vista samt".</div>
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Þessi kvittun virðist þegar skráð{dup.purchased_at ? ' (' + dup.store + ', ' + fmtDate(dup.purchased_at) + ')' : ''}. Ef hún er ný, ýttu aftur á „Vista samt".</span></div>
             )}
             <button className="add-recipe-btn" onClick={save} disabled={saving}>{saving ? 'Vista…' : (dup ? 'Vista samt' : 'Vista kvittun')}</button>
           </>

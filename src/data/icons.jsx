@@ -5,6 +5,8 @@ import {
   IconCandy, IconCookie, IconIceCream, IconPizza, IconSoup, IconSalt, IconToolsKitchen2,
   IconToiletPaper, IconSpray, IconBucket, IconPaw, IconSnowflake, IconShoppingBag,
   IconBowl, IconCake, IconPackage,
+  IconGlassFull, IconGlassCocktail, IconHome, IconBabyCarriage, IconPlane, IconCar, IconReceipt, IconPill, IconMovie,
+  IconBurger, IconShirt, IconGift, IconBallFootball, IconDeviceTv, IconBuildingStore,
 } from '@tabler/icons-react'
 
 const norm = (s) => ' ' + (s || '').toLowerCase().trim() + ' '
@@ -76,3 +78,20 @@ export function DeptIcon({ dept, size = 15 }) {
   const Icon = DEPT_HEAD[dept] || IconPackage
   return <Icon size={size} stroke={1.75} color="currentColor" />
 }
+
+// Útgjaldaflokkar (Bókhald/Útgjöld) — línutákn í stað emoji. Eigin flokkar notanda halda
+// sínu emoji (það er efni sem notandinn valdi), sjá ExpIcon.
+const EXP = {
+  matur: IconToolsKitchen2, drykkir: IconBottle, afengi: IconGlassFull, snakk: IconCandy, hreinlaeti: IconSpray,
+  snyrti: IconDroplet, heimili: IconHome, born: IconBabyCarriage, ferdalog: IconPlane, samgongur: IconCar,
+  reikningar: IconReceipt, heilsa: IconPill, afthreying: IconMovie, veitingar: IconBurger, skemmtun: IconGlassCocktail,
+  fot: IconShirt, gjafir: IconGift, tomstundir: IconBallFootball, askriftir: IconDeviceTv, gaeludyr: IconPaw, annad: IconPackage,
+}
+export function ExpIcon({ cat, size = 18 }) {
+  // cat: { key, icon, custom } eða lykill. Eigin flokkur → emoji notandans.
+  const c = typeof cat === 'string' ? { key: cat } : (cat || {})
+  if (c.custom && c.icon) return <span className="exp-emoji" style={{ fontSize: Math.round(size * 0.9) }}>{c.icon}</span>
+  const Icon = EXP[c.key] || IconPackage
+  return <Icon size={size} stroke={1.75} color="currentColor" />
+}
+export function StoreIcon({ size = 18 }) { return <IconBuildingStore size={size} stroke={1.75} color="currentColor" /> }

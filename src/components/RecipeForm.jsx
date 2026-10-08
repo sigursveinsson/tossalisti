@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { IconArrowLeft, IconLock, IconWorld, IconX } from '@tabler/icons-react'
 
 export default function RecipeForm({ defaultAuthor, onSubmit, onClose }) {
   const [name, setName] = useState('')
@@ -44,7 +45,7 @@ export default function RecipeForm({ defaultAuthor, onSubmit, onClose }) {
 
   return (
     <div>
-      <button className="back" onClick={onClose}>← Hætta við</button>
+      <button className="back" onClick={onClose}><IconArrowLeft size={18} stroke={1.9} /> Hætta við</button>
       <h2 className="recipe-h">Ný uppskrift</h2>
 
       <div className="frow">
@@ -65,7 +66,7 @@ export default function RecipeForm({ defaultAuthor, onSubmit, onClose }) {
           <input value={ing.name} onChange={e => setIng(i, 'name', e.target.value)} placeholder="hráefni" style={{ flex: 1 }} />
           <input value={ing.qty} onChange={e => setIng(i, 'qty', e.target.value)} placeholder="magn" inputMode="decimal" style={{ width: 64 }} />
           <input value={ing.unit} onChange={e => setIng(i, 'unit', e.target.value)} placeholder="g/stk" style={{ width: 64 }} />
-          <button className="ico" onClick={() => removeRow(i)} aria-label="Fjarlægja">×</button>
+          <button className="ico" onClick={() => removeRow(i)} aria-label="Fjarlægja"><IconX size={16} stroke={1.75} /></button>
         </div>
       ))}
       <button className="ghost-btn" onClick={addRow}>+ Bæta við hráefni</button>
@@ -95,8 +96,8 @@ export default function RecipeForm({ defaultAuthor, onSubmit, onClose }) {
 
       <div className="recipe-section">Sýnileiki</div>
       <div className="seg">
-        <button className={!isPublic ? 'on' : ''} onClick={() => setIsPublic(false)}>🔒 Einka</button>
-        <button className={isPublic ? 'on' : ''} onClick={() => setIsPublic(true)}>🌍 Sýnileg öllum</button>
+        <button className={!isPublic ? 'on' : ''} onClick={() => setIsPublic(false)}><IconLock size={16} stroke={1.75} /> Einka</button>
+        <button className={isPublic ? 'on' : ''} onClick={() => setIsPublic(true)}><IconWorld size={16} stroke={1.75} /> Sýnileg öllum</button>
       </div>
 
       {err && <p style={{ color: 'var(--accent)', fontSize: 14 }}>{err}</p>}

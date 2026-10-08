@@ -140,7 +140,7 @@ export default function RewardsAdmin({ onClose }) {
                 <b>{p.name}</b>
                 <small>{[p.size, p.barcode].filter(Boolean).join(' · ') || 'engin stærð/strikamerki'}</small>
               </div>
-              <button className="rw-del" onClick={async () => { await store.deleteRewardProduct(p.id); load() }} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+              <button className="rw-del" onClick={async () => { await store.deleteRewardProduct(p.id); load() }} aria-label="Eyða">×</button>
             </div>
             <div className="rw-prod-row">
               <select value={p.reward_type} onChange={e => setField(p, { reward_type: e.target.value })}>
@@ -210,7 +210,7 @@ export default function RewardsAdmin({ onClose }) {
         {data.offers.map(o => (
           <div className="rw-offer" key={o.id}>
             <div className="rw-offer-txt"><b>{o.title}</b><small>Safnaðu {Math.round(o.threshold)} kr → {o.reward_desc || o.kind}</small></div>
-            <button className="rw-del" onClick={async () => { await store.deleteRewardOffer(o.id); load() }} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+            <button className="rw-del" onClick={async () => { await store.deleteRewardOffer(o.id); load() }} aria-label="Eyða">×</button>
           </div>
         ))}
         <div className="rw-add">

@@ -413,7 +413,7 @@ export default function App() {
     await store.resetWeek(list.id)
     await reload(list.id)
     store.getCompletions(list.id).then(setCompletions).catch(() => {})
-    flash('Ný vika — allt af-hakað ✓')
+    flash('Ný vika — allt af-hakað')
   }
   const savePurchase = async (purchase) => {
     await store.addPurchase({ ...purchase, list_id: list?.id || null })
@@ -422,7 +422,7 @@ export default function App() {
       const ids = matchListItems(list.items, purchase.items)
       const toCheck = list.items.filter(i => ids.includes(i.id) && !i.checked)
       for (const it of toCheck) { try { await store.toggleItem(list.id, it) } catch (e) {} }
-      if (toCheck.length) { await reload(list.id); flash(toCheck.length + ' vörur merktar keyptar ✓') }
+      if (toCheck.length) { await reload(list.id); flash(toCheck.length + ' vörur merktar keyptar') }
     }
     await loadPurchases()
   }
@@ -431,8 +431,8 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
-    if (r && r.earned > 0) flash(`🎁 Þú vannst þér inn ${Math.round(r.earned)} kr cashback!`)
-    else flash('Kvittun skráð ✓')
+    if (r && r.earned > 0) flash(`Þú vannst þér inn ${Math.round(r.earned)} kr cashback!`)
+    else flash('Kvittun skráð')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
@@ -466,8 +466,8 @@ export default function App() {
     const person = personOf(it)
     const before = totalPoints(completions, person)
     const crossed = levelFor(before).level !== levelFor(before + pts).level
-    if (crossed) { celebrateLevelUp(); flash('🎉 Nýtt borð: ' + levelFor(before + pts).title + '!') }
-    else { celebrate(pts); flash('+' + pts + ' stig 🎉') }
+    if (crossed) { celebrateLevelUp(); flash('Nýtt borð: ' + levelFor(before + pts).title + '!') }
+    else { celebrate(pts); flash('+' + pts + ' stig') }
   }
   const togglingRef = useRef(new Set())
   const toggleItem = async (it, done) => {
@@ -511,7 +511,7 @@ export default function App() {
   const redeemReward = async (reward, person) => {
     await store.redeemReward(list.id, reward, person)
     await loadRedemptions(list.id)
-    celebrate(20); flash('🎁 ' + reward.title + ' leyst út!')
+    celebrate(20); flash(reward.title + ' leyst út!')
   }
   const deleteRedemption = async (id) => { await store.deleteRedemption(id); await loadRedemptions(list.id) }
 
@@ -545,7 +545,7 @@ export default function App() {
   const goHome = () => { setView('home') }
   const goBudget = () => { setView('budget') }
   // Bókhaldssýn: ný útgjaldafærsla er persónuleg (engum lista tengd).
-  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadMyRewards(); if (r && r.earned > 0) flash(`🎁 +${Math.round(r.earned)} kr cashback!`) }
+  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadMyRewards(); if (r && r.earned > 0) flash(`+${Math.round(r.earned)} kr cashback!`) }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({

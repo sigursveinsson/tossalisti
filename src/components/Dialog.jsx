@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { IconX } from '@tabler/icons-react'
 
 export default function Dialog({ title, message, input, defaultValue, confirmLabel = 'Í lagi', danger, onConfirm, onClose }) {
   const [val, setVal] = useState(defaultValue || '')
@@ -8,7 +9,7 @@ export default function Dialog({ title, message, input, defaultValue, confirmLab
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>{title} <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2>{title} <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
         {message && <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 14px' }}>{message}</p>}
         {input && (
           <input

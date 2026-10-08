@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
+import { IconCheck, IconClock, IconGift, IconShoppingBag, IconX } from '@tabler/icons-react'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
 
@@ -22,7 +23,7 @@ export default function RewardsView({ onClose }) {
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>🎁 Cashback <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2><span className="h2-ico green"><IconGift size={20} stroke={1.75} /></span>Cashback <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         <div className="rv-balance">
           <div className="rv-bal-val">{kr(r.balance)}</div>
@@ -35,7 +36,7 @@ export default function RewardsView({ onClose }) {
             <div className="rv-catalog">
               {products.map(p => (
                 <div className="rv-cat-item" key={p.id}>
-                  {p.image_url ? <img className="rv-cat-img" src={p.image_url} alt="" /> : <div className="rv-cat-img rv-cat-ph">🛒</div>}
+                  {p.image_url ? <img className="rv-cat-img" src={p.image_url} alt="" /> : <div className="rv-cat-img rv-cat-ph"><IconShoppingBag size={20} stroke={1.6} /></div>}
                   <div className="rv-cat-txt"><b>{p.name}</b>{p.size && <small>{p.size}</small>}</div>
                   <span className="rv-cat-reward">{rewardText(p)}</span>
                 </div>
@@ -52,7 +53,7 @@ export default function RewardsView({ onClose }) {
               <div className="rv-offer" key={o.id}>
                 <div className="rv-offer-txt"><b>{o.title}</b>{o.reward_desc && <small>{o.reward_desc}</small>}</div>
                 {r.balance >= o.threshold
-                  ? <span className="rv-reached">✓ Náð</span>
+                  ? <span className="rv-reached"><IconCheck size={14} stroke={2.5} /> Náð</span>
                   : <span className="rv-th">{kr(o.threshold)}</span>}
               </div>
             ))}
@@ -65,7 +66,7 @@ export default function RewardsView({ onClose }) {
           {r.items.map((it, i) => (
             <div className="rv-item" key={i}>
               <span>{it.product_name}</span>
-              <span className="rv-item-val">+{kr(it.value)}{it.status === 'pending' ? ' ⏳' : it.status === 'approved' ? ' ✓' : ''}</span>
+              <span className="rv-item-val">+{kr(it.value)}{it.status === 'pending' ? <IconClock size={14} stroke={2} className="rv-st pending" /> : it.status === 'approved' ? <IconCheck size={14} stroke={2.5} className="rv-st" /> : null}</span>
             </div>
           ))}
         </div>

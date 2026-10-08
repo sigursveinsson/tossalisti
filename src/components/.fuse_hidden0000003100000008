@@ -143,7 +143,7 @@ function EditPurchase({ purchase, onClose, onSave }) {
             <div className="receipt-row" key={it.id}>
               <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
               <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
-              <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+              <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða">×</button>
             </div>
           ))}
         </div>

@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react'
 import { PRODUCTS, PRODUCT_NAMES } from '../data/products.js'
 import { DEPARTMENTS } from '../data/departments.js'
 import { CATEGORY_SPONSORS } from '../data/sponsors.js'
-import { CatIcon } from '../data/icons.jsx'
+import { CatIcon, DeptIcon } from '../data/icons.jsx'
 import { useBackClose } from '../lib/backstack.js'
+import { IconCheck, IconX } from '@tabler/icons-react'
 
 const norm = s => (s || '').toLowerCase().trim()
 
@@ -51,7 +52,7 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
     return (
       <button key={(opts.key || '') + name} className={'shelf-card' + (on ? ' on' : '') + (opts.spon ? ' spon' : '')} onClick={() => toggle(name)}>
         {opts.spon && <span className="shelf-badge">Kostað</span>}
-        {on && <span className="shelf-check">✓</span>}
+        {on && <span className="shelf-check"><IconCheck size={14} stroke={3} /></span>}
         <span className="shelf-img" style={{ background: img ? '#fff' : 'transparent' }}>
           {img ? <img src={img} alt="" /> : <CatIcon name={name} dept={opts.dept} fill className="shelf-cat" />}
         </span>
@@ -66,16 +67,15 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
       <div className="shelf" onClick={e => e.stopPropagation()}>
         <div className="shelf-top">
           <input className="shelf-search" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Leita í vöruhillunni…" />
-          <button className="x" onClick={onClose} aria-label="Loka">×</button>
+          <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button>
         </div>
 
         <div className="shelf-filters">
           <button className={!deptFilter ? 'on' : ''} onClick={() => setDeptFilter(null)}>Allt</button>
           {sections.map(s => (
             <button key={s.dept.key} className={deptFilter === s.dept.key ? 'on' : ''}
-              style={deptFilter === s.dept.key ? { borderColor: s.dept.color, color: s.dept.color } : undefined}
               onClick={() => setDeptFilter(deptFilter === s.dept.key ? null : s.dept.key)}>
-              {s.dept.icon} {s.dept.name}
+              <DeptIcon dept={s.dept.key} size={14} /> {s.dept.name}
             </button>
           ))}
         </div>
@@ -95,7 +95,7 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
           )}
           {sections.filter(s => !deptFilter || s.dept.key === deptFilter).map(s => (
             <React.Fragment key={s.dept.key}>
-              <div className="shelf-head">{s.dept.icon} {s.dept.name}</div>
+              <div className="shelf-head"><DeptIcon dept={s.dept.key} /> {s.dept.name}</div>
               <div className="shelf-grid">{s.items.map(n => card(n, s.dept.color, { dept: s.dept.key }))}</div>
             </React.Fragment>
           ))}

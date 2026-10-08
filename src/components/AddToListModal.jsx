@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ingredientLine } from '../data/recipes.js'
+import { IconCheck, IconX } from '@tabler/icons-react'
 
 export default function AddToListModal({ recipe, servings, lists, defaultListId, onConfirm, onClose }) {
   const factor = servings / recipe.serves
@@ -14,7 +15,7 @@ export default function AddToListModal({ recipe, servings, lists, defaultListId,
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>{recipe.emoji} {recipe.name} <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2>{recipe.emoji} {recipe.name} <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         {lists.length > 1 && (
           <>
@@ -29,7 +30,7 @@ export default function AddToListModal({ recipe, servings, lists, defaultListId,
         <div className="ing-check-list">
           {lines.map((line, i) => (
             <button key={i} className={'ing-check' + (checked[i] ? ' on' : '')} onClick={() => toggle(i)}>
-              <span className="box">{checked[i] ? '✓' : ''}</span>
+              <span className="box">{checked[i] ? <IconCheck size={14} stroke={3} /> : ''}</span>
               <span>{line}</span>
             </button>
           ))}

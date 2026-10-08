@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/library'
+import { IconCamera, IconX } from '@tabler/icons-react'
 
 const FORMATS_NATIVE = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
 const FORMATS_ZXING = [
@@ -131,14 +132,14 @@ export default function BarcodeScanner({ onDetect, onClose, children }) {
     <div className="scan-bg">
       <video ref={videoRef} className="scan-video" muted playsInline autoPlay />
       <div className="scan-frame"><div className="scan-line" /></div>
-      <button className="scan-close" onClick={onClose} aria-label="Loka">×</button>
+      <button className="scan-close" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button>
       <div className="scan-hint">Beindu myndavélinni að strikamerki</div>
       {error && <div className="scan-error">{error}</div>}
       <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
       <div className="scan-panel">
         {children}
         <button className="scan-photo" onClick={() => fileRef.current && fileRef.current.click()} disabled={busy}>
-          {busy ? 'Les mynd…' : '📸 Les ekki? Taktu mynd af strikamerkinu'}
+          {busy ? 'Les mynd…' : <><IconCamera size={17} stroke={1.9} /> Les ekki? Taktu mynd af strikamerkinu</>}
         </button>
       </div>
     </div>

@@ -70,7 +70,7 @@ export default function KidsManager({ kids = [], onCreate, onUpdate, onDelete, o
               </span>
               <span className="kid-row-name">{k.name}</span>
               <button className="kid-edit" onClick={() => setEditId(k.id)} aria-label="Breyta">✏️</button>
-              <button className="del" onClick={() => onDelete(k.id)} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+              <button className="del" onClick={() => onDelete(k.id)} aria-label="Eyða">×</button>
             </div>
           )
         ))}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { IconCalendar, IconChecklist, IconChevronDown, IconChevronRight, IconCopy, IconDots, IconNotebook, IconPencil, IconPlus, IconReceipt, IconShare, IconShoppingCart, IconTemplate, IconTrash, IconX } from '@tabler/icons-react'
+import { IconCalendar, IconChecklist, IconChevronDown, IconChevronRight, IconCopy, IconDots, IconNotebook, IconPencil, IconReceipt, IconShare, IconShoppingCart, IconTemplate, IconTrash, IconX } from '@tabler/icons-react'
 
 // Hönnunarkerfi: eitt hlutlaust tákn-box, línutákn í stað emoji og litaðra reita.
 const TYPE = {
@@ -51,7 +51,7 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
           <h2>Listarnir mínir <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
           {!creating ? (
-            <button className="primary-btn" onClick={() => setCreating(true)}><IconPlus size={18} stroke={2} /> Nýr listi</button>
+            <button className="primary-btn" onClick={() => setCreating(true)}>+ Nýr listi</button>
           ) : (
             <div className="create-box">
               <div className="seg seg3" style={{ marginBottom: 8 }}>
@@ -105,7 +105,7 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
       {actionList && (
         <div className="sheet-bg center" onClick={() => setActionList(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2 style={{ textTransform: 'capitalize' }}>{actionList.name} <button className="x" onClick={() => setActionList(null)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+            <h2 style={{ textTransform: 'capitalize' }}>{actionList.name} <button className="x" onClick={() => setActionList(null)} aria-label="Loka">×</button></h2>
             <button className="action-row" onClick={() => { onRename(actionList); setActionList(null) }}><IconPencil size={18} stroke={1.75} /> Endurnefna</button>
             <button className="action-row" onClick={() => { onDuplicate(actionList); setActionList(null) }}><IconCopy size={18} stroke={1.75} /> Afrita</button>
             <button className="action-row" onClick={() => { onShare(actionList); setActionList(null) }}><IconShare size={18} stroke={1.75} /> Deila</button>

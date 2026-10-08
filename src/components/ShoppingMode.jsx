@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
-import { CatIcon } from '../data/icons.jsx'
+import { CatIcon, DeptIcon } from '../data/icons.jsx'
 import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
+import { IconBarcode, IconCheck, IconX } from '@tabler/icons-react'
 
 // Verslunarhamur: einfaldað heilskjás-útlit fyrir notkun inni í búð.
 // Stórir reitir, raðað eftir leið um búð, afgreitt færist neðst, skjár helst kveiktur.
@@ -43,18 +44,18 @@ export default function ShoppingMode({ items, onToggle, onClose, onScanCode, cat
   return (
     <div className="shopmode">
       <div className="shopmode-top">
-        <button className="shopmode-x" onClick={onClose} aria-label="Loka">×</button>
+        <button className="shopmode-x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button>
         <span className="shopmode-title">Versla</span>
-        {onScanCode && <button className="shopmode-scan" onClick={() => setScanning(true)} aria-label="Skanna">📷</button>}
+        {onScanCode && <button className="shopmode-scan" onClick={() => setScanning(true)} aria-label="Skanna"><IconBarcode size={22} stroke={1.75} /></button>}
         <span className="shopmode-prog">{openItems.length} eftir</span>
       </div>
 
       <div className="shopmode-body">
-        {openItems.length === 0 && <p className="shopmode-empty">Allt komið í körfuna! 🎉</p>}
+        {openItems.length === 0 && <p className="shopmode-empty">Allt komið í körfuna!</p>}
 
         {groups.map(g => (
           <div className="shopmode-group" key={g.key}>
-            <div className="shopmode-dept" style={{ color: g.color }}>{g.icon} {g.name}</div>
+            <div className="shopmode-dept"><DeptIcon dept={g.key} /> {g.name}</div>
             {g.items.map(it => (
               <button className="shopmode-item" key={it.id} onClick={() => onToggle(it, false)}>
                 <span className="shopmode-check" />
@@ -70,7 +71,7 @@ export default function ShoppingMode({ items, onToggle, onClose, onScanCode, cat
             <div className="shopmode-dept" style={{ color: 'var(--muted)' }}>Komið í körfu ({doneItems.length})</div>
             {doneItems.map(it => (
               <button className="shopmode-item done" key={it.id} onClick={() => onToggle(it, true)}>
-                <span className="shopmode-check on">✓</span>
+                <span className="shopmode-check on"><IconCheck size={18} stroke={3} /></span>
                 <span className="shopmode-name">{it.name}</span>
               </button>
             ))}

@@ -16,7 +16,14 @@ _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með 
 - **Innkaupalisti:** magn/eining-reitir faldir (+/− á línu), leitartákn í reit, strikamerki/mic/+ sem línutákn, hringlaga hak, ljós vörutákn (44px), flokkahaus = grátt tákn + grátt heiti + fjöldi, „Versla" navy, Vöruhilla/Myndir draugahnappar, „X vörur eftir" fjarlægt (er í haus).
 - **Haus:** 🏠🔔📊☰⤴ → Tabler-tákn, gegnsæir hnappar; emoji fjarlægt úr titli.
 - Skrár: `ListView.jsx`, `App.jsx`, `data/icons.jsx` (DeptIcon), `data/sponsors.js` (sponsorFor), CSS-blokk neðst í `index.css`.
-- **Næst (áfangi 2+):** Heim, Bókhald/Útgjöld, Gríptu/Rewards, Vöruhilla, Verslunarhamur, Stjórnborð, aðrar listategundir.
+- **Áfangar 2–4 (8. okt, BÍÐA DEPLOY-S):** sama kerfi á öll önnur skjá:
+  - Heim: gráir línutáknareitir, útgjaldakort hvítt (ekki blár hallandi litur), cashback-kort navy með grænni upphæð, avatarar í einum hlutlausum tón.
+  - Bókhald: `ExpIcon` (Tabler) fyrir innbyggða útgjaldaflokka; súlur gráar/navy í stað regnbogalita; litaval fjarlægt úr „Nýr flokkur" (eigin flokkar halda emoji sem notandi velur).
+  - Gríptu/cashback, Vöruhilla (síur navy, „Kostað" mjúkt gull), Verslunarhamur, Kvittun, Uppskriftir, Listapanell, Áminningar, Deila, Stjórnborð, Verðlaunakerfi, Mælaborð, Innskráning, Onboarding, Samþykki.
+  - Öll × lokunarhnappar → IconX. Emoji fjarlægt úr tilkynningum (flash).
+  - **Haldið viljandi:** gæsin 🪿, barna-/verk-emoji og uppskrifta-emoji (efni), stjörnur ★, og „🧪 SÝNIDÆMI — Ekki raunveruleg sala" merkið.
+  - CSS: blokkir „Hönnunarkerfi 2/3/4" neðst í `index.css`.
+- Staðfest: babel-parse á öllum skrám + keyrslupróf (react-dom/server) á 26 íhlutum, allir rendera. Forskoðun: `honnun-skjair-forskodun.html` (Heim, Bókhald, Listapanell).
 
 ## Komið og virkt (fyrir þessa lotu)
 Listar (innkaup/verk/skema), uppskriftir, rauntíma-deiling. Strikamerkjaskanni + vörumyndir (Open Food Facts). Sjálfbyggjandi vörubanki + deildaflokkun. Vöruhilla, Verslunarhamur, magn +/-. Kvittanaskönnun gegnum sjónlíkan (Edge Function `parse-receipt`, Gemini). Útgjöld (áður „Eyðsla"). Flokka-kostun (Ölgerðin á drykki) + auglýsingabanner. Stigatafla/afrek á verk- og skemalistum. Stjórnborð (admin). Onboarding.

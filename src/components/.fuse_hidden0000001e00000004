@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest, departmentFor } from '../data/products.js'
 import { sponsoredSuggest, sponsoredForAI, sponsorFor } from '../data/sponsors.js'
-import { IconBarcode, IconBell, IconBellOff, IconBuildingStore, IconCalendar, IconCalendarWeek, IconCamera, IconCheck, IconGift, IconListDetails, IconMicrophone, IconMinus, IconMoodKid, IconPhoto, IconPhotoOff, IconPlus, IconRefresh, IconRepeat, IconSearch, IconShoppingCart, IconTag, IconUserPlus, IconX } from '@tabler/icons-react'
+import { IconSearch, IconBarcode, IconMicrophone, IconPlus, IconMinus, IconX, IconGift, IconShoppingCart, IconBuildingStore, IconPhoto, IconPhotoOff, IconCheck, IconTag, IconRepeat } from '@tabler/icons-react'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
 import { CatIcon, DeptIcon } from '../data/icons.jsx'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
@@ -51,7 +51,7 @@ function dueTag(it) {
   else if (diff === 0) label = 'Í dag'
   else if (diff === 1) label = 'Á morgun'
   else label = due.toLocaleDateString('is-IS', { day: 'numeric', month: 'short' })
-  return <span className={'due-tag' + (overdue ? ' overdue' : '')}><IconCalendar size={12} stroke={2} />{label}</span>
+  return <span className={'due-tag' + (overdue ? ' overdue' : '')}>📅 {label}</span>
 }
 
 export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
@@ -194,7 +194,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             <div className="voice-secs">{fmtSecs(voiceSecs)} / {fmtSecs(VOICE_MAX)}</div>
             <div className="voice-actions">
               <button className="voice-cancel" onClick={cancelVoice}>Hætta við</button>
-              <button className="voice-done" onClick={finishVoice}><IconCheck size={18} stroke={2.5} /> Klára</button>
+              <button className="voice-done" onClick={finishVoice}>Klára ✓</button>
             </div>
           </>
         )}
@@ -380,7 +380,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const p = assignedPerson(it)
     return p
       ? <button className="assign-chip-btn" onClick={() => setAssigning(it)} title={displayName(p)}>{personChip(p, { static: true })}</button>
-      : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta"><IconUserPlus size={17} stroke={1.75} /></button>
+      : <button className="assign-add" onClick={() => setAssigning(it)} aria-label="Úthluta">＋</button>
   }
 
   const itemRow = (it, color, chore) => {
@@ -427,7 +427,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
         {chore && onSetReminder && (
           <button className={'rem-bell' + (it.reminder_enabled ? ' on' : '')} onClick={() => { if (it.reminder_enabled) onSetReminder(it, false); else { setRemErr(''); setRemItem(it) } }} title={it.reminder_enabled ? 'Slökkva á áminningu' : 'Stilla áminningu'} aria-label="Áminning">
-            {it.reminder_enabled ? <><IconBell size={17} stroke={1.75} />{it.time ? <span className="rem-time">{it.time}</span> : null}</> : <IconBellOff size={17} stroke={1.75} />}
+            {it.reminder_enabled ? <>🔔{it.time ? <span className="rem-time">{it.time}</span> : null}</> : '🔕'}
           </button>
         )}
         {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru"><IconTag size={17} stroke={1.75} /></button>}
@@ -499,7 +499,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const assignModal = assigning && (
     <div className="sheet-bg center" onClick={() => setAssigning(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Hver ber ábyrgð? <button className="x" onClick={() => setAssigning(null)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+        <h2>Hver ber ábyrgð? <button className="x" onClick={() => setAssigning(null)} aria-label="Loka">×</button></h2>
         <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 10 }}>{assigning.name}</div>
         {members.map(p => (
           <button className="pick-row" key={p.kind + p.id} onClick={() => { onAssign(assigning, { kind: p.kind, id: p.id }); setAssigning(null) }}>
@@ -516,7 +516,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const settingsModal = editItem && (
     <div className="sheet-bg center" onClick={() => setEditItem(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Verk-stillingar <button className="x" onClick={() => setEditItem(null)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+        <h2>Verk-stillingar <button className="x" onClick={() => setEditItem(null)} aria-label="Loka">×</button></h2>
         <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 12 }}>{editItem.name}</div>
 
         <div className="modal-label">Stig</div>
@@ -535,7 +535,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               ))}
             </div>
             <div className="emoji-actions">
-              <label className="emoji-photo-btn"><IconCamera size={16} stroke={1.75} /> Taka mynd
+              <label className="emoji-photo-btn">📷 Taka mynd
                 <input type="file" accept="image/*" capture="environment" hidden onChange={async ev => {
                   const f = ev.target.files && ev.target.files[0]; if (!f) return
                   try { const url = await resizeImageFile(f, 256); onSetItemImage(editItem, url); setEditItem({ ...editItem, image_url: url }) } catch (err) {}
@@ -597,7 +597,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return (
       <div className="sheet-bg center" onClick={() => setRemItem(null)}>
         <div className="modal" onClick={e => e.stopPropagation()}>
-          <h2><span className="h2-ico"><IconBell size={20} stroke={1.75} /></span>Áminning <button className="x" onClick={() => setRemItem(null)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+          <h2>🔔 Áminning <button className="x" onClick={() => setRemItem(null)} aria-label="Loka">×</button></h2>
           <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 12 }}>{r.name}</div>
           {isSchedule ? (
             <>
@@ -630,7 +630,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const deptModal = deptItem && (
     <div className="sheet-bg center" onClick={() => setDeptItem(null)}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Flokka vöru <button className="x" onClick={() => setDeptItem(null)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+        <h2>Flokka vöru <button className="x" onClick={() => setDeptItem(null)} aria-label="Loka">×</button></h2>
         <div style={{ fontSize: 14, color: 'var(--muted)', textTransform: 'capitalize', marginBottom: 10 }}>{deptItem.name}</div>
         {DEPARTMENTS.filter(d => d.key !== 'other').map(d => (
           <button className="pick-row" key={d.key} onClick={() => { onRecategorize(deptItem, d.key); setDeptItem(null) }}>
@@ -643,7 +643,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
 
   const kidsBtn = canManageKids ? (
     <span className="top-btns">
-      <button className="kids-btn" onClick={() => setKidsOpen(true)}><IconMoodKid size={18} stroke={1.75} /> Krakkar</button>
+      <button className="kids-btn" onClick={() => setKidsOpen(true)}>🧒 Krakkar</button>
       <button className="help-btn" onClick={() => setGuideOpen(true)} aria-label="Leiðbeiningar" title="Leiðbeiningar">?</button>
     </span>
   ) : null
@@ -714,12 +714,12 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           {kidsBtn}
         </div>
         <div className="sched-viewtoggle">
-          <button className={schedView === 'week' ? 'on' : ''} onClick={() => setSchedViewP('week')}><IconCalendarWeek size={16} stroke={1.75} /> Vika</button>
-          <button className={schedView === 'day' ? 'on' : ''} onClick={() => setSchedViewP('day')}><IconListDetails size={16} stroke={1.75} /> Dagur</button>
+          <button className={schedView === 'week' ? 'on' : ''} onClick={() => setSchedViewP('week')}>📅 Vika</button>
+          <button className={schedView === 'day' ? 'on' : ''} onClick={() => setSchedViewP('day')}>📋 Dagur</button>
         </div>
         {gamePanel}
         {onNewWeek && items.length > 0 && (
-          <button className="newweek-btn" onClick={() => { if (window.confirm('Byrja nýja viku? Öll verk verða af-hökuð — stigin og afrekin haldast.')) onNewWeek() }}><IconRefresh size={17} stroke={1.75} /> Byrja nýja viku</button>
+          <button className="newweek-btn" onClick={() => { if (window.confirm('Byrja nýja viku? Öll verk verða af-hökuð — stigin og afrekin haldast.')) onNewWeek() }}>🔄 Byrja nýja viku</button>
         )}
       </>
     )
@@ -754,7 +754,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         const img = it.image_url
         return (
           <div className={'wk-task' + (done ? ' done' : '')} key={it.id} onClick={() => onToggle(it, done)}>
-            <span className="wk-check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }}>{done ? <IconCheck size={13} stroke={3} /> : ''}</span>
+            <span className="wk-check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }}>{done ? '✓' : ''}</span>
             {it.time && <span className="wk-time">{it.time}</span>}
             {img && (isEmojiImage(img) ? <span className="wk-emoji">{emojiOf(img)}</span> : <img className="wk-img" src={img} alt="" loading="lazy" />)}
             <span className="wk-name">{it.name}</span>

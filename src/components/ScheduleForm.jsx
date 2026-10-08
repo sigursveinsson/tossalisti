@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { TIME_OPTIONS, EMOJI_CHOICES, suggestChoreEmoji } from '../data/chores.js'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
+import { IconX } from '@tabler/icons-react'
 
 const DAYS = [
   ['mon', 'Mánudagur'], ['tue', 'Þriðjudagur'], ['wed', 'Miðvikudagur'], ['thu', 'Fimmtudagur'],
@@ -38,7 +39,7 @@ export default function ScheduleForm({ members = [], currentUserId, defaultDay =
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Nýtt verk <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2>Nýtt verk <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         <input className="dialog-input" autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && save()} placeholder="Heiti (t.d. fara út með hund)" />
 

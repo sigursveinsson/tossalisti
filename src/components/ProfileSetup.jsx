@@ -19,7 +19,7 @@ export default function ProfileSetup({ initial, onSave }) {
   return (
     <div className="landing">
       <div className="hero">
-        <div className="hero-logo">🧺</div>
+        <img className="hero-logo" src="/logo.svg" alt="Tossalisti" width="76" height="76" />
         <h1>Velkomin!</h1>
         <p className="lead">Hvað heitir þú? Þá sjá aðrir hver þú ert á sameiginlegum listum.</p>
       </div>

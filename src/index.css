@@ -1078,3 +1078,125 @@ button { font-family: inherit; cursor: pointer; }
 .item .label .item-reward { display: inline-flex; align-items: center; gap: 3px; margin-left: 0; vertical-align: 0; background: transparent; border: 1px solid rgba(46,170,130,.45); color: var(--green-ink); font-weight: 700; font-size: 11px; padding: 1px 7px; }
 .item .label .item-spon { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; color: var(--gold-ink); background: var(--gold-soft); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
 .item.done .label .item-spon { opacity: .55; }
+
+/* ═══ Hönnunarkerfi 2 — Heim + Bókhald ═══ */
+/* Sameiginlegt: hnappar með línutákni */
+.primary-btn, .ghost-btn, .bscan, .bedit-add, .bmanage-cats, .bfilter-clear { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.sheet h2 .x, .modal h2 .x, .x { display: inline-flex; align-items: center; justify-content: center; }
+.ghost-btn { border: 1px solid var(--line2); color: var(--navy); }
+
+/* Heim */
+.home-ach b { color: var(--navy); }
+.home-row-ic { display: inline-flex; color: var(--ink2); }
+.home-row-go { display: inline-flex; align-items: center; color: var(--faint); }
+.home-row { border-color: var(--line2); }
+.home-spend { background: var(--surface); border: 1px solid var(--line2); color: var(--navy); }
+.home-spend-label { opacity: 1; color: var(--ink2); }
+.home-spend .home-row-go { color: var(--faint); }
+.home-cashback { background: var(--navy); }
+.home-cashback-ic { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.10); color: #7fe0bf; }
+.home-cashback-txt b { color: #7fe0bf; }
+.home-cashback.promo .home-cashback-txt small { color: #cdd9ee; font-weight: 600; }
+.home-cashback .home-row-go { color: #9fb1cf; }
+.home-invite, .home-install { background: var(--surface); border: 1px solid var(--line2); }
+.home-invite-ic, .home-install-ic { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: var(--soft); color: var(--navy); }
+.home-feed-ava { background: var(--soft); color: var(--navy); border: 1px solid var(--line2); }
+
+/* Bókhald / Útgjöld */
+.bsum { background: var(--surface); border: 1px solid var(--line2); color: var(--navy); }
+.bsum-label { opacity: 1; color: var(--ink2); }
+.bperiod button { border-color: var(--line2); color: var(--ink2); }
+.bperiod button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.bbreak { border-color: var(--line2); }
+.bbreak-row { border-top-color: var(--line2); }
+.bbreak-ic { display: inline-flex; color: var(--ink2); width: 20px; justify-content: center; }
+.bbreak-bar { background: var(--soft); }
+.bbreak-bar i { background: #9fb1cf; }
+.bbreak-bar i.on { background: var(--navy); }
+.btx-wrap { border-color: var(--line2); }
+.btx-exp { display: inline-flex; align-items: center; justify-content: center; }
+.bitem-cat { display: inline-flex; align-items: center; gap: 4px; background: var(--soft); color: var(--ink2); }
+.bedit-cat { display: inline-flex; align-items: center; justify-content: center; color: var(--navy); border-color: var(--line2); }
+.bedit-del, .bcat-del { display: inline-flex; align-items: center; justify-content: center; }
+.bcat-opt { border-color: var(--line2); }
+.bcat-opt span, .bcat-line span, .bcat-new span { display: inline-flex; color: var(--ink2); }
+.bcat-new { border-color: var(--line2); color: var(--navy); }
+.bedit-add { color: var(--navy); border-color: var(--line2); }
+.bfilter-clear { color: var(--navy); }
+.bmode button.on { background: var(--navy); }
+.exp-emoji { line-height: 1; }
+.bintro-rico, .bintro-arrow { display: inline-flex; color: var(--navy); }
+.bintro-arrow { color: var(--faint); }
+.bintro-bar i { background: var(--navy); }
+.bintro-bar:nth-child(2) i { background: #6f84a8; }
+.bintro-bar:nth-child(3) i { background: #9fb1cf; }
+.bintro-steps span { display: inline-flex; justify-content: center; color: var(--ink2); }
+.onb-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* ═══ Hönnunarkerfi 3 — Gríptu, Vöruhilla, Verslunarhamur, Kvittun, Uppskriftir ═══ */
+.h2-ico { display: inline-flex; margin-right: 8px; color: var(--navy); vertical-align: -3px; }
+.h2-ico.green { color: var(--green-ink); }
+.inline-ico { margin-left: 6px; vertical-align: -1px; color: var(--ink2); }
+/* Gríptu/cashback */
+.rv-balance { background: var(--navy); }
+.rv-bal-val { color: #7fe0bf; }
+.rv-reached, .rv-item-val { display: inline-flex; align-items: center; gap: 4px; color: var(--green-ink); }
+.rv-st { margin-left: 4px; } .rv-st.pending { color: var(--faint); }
+.rv-cat-ph { display: flex; align-items: center; justify-content: center; color: var(--ink2); background: var(--soft); }
+.rv-cat-item, .rv-offer, .rv-item { border-color: var(--line2); }
+/* Vöruhilla */
+.shelf-filters button { display: inline-flex; align-items: center; gap: 5px; border-color: var(--line2); color: var(--ink2); }
+.shelf-filters button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.shelf-head { display: flex; align-items: center; gap: 7px; color: var(--ink2); }
+.shelf-card { border-color: var(--line2); }
+.shelf-card.on { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy); }
+.shelf-card.spon { border-color: var(--line2); background: var(--surface); }
+.shelf-badge { background: var(--gold-soft); color: var(--gold-ink); font-weight: 600; }
+/* Verslunarhamur */
+.shopmode-x, .shopmode-scan { display: inline-flex; align-items: center; justify-content: center; background: transparent; }
+.shopmode-prog { background: transparent; color: #9fb1cf; }
+.shopmode-dept { display: flex; align-items: center; gap: 7px; color: var(--ink2); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
+.shopmode-item { border-color: var(--line2); }
+.shopmode-check { border-radius: 50%; border-color: #c3ccda; }
+/* Kvittun */
+.receipt-match { display: inline-flex; align-items: center; gap: 5px; background: transparent; }
+.receipt-datewarn { display: flex; gap: 8px; align-items: flex-start; }
+.receipt-datewarn svg { flex: none; margin-top: 2px; }
+/* Uppskriftir */
+.back { display: inline-flex; align-items: center; gap: 4px; color: var(--navy); font-weight: 600; }
+.match-tag { display: inline-flex; align-items: center; gap: 4px; color: var(--green-ink); }
+.stars, .star-btn.on { color: var(--cta); }
+.pick-row { border-color: var(--line2); background: var(--surface); }
+.pick-dept { display: inline-flex; align-items: center; gap: 10px; }
+.pick-dept svg { color: var(--ink2); }
+
+/* ═══ Hönnunarkerfi 4 — listapanell, áminningar, deila, stjórnborð, innskráning ═══ */
+.ltype { background: var(--soft); color: var(--navy); }
+.lrow2.active { background: var(--soft); }
+.lrow2.active .ltype { background: var(--navy); color: #fff; }
+.seg button, .sched-viewtoggle button, .kids-btn, .newweek-btn, .emoji-photo-btn, .scan-receipt-btn, .budget-link-btn, .tellfriend-btn, .action-row, .adm-rewards-btn, .rw-scanbtn, .voice-done { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.action-row { justify-content: flex-start; display: flex; background: var(--surface); border-color: var(--line2); }
+.action-row svg { color: var(--ink2); } .action-row.danger svg { color: #e05a5a; }
+.seg button.on { border-color: var(--navy); color: var(--navy); background: var(--soft); }
+.scan-receipt-btn, .budget-link-btn, .tellfriend-btn { background: var(--surface); border-color: var(--line2); }
+.inline-row { display: inline-flex; align-items: center; gap: 8px; }
+.adm-rewards-btn { border-color: var(--line2); background: var(--surface); }
+.rw-thumb-ph { color: var(--ink2); background: var(--soft); }
+.rw-scanbtn { border-color: var(--line2); }
+.feature-ico { background: var(--soft); color: var(--navy); }
+.onb-emoji { display: flex; justify-content: center; color: var(--navy); }
+.onb-list li { display: flex; align-items: center; gap: 10px; }
+.onb-list li svg { color: var(--ink2); flex: none; }
+.consent-ico { display: flex; justify-content: center; color: var(--navy); }
+.ns-master-lbl, .ns-quiet-h { display: inline-flex; align-items: center; gap: 7px; }
+.due-tag { display: inline-flex; align-items: center; gap: 3px; color: var(--ink2); }
+.kids-btn { background: var(--surface); border-color: var(--line2); }
+.wk-check { border-color: #c3ccda; }
+.bd-h-ico { vertical-align: -3px; margin-right: 2px; }
+.bd-seg button { display: inline-flex; align-items: center; gap: 5px; }
+.bd-back { display: inline-flex; align-items: center; gap: 4px; }
+.bd-bar { background: var(--navy); }
+.bd-pbar { background: #9fb1cf; }
+.bd-ai { background: var(--surface); border-color: var(--line2); }
+.bd-ai-action { background: var(--soft); border-color: var(--line2); }
+.assign-add { display: inline-flex; align-items: center; justify-content: center; color: var(--faint); }

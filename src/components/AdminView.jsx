@@ -3,6 +3,7 @@ import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import RewardsAdmin from './RewardsAdmin.jsx'
 import BrandDashboard from './BrandDashboard.jsx'
+import { IconChartBar, IconGift, IconTrendingUp, IconX } from '@tabler/icons-react'
 
 const kr = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr')
 const num = (n) => (n == null ? '—' : Number(n).toLocaleString('is-IS'))
@@ -28,9 +29,9 @@ const activitySummary = (u) => {
   const parts = []
   if (u.lists_owned > 0) parts.push(u.lists_owned + ' lista' + (u.lists_owned === 1 ? '' : ''))
   if (u.items > 0) parts.push(u.items + ' vörur/verk')
-  if (u.completions > 0) parts.push('✓ ' + u.completions)
-  if (u.purchases > 0) parts.push('🧾 ' + u.purchases)
-  if (u.kids > 0) parts.push('🧒 ' + u.kids)
+  if (u.completions > 0) parts.push(u.completions + ' verk')
+  if (u.purchases > 0) parts.push(u.purchases + ' kvitt.')
+  if (u.kids > 0) parts.push(u.kids + ' börn')
   if (u.memberships > u.lists_owned) parts.push('gekk í ' + (u.memberships - u.lists_owned) + ' deilda')
   return parts.length ? parts.join(' · ') : 'skráði sig, engin virkni enn'
 }
@@ -78,10 +79,10 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal adm-modal" onClick={e => e.stopPropagation()}>
-        <h2>📊 Stjórnborð <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2><span className="h2-ico"><IconChartBar size={20} stroke={1.75} /></span>Stjórnborð <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
-        <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}>🎁 Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
-        <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}>📈 Vörumerkja-mælaborð (innsýn fyrir heildsala)</button>
+        <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}><IconGift size={18} stroke={1.75} /> Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
+        <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}><IconTrendingUp size={18} stroke={1.75} /> Vörumerkja-mælaborð (innsýn fyrir heildsala)</button>
 
         {onToggleAds && (
           <div className="adm-ads">

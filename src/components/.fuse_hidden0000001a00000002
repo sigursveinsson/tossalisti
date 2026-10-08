@@ -93,7 +93,7 @@ export default function KidProfile({
                 <div className="redeem-row" key={r.id}>
                   <span className="redeem-title">{r.title || 'Verðlaun'}</span>
                   <span className="redeem-cost">−{r.cost} 🪙</span>
-                  {onDeleteRedemption && <button className="del" onClick={() => onDeleteRedemption(r.id)} aria-label="Afturkalla"><IconX size={20} stroke={1.75} /></button>}
+                  {onDeleteRedemption && <button className="del" onClick={() => onDeleteRedemption(r.id)} aria-label="Afturkalla">×</button>}
                 </div>
               ))}
             </div>

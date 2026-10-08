@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { IconLink, IconShare, IconX } from '@tabler/icons-react'
 
 export default function ShareModal({ list, inviterName, onInviteLink, onEmail, onClose }) {
   const [email, setEmail] = useState('')
@@ -39,12 +40,12 @@ export default function ShareModal({ list, inviterName, onInviteLink, onEmail, o
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>Deila „{list.name}“ <button className="x" onClick={onClose} aria-label="Loka">×</button></h2>
+        <h2>Deila „{list.name}“ <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         <button className="add-recipe-btn" style={{ marginTop: 4 }} onClick={shareNative} disabled={busy}>
-          📲 Senda boðshlekk
+          <IconShare size={18} stroke={1.9} /> Senda boðshlekk
         </button>
-        <button className="ghost-btn" onClick={copyLink} disabled={busy}>🔗 Afrita hlekk</button>
+        <button className="ghost-btn" onClick={copyLink} disabled={busy}><IconLink size={18} stroke={1.75} /> Afrita hlekk</button>
 
         {link && <p style={{ fontSize: 12, color: 'var(--muted)', wordBreak: 'break-all', marginTop: 8 }}>{link}</p>}
         {status && <p className="signin-note" style={{ marginTop: 6 }}>{status}</p>}

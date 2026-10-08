@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import { demoDashboard } from '../lib/brandDemo.js'
+import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles } from '@tabler/icons-react'
 
 // Vörumerkja-mælaborð (Gríptu fyrir heildsala). Allar tölur koma úr gagnagrunninum
 // (brand_dashboard, k-nafnleysi). Gervigreindin útskýrir aðeins tölurnar.
@@ -101,8 +102,8 @@ export default function BrandDashboard({ onClose }) {
     <div className="bd-wrap" onClick={e => e.stopPropagation()}>
       <div className="bd-inner">
         <div className="bd-top">
-          <button className="bd-back" onClick={onClose}>← Stjórnborð</button>
-          <div className="bd-title">📈 Vörumerkja-mælaborð <span>Gríptu fyrir heildsala</span></div>
+          <button className="bd-back" onClick={onClose}><IconArrowLeft size={17} stroke={1.9} /> Stjórnborð</button>
+          <div className="bd-title">Vörumerkja-mælaborð <span>Gríptu fyrir heildsala</span></div>
         </div>
 
         <div className="bd-controls">
@@ -114,7 +115,7 @@ export default function BrandDashboard({ onClose }) {
           </div>
           <div className="bd-seg">
             <button className={!isDemo ? 'on' : ''} onClick={() => setModeP('real')}>Raungögn</button>
-            <button className={isDemo ? 'on demo' : ''} onClick={() => setModeP('demo')}>🧪 Sýnidæmi</button>
+            <button className={isDemo ? 'on demo' : ''} onClick={() => setModeP('demo')}><IconFlask size={15} stroke={1.9} /> Sýnidæmi</button>
           </div>
         </div>
 
@@ -131,7 +132,7 @@ export default function BrandDashboard({ onClose }) {
           <div className="bd-empty">
             <div className="bd-empty-big">Of fá gögn enn fyrir {data.brand || 'vörumerkið'}</div>
             <p>{num(t.lines)} staðfest kaup frá {num(t.buyers)} {t.buyers === 1 ? 'kaupanda' : 'kaupendum'} á tímabilinu. Mælaborðið birtir tölur þegar a.m.k. <b>{data.min_group} kaupendur</b> hafa keypt — svo enginn einstaklingur verði greinanlegur.</p>
-            <button className="bd-btn" onClick={() => setModeP('demo')}>🧪 Sjá sýnidæmi</button>
+            <button className="bd-btn" onClick={() => setModeP('demo')}><IconFlask size={16} stroke={1.9} /> Sjá sýnidæmi</button>
           </div>
         )}
 
@@ -151,12 +152,12 @@ export default function BrandDashboard({ onClose }) {
             </div>
 
             <div className="bd-card bd-ai">
-              <div className="bd-card-h">✨ Helstu innsýn <span>gervigreind útskýrir tölurnar — býr ekki til nýjar</span></div>
+              <div className="bd-card-h"><IconSparkles size={17} stroke={1.75} className="bd-h-ico" /> Helstu innsýn <span>gervigreind útskýrir tölurnar — býr ekki til nýjar</span></div>
               {aiLoading && <div className="bd-ai-load"><span className="bd-goose">🪿</span> Gríptu greinir gögnin…</div>}
               {ai && !ai.error && (
                 <>
                   <ul className="bd-ai-list">{(ai.bullets || []).map((b, i) => <li key={i}>{b}</li>)}</ul>
-                  {ai.action && <div className="bd-ai-action"><b>💡 Tillaga:</b> {ai.action}</div>}
+                  {ai.action && <div className="bd-ai-action"><b><IconBulb size={15} stroke={2} className="bd-h-ico" /> Tillaga:</b> {ai.action}</div>}
                 </>
               )}
               {ai && ai.error && <div className="bd-muted">Náði ekki að sækja innsýn núna.</div>}
@@ -225,7 +226,7 @@ export default function BrandDashboard({ onClose }) {
         )}
 
         <div className="bd-foot">
-          🔒 Vörumerki sjá aðeins samanteknar, nafnlausar tölur. Hópum með færri en {data ? data.min_group : 5} kaupendum er sleppt eða þeir sameinaðir. Gervigreindin fær aðeins þessar samanteknu tölur.
+          <IconLock size={14} stroke={2} className="bd-h-ico" /> Vörumerki sjá aðeins samanteknar, nafnlausar tölur. Hópum með færri en {data ? data.min_group : 5} kaupendum er sleppt eða þeir sameinaðir. Gervigreindin fær aðeins þessar samanteknu tölur.
         </div>
       </div>
     </div>

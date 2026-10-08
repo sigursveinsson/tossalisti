@@ -1,13 +1,13 @@
 import React from 'react'
 import AdBanner from './AdBanner.jsx'
+import { IconGift, IconUsers, IconDeviceMobile, IconShoppingCart, IconChecklist, IconCalendar, IconChevronRight } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
 const MONTHS = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember']
 
-const COLORS = ['#e8615a', '#e8954a', '#5a9e5a', '#4aa6c8', '#4a6fd0', '#9a5ad0', '#d05a9a']
-const colorFor = (s) => COLORS[[...(s || '?')].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
+// Hönnunarkerfi: engir regnbogalitir — allir avatarar í sama hlutlausa tóni.
 const initials = (s) => (s || '?').trim().slice(0, 2).toUpperCase()
 
 function since(iso) {
@@ -58,7 +58,8 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
 
   const groups = groupFeed(s.feed)
 
-  const typeIcon = (t) => t === 'schedule' ? '📅' : t === 'task' ? '✅' : '🛒'
+  const typeIcon = (t) => { const I = t === 'schedule' ? IconCalendar : t === 'task' ? IconChecklist : IconShoppingCart; return <I size={20} stroke={1.75} /> }
+  const Go = () => <span className="home-row-go"><IconChevronRight size={18} stroke={1.75} /></span>
 
   return (
     <div className="home">
@@ -66,34 +67,34 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         <div className="home-greet">Góðan dag{name ? ', ' + name : ''}</div>
         <div className="home-ach">
           {s.week_done > 0
-            ? <>🔥 Þú hefur klárað <b>{s.week_done}</b> {s.week_done === 1 ? 'verk' : 'verk'} í vikunni{s.week_points > 0 ? ` — ${s.week_points} stig` : ''}</>
-            : <>👋 Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
+            ? <>Þú hefur klárað <b>{s.week_done}</b> {s.week_done === 1 ? 'verk' : 'verk'} í vikunni{s.week_points > 0 ? ` — ${s.week_points} stig` : ''}</>
+            : <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
 
       {onOpenRewards && (cashback > 0 || rewardsEnabled) && (
         <button className={'home-cashback' + (cashback > 0 ? '' : ' promo')} onClick={() => onOpenRewards()}>
-          <span className="home-cashback-ic">🎁</span>
+          <span className="home-cashback-ic"><IconGift size={22} stroke={1.75} /></span>
           {cashback > 0
             ? <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
             : <span className="home-cashback-txt"><small>Nýtt: Gríptu cashback</small><b>Fáðu til baka af innkaupum</b></span>}
-          <span className="home-row-go">›</span>
+          <Go />
         </button>
       )}
 
       {!hasSharedList && onInvite && (
         <button className="home-invite" onClick={() => onInvite()}>
-          <span className="home-invite-ic">👨‍👩‍👧</span>
+          <span className="home-invite-ic"><IconUsers size={22} stroke={1.75} /></span>
           <span className="home-invite-txt"><b>Bjóddu heimilisfólki á listann</b><small>Tossalisti er bestur þegar fjölskyldan deilir — sjáið innkaup og verk uppfærast í rauntíma</small></span>
-          <span className="home-row-go">›</span>
+          <Go />
         </button>
       )}
 
       {canInstall && (
         <button className="home-install" onClick={() => onInstall && onInstall()}>
-          <span className="home-install-ic">📲</span>
+          <span className="home-install-ic"><IconDeviceMobile size={22} stroke={1.75} /></span>
           <span className="home-install-txt"><b>Settu Tossalista á heimaskjáinn</b><small>Opnast eins og app — og þú getur fengið áminningar</small></span>
-          <span className="home-row-go">›</span>
+          <Go />
         </button>
       )}
 
@@ -105,7 +106,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
               <span className="home-row-ic">{typeIcon(l.type)}</span>
               <span className="home-row-name">{l.name}</span>
               <span className="home-row-sub">{n} {l.type === 'shopping' ? (n === 1 ? 'vara eftir' : 'vörur eftir') : (n === 1 ? 'verk' : 'verk')}{l.type === 'schedule' ? ' í dag' : ''}</span>
-              <span className="home-row-go">›</span>
+              <Go />
             </button>
           ))}
         </div>
@@ -117,7 +118,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             <div className="home-spend-label">Útgjöld í {MONTHS[new Date().getMonth()]}</div>
             <div className="home-spend-val">{kr(monthSpend)}</div>
           </div>
-          <span className="home-row-go">›</span>
+          <Go />
         </button>
       )}
 
@@ -126,7 +127,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <div className="home-sec-h">Hjá fjölskyldunni</div>
           {groups.map((g, i) => (
             <div className="home-feed" key={i}>
-              <span className="home-feed-ava" style={{ background: colorFor(g.actor) }}>{initials(g.actor)}</span>
+              <span className="home-feed-ava">{initials(g.actor)}</span>
               <div className="home-feed-txt">
                 <span><b>{g.actor}</b> {feedText(g)}</span>
                 <span className="home-feed-time">{since(g.at)}</span>

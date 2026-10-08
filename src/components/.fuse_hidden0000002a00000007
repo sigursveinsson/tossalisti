@@ -61,7 +61,7 @@ export default function RewardsManager({ rewards = [], onCreate, onUpdate, onDel
               <span className="reward-title">{r.title}</span>
               <span className="reward-cost">{r.cost} 🪙</span>
               <button className="kid-edit" onClick={() => setEditId(r.id)} aria-label="Breyta">✏️</button>
-              <button className="del" onClick={() => onDelete(r.id)} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+              <button className="del" onClick={() => onDelete(r.id)} aria-label="Eyða">×</button>
             </div>
           )
         ))}

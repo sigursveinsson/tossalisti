@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
+import { IconShoppingCart, IconChecklist, IconUsers, IconChefHat, IconBolt } from '@tabler/icons-react'
 
 const FEATURES = [
-  { icon: '🛒', title: 'Snjallir innkaupalistar', text: 'Vörur flokkast sjálfkrafa í búðardeildir — þú gengur búðina í réttri röð.' },
-  { icon: '✅', title: 'Verkefnalistar & sniðmát', text: 'Brúðkaup, útilega, flutningar og fleira — tilbúin sniðmát með einum smelli.' },
-  { icon: '👥', title: 'Deildu og úthlutaðu', text: 'Deildu lista með fjölskyldu eða vinum og gerðu fólk ábyrgt fyrir einstökum liðum.' },
-  { icon: '🍳', title: 'Uppskriftir → listi', text: 'Settu öll hráefni uppskriftar á listann með einum smelli, með réttu magni.' },
-  { icon: '⚡', title: 'Rauntíma samstilling', text: 'Hakaðu við í búðinni og hinir á listanum sjá það samstundis.' },
+  { Icon: IconShoppingCart, title: 'Snjallir innkaupalistar', text: 'Vörur flokkast sjálfkrafa í búðardeildir — þú gengur búðina í réttri röð.' },
+  { Icon: IconChecklist, title: 'Verkefnalistar & sniðmát', text: 'Brúðkaup, útilega, flutningar og fleira — tilbúin sniðmát með einum smelli.' },
+  { Icon: IconUsers, title: 'Deildu og úthlutaðu', text: 'Deildu lista með fjölskyldu eða vinum og gerðu fólk ábyrgt fyrir einstökum liðum.' },
+  { Icon: IconChefHat, title: 'Uppskriftir → listi', text: 'Settu öll hráefni uppskriftar á listann með einum smelli, með réttu magni.' },
+  { Icon: IconBolt, title: 'Rauntíma samstilling', text: 'Hakaðu við í búðinni og hinir á listanum sjá það samstundis.' },
 ]
 
 const ICELANDIC_ERROR = (msg) => {
@@ -84,7 +85,7 @@ export default function Auth() {
       <div className="features">
         {FEATURES.map((f, i) => (
           <div className="feature" key={i}>
-            <div className="feature-ico">{f.icon}</div>
+            <div className="feature-ico"><f.Icon size={22} stroke={1.75} /></div>
             <div>
               <div className="feature-title">{f.title}</div>
               <div className="feature-text">{f.text}</div>

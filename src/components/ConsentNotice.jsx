@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { IconChevronDown, IconChevronUp, IconLock } from '@tabler/icons-react'
 
 // Fyrsta-skiptis persónuvernd / samþykki. Heiðarlegt orðalag: nafnleysi bundið við
 // samanteknu gögnin, ekki hráu kvittunina (sem er persónuupplýsing meðan hún er á reikningi).
@@ -10,7 +11,7 @@ export default function ConsentNotice({ onAccept }) {
   return (
     <div className="consent-bg">
       <div className="consent-card">
-        <div className="consent-ico">🔒</div>
+        <div className="consent-ico"><IconLock size={22} stroke={1.75} /></div>
         <h2 className="consent-h">Um gögnin þín</h2>
         <p className="consent-p">
           Tossalisti vistar kvittanirnar þínar til að gefa þér yfirlit yfir útgjöld.
@@ -20,7 +21,7 @@ export default function ConsentNotice({ onAccept }) {
         </p>
 
         <button className="consent-more" onClick={() => setMore(m => !m)}>
-          {more ? 'Fela nánari upplýsingar' : 'Nánari upplýsingar'} {more ? '▴' : '▾'}
+          {more ? 'Fela nánari upplýsingar' : 'Nánari upplýsingar'} {more ? <IconChevronUp size={14} stroke={2} /> : <IconChevronDown size={14} stroke={2} />}
         </button>
 
         {more && (
