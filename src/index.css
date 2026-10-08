@@ -1019,3 +1019,62 @@ button { font-family: inherit; cursor: pointer; }
   .addbar .qty-in { width: 72px; font-size: 15px; }
   .addbar .unit-in { width: 68px; font-size: 15px; }
 }
+
+/* ═══ Hönnunarkerfi 1 (okt 2026) — innkaupalisti + haus ═══
+   3 litir með merkingu: navy = strúktúr/texti, gull = aðeins aðalaðgerð, grænt = lokið/cashback.
+   Rautt aðeins villur/eyða. Allt annað grátt. Ein íkonafjölskylda (Tabler), litur erfist. */
+:root { --ink2: #5b6b85; --line2: #e6eaf1; --soft: #f3f5f9; --gold-soft: #fdf3e1; --gold-ink: #8a5a00; --green-ink: #12795b; }
+
+/* Haus — gegnsæir draugahnappar, ljós íkon */
+.listbtn, .switch-btn, .home-btn, .admin-btn, .share-btn {
+  background: transparent; border: 1px solid transparent; color: #e6edf8;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600;
+}
+.listbtn { font-size: 17px; padding: 6px 8px; }
+.listbtn:active, .switch-btn:active, .home-btn:active, .admin-btn:active, .share-btn:active { background: rgba(255,255,255,.10); }
+.switch-btn { height: 34px; padding: 0 6px; }
+.share-btn { width: 34px; height: 34px; }
+.count { background: transparent; color: #9fb1cf; padding: 0 2px; font-size: 12.5px; font-weight: 500; }
+
+/* Bæta-við stika */
+.addbar .add-input { flex: 1; min-width: 0; position: relative; display: flex; }
+.addbar .add-input input { width: 100%; }
+.addbar .add-input.with-icon input { padding-left: 40px; }
+.addbar .add-input-ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
+.addbar .add, .addbar .scan-btn { display: inline-flex; align-items: center; justify-content: center; }
+.addbar .scan-btn { color: var(--navy); border-color: var(--line2); }
+
+/* Tillögur — hlutlaus bakgrunnur, merki bera merkinguna */
+.suggest .suggest-reward, .suggest .suggest-spon { background: var(--surface); }
+.spon-tag { background: var(--gold-soft); color: var(--gold-ink); font-weight: 600; }
+.sugg-cashback { display: inline-flex; align-items: center; gap: 4px; color: var(--green-ink); background: transparent; border: 1px solid rgba(46,170,130,.45); font-weight: 700; }
+
+/* Aðgerðahnappar: Versla = navy, hin draugur */
+.list-actions { gap: 8px; margin: 10px 0 6px; }
+.list-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 42px; font-size: 14.5px; }
+.shop-go { background: var(--navy); color: #fff; }
+.shelf-open { background: var(--surface); border: 1px solid var(--line2); color: var(--navy); }
+
+/* Flokkafyrirsagnir — grátt línutákn + grátt heiti */
+.group-head { gap: 8px; margin: 4px 0 2px; color: var(--ink2); }
+.group-head .dept-ico { display: inline-flex; color: var(--ink2); }
+.group-head .name { color: var(--ink2); font-size: 11.5px; letter-spacing: .06em; }
+.group-head .group-count { margin-left: auto; font-size: 12px; color: var(--faint); }
+
+/* Línur */
+.item { border-bottom-color: var(--line2); }
+.check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #c3ccda; }
+.cat-icon { background: var(--soft); color: var(--navy); box-shadow: none; border-radius: 11px; }
+.cat-icon-fill { background: var(--soft); }
+.item-img { width: 44px; height: 44px; border-color: var(--line2); }
+.qty-step button { display: inline-flex; align-items: center; justify-content: center; border-color: var(--line2); }
+.item .del { display: inline-flex; align-items: center; }
+.recat-btn { color: var(--faint); display: inline-flex; align-items: center; }
+.rec-tag { display: inline-flex; align-items: center; gap: 3px; }
+
+/* Merki á línu: cashback (grænt útlína + gjöf) og kostað (mjúkt gull) */
+.item .label .item-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; text-transform: none; }
+.item .label .item-tags:empty { display: none; }
+.item .label .item-reward { display: inline-flex; align-items: center; gap: 3px; margin-left: 0; vertical-align: 0; background: transparent; border: 1px solid rgba(46,170,130,.45); color: var(--green-ink); font-weight: 700; font-size: 11px; padding: 1px 7px; }
+.item .label .item-spon { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; color: var(--gold-ink); background: var(--gold-soft); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+.item.done .label .item-spon { opacity: .55; }

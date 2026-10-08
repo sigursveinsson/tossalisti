@@ -91,6 +91,16 @@ const EXTRA_SUGGEST = [
   },
 ]
 
+// Er vara á lista kostuð vara? (t.d. „cheerios" eða „old el paso taco skeljar 12 stk") → { brand } eða null.
+export function sponsorFor(itemName) {
+  const n = (itemName || '').toLowerCase().trim()
+  if (!n) return null
+  for (const s of [...Object.values(CATEGORY_SPONSORS), ...EXTRA_SUGGEST]) {
+    for (const p of s.products) { const pn = p.name.toLowerCase(); if (n === pn || n.startsWith(pn + ' ')) return { brand: s.brand, name: p.name } }
+  }
+  return null
+}
+
 // Kostaðar vörur sem gervigreindin má nota SEM STAÐGENGLA fyrir almenna vöru í raddstýringu.
 // Aðeins vörur með `generic`. [{ name, brand, generic, image, color }]
 export function sponsoredForAI() {

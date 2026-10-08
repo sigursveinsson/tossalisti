@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest, departmentFor } from '../data/products.js'
-import { CATEGORY_SPONSORS, sponsoredSuggest, sponsoredForAI } from '../data/sponsors.js'
+import { sponsoredSuggest, sponsoredForAI, sponsorFor } from '../data/sponsors.js'
+import { IconSearch, IconBarcode, IconMicrophone, IconPlus, IconMinus, IconX, IconGift, IconShoppingCart, IconBuildingStore, IconPhoto, IconPhotoOff, IconCheck, IconTag, IconRepeat } from '@tabler/icons-react'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
-import { CatIcon } from '../data/icons.jsx'
+import { CatIcon, DeptIcon } from '../data/icons.jsx'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
 import ScheduleForm from './ScheduleForm.jsx'
 import KidsManager from './KidsManager.jsx'
@@ -83,7 +84,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const isShopping = !isTask && !isSchedule
   const sponSugg = (isTask || isSchedule || !adsEnabled) ? [] : sponsoredSuggest(text)
   const rewardFor = (name) => (rewardProducts && rewardProducts.length) ? rewardForName(name, rewardProducts) : null
-  const rewardLabel = (p) => p.reward_type === 'percent' ? `🎁 ${p.reward_value}%` : `🎁 +${p.reward_value} kr`
+  // Cashback-merki: gjafatákn + upphæð (hönnunarkerfi: grænt útlínumerki, engin emoji).
+  const rewardLabel = (p) => <><IconGift size={12} stroke={2} />{p.reward_type === 'percent' ? `${p.reward_value}%` : `+${p.reward_value} kr`}</>
   // Skráðar verðlaunavörur birtast sem fyrsta flokks tillögur (heiti + mynd + cashback).
   const rq = normMatch(text)
   const rewardSuggAll = (isShopping && rq.length >= 2 && rewardProducts && rewardProducts.length)
@@ -186,7 +188,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
         {voiceState === 'rec' && (
           <>
-            <div className="voice-orb rec" style={{ transform: `scale(${1 + voiceLevel * 0.5})` }}>🎤</div>
+            <div className="voice-orb rec" style={{ transform: `scale(${1 + voiceLevel * 0.5})` }}><IconMicrophone size={40} stroke={1.75} /></div>
             <div className="voice-hint">Segðu hvað á að fara á listann…</div>
             <div className="voice-eg">t.d. „mjólk, tvö kíló af kartöflum og taco fyrir sex"</div>
             <div className="voice-secs">{fmtSecs(voiceSecs)} / {fmtSecs(VOICE_MAX)}</div>
@@ -204,7 +206,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         )}
         {voiceState === 'error' && (
           <>
-            <div className="voice-orb">🎤</div>
+            <div className="voice-orb"><IconMicrophone size={40} stroke={1.75} /></div>
             <div className="voice-hint">{voiceErr}</div>
             <div className="voice-actions">
               <button className="voice-cancel" onClick={cancelVoice}>Loka</button>
@@ -243,7 +245,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               })}
             </div>
             <div className="voice-actions">
-              <button className="voice-cancel" onClick={startVoice}>🎤 Aftur</button>
+              <button className="voice-cancel" onClick={startVoice}><IconMicrophone size={17} stroke={2} /> Aftur</button>
               <button className="voice-done" onClick={commitVoice} disabled={!voiceRes.items.some(i => i.sel)}>
                 Bæta {voiceRes.items.filter(i => i.sel).length} við
               </button>
@@ -385,7 +387,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const done = isDone(it)
     return (
       <div className={'item' + (done ? ' done' : '')} key={it.id}>
-        <div className="check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }} onClick={() => onToggle(it, done)}>{done ? '✓' : ''}</div>
+        <div className="check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }} onClick={() => onToggle(it, done)}>{done ? <IconCheck size={15} stroke={3} /> : ''}</div>
         {(() => {
           if (!chore && !showImages) return null
           const img = it.image_url || (!chore ? catalog[it.name] : null)
@@ -394,22 +396,32 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
           }
           // Engin alvöru mynd → samræmt flokkaíkon (aðeins innkaup)
-          if (!chore) return <CatIcon name={it.name} dept={it.dept} size={52} className="item-cat" onClick={() => onToggle(it, done)} />
+          if (!chore) return <CatIcon name={it.name} dept={it.dept} size={44} className="item-cat" onClick={() => onToggle(it, done)} />
           return null
         })()}
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
-          {!chore && (() => { const rp = rewardFor(it.name); return rp ? <span className="item-reward" title={`Cashback frá ${rp.name} — skannaðu kvittunina`}>{rewardLabel(rp)}</span> : null })()}
-          {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag">🔁 {RECURRENCE_LABELS[it.recurrence]}</span>}
-          {isSchedule && it.weekday === 'daily' && <span className="rec-tag">🔁 daglega</span>}
+          {!chore && (() => {
+            const rp = rewardFor(it.name)
+            const sp = adsEnabled ? sponsorFor(it.name) : null
+            if (!rp && !sp) return null
+            return (
+              <span className="item-tags">
+                {rp && <span className="item-reward" title={`Cashback frá ${rp.name} — skannaðu kvittunina`}>{rewardLabel(rp)}</span>}
+                {sp && <span className="item-spon">Kostað · {sp.brand}</span>}
+              </span>
+            )
+          })()}
+          {chore && !isSchedule && it.recurrence && it.recurrence !== 'none' && <span className="rec-tag"><IconRepeat size={12} stroke={2} />{RECURRENCE_LABELS[it.recurrence]}</span>}
+          {isSchedule && it.weekday === 'daily' && <span className="rec-tag"><IconRepeat size={12} stroke={2} />daglega</span>}
           {dueTag(it)}
         </span>
         {!chore && onSetQty && (
           <span className="qty-step" onClick={e => e.stopPropagation()}>
-            <button onClick={() => onSetQty(it, (it.qty ?? 1) - 1)} disabled={(it.qty ?? 1) <= 1} aria-label="Fækka">−</button>
+            <button onClick={() => onSetQty(it, (it.qty ?? 1) - 1)} disabled={(it.qty ?? 1) <= 1} aria-label="Fækka"><IconMinus size={14} stroke={2} /></button>
             <span className="qty-n">{it.qty ?? 1}</span>
-            <button onClick={() => onSetQty(it, (it.qty ?? 1) + 1)} aria-label="Fjölga">+</button>
+            <button onClick={() => onSetQty(it, (it.qty ?? 1) + 1)} aria-label="Fjölga"><IconPlus size={14} stroke={2} /></button>
           </span>
         )}
         {chore && <button className="points-badge" onClick={() => setEditItem(it)}>{it.points ?? 10} stig</button>}
@@ -418,22 +430,26 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             {it.reminder_enabled ? <>🔔{it.time ? <span className="rem-time">{it.time}</span> : null}</> : '🔕'}
           </button>
         )}
-        {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru">🏷️</button>}
+        {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru"><IconTag size={17} stroke={1.75} /></button>}
         {assignBtn(it)}
-        <button className="del" onClick={() => onRemove(it)} aria-label="Eyða">×</button>
+        <button className="del" onClick={() => onRemove(it)} aria-label="Eyða"><IconX size={17} stroke={1.75} /></button>
       </div>
     )
   }
 
   const addBar = (
     <div className="addbar">
-      <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
-      {!isTask && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
-      {!isTask && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
-      {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki">📷</button>}
+      <div className={'add-input' + (isShopping ? ' with-icon' : '')}>
+        {isShopping && <IconSearch className="add-input-ico" size={18} stroke={1.75} />}
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
+      </div>
+      {/* Magn/eining aðeins utan innkaupalista — á innkaupalista er magn stillt með +/− á línunni. */}
+      {!isTask && !isShopping && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
+      {!isTask && !isShopping && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
+      {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki"><IconBarcode size={21} stroke={1.75} /></button>}
       {micAvailable && !text.trim()
-        ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann">🎤</button>
-        : <button className="add" onClick={() => add()} aria-label="Bæta við">+</button>}
+        ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann"><IconMicrophone size={21} stroke={2} /></button>
+        : <button className="add" onClick={() => add()} aria-label="Bæta við"><IconPlus size={22} stroke={2.25} /></button>}
       {(rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
           {rewardSugg.map(p => (
@@ -846,35 +862,21 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   return (
     <div>
       {addBar}
-      <span className="badge">{open} vörur eftir</span>
       <div className="list-actions">
-        <button className="shop-go" onClick={() => setShopMode(true)}>🛒 Versla</button>
-        <button className="shelf-open" onClick={() => setShelf(true)}>🛍️ Vöruhilla</button>
-        <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? '🖼️ Fela' : '🖼️ Sýna'}</button>
+        <button className="shop-go" onClick={() => setShopMode(true)}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
+        <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
+        <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
       </div>
       {adsEnabled && <AdBanner />}
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {
-        const spon = adsEnabled ? CATEGORY_SPONSORS[g.key] : null
         return (
           <div className="group" key={g.key}>
             <div className="group-head">
-              <span className="emoji">{g.icon}</span>
-              <span className="name" style={{ color: g.color }}>{g.name}</span>
-              {spon && <span className="spon-badge">{spon.tag}</span>}
+              <span className="dept-ico"><DeptIcon dept={g.key} /></span>
+              <span className="name">{g.name}</span>
+              <span className="group-count">{g.items.filter(i => !i.done).length || ''}</span>
             </div>
-            {spon && (
-              <div className="spon-strip">
-                {spon.products.map(p => (
-                  <button key={p.name} className="spon-chip" onClick={() => add(p.name, p.image)}>
-                    <span className="spon-cmark" style={{ background: p.color }}>
-                      {p.image ? <img src={p.image} alt="" /> : p.name.charAt(0)}
-                    </span>
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            )}
             {g.items.map(it => itemRow(it, g.color, false))}
           </div>
         )

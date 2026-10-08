@@ -4,6 +4,7 @@ import {
   IconMilk, IconCheese, IconBread, IconCoffee, IconCup, IconBottle, IconBeer, IconDroplet,
   IconCandy, IconCookie, IconIceCream, IconPizza, IconSoup, IconSalt, IconToolsKitchen2,
   IconToiletPaper, IconSpray, IconBucket, IconPaw, IconSnowflake, IconShoppingBag,
+  IconBowl, IconCake, IconPackage,
 } from '@tabler/icons-react'
 
 const norm = (s) => ' ' + (s || '').toLowerCase().trim() + ' '
@@ -60,7 +61,18 @@ export function CatIcon({ name, dept, size = 52, fill = false, className = '', o
   const isz = fill ? 40 : Math.round(size * 0.58)
   return (
     <span className={'cat-icon ' + (fill ? 'cat-icon-fill ' : '') + className} style={spanStyle} onClick={onClick}>
-      <Icon size={isz} color="#ffffff" stroke={1.8} />
+      <Icon size={isz} color="currentColor" stroke={1.6} />
     </span>
   )
+}
+
+// Deildartákn fyrir flokkafyrirsagnir á innkaupalista (hönnunarkerfi: línutákn, enginn litur).
+const DEPT_HEAD = {
+  produce: IconCarrot, bakery: IconBread, meat: IconMeat, dairy: IconMilk, frozen: IconSnowflake,
+  pantry: IconBowl, baking: IconCake, beverages: IconBottle, alcohol: IconBeer, snacks: IconCookie,
+  candy: IconCandy, cleaning: IconSpray, personalcare: IconDroplet, household: IconToiletPaper, other: IconPackage,
+}
+export function DeptIcon({ dept, size = 15 }) {
+  const Icon = DEPT_HEAD[dept] || IconPackage
+  return <Icon size={size} stroke={1.75} color="currentColor" />
 }
