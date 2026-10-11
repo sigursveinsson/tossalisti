@@ -38,11 +38,7 @@ export default function RewardsAdmin({ onClose }) {
   useBackClose(true, onClose)
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
-  const [members, setMembers] = useState([])
-  const [nm, setNm] = useState({ email: '', brand_id: '', role: 'editor' })
-  const loadMembers = () => store.getBrandMembers().then(setMembers).catch(() => setMembers([]))
-  const addMember = async () => { await store.addBrandMember(nm.email, nm.brand_id, nm.role); setNm({ email: '', brand_id: nm.brand_id, role: 'editor' }); loadMembers() }
-  useEffect(() => { loadMembers(); load(); store.getAppSettings().then(s => setEnabled(s.rewards_enabled === true)).catch(() => {}) }, [])
+  useEffect(() => { load(); store.getAppSettings().then(s => setEnabled(s.rewards_enabled === true)).catch(() => {}) }, [])
   // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
   useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
   useEffect(() => {
@@ -223,29 +219,6 @@ export default function RewardsAdmin({ onClose }) {
             <input type="number" className="rw-val" placeholder="þröskuldur kr" value={no.threshold} onChange={e => setNo({ ...no, threshold: e.target.value })} />
             <input placeholder="lýsing" value={no.reward_desc} onChange={e => setNo({ ...no, reward_desc: e.target.value })} />
             <button className="primary-btn rw-addbtn" onClick={addOffer}>Bæta við</button>
-          </div>
-        </div>
-
-        <div className="adm-head">Aðgangur vörumerkja (innskráning heildsala)</div>
-        <p className="muted-p">Skráðu netfang — þegar viðkomandi skráir sig inn í Gríptu með því netfangi sér hann aðeins mælaborð og herferðir síns vörumerkis. „Ritstjóri" má stofna herferðir.</p>
-        {members.map(m => (
-          <div className="rw-offer" key={m.email + m.brand_id}>
-            <div className="rw-offer-txt"><b>{m.email}</b><small>{(data.brands.find(b => b.id === m.brand_id) || {}).name || '—'} · {m.role === 'editor' ? 'ritstjóri' : 'áhorfandi'}</small></div>
-            <button className="rw-del" onClick={async () => { await store.removeBrandMember(m.email, m.brand_id); loadMembers() }} aria-label="Fjarlægja"><IconX size={20} stroke={1.75} /></button>
-          </div>
-        ))}
-        <div className="rw-add">
-          <input placeholder="netfang@fyrirtaeki.is" value={nm.email} onChange={e => setNm({ ...nm, email: e.target.value })} inputMode="email" />
-          <div className="rw-add-row">
-            <select className="bd-select" value={nm.brand_id} onChange={e => setNm({ ...nm, brand_id: e.target.value })}>
-              <option value="">Vörumerki…</option>
-              {data.brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-            <select className="bd-select" value={nm.role} onChange={e => setNm({ ...nm, role: e.target.value })}>
-              <option value="editor">Ritstjóri</option>
-              <option value="viewer">Áhorfandi</option>
-            </select>
-            <button className="primary-btn rw-addbtn" onClick={addMember} disabled={!nm.email.includes('@') || !nm.brand_id}>Bæta við</button>
           </div>
         </div>
 

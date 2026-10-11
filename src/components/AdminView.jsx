@@ -58,6 +58,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   const [loading, setLoading] = useState(true)
   const [showRewards, setShowRewards] = useState(false)
   const [showBrand, setShowBrand] = useState(false)
+  const [tab, setTab] = useState('stats') // stats | brands
   useBackClose(true, onClose)
 
   const load = () => {
@@ -81,10 +82,20 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
       <div className="modal adm-modal" onClick={e => e.stopPropagation()}>
         <h2><span className="h2-ico"><IconChartBar size={20} stroke={1.75} /></span>Stjórnborð <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
-        <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}><IconGift size={18} stroke={1.75} /> Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
-        <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}><IconTrendingUp size={18} stroke={1.75} /> Vörumerkja-mælaborð (innsýn fyrir heildsala)</button>
+        <div className="adm-tabs">
+          <button className={tab === 'stats' ? 'on' : ''} onClick={() => setTab('stats')}>Tölfræði</button>
+          <button className={tab === 'brands' ? 'on' : ''} onClick={() => setTab('brands')}>Vörumerki</button>
+        </div>
 
-        {onToggleAds && (
+        {tab === 'brands' && (
+          <>
+            <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}><IconGift size={18} stroke={1.75} /> Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
+            <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}><IconTrendingUp size={18} stroke={1.75} /> Vörumerkja-mælaborð, herferðir og aðgangur</button>
+            <p className="muted-p">Aðgangur heildsala (netföng) er skráður neðst í vörumerkja-mælaborðinu.</p>
+          </>
+        )}
+
+        {tab === 'stats' && onToggleAds && (
           <div className="adm-ads">
             <div className="adm-ads-txt">
               <b>Kostaðar auglýsingar</b>
@@ -94,10 +105,10 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
           </div>
         )}
 
-        {loading && <p className="muted-p">Sæki tölfræði…</p>}
-        {err && <p className="muted-p">Næ ekki í tölfræði (ertu skráð(ur) inn sem stjórnandi?).</p>}
+        {tab === 'stats' && loading && <p className="muted-p">Sæki tölfræði…</p>}
+        {tab === 'stats' && err && <p className="muted-p">Næ ekki í tölfræði (ertu skráð(ur) inn sem stjórnandi?).</p>}
 
-        {pv && (
+        {tab === 'stats' && pv && (
           <>
             <div className="adm-head">Umferð (gestir á síðuna)</div>
             <div className="adm-grid">
@@ -116,7 +127,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
           </>
         )}
 
-        {stats && (
+        {tab === 'stats' && stats && (
           <>
             <div className="adm-grid">
               {metric('Notendur alls', num(stats.users_total))}
@@ -140,7 +151,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
           </>
         )}
 
-        {activity && activity.length > 0 && (
+        {tab === 'stats' && activity && activity.length > 0 && (
           <>
             <div className="adm-head">Notendur — virkni ({activity.length})</div>
             <div className="adm-users">

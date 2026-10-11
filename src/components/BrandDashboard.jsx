@@ -4,6 +4,7 @@ import { useBackClose } from '../lib/backstack.js'
 import { demoDashboard } from '../lib/brandDemo.js'
 import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout, IconPlus, IconX, IconListCheck } from '@tabler/icons-react'
 import Campaigns from './BrandCampaigns.jsx'
+import BrandAccess from './BrandAccess.jsx'
 
 // Vörumerkja-mælaborð (Gríptu fyrir heildsala). Allar tölur koma úr gagnagrunninum
 // (brand_dashboard, k-nafnleysi). Gervigreindin útskýrir aðeins tölurnar.
@@ -264,6 +265,10 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
 
         {brandId && !isDemo && (
           <Campaigns brandId={brandId} brandName={brand ? brand.name : ''} products={products.filter(p => p.brand_id === brandId)} canEdit={!isBrandUser || brandUser.role === 'editor'} />
+        )}
+
+        {!isBrandUser && (
+          <div className="bd-card"><BrandAccess /></div>
         )}
 
         <div className="bd-foot">

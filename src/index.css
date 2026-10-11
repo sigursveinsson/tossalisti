@@ -1279,3 +1279,9 @@ button { font-family: inherit; cursor: pointer; }
 .bc-err { font-size: 13px; color: #e05a5a; }
 .bc-actions { display: flex; gap: 8px; }
 .bc-actions .ghost-btn, .bc-actions .primary-btn { margin-top: 4px; flex: 1; }
+.adm-tabs { display: flex; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; margin: 2px 0 12px; }
+.adm-tabs button { flex: 1; height: 40px; border: none; background: var(--surface); color: var(--ink2); font-size: 14px; font-weight: 600; }
+.adm-tabs button + button { border-left: 1px solid var(--line2); }
+.adm-tabs button.on { background: var(--navy); color: #fff; }
+.rw-addbtn { display: inline-flex; align-items: center; gap: 5px; }
+.bd-card .adm-head { margin-top: 0; }
