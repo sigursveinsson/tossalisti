@@ -1285,3 +1285,7 @@ button { font-family: inherit; cursor: pointer; }
 .adm-tabs button.on { background: var(--navy); color: #fff; }
 .rw-addbtn { display: inline-flex; align-items: center; gap: 5px; }
 .bd-card .adm-head { margin-top: 0; }
+.bd-tabs { display: flex; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; margin: 0 0 12px; background: var(--surface); }
+.bd-tabs button { flex: 1; height: 42px; border: none; background: transparent; color: var(--ink2); font-size: 14.5px; font-weight: 700; }
+.bd-tabs button + button { border-left: 1px solid var(--line2); }
+.bd-tabs button.on { background: var(--navy); color: #fff; }

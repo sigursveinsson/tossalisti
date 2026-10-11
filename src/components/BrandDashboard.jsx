@@ -28,6 +28,7 @@ const QUESTIONS = [
 export default function BrandDashboard({ onClose, brandUser = null, onSignOut }) {
   useBackClose(true, onClose)
   const isBrandUser = !!brandUser
+  const [tab, setTab] = useState('overview') // overview | campaigns | access
   const [brands, setBrands] = useState([])
   const [products, setProducts] = useState([])
   const [brandId, setBrandId] = useState('')
@@ -114,7 +115,13 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
           {isBrandUser && onSignOut && <button className="bd-back bd-right" onClick={onSignOut}><IconLogout size={16} stroke={1.9} /> Útskrá</button>}
         </div>
 
-        <div className="bd-controls">
+        <div className="bd-tabs">
+          <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Yfirlit</button>
+          <button className={tab === 'campaigns' ? 'on' : ''} onClick={() => setTab('campaigns')}>Herferðir</button>
+          {!isBrandUser && <button className={tab === 'access' ? 'on' : ''} onClick={() => setTab('access')}>Aðgangur</button>}
+        </div>
+
+        {tab === 'overview' && <div className="bd-controls">
           {!isBrandUser && (
             <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
               {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -127,18 +134,18 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
             <button className={!isDemo ? 'on' : ''} onClick={() => setModeP('real')}>Raungögn</button>
             <button className={isDemo ? 'on demo' : ''} onClick={() => setModeP('demo')}><IconFlask size={15} stroke={1.9} /> Sýnidæmi</button>
           </div>
-        </div>
+        </div>}
 
-        {isDemo && (
+        {tab === 'overview' && isDemo && (
           <div className="bd-demo-banner">
             🧪 <b>SÝNIDÆMI</b> — tilbúin gögn sem sýna hvernig mælaborðið lítur út með nokkur hundruð kaupendum. <b>Ekki raunveruleg sala.</b>
           </div>
         )}
 
-        {loading && <div className="bd-empty">Sæki gögn…</div>}
-        {err && <div className="bd-empty">{err}</div>}
+        {tab === 'overview' && loading && <div className="bd-empty">Sæki gögn…</div>}
+        {tab === 'overview' && err && <div className="bd-empty">{err}</div>}
 
-        {data && data.insufficient && !isDemo && (
+        {tab === 'overview' && data && data.insufficient && !isDemo && (
           <div className="bd-empty">
             <div className="bd-empty-big">Of fá gögn enn fyrir {data.brand || 'vörumerkið'}</div>
             <p>{num(t.lines)} staðfest kaup frá {num(t.buyers)} {t.buyers === 1 ? 'kaupanda' : 'kaupendum'} á tímabilinu. Mælaborðið birtir tölur þegar a.m.k. <b>{data.min_group} kaupendur</b> hafa keypt — svo enginn einstaklingur verði greinanlegur.</p>
@@ -146,7 +153,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
           </div>
         )}
 
-        {ready && (
+        {tab === 'overview' && ready && (
           <>
             <div className="bd-hero">
               <b>{data.brand}</b> · staðfest kaup af kassakvittunum <b>þvert á allar verslanakeðjur</b> · síðustu {periodLabel}
@@ -263,11 +270,20 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
           </>
         )}
 
-        {brandId && !isDemo && (
-          <Campaigns brandId={brandId} brandName={brand ? brand.name : ''} products={products.filter(p => p.brand_id === brandId)} canEdit={!isBrandUser || brandUser.role === 'editor'} />
+        {tab === 'campaigns' && brandId && (
+          <>
+            {!isBrandUser && (
+              <div className="bd-controls">
+                <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
+            <Campaigns brandId={brandId} brandName={brand ? brand.name : ''} products={products.filter(p => p.brand_id === brandId)} canEdit={!isBrandUser || brandUser.role === 'editor'} />
+          </>
         )}
 
-        {!isBrandUser && (
+        {tab === 'access' && !isBrandUser && (
           <div className="bd-card"><BrandAccess /></div>
         )}
 
