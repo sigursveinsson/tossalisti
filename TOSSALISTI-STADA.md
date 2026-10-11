@@ -25,6 +25,45 @@ _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með 
   - CSS: blokkir „Hönnunarkerfi 2/3/4" neðst í `index.css`.
 - Staðfest: babel-parse á öllum skrám + keyrslupróf (react-dom/server) á 26 íhlutum, allir rendera. Forskoðun: `honnun-skjair-forskodun.html` (Heim, Bókhald, Listapanell).
 
+## VÖRUMERKJA-GÁTT (11. okt 2026) — bakendi Í LOFTINU, framendi BÍÐUR DEPLOY-S
+_Þrjú atriði sem vantaði til að heildsali gæti gert eitthvað SJÁLFUR (ekki bara horft á demo hjá Sverri)._
+- **1. Innskráning vörumerkja.** `brand_members(email, brand_id, role viewer|editor)`. Stjórnandi skráir netfang í Stjórnborði → Verðlaunakerfi → „Aðgangur vörumerkja". Þegar viðkomandi skráir sig inn í Gríptu (Google/magic link) með því netfangi fer hann BEINT í mælaborð síns vörumerkis — sér hvorki lista, kvittanir né annað (RLS prófað: 0 kvittanir, 0 listar). Vörumerkjanotandi sér EKKI skiptingu eftir keðjum (aðeins stjórnandi) — í samræmi við „gögn aðeins samanlögð".
+  - SQL: `is_admin()`, `my_brand()`, `is_brand_member(brand, editor)`. `brand_dashboard` v2 opið fyrir vörumerkjanotendur. Afrit: `supabase/brand_portal.sql`.
+  - **Fyrir fundinn:** skrá netföng Mikaels/Arnars/Hildar sem editor á Nathan → „Þið fáið aðgang í dag."
+- **2. Herferðir.** `reward_campaigns(brand, product|allar, reward_type/value, starts_on, ends_on, max_redemptions, budget_kr, active)`. Vörumerki (editor) stofnar sjálft í mælaborðinu („Herferðir"-kort: staða Í gangi/Væntanleg/Lokið/Þak náð/Í bið, framvindustika, innlausnir, greitt). `brand_campaigns()` skilar samanlagðri stöðu. **Cashback-reikningur:** vara MEÐ herferðir gefur aðeins verðlaun meðan herferð er í gangi og undir þaki/ramma (stöðvast sjálfkrafa); vara ÁN herferða heldur eigin verðlaunum (afturábak-samhæft). `reward_earnings.campaign_id`.
+- **3. „Á lista → keypt".** Nýtt svið `listed` í `brand_dashboard`: vörur vörumerkisins settar á innkaupalista á tímabilinu (leitarorð), og hvort HEIMILIÐ (eigandi/meðlimir listans) keypti vöruna innan 14 daga (staðfest af kvittun). k-nafnleysi á heimilum. Sýnt sem sér kort efst: Sett á lista / Keypt eftir lista / Ekki keypt (= tækifæri). Líka í sýnidæmi (brandDemo) og gervigreindin þekkir sviðið (brand-insights v5).
+- Skrár: `BrandDashboard.jsx` (brandUser-hamur), `BrandCampaigns.jsx` (nýtt), `RewardsAdmin.jsx` (aðgangur), `App.jsx` (vörumerkjanotandi → beint í mælaborð), `store.js` (myBrand, brandCampaigns, add/update/deleteCampaign, brand members, herferðir í addPurchase), `brandDemo.js`.
+- **Næst:** útflutningur í PDF/skýrslu með merki vörumerkis (fyrir General Mills o.fl.); staðfesting innlausna (samþykkja/hafna með kvittanamynd) áður en pilot borgar út; cashback-útreikning á netþjón (öryggi, sjá að neðan).
+
+## KVITTANA- OG ÁBYRGÐAGEYMSLA (11. okt 2026) — bakendi Í LOFTINU, framendi BÍÐUR DEPLOY-S
+- **Hugmynd:** eins og Kivra/Slip — kvittanir, ábyrgðir og skilafrestir á einum stað. Eykur notkun (ástæða til að skanna ALLAR kvittanir, ekki bara matvöru) og er áhættulaust gagnvart keðjunum.
+- **Gagnagrunnur** (migration `receipt_archive_warranties`, afrit í `supabase/receipt_archive.sql`): `purchases.receipt_path`, `return_until`, `return_reminded_at`; `purchase_items.warranty_until`, `warranty_reminded_at`. Einkageymsla `receipts` (ekki opinber, 10 MB, `<user_id>/<purchase_id>.jpg`). RLS: eigandi les/skrifar eigin möppu; meðlimir sameiginlegs lista mega LESA kvittanir sem tengjast listanum.
+- **parse-receipt v18:** gervigreindin merkir hverja línu `w` = 0/2/5 ár (neytendakaupalög: 2 ár almennt, 5 fyrir langlífa hluti). Netþjónn leyfir aðeins 0/2/5. Afturábak-samhæft.
+- **send-reminders v6:** daglega kl. 10 — skilafrestur 3 dögum fyrr, ábyrgð 30 dögum fyrr (aðeins notendur með push virkt, virðir hljóðlátan tíma, einu sinni per færslu).
+- **Framendi:** `ReceiptScanner` geymir minnkaða mynd (1100px JPEG; hrá skrá ≤9MB ef afkóðun bregst), skjöldur á hverri línu (engin → 2 ár → 5 ár), skilafrestur (enginn/14/30 dagar), „Geyma mynd" hak. Nýr skjár `ReceiptsView` (Listapanell → „Kvittanir & ábyrgðir", Bókhald → skjaldartákn): leit, ábyrgðir í gildi, skilafrestir, allar kvittanir, smáatriði með mynd (signed URL 10 mín), Deila/Opna/Bæta við mynd/Eyða mynd, breyta ábyrgð/skilafresti. Heimaskjár sýnir kort ef ábyrgð (≤30 d) eða skilafrestur (≤7 d) er að renna út. Bókhald heldur ábyrgð við breytingu á færslu; eyðing færslu eyðir myndinni.
+- **Persónuvernd:** kvittanamyndir fara ALDREI til vörumerkja, ekki einu sinni samanteknar.
+- **Seinna:** rafrænar kvittanir beint frá verslunum (krefst samninga), PDF-kvittanir úr tölvupósti, ábyrgðarskírteini sem sér skjal.
+- ✅ **Öryggi lagað 11. okt** (migration `reward_products_storage_admin_only`): geymslusvæðið `reward-products` leyfði insert/update/delete án innskráningar → nú aðeins stjórnandi (lesa áfram opið).
+- ⚠️ **Öryggi — áður en cashback fer í raunnotkun:** `reward_earnings` leyfir notanda að skrifa eigin færslur (insert/update), þ.e. hann gæti breytt upphæð/stöðu. Á meðan cashback er sýnidæmi er það í lagi, en í cashback-kjarnanum þarf að færa útreikning á netþjón (edge function / security definer) og leyfa notanda aðeins að LESA.
+- `.gitignore`: `research_notes/` og `reports/` (rannsóknarvinna fer ekki í repo).
+
+## HUGMYNDIR TIL AÐ BÆTA TOSSALISTA/GÆSINA (11. okt 2026) — forgangur: HEILDSALAR FYRST
+_Stefna Sverris: ná heildsölunum um borð fyrst; notendavöxtur kemur í kjölfarið. Röðin hér miðar við það._
+
+**A. Það sem styrkir samtalið við heildsala (gera fyrst):**
+1. **Gæsin sem fer á milli heimila (viral deiling).** Boð á lista = „Jón bauð þér á innkaupalistann — gæsin er þegar með 3 vörur" + fyrsta skönnun gefur strax eitthvað. Svarar stærstu spurningu heildsala: „hvað eruð þið með marga notendur?" Byggir á deilingu sem er þegar til. **Mest verðmæti fyrir næstu viku.**
+2. **Vikuplan úr listanum.** Gæsin setur saman matseðil vikunnar úr því sem er á listanum + bætir við því sem vantar. Tengir uppskriftir + lista + rödd. Eðlilegt pláss fyrir vörumerki („Knorr í pottréttinum á þriðjudegi") — alltaf merkt kostað.
+3. **Hringrásin sala → cashback → gott málefni, sýnileg.** „Heimilin í Gríptu hafa gefið X kr. til góðra málefna." Jákvæð tenging sem vörumerki vilja vera hluti af; sérstaða gagnvart Fetch.
+4. **Rafrænar kvittanir beint úr keðju (seinna, en sterkasta rökin við Krónuna/Samkaup):** kvittun kemur sjálfkrafa → engin skönnun → gögn án fyrirhafnar. Krefst samnings við keðju.
+
+**B. Það sem fjölgar notendum (eftir að heildsali er kominn):**
+5. **Gæsin sem persóna, ekki bara lógó.** Rödd í appinu: stingur upp á („bananar á lista — muffins um helgina?"), fagnar við skönnun, nefnir tilboðsvöru þegar vara fer á lista. Persónuleiki = fólk talar um appið. Fetch er ópersónulegt, Takk er afsláttarmiði.
+6. **Kvittanaþjónustan sem sjálfstæður aðgöngumiði.** Lendingarsíða + ein setning: „Týndu aldrei kvittun aftur." Fólk kemur fyrir kvittunina á þvottavélinni, uppgötvar listann og cashback.
+7. **Verðvitund án verðbirtingar.** Persónuleg gögn aðeins: „Þú borgaðir 15% meira fyrir þessa körfu en í síðasta mánuði", „þessi vara hefur hækkað hjá þér þrisvar í röð". Engin birting á verðum eftir búðum (regla). Gefur tilfinningu fyrir að skönnun skili einhverju.
+
+## Raddstýring — ranghljóð (8. okt, parse-voice v12, KOMIÐ Í LOFTIÐ)
+- „nautaforð" í stað „nautahakk". Lagað á tvo vegu: (1) líkanið fær orðaforða ~480 algengra vöruheita (úr `products.js`) og reglu um að búa aldrei til orð heldur velja næstu raunverulegu vöru; (2) `FIX`-tafla á netþjóni sem leiðréttir þekkt ranghljóð. Bæta nýjum ranghljóðum í `FIX` þegar þau sjást.
+
 ## Komið og virkt (fyrir þessa lotu)
 Listar (innkaup/verk/skema), uppskriftir, rauntíma-deiling. Strikamerkjaskanni + vörumyndir (Open Food Facts). Sjálfbyggjandi vörubanki + deildaflokkun. Vöruhilla, Verslunarhamur, magn +/-. Kvittanaskönnun gegnum sjónlíkan (Edge Function `parse-receipt`, Gemini). Útgjöld (áður „Eyðsla"). Flokka-kostun (Ölgerðin á drykki) + auglýsingabanner. Stigatafla/afrek á verk- og skemalistum. Stjórnborð (admin). Onboarding.
 
@@ -264,6 +303,19 @@ Staðfest: GameGuide þýðist hreint (esbuild); öll breytt svæði í store/Ap
   4. **Hindranir (mikilvægast):** Hvað gæti komið í veg fyrir að þið prófið þetta? · Áhyggjur af viðbrögðum verslana? · Hverjir aðrir koma að ákvörðun?
   5. **Næstu skref:** Hvaða tala eftir 3 mánuði sannaði vel heppnaðan pilot? · Hvað þyrftuð þið að sjá til að segja já? · Hvernig er ákvörðunarferlið og hvenær hittumst við næst?
   - **TODO fyrir fund:** fara yfir spurningarnar með Sverri og bæta við; gera eins síðu útprentanlegt skjal með plássi fyrir svör.
+
+- **★ STEFNA FYRIR NATHAN-FUND (9. okt) — skoða minnisblaðið eftir helgi.** Heimild: skýrslan `reports/Árangur vörumerkja með Fetch.pdf` + nótur í `research_notes/`.
+  - **Forskot Gríptu (ekki verð!):** *„Fetch sér hvað þú keyptir. Gríptu sér hvað þú ætlaðir að kaupa — og hvort þú gerðir það — í öllum búðum."*
+    1. Gögn um ásetning: „á lista → keypt" (týnd sala sjáanleg). 2. Áhrif á ákvörðunarstund (rödd, kostaðar tillögur, uppskriftir — alltaf merkt). 3. Þvert á allar keðjur (Takk/Nettó ná bara til sinna). 4. Daglegt notagildi (fjölskyldulistar, verk, útgjöld) → minni þörf á dýru cashback. 5. Prufukaup nýrra vara (Sproud, Oddbird, Lucky Saint — Fetch: 61–77% nýir kaupendur hjá áskorendum). 6. Gegnsæ mæling með samanburðarhóp (Fetch felur aðferðina). 7. Persónuvernd (k≥5, engin persónugögn; andstæða við Takk-gagnrýnina). 8. „Styrktu gott málefni".
+  - **Verðbirting: EKKI.** Of viðkvæmt gagnvart keðjum + samkeppnisréttur. Föst regla, ekki „ekki núna". (Fetch hefur verðgögnin en birtir þau ekki heldur.)
+  - **Hvað þarf til að Nathan stökkvi á:** (1) lítill afmarkaður pilot — 2–3 vörur, 8–12 vikur, kostnaðarþak, greitt per staðfest kaup (svona byrjuðu Barilla/Kodiak/Pernod hjá Fetch); (2) notendur — stærsta hindrunin (Takk ~65þ, Nettó 80–90þ); hanna pilot sem aflar notenda („Prófaðu Sproud frítt"); (3) prinsipal-vinkill: General Mills/Unilever þekkja Fetch (Cheerios, Old El Paso, Vaseline á logo-vegg Fetch) — „íslensk útgáfa af Fetch" er saga sem Nathan getur sagt sínum birgjum; (4) gögn sem enginn annar á; (5) trúverðug mæling, engin loforð um % fyrirfram.
+  - **Áhætta að styggja keðjur (Hagar ~44%, Festi ~28%, Samkaup ~16%):**
+    - MIKIL: verðbirting / keðjusamanburður. MIÐLUNGS–MIKIL: ef Gríptu lítur út sem keppinautur Takk/Nettó-appsins. MIÐLUNGS: gögn eftir keðjum (sýna aðeins samanlagt); kynningarfé sem færist frá keðjum. LÍTIL: prufutilboð (fullt hilluverð, umbun eftir á — sendir fólk inn í búðirnar). ENGIN: listi/fjölskylda.
+    - Hætta: Nathan spyr keðju fyrst og fær nei → undirbúa „Gríptu eykur sölu hjá ÖLLUM keðjum", ekki keppinautur.
+  - **Mótvægi:** engin verð/keðjusamanburður (regla) · gögn aðeins samanlögð · bjóða keðjum að tengjast (Takk/Nettó-kvittanir gildi; Casey's-tenging við Fetch sem fyrirmynd) · byrja á nýjum vörum, ekki stærstu vörum keðjanna · kyrrlátur pilot, engin fréttatilkynning fyrr en niðurstöður liggja fyrir.
+  - **Raunhæft mat:** líklegast „komið aftur með X notendur" → **spyrja hvert X er.** Gott: pilot með 1–3 (nýjum) vörum. Ólíklegt: stór samningur strax.
+  - **Lykilspurningin:** *„Hvað þyrftum við að sýna ykkur til að þið gætuð prófað þetta án áhættu gagnvart keðjunum?"*
+  - Fetch-dæmi um búðir með eigið vildarkerfi: Albertsons (for U) kallar Fetch „viðbót"; Casey's tengdi vildarkort beint við Fetch (2023); Dollar General notar bæði Ibotta (í eigin appi) og Fetch (í gegnum auglýsingakerfi); Walmart/Kroger völdu Ibotta inni í eigin appi. → Gríptu sem viðbót, ekki keppinautur.
 
 - **★ TÉKKLISTI FYRIR NATHAN-FUND (skoða áður en farið er á fundinn).**
   000. **🗣️ FARA YFIR SPURNINGARNAR (sjá „SPURNINGAR FYRIR NATHAN-FUND" að ofan) og bæta við — prenta eins síðu skjal með plássi fyrir svör.** Deploy 4. okt komið inn (receipt.js OOM-eftirfylgni + Nathan kostunarvörur).

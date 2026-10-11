@@ -12,3 +12,7 @@ dist
 ~$*
 _cmp*.jpg
 _qa/
+
+# Rannsóknir og skýrslur (vinnuskjöl, ekki hluti af appinu)
+research_notes/
+reports/

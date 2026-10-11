@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import { demoDashboard } from '../lib/brandDemo.js'
-import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles } from '@tabler/icons-react'
+import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout, IconPlus, IconX, IconListCheck } from '@tabler/icons-react'
+import Campaigns from './BrandCampaigns.jsx'
 
 // Vörumerkja-mælaborð (Gríptu fyrir heildsala). Allar tölur koma úr gagnagrunninum
 // (brand_dashboard, k-nafnleysi). Gervigreindin útskýrir aðeins tölurnar.
@@ -22,8 +23,10 @@ const QUESTIONS = [
   'Hvernig hefur þróunin verið síðustu vikur?',
 ]
 
-export default function BrandDashboard({ onClose }) {
+// brandUser: { brand_id, name, role } → vörumerkjanotandi sér AÐEINS sitt vörumerki (ekkert val, engin keðjuskipting).
+export default function BrandDashboard({ onClose, brandUser = null, onSignOut }) {
   useBackClose(true, onClose)
+  const isBrandUser = !!brandUser
   const [brands, setBrands] = useState([])
   const [products, setProducts] = useState([])
   const [brandId, setBrandId] = useState('')
@@ -44,6 +47,7 @@ export default function BrandDashboard({ onClose }) {
   useEffect(() => {
     Promise.all([store.getRewardBrands(), store.getRewardMatchList()]).then(([b, p]) => {
       setBrands(b || []); setProducts(p || [])
+      if (isBrandUser) { setBrandId(brandUser.brand_id); return }
       const nathan = (b || []).find(x => /nathan/i.test(x.name))
       setBrandId((nathan || (b || [])[0] || {}).id || '')
     }).catch(() => setErr('Gat ekki sótt vörumerki.'))
@@ -59,7 +63,7 @@ export default function BrandDashboard({ onClose }) {
       .finally(() => setLoading(false))
   }, [brandId, days, isDemo])
 
-  const brand = brands.find(b => b.id === brandId)
+  const brand = brands.find(b => b.id === brandId) || (isBrandUser ? { id: brandUser.brand_id, name: brandUser.name } : null)
   const brandProducts = useMemo(() => products.filter(p => p.brand_id === brandId).map(p => p.name), [products, brandId])
   const data = isDemo ? (brand ? demoDashboard(brand.name, brandProducts, days) : null) : real
   const ready = data && !data.insufficient
@@ -102,14 +106,19 @@ export default function BrandDashboard({ onClose }) {
     <div className="bd-wrap" onClick={e => e.stopPropagation()}>
       <div className="bd-inner">
         <div className="bd-top">
-          <button className="bd-back" onClick={onClose}><IconArrowLeft size={17} stroke={1.9} /> Stjórnborð</button>
-          <div className="bd-title">Vörumerkja-mælaborð <span>Gríptu fyrir heildsala</span></div>
+          {isBrandUser
+            ? <div className="bd-brandmark">{brandUser.name}</div>
+            : <button className="bd-back" onClick={onClose}><IconArrowLeft size={17} stroke={1.9} /> Stjórnborð</button>}
+          <div className="bd-title">{isBrandUser ? 'Gríptu' : 'Vörumerkja-mælaborð'} <span>{isBrandUser ? 'mælaborð vörumerkis' : 'Gríptu fyrir heildsala'}</span></div>
+          {isBrandUser && onSignOut && <button className="bd-back bd-right" onClick={onSignOut}><IconLogout size={16} stroke={1.9} /> Útskrá</button>}
         </div>
 
         <div className="bd-controls">
-          <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
-            {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
+          {!isBrandUser && (
+            <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
+              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
           <div className="bd-seg">
             {PERIODS.map(([d, l]) => <button key={d} className={days === d ? 'on' : ''} onClick={() => setDays(d)}>{l}</button>)}
           </div>
@@ -151,6 +160,34 @@ export default function BrandDashboard({ onClose }) {
               <div className="bd-kpi gold"><div className="v">{kr(t.cashback)}</div><div className="l">Cashback greitt</div><div className="s">{roi ? `${num(roi)} kr sala per greidda krónu` : 'ekkert greitt enn'}</div></div>
             </div>
 
+            {data.listed && (
+              <div className="bd-card bd-listed">
+                <div className="bd-card-h"><IconListCheck size={17} stroke={1.75} className="bd-h-ico" /> Á lista → keypt <span>það sem enginn annar getur mælt: ásetningur á innkaupalista og hvort heimilið keypti innan 14 daga</span></div>
+                {data.listed.insufficient
+                  ? <div className="bd-muted">Of fá heimili enn ({num(data.listed.households)}) — birtist þegar a.m.k. {data.min_group} heimili hafa sett vöru á lista.</div>
+                  : (
+                    <>
+                      <div className="bd-kpis three">
+                        <div className="bd-kpi"><div className="v">{num(data.listed.listed)}</div><div className="l">Sett á lista</div><div className="s">á {num(data.listed.households)} heimilum</div></div>
+                        <div className="bd-kpi good"><div className="v">{pct(data.listed.rate)}</div><div className="l">Keypt eftir lista</div><div className="s">{num(data.listed.bought)} staðfest með kvittun</div></div>
+                        <div className="bd-kpi gold"><div className="v">{num((data.listed.listed || 0) - (data.listed.bought || 0))}</div><div className="l">Ekki keypt</div><div className="s">tækifæri — hér vinnur tilboð</div></div>
+                      </div>
+                      {data.listed.by_product.length > 0 && (
+                        <div className="bd-table">
+                          <div className="bd-tr bd-th bd-tr3"><span>Vara</span><span>Á lista</span><span>Keypt</span></div>
+                          {data.listed.by_product.map(p => (
+                            <div key={p.name} className="bd-tr bd-tr3">
+                              <span className="bd-pname">{p.name}</span>
+                              {p.suppressed ? <><span className="bd-muted">falið</span><span className="bd-muted">—</span></> : <><span>{num(p.listed)}</span><span className="bd-rep">{pct(p.rate)}</span></>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+              </div>
+            )}
+
             <div className="bd-card bd-ai">
               <div className="bd-card-h"><IconSparkles size={17} stroke={1.75} className="bd-h-ico" /> Helstu innsýn <span>gervigreind útskýrir tölurnar — býr ekki til nýjar</span></div>
               {aiLoading && <div className="bd-ai-load"><span className="bd-goose">🪿</span> Gríptu greinir gögnin…</div>}
@@ -184,8 +221,8 @@ export default function BrandDashboard({ onClose }) {
                 </div>
               </div>
 
-              <div className="bd-card">
-                <div className="bd-card-h">Eftir verslanakeðju <span>engin ein verslun sér þessa heildarmynd</span></div>
+              {!isBrandUser && <div className="bd-card">
+                <div className="bd-card-h">Eftir verslanakeðju <span>aðeins stjórnandi — vörumerki fá samanlagðar tölur</span></div>
                 {data.by_chain.map(c => (
                   <div key={c.chain} className="bd-hrow">
                     <div className="bd-hlabel">{c.chain}</div>
@@ -194,7 +231,7 @@ export default function BrandDashboard({ onClose }) {
                   </div>
                 ))}
                 {data.by_chain.length === 0 && <div className="bd-muted">Of fáir kaupendur á hverja keðju til að sýna.</div>}
-              </div>
+              </div>}
             </div>
 
             <div className="bd-card">
@@ -223,6 +260,10 @@ export default function BrandDashboard({ onClose }) {
               </div>
             </div>
           </>
+        )}
+
+        {brandId && !isDemo && (
+          <Campaigns brandId={brandId} brandName={brand ? brand.name : ''} products={products.filter(p => p.brand_id === brandId)} canEdit={!isBrandUser || brandUser.role === 'editor'} />
         )}
 
         <div className="bd-foot">

@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     const today = new Date()
     const todayStr = iso(today)
 
-    const itemShape = prods.length ? '{"name":"","price":0,"pid":null}' : '{"name":"","price":0}'
+    const itemShape = prods.length ? '{"name":"","price":0,"w":0,"pid":null}' : '{"name":"","price":0,"w":0}'
     const prompt = [
       'Þú lest íslenska kassakvittun af mynd.',
       'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","items":[' + itemShape + '],"total":0}',
@@ -100,6 +100,12 @@ Deno.serve(async (req) => {
       '- Verð eru heiltölur í íslenskum krónum.',
       '- Settu hverja keypta vöru í items með hreinu nafni.',
       '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items.',
+      '',
+      'ÁBYRGÐ ("w") — fyrir hverja vöru:',
+      '- "w": 0 fyrir neysluvörur sem klárast eða slitna hratt (matur, drykkir, hreinlætisvörur, snyrtivörur, lyf, pappír, föt, rafhlöður, perur o.þ.h.).',
+      '- "w": 2 fyrir endingarvörur: raftæki, símar, tölvur, heyrnartól, smáraftæki (blandari, ryksuga, kaffivél), verkfæri, leikföng úr hörðu efni, íþróttabúnaður, skór og yfirhafnir í dýrari kantinum.',
+      '- "w": 5 fyrir hluti sem eiga að endast verulega lengur: stór heimilistæki (þvottavél, þurrkari, ísskápur, uppþvottavél, eldavél, ofn), húsgögn, sjónvörp, rúm/dýnur, reiðhjól.',
+      '- Í vafa: 0. Matvöruverslun (Bónus, Krónan, Nettó o.fl.) → nær allt 0.',
       ...(prods.length ? [
         '',
         'TILBOÐSVÖRUR — pörun:',
@@ -137,16 +143,22 @@ Deno.serve(async (req) => {
         parsed.date = fixDate(parsed.date, today)
         // Varpa pid-kóðum í raunveruleg vöru-id; hafna öllu sem ekki var í listanum.
         let matched = 0
+        let warranty = 0
         if (Array.isArray(parsed.items)) {
           parsed.items = (parsed.items as any[]).map((it) => {
-            const { pid, ...rest } = it || {}
+            const { pid, w, ...rest } = it || {}
             const id = typeof pid === 'string' ? codeToId.get(pid.trim().toUpperCase()) : undefined
             if (id) matched++
-            return id ? { ...rest, reward_product_id: id } : rest
+            // Ábyrgðartillaga: aðeins 0/2/5 ár leyfð (neytendakaupalög: 2 ár almennt, 5 fyrir langlífa hluti).
+            const wy = Number(w) === 5 ? 5 : Number(w) === 2 ? 2 : 0
+            if (wy) warranty++
+            const out: any = { ...rest, warranty_years: wy }
+            if (id) out.reward_product_id = id
+            return out
           })
         }
         console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) +
-          ' prods=' + prods.length + ' matched=' + matched +
+          ' prods=' + prods.length + ' matched=' + matched + ' warranty=' + warranty +
           ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
         return json(parsed)
       }

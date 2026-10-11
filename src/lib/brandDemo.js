@@ -83,6 +83,20 @@ export function demoDashboard(brand, productNames = [], days = 90) {
   const by_chain = CHAINS.map(([chain, s]) => ({ chain, lines: Math.round(L * s), buyers: Math.round(buyers * s * 1.08) }))
   const basket = BASKET.map(([label, share]) => ({ label, receipts: Math.round(receipts * share), share }))
 
+  // „Á lista → keypt": ásetningur á innkaupalista og hvort heimilið keypti innan 14 daga.
+  const listedTotal = Math.round(L * 1.35)
+  const lrate = 0.62
+  const listedBy = by_product.map(p => {
+    const n = Math.round(listedTotal * p.lines / Math.max(1, L))
+    const rate = Math.max(0.3, Math.min(0.85, lrate + (p.repeat_rate - 0.35) * 0.6))
+    return { name: p.name, listed: n, bought: Math.round(n * rate), rate: Math.round(rate * 1000) / 1000, suppressed: false }
+  })
+  const listedBought = listedBy.reduce((s, p) => s + p.bought, 0)
+  const listed = {
+    listed: listedTotal, households: Math.round(listedTotal * 0.44), bought: listedBought,
+    rate: Math.round(listedBought / Math.max(1, listedTotal) * 1000) / 1000, insufficient: false, by_product: listedBy,
+  }
+
   return {
     brand, days, since: iso(new Date(Date.now() - days * 86400000)), min_group: 5,
     insufficient: false, demo: true,
@@ -92,6 +106,6 @@ export function demoDashboard(brand, productNames = [], days = 90) {
       new_buyers: Math.round(buyers * new_rate), new_rate,
       cashback: Math.round(L * 34),
     },
-    by_week, by_chain, by_product, basket,
+    listed, by_week, by_chain, by_product, basket,
   }
 }

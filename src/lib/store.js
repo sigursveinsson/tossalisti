@@ -73,7 +73,7 @@ function matchRewards(items, products) {
     const value = prod.reward_type === 'percent'
       ? Math.round(price * (Number(prod.reward_value) || 0) / 100)
       : (Number(prod.reward_value) || 0) * qty
-    if (value > 0) out.push({ product_id: prod.id, product_name: prod.name, brand_id: prod.brand_id, qty, value })
+    if (value > 0) out.push({ product_id: prod.id, product_name: prod.name, brand_id: prod.brand_id, qty, value, campaign_id: prod.campaign_id || null })
   }
   return out
 }
@@ -224,6 +224,20 @@ const local = {
     const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
     return all.sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
   },
+  // Kvittanasafn (staðbundið): engin myndageymsla án innskráningar — ábyrgð/skilafrestur vistast.
+  async uploadReceiptImage() { return null },
+  async removeReceiptImage() {},
+  async getReceiptUrl() { return null },
+  async setItemWarranty(itemId, until) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    for (const p of all) for (const it of (p.items || [])) if (it.id === itemId) it.warranty_until = until || null
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
+  async setReturnUntil(purchaseId, until) {
+    const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
+    for (const p of all) if (p.id === purchaseId) p.return_until = until || null
+    localStorage.setItem('korfan.purchases', JSON.stringify(all))
+  },
   async checkDuplicatePurchase(p) {
     const fp = purchaseFingerprint(p)
     const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
@@ -235,7 +249,8 @@ const local = {
       id: uid(), list_id: p.list_id || null, store: p.store || '',
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10),
       total: p.total ?? null, category: p.category || null, user_id: 'me', fingerprint: purchaseFingerprint(p),
-      items: (p.items || []).map(i => ({ id: uid(), name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null })),
+      return_until: p.return_until || null,
+      items: (p.items || []).map(i => ({ id: uid(), name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null, warranty_until: i.warranty_until || null })),
     }
     all.push(rec); localStorage.setItem('korfan.purchases', JSON.stringify(all)); return rec
   },
@@ -470,6 +485,10 @@ const local = {
   async getRewardBrands() { return [] },
   async brandDashboard() { return null },
   async brandInsights() { return null },
+  async myBrand() { return null },
+  async brandCampaigns() { return [] },
+  async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {},
+  async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
     const lists = lsRead() || []
@@ -643,26 +662,54 @@ const cloud = {
       user_id: user.id, list_id: p.list_id || null, store: p.store || null,
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
       category: p.category || null, fingerprint: purchaseFingerprint(p),
+      ...(p.return_until ? { return_until: p.return_until } : {}),
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {
-      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null, reward_product_id: i.reward_product_id || null }))
+      const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null, reward_product_id: i.reward_product_id || null, warranty_until: i.warranty_until || null }))
       const { error: ie } = await supabase.from('purchase_items').insert(rows)
-      // Varaleið: ef dálkurinn er ekki til (eldri gagnagrunnur) — vista án AI-pörunar.
-      if (ie) await supabase.from('purchase_items').insert(rows.map(({ reward_product_id, ...r }) => r))
+      // Varaleið: ef dálkar eru ekki til (eldri gagnagrunnur) — vista án AI-pörunar/ábyrgðar.
+      if (ie) await supabase.from('purchase_items').insert(rows.map(({ reward_product_id, warranty_until, ...r }) => r))
     }
+    // Kvittanasafn: geyma mynd af kvittuninni (einkageymsla, aðeins eigandi og meðlimir lista sjá).
+    if (p.archive) { try { pr.receipt_path = await cloud.uploadReceiptImage(pr.id, p.archive) } catch (e) { /* myndin er valkvæð */ } }
     // Verðlaun (cashback) — aðeins ef kveikt er á kerfinu
     let earned = 0
     try {
       const { data: rs } = await supabase.from('app_settings').select('value').eq('key', 'rewards_enabled').maybeSingle()
       if (rs && rs.value === true) {
         const { data: prods } = await supabase.from('reward_products').select('id,name,brand_id,match_keywords,reward_type,reward_value,active').eq('active', true)
-        const matches = matchRewards(p.items, prods || [])
+        // Herferðir ráða: ef vara/vörumerki á herferðir gildir aðeins herferð sem er Í GANGI (dagsetning + þak).
+        // Vara án herferða heldur eigin verðlaunum (afturábak-samhæft).
+        const today = (p.purchased_at || new Date().toISOString().slice(0, 10))
+        const { data: camps } = await supabase.from('reward_campaigns').select('id,brand_id,product_id,reward_type,reward_value,starts_on,ends_on,max_redemptions,budget_kr,active')
+        const all = camps || []
+        const hasCamp = (prod) => all.some(c => c.brand_id === prod.brand_id && (!c.product_id || c.product_id === prod.id))
+        const liveFor = async (prod) => {
+          const cands = all.filter(c => c.active && c.brand_id === prod.brand_id && (!c.product_id || c.product_id === prod.id) && c.starts_on <= today && c.ends_on >= today)
+            .sort((a, b) => (a.product_id ? 0 : 1) - (b.product_id ? 0 : 1)) // vöru-sértæk herferð á undan vörumerkis-herferð
+          for (const c of cands) {
+            if (c.max_redemptions == null && c.budget_kr == null) return c
+            const { data: used } = await supabase.from('reward_earnings').select('value').eq('campaign_id', c.id).neq('status', 'rejected')
+            const n = (used || []).length, spent = (used || []).reduce((s, e) => s + Number(e.value || 0), 0)
+            if ((c.max_redemptions == null || n < c.max_redemptions) && (c.budget_kr == null || spent < c.budget_kr)) return c
+          }
+          return null
+        }
+        const effective = []
+        for (const prod of (prods || [])) {
+          if (!hasCamp(prod)) { effective.push(prod); continue }
+          const c = await liveFor(prod)
+          if (c) effective.push({ ...prod, reward_type: c.reward_type, reward_value: c.reward_value, campaign_id: c.id })
+        }
+        const matches = matchRewards(p.items, effective)
         if (matches.length) {
-          await supabase.from('reward_earnings').insert(matches.map(m => ({
+          const rows = matches.map(m => ({
             user_id: user.id, purchase_id: pr.id, brand_id: m.brand_id, product_id: m.product_id,
-            product_name: m.product_name, qty: m.qty, value: m.value, status: 'pending',
-          })))
+            product_name: m.product_name, qty: m.qty, value: m.value, status: 'pending', campaign_id: m.campaign_id || null,
+          }))
+          const { error: ee } = await supabase.from('reward_earnings').insert(rows)
+          if (ee) await supabase.from('reward_earnings').insert(rows.map(({ campaign_id, ...r }) => r))
           earned = matches.reduce((s, m) => s + m.value, 0)
         }
       }
@@ -679,6 +726,10 @@ const cloud = {
     return { pending, approved, redeemed, balance: pending + approved - redeemed, items }
   },
   async deletePurchase(id) {
+    try {
+      const { data } = await supabase.from('purchases').select('receipt_path').eq('id', id).maybeSingle()
+      if (data && data.receipt_path) await supabase.storage.from('receipts').remove([data.receipt_path])
+    } catch (e) { /* ekki stöðva eyðingu */ }
     await supabase.from('purchases').delete().eq('id', id)
   },
   async updatePurchase(id, patch) {
@@ -687,9 +738,39 @@ const cloud = {
     await supabase.from('purchases').update(upd).eq('id', id)
     await supabase.from('purchase_items').delete().eq('purchase_id', id)
     if (patch.items && patch.items.length) {
-      const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null }))
-      await supabase.from('purchase_items').insert(rows)
+      // Halda ábyrgðardagsetningu ef hún var skráð (annars týnist hún við breytingu).
+      const rows = patch.items.map(i => ({ purchase_id: id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, category: i.category || null, warranty_until: i.warranty_until || null }))
+      const { error: ie } = await supabase.from('purchase_items').insert(rows)
+      if (ie) await supabase.from('purchase_items').insert(rows.map(({ warranty_until, ...r }) => r))
     }
+  },
+  // ── Kvittana- og ábyrgðageymsla ──
+  async uploadReceiptImage(purchaseId, blob) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !blob) return null
+    const ext = (blob.type || '').includes('png') ? 'png' : (blob.type || '').includes('webp') ? 'webp' : 'jpg'
+    const path = `${user.id}/${purchaseId}.${ext}`
+    const { error } = await supabase.storage.from('receipts').upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' })
+    if (error) throw error
+    await supabase.from('purchases').update({ receipt_path: path }).eq('id', purchaseId)
+    return path
+  },
+  async removeReceiptImage(purchaseId, path) {
+    if (path) await supabase.storage.from('receipts').remove([path])
+    await supabase.from('purchases').update({ receipt_path: null }).eq('id', purchaseId)
+  },
+  async getReceiptUrl(path) {
+    if (!path) return null
+    const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 600)
+    return error ? null : data.signedUrl
+  },
+  async setItemWarranty(itemId, until) {
+    const { error } = await supabase.from('purchase_items').update({ warranty_until: until || null, warranty_reminded_at: null }).eq('id', itemId)
+    if (error) throw error
+  },
+  async setReturnUntil(purchaseId, until) {
+    const { error } = await supabase.from('purchases').update({ return_until: until || null, return_reminded_at: null }).eq('id', purchaseId)
+    if (error) throw error
   },
   async setPurchaseCategory(id, category) {
     const { error } = await supabase.from('purchases').update({ category: category || null }).eq('id', id)
@@ -1039,6 +1120,48 @@ const cloud = {
     const { data, error } = await supabase.rpc('brand_dashboard', { p_brand_id: brandId, p_days: days, p_min: min })
     if (error) throw error
     return data
+  },
+  // Vörumerkja-gátt: er innskráður notandi skráður hjá vörumerki? → { brand_id, name, role } eða null.
+  async myBrand() {
+    const { data, error } = await supabase.rpc('my_brand')
+    return error ? null : (data || null)
+  },
+  async brandCampaigns(brandId) {
+    const { data, error } = await supabase.rpc('brand_campaigns', { p_brand_id: brandId })
+    if (error) throw error
+    return data || []
+  },
+  async addCampaign(c) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('reward_campaigns').insert({
+      brand_id: c.brand_id, product_id: c.product_id || null, title: (c.title || '').trim(),
+      reward_type: c.reward_type || 'fixed', reward_value: Number(c.reward_value) || 0,
+      starts_on: c.starts_on, ends_on: c.ends_on,
+      max_redemptions: c.max_redemptions ? Number(c.max_redemptions) : null,
+      budget_kr: c.budget_kr ? Number(c.budget_kr) : null,
+      active: true, created_by: user?.email || null,
+    })
+    if (error) throw error
+  },
+  async updateCampaign(id, patch) {
+    const { error } = await supabase.from('reward_campaigns').update(patch).eq('id', id)
+    if (error) throw error
+  },
+  async deleteCampaign(id) {
+    const { error } = await supabase.from('reward_campaigns').delete().eq('id', id)
+    if (error) throw error
+  },
+  async getBrandMembers() {
+    const { data } = await supabase.from('brand_members').select('email,brand_id,role,created_at').order('created_at')
+    return data || []
+  },
+  async addBrandMember(email, brandId, role = 'editor') {
+    const { error } = await supabase.from('brand_members').upsert({ email: (email || '').trim().toLowerCase(), brand_id: brandId, role })
+    if (error) throw error
+  },
+  async removeBrandMember(email, brandId) {
+    const { error } = await supabase.from('brand_members').delete().eq('email', email).eq('brand_id', brandId)
+    if (error) throw error
   },
   // AI-innsýn: { bullets, action } eða { answer } ef spurning fylgir. Gögnin eru samantekin (ekkert persónugreinanlegt).
   async brandInsights(data, { demo = false, question = '' } = {}) {

@@ -135,5 +135,35 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ---- 4. Kvittanasafn: skilafrestur (3 dögum fyrr) og ábyrgð (30 dögum fyrr) — daglega kl. 10 ----
+  if (hour === 10 && firstRunOfHour) {
+    const plusDays = (n: number) => { const d = new Date(now); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
+    const fmtD = (d: string) => { const [y, m, dd] = d.split('-').map(Number); return `${dd}.${m}.${y}` }
+    const canSend = (uid: string) => { const st = setByUser[uid]; return st && !inQuiet(hour, st.quiet_start, st.quiet_end) && subsByUser[uid]?.length }
+
+    const { data: rets } = await db.from('purchases')
+      .select('id,user_id,store,return_until')
+      .in('user_id', userIds).is('return_reminded_at', null)
+      .gte('return_until', todayISO).lte('return_until', plusDays(3))
+    for (const p of rets || []) {
+      if (!canSend(p.user_id)) continue
+      await sendTo(subsByUser[p.user_id], { title: 'Skilafrestur að renna út', body: `${p.store || 'Kvittun'} — síðasti dagur til að skila er ${fmtD(p.return_until)}.`, tag: 'return-' + p.id, url: '/' })
+      await db.from('purchases').update({ return_reminded_at: now.toISOString() }).eq('id', p.id)
+      sentLog.push('return:' + p.id)
+    }
+
+    const { data: wars } = await db.from('purchase_items')
+      .select('id,name,warranty_until,purchases!inner(user_id,store)')
+      .in('purchases.user_id', userIds).is('warranty_reminded_at', null)
+      .gte('warranty_until', todayISO).lte('warranty_until', plusDays(30))
+    for (const it of wars || []) {
+      const uid = (it as any).purchases?.user_id
+      if (!uid || !canSend(uid)) continue
+      await sendTo(subsByUser[uid], { title: 'Ábyrgð að renna út', body: `${it.name} (${(it as any).purchases?.store || 'kvittun'}) — ábyrgðin rennur út ${fmtD(it.warranty_until)}. Er allt í lagi með hlutinn?`, tag: 'warranty-' + it.id, url: '/' })
+      await db.from('purchase_items').update({ warranty_reminded_at: now.toISOString() }).eq('id', it.id)
+      sentLog.push('warranty:' + it.id)
+    }
+  }
+
   return new Response(JSON.stringify({ ok: true, sent: sentLog.length, items: sentLog }), { headers: { 'Content-Type': 'application/json' } })
 })

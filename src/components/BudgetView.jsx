@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 import { ExpIcon, StoreIcon } from '../data/icons.jsx'
-import { IconPlus, IconX, IconReceipt, IconSettings, IconChevronRight, IconChevronDown } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconPhoto, IconPlus, IconReceipt, IconSettings, IconShieldCheck, IconX } from '@tabler/icons-react'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
 const today = () => new Date().toISOString().slice(0, 10)
@@ -53,7 +53,7 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
   const [store, setStore] = useState(initial?.store || '')
   const [date, setDate] = useState(initial?.purchased_at || today())
   const [items, setItems] = useState(() => {
-    const init = (initial?.items || []).map(it => ({ name: it.name || '', price: it.price != null ? String(it.price) : '', category: it.category || null }))
+    const init = (initial?.items || []).map(it => ({ name: it.name || '', price: it.price != null ? String(it.price) : '', category: it.category || null, warranty_until: it.warranty_until || null }))
     return init.length ? init : [{ name: '', price: '', category: null }]
   })
   const [override, setOverride] = useState(initial?.id && !(initial?.items || []).length && initial?.total != null ? String(initial.total) : '')
@@ -70,7 +70,7 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
 
   const save = () => {
     if (!store.trim()) return
-    const its = clean.map(it => ({ name: it.name.trim(), price: num(it.price), category: it.category || itemCategory(it.name) }))
+    const its = clean.map(it => ({ name: it.name.trim(), price: num(it.price), category: it.category || itemCategory(it.name), warranty_until: it.warranty_until || null }))
     onSave({ store: store.trim(), purchased_at: date, total: total || 0, items: its, category: null })
   }
 
@@ -117,7 +117,7 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
   )
 }
 
-export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt }) {
+export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt, onOpenReceipts }) {
   const [period, setPeriod] = useState('all')
   const [mode, setMode] = useState('cat') // 'cat' | 'store'
   const [filterCat, setFilterCat] = useState(null)
@@ -188,6 +188,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
       <div className="bactions">
         <button className="primary-btn" onClick={() => setForm({})}><IconPlus size={18} stroke={2} /> Ný færsla</button>
         {onScanReceipt && <button className="bscan" onClick={onScanReceipt}><IconReceipt size={18} stroke={1.75} /> Skanna</button>}
+        {onOpenReceipts && <button className="bscan" onClick={onOpenReceipts} title="Kvittanir & ábyrgðir" aria-label="Kvittanir og ábyrgðir"><IconShieldCheck size={18} stroke={1.75} /></button>}
       </div>
 
       <div className="bmode">
@@ -230,7 +231,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
               <div className="btx">
                 <button className="btx-exp" onClick={() => items.length && setOpenIds(o => ({ ...o, [p.id]: !o[p.id] }))} aria-label="Sýna liði">{items.length ? (open ? <IconChevronDown size={16} stroke={1.75} /> : <IconChevronRight size={16} stroke={1.75} />) : '·'}</button>
                 <button className="btx-main" onClick={() => setForm(p)}>
-                  <span className="btx-store">{p.store || 'Færsla'}</span>
+                  <span className="btx-store">{p.store || 'Færsla'}{p.receipt_path ? <IconPhoto size={13} stroke={1.9} className="btx-has-img" /> : null}</span>
                   <span className="btx-meta">{fmtDate(p.purchased_at)}{items.length ? ` · ${items.length} liðir` : ''}{payerName(p) ? ' · ' + payerName(p) : ''}</span>
                 </button>
                 <span className="btx-amt">{kr(p.total)}</span>

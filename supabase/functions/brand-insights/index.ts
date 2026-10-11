@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       '- totals.lines = staðfestar kaupalínur, buyers = einstakir kaupendur, receipts = kvittanir, revenue = sala í kr (af kvittunum), units = einingar,',
       '- repeat_rate = hlutfall kaupenda sem keyptu oftar en einu sinni á tímabilinu, new_rate = hlutfall kaupenda sem keyptu vörumerkið í fyrsta sinn á tímabilinu,',
       '- cashback = greitt cashback í kr, by_chain = eftir verslanakeðju, by_product = eftir vöru, basket = vörur sem oft eru keyptar í sömu körfu (share = hlutfall kvittana), by_week = vikuleg þróun.',
+      '- listed = „á lista → keypt": listed = hversu oft vörur vörumerkisins voru settar á innkaupalista á tímabilinu, households = heimili, bought = hversu oft heimilið keypti vöruna innan 14 daga (staðfest með kvittun), rate = hlutfall. Þetta mælir ásetning sem ekki varð að kaupum — sérstaða Gríptu sem engin verslun getur mælt.',
       '- Hópar með færri en min_group kaupendum eru faldir (persónuvernd).',
       ...(demo ? ['ATH: Þetta eru SÝNIDÆMI (tilbúin gögn til kynningar), ekki raunveruleg sala. Talaðu eðlilega um tölurnar en ekki fullyrða að þær séu raunverulegar.'] : []),
       '',

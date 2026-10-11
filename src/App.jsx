@@ -11,6 +11,8 @@ import ReceiptScanner from './components/ReceiptScanner.jsx'
 import AdminView from './components/AdminView.jsx'
 import NotifSettings from './components/NotifSettings.jsx'
 import RewardsView from './components/RewardsView.jsx'
+import ReceiptsView from './components/ReceiptsView.jsx'
+import BrandDashboard from './components/BrandDashboard.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
@@ -209,6 +211,13 @@ export default function App() {
   // Verðlaun (cashback)
   const [myRewards, setMyRewards] = useState(null)
   const [showRewards, setShowRewards] = useState(false)
+  const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
+  // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
+  const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
+  useEffect(() => {
+    if (!isCloud || !session) { setBrandUser(null); return }
+    store.myBrand().then(b => setBrandUser(b || null)).catch(() => setBrandUser(null))
+  }, [session?.user?.email])
   const loadMyRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
   useEffect(() => { if (isCloud && !session) return; loadMyRewards() }, [session])
   // Verðlaunavörulisti (til að sýna cashback-merki í vöruleit)
@@ -595,6 +604,9 @@ export default function App() {
 
   if (!authReady) return null
   if (isCloud && !session) return <Auth />
+  // Vörumerkjanotandi (t.d. Nathan): beint í mælaborðið — hvorki prófíl, samþykki né listar.
+  if (isCloud && session && brandUser === undefined) return null
+  if (isCloud && session && brandUser) return <BrandDashboard brandUser={brandUser} onClose={() => {}} onSignOut={signOut} />
   if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
     return <ProfileSetup initial={profile} onSave={saveProfile} />
   }
@@ -677,13 +689,13 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
           : showBudget
-          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'spending' && isShopping
-              ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+              ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
               : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
@@ -701,6 +713,7 @@ export default function App() {
           onCreateFromTemplate={createFromTemplate}
           onScanReceipt={() => { setShowLists(false); setReceiptListId(null); setShowReceipt(true) }}
           onOpenBudget={() => { setShowLists(false); goBudget() }}
+          onOpenReceipts={() => { setShowLists(false); loadPurchases(); setShowReceipts(true) }}
           userEmail={session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onClose={() => setShowLists(false)}
@@ -748,6 +761,7 @@ export default function App() {
       {showAdmin && <AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} />}
       {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
       {showRewards && <RewardsView onClose={() => setShowRewards(false)} />}
+      {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 

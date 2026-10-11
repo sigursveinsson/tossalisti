@@ -121,6 +121,7 @@ async function visionInvoke(image, mime, products) {
         name: String(i.name || '').trim(),
         price: i.price == null ? null : Number(i.price),
         reward_product_id: i.reward_product_id || null,
+        warranty_years: [2, 5].includes(Number(i.warranty_years)) ? Number(i.warranty_years) : 0,
       })).filter(i => i.name)
     : []
   return { store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null }
@@ -160,7 +161,14 @@ function getOcrWorker() {
 // Satt þegar OCR-worker er tilbúinn (málgangur hlaðinn) — notað til að fela „fyrsta skipti“ skilaboð.
 export function ocrIsReady() { return _ocrReady }
 
+// Mynd til geymslu (kvittanasafn): minnkaður JPEG úr striganum, eða hráa skráin ef hún er hófleg.
+function canvasToBlob(canvas, quality = 0.72) {
+  return new Promise((resolve) => { try { canvas.toBlob(b => resolve(b), 'image/jpeg', quality) } catch (e) { resolve(null) } })
+}
+const ARCHIVE_RAW_MAX = 9 * 1024 * 1024
+
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
+// Skilar líka `archive` (Blob) — mynd af kvittuninni til að geyma í kvittanasafni.
 export async function parseReceipt(file, onProgress, products) {
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
@@ -177,12 +185,16 @@ export async function parseReceipt(file, onProgress, products) {
   if (!image) {
     try { image = await fileToBase64(file); mime = file.type || 'image/jpeg' } catch (e2) { image = null }
   }
+  // Geymslumynd búin til ÁÐUR en OCR-varaleiðin breytir striganum (grátóna).
+  let archive = null
+  if (canvas) archive = await canvasToBlob(canvas)
+  else if (file.size && file.size <= ARCHIVE_RAW_MAX) archive = file
 
   // 1) Sjónlíkan (nákvæmt). Virkar líka þegar afkóðun klikkaði — hráa skráin fer á netþjóninn.
   if (image && supabase && supabase.functions) {
     try {
       const ai = await visionInvoke(image, mime, products)
-      if (ai && ai.items && ai.items.length) return ai
+      if (ai && ai.items && ai.items.length) return { ...ai, archive }
     } catch (e) { /* fall back */ }
   }
 
@@ -192,12 +204,12 @@ export async function parseReceipt(file, onProgress, products) {
     try {
       const worker = await getOcrWorker()
       const { data } = await worker.recognize(enhanceForOcr(canvas))
-      return parseReceiptText(data.text || '')
+      return { ...parseReceiptText(data.text || ''), archive }
     } catch (e) { /* skila tómu */ } finally { _ocrProgress = null }
   }
 
   // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu.
-  return { store: '', items: [], total: null, date: null }
+  return { store: '', items: [], total: null, date: null, archive }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---
@@ -223,4 +235,13 @@ export function matchListItems(listItems, receiptItems) {
     if (hit) ids.push(it.id)
   }
   return ids
+}
+
+// Mynd af kvittun → Blob til geymslu (notað þegar mynd er bætt við eldri færslu).
+export async function makeArchiveImage(file) {
+  if (!file) return null
+  if (file.size && file.size <= 6 * 1024 * 1024) {
+    try { const c = await loadDownscaledCanvas(file, 1200); const b = await canvasToBlob(c); if (b) return b } catch (e) { /* hrátt */ }
+  }
+  return file.size && file.size <= ARCHIVE_RAW_MAX ? file : null
 }

@@ -10,7 +10,7 @@ const matchLabel = (p) => {
   return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'
-import { IconAlertTriangle, IconCamera, IconGift, IconX } from '@tabler/icons-react'
+import { IconAlertTriangle, IconArchive, IconCamera, IconGift, IconShieldCheck, IconX } from '@tabler/icons-react'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const sum = (items) => items.reduce((a, b) => a + (Number(b.price) || 0), 0)
@@ -20,6 +20,10 @@ const dateLooksOff = (d) => {
   const diff = Math.abs(new Date(d + 'T00:00:00').getTime() - new Date(today() + 'T00:00:00').getTime())
   return diff > 31 * 86400000
 }
+// Ábyrgð: dagsetning + N ár (YYYY-MM-DD). Skilafrestur: dagsetning + N dagar.
+const addYears = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCFullYear(x.getUTCFullYear() + n); return x.toISOString().slice(0, 10) }
+const addDays = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10) }
+const nextW = (w) => (w === 0 ? 2 : w === 2 ? 5 : 0)
 const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' }) } catch { return d } }
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
@@ -33,6 +37,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
   const [total, setTotal] = useState('')
   const [saving, setSaving] = useState(false)
   const [dup, setDup] = useState(null)
+  const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
+  const [keepImage, setKeepImage] = useState(true)
+  const [returnDays, setReturnDays] = useState(0) // 0 = enginn skilafrestur skráður
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
 
   useBackClose(true, onClose)
@@ -56,8 +63,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
       const res = await parseReceipt(file, setProgress, prods)
       setStore(res.store || '')
       if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
-      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null }))
+      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
       )
+      setArchive(res.archive || null)
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
       setScannedOnce(true)
@@ -69,17 +77,19 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
 
   const setItem = (id, field, val) => setItems(items.map(it => it.id === id ? { ...it, [field]: val } : it))
   const delItem = (id) => setItems(items.filter(it => it.id !== id))
-  const addRow = () => setItems([...items, { id: 'n_' + Date.now(), name: '', price: '' }])
+  const addRow = () => setItems([...items, { id: 'n_' + Date.now(), name: '', price: '', w: 0 }])
 
   const save = async () => {
     const clean = items
-      .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price), reward_product_id: it.reward_product_id || null }))
+      .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price), reward_product_id: it.reward_product_id || null, warranty_until: it.w ? addYears(date, it.w) : null }))
       .filter(it => it.name)
     const payload = {
       store: store.trim(),
       purchased_at: date,
       total: total === '' ? sum(clean) : Number(total),
       items: clean,
+      return_until: returnDays ? addDays(date, returnDays) : null,
+      archive: keepImage ? archive : null,
     }
     setSaving(true)
     try {
@@ -133,6 +143,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
                     <div className={'receipt-row' + (mp ? ' is-match' : '')}>
                       <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
                       <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
+                      <button className={'receipt-warr' + (it.w ? ' on' : '')} onClick={() => setItem(it.id, 'w', nextW(it.w || 0))} title="Ábyrgð: ýttu til að skipta (engin / 2 ár / 5 ár)" aria-label="Ábyrgð">
+                        <IconShieldCheck size={16} stroke={1.75} />{it.w ? <span>{it.w} ár</span> : null}
+                      </button>
                       <button className="receipt-del" onClick={() => delItem(it.id)} aria-label="Eyða"><IconX size={16} stroke={1.75} /></button>
                     </div>
                     {mp && <div className="receipt-match"><IconGift size={13} stroke={2} />{matchLabel(mp)}</div>}
@@ -141,6 +154,16 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
               })}
             </div>
             <button className="receipt-addrow" onClick={addRow}>+ Bæta við línu</button>
+            {items.some(i => i.w) && <p className="receipt-hint"><IconShieldCheck size={14} stroke={1.9} /> Gervigreindin merkti vörur með ábyrgð. Þú færð áminningu mánuði áður en hún rennur út.</p>}
+            <div className="receipt-return">
+              <span>Skilafrestur</span>
+              <div className="seg-mini">
+                {[0, 14, 30].map(d => <button key={d} className={returnDays === d ? 'on' : ''} onClick={() => setReturnDays(d)}>{d ? d + ' dagar' : 'Enginn'}</button>)}
+              </div>
+            </div>
+            {archive && (
+              <label className="receipt-keep"><input type="checkbox" checked={keepImage} onChange={e => setKeepImage(e.target.checked)} /> <IconArchive size={16} stroke={1.75} /> Geyma mynd af kvittun (aðeins þú og heimilið sjáið hana)</label>
+            )}
             <div className="receipt-total">
               <span>Samtals</span>
               <input value={total} onChange={e => setTotal(e.target.value)} placeholder={String(sum(items.map(i => ({ price: i.price }))))} inputMode="decimal" />

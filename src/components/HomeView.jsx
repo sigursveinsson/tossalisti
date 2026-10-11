@@ -1,6 +1,7 @@
 import React from 'react'
 import AdBanner from './AdBanner.jsx'
-import { IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShoppingCart, IconUsers } from '@tabler/icons-react'
+import { receiptAlerts } from './ReceiptsView.jsx'
+import { IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -38,7 +39,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, onScanReceipt }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, onScanReceipt, onOpenReceipts }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -57,6 +58,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
   const hasShopping = lists.some(l => l.type === 'shopping')
 
   const groups = groupFeed(s.feed)
+  const alerts = receiptAlerts(purchases)
 
   const typeIcon = (t) => { const I = t === 'schedule' ? IconCalendar : t === 'task' ? IconChecklist : IconShoppingCart; return <I size={20} stroke={1.75} /> }
   const Go = () => <span className="home-row-go"><IconChevronRight size={18} stroke={1.75} /></span>
@@ -78,6 +80,17 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           {cashback > 0
             ? <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
             : <span className="home-cashback-txt"><small>Nýtt: Gríptu cashback</small><b>Fáðu til baka af innkaupum</b></span>}
+          <Go />
+        </button>
+      )}
+
+      {onOpenReceipts && alerts.length > 0 && (
+        <button className="home-invite home-alert" onClick={() => onOpenReceipts()}>
+          <span className="home-invite-ic">{alerts[0].kind === 'return' ? <IconArrowBackUp size={22} stroke={1.75} /> : <IconShieldCheck size={22} stroke={1.75} />}</span>
+          <span className="home-invite-txt">
+            <b>{alerts[0].kind === 'return' ? `Skilafrestur: ${alerts[0].label}` : `Ábyrgð: ${alerts[0].label}`}</b>
+            <small>Rennur út {alerts[0].days === 0 ? 'í dag' : `eftir ${alerts[0].days} ${alerts[0].days === 1 ? 'dag' : 'daga'}`}{alerts.length > 1 ? ` · ${alerts.length - 1} í viðbót` : ''}</small>
+          </span>
           <Go />
         </button>
       )}

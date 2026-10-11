@@ -1,0 +1,15 @@
+-- Vörumerkja-gátt (11. okt 2026). ÞEGAR Í LOFTINU (migrations brand_users_and_campaigns + brand_dashboard_v2_listed).
+-- Heimild fyrir það sem er í gagnagrunninum. Sjá líka brand_dashboard.sql (v1).
+--
+-- 1. brand_members: netfang → vörumerki (role viewer|editor). Stjórnandi skráir; notandi með
+--    það netfang fær aðgang að SÍNU vörumerki þegar hann skráir sig inn.
+-- 2. is_admin(), my_brand(), is_brand_member(brand, editor)
+-- 3. reward_campaigns: herferðir með tímabili, þaki (max_redemptions) og fjárhagsramma (budget_kr).
+--    Vörumerki með role=editor stofnar/breytir sjálft (RLS). reward_earnings.campaign_id.
+-- 4. brand_campaigns(brand): staða herferða (live/upcoming/done/capped/off) + innlausnir + eytt kr.
+-- 5. brand_dashboard v2: opið fyrir vörumerkjanotendur (is_brand_member) og nýtt svið „listed":
+--    { listed, households, bought, rate, insufficient, by_product[] } = vörur settar á innkaupalista
+--    á tímabilinu og hvort heimilið keypti innan 14 daga (staðfest af kvittun). k-nafnleysi á heimilum.
+--
+-- Full SQL: sjá migrations í Supabase (Database → Migrations):
+--   brand_users_and_campaigns, brand_dashboard_v2_listed
