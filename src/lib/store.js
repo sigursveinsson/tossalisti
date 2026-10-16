@@ -56,8 +56,10 @@ export function rewardForName(name, products) {
   if (!n) return null
   return (products || []).find(p => {
     if (p.active === false) return false
+    if (p.status && p.status !== 'approved') return false
+    // Hvert leitarorð er valkostur (eitt dugar); orð með bili = öll orðin verða að vera í línunni. (Sama og kw_match í SQL.)
     const kws = (p.match_keywords || []).filter(Boolean)
-    return kws.length > 0 && kws.every(k => n.includes(normMatch(k)))
+    return kws.some(k => { const ws = String(k).split(/\s+/).map(normMatch).filter(Boolean); return ws.length > 0 && ws.every(w => n.includes(w)) })
   }) || null
 }
 
@@ -487,6 +489,7 @@ const local = {
   async brandInsights() { return null },
   async myBrand() { return null },
   async brandCampaigns() { return [] },
+  async brandProducts() { return [] }, async brandLiveCounts() { return null }, async reviewRewardProduct() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {},
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
@@ -673,48 +676,15 @@ const cloud = {
     }
     // Kvittanasafn: geyma mynd af kvittuninni (einkageymsla, aðeins eigandi og meðlimir lista sjá).
     if (p.archive) { try { pr.receipt_path = await cloud.uploadReceiptImage(pr.id, p.archive) } catch (e) { /* myndin er valkvæð */ } }
-    // Verðlaun (cashback) — aðeins ef kveikt er á kerfinu
-    let earned = 0
+    // Verðlaun (cashback) eru reiknuð á NETÞJÓNI (award_purchase): pörun, herferðir, þak, fjárhagsrammi
+    // og svikavörn (tvítekin kvittun, 14 daga aldur, 3 kvittanir á dag, 5 stk. á vöru). Notandi getur ekki skrifað stig sjálfur.
+    let earned = 0, rewardNote = null
     try {
-      const { data: rs } = await supabase.from('app_settings').select('value').eq('key', 'rewards_enabled').maybeSingle()
-      if (rs && rs.value === true) {
-        const { data: prods } = await supabase.from('reward_products').select('id,name,brand_id,match_keywords,reward_type,reward_value,active').eq('active', true)
-        // Herferðir ráða: ef vara/vörumerki á herferðir gildir aðeins herferð sem er Í GANGI (dagsetning + þak).
-        // Vara án herferða heldur eigin verðlaunum (afturábak-samhæft).
-        const today = (p.purchased_at || new Date().toISOString().slice(0, 10))
-        const { data: camps } = await supabase.from('reward_campaigns').select('id,brand_id,product_id,reward_type,reward_value,starts_on,ends_on,max_redemptions,budget_kr,active')
-        const all = camps || []
-        const hasCamp = (prod) => all.some(c => c.brand_id === prod.brand_id && (!c.product_id || c.product_id === prod.id))
-        const liveFor = async (prod) => {
-          const cands = all.filter(c => c.active && c.brand_id === prod.brand_id && (!c.product_id || c.product_id === prod.id) && c.starts_on <= today && c.ends_on >= today)
-            .sort((a, b) => (a.product_id ? 0 : 1) - (b.product_id ? 0 : 1)) // vöru-sértæk herferð á undan vörumerkis-herferð
-          for (const c of cands) {
-            if (c.max_redemptions == null && c.budget_kr == null) return c
-            const { data: used } = await supabase.from('reward_earnings').select('value').eq('campaign_id', c.id).neq('status', 'rejected')
-            const n = (used || []).length, spent = (used || []).reduce((s, e) => s + Number(e.value || 0), 0)
-            if ((c.max_redemptions == null || n < c.max_redemptions) && (c.budget_kr == null || spent < c.budget_kr)) return c
-          }
-          return null
-        }
-        const effective = []
-        for (const prod of (prods || [])) {
-          if (!hasCamp(prod)) { effective.push(prod); continue }
-          const c = await liveFor(prod)
-          if (c) effective.push({ ...prod, reward_type: c.reward_type, reward_value: c.reward_value, campaign_id: c.id })
-        }
-        const matches = matchRewards(p.items, effective)
-        if (matches.length) {
-          const rows = matches.map(m => ({
-            user_id: user.id, purchase_id: pr.id, brand_id: m.brand_id, product_id: m.product_id,
-            product_name: m.product_name, qty: m.qty, value: m.value, status: 'pending', campaign_id: m.campaign_id || null,
-          }))
-          const { error: ee } = await supabase.from('reward_earnings').insert(rows)
-          if (ee) await supabase.from('reward_earnings').insert(rows.map(({ campaign_id, ...r }) => r))
-          earned = matches.reduce((s, m) => s + m.value, 0)
-        }
-      }
+      const { data: aw } = await supabase.rpc('award_purchase', { p_purchase: pr.id })
+      earned = Number(aw && aw.earned) || 0
+      rewardNote = (aw && aw.reason) || null
     } catch {}
-    return { ...pr, earned }
+    return { ...pr, earned, rewardNote }
   },
   async getMyRewards() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -1097,10 +1067,11 @@ const cloud = {
     })
     if (error) throw error
   },
-  async uploadRewardImage(file) {
+  // Myndir: stjórnandi í eigin möppu; vörumerki í möppu brand_id (RLS: brand_folder_ok).
+  async uploadRewardImage(file, brandId) {
     const { data: { user } } = await supabase.auth.getUser()
     const ext = ((file.name || 'img.jpg').split('.').pop() || 'jpg').toLowerCase()
-    const path = `${user?.id || 'anon'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const path = `${brandId || user?.id || 'anon'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
     const { error } = await supabase.storage.from('reward-products').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' })
     if (error) throw error
     const { data } = supabase.storage.from('reward-products').getPublicUrl(path)
@@ -1108,7 +1079,7 @@ const cloud = {
   },
   async lookupBarcode(bc) { return offLookup(bc) },
   async getRewardCatalog() {
-    const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true)
+    const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true).eq('status', 'approved')
     return data || []
   },
   async getRewardBrands() {
@@ -1151,6 +1122,22 @@ const cloud = {
     const { error } = await supabase.from('reward_campaigns').delete().eq('id', id)
     if (error) throw error
   },
+  // Vörur vörumerkis (sér allar sínar: pending/approved/rejected). Nýjar/breyttar vörur fara sjálfkrafa í bið (trigger).
+  async brandProducts(brandId) {
+    const { data, error } = await supabase.from('reward_products').select('*').eq('brand_id', brandId).order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+  // Snemmbúin talning án sundurliðunar: { receipts, units, points, today, last_at } — birtist frá fyrsta degi.
+  async brandLiveCounts(brandId) {
+    const { data, error } = await supabase.rpc('brand_live_counts', { p_brand: brandId })
+    return error ? null : (data || null)
+  },
+  // Samþykkt stjórnanda á vörum í bið.
+  async reviewRewardProduct(id, status, note) {
+    const { error } = await supabase.from('reward_products').update({ status, review_note: note || null, active: status === 'approved' }).eq('id', id)
+    if (error) throw error
+  },
   async getBrandMembers() {
     const { data } = await supabase.from('brand_members').select('email,brand_id,role,created_at').order('created_at')
     return data || []
@@ -1172,7 +1159,7 @@ const cloud = {
   // Listi fyrir AI-pörun í kvittanalestri: [{ id, name, brand, image_url, reward_type, reward_value }].
   async getRewardMatchList() {
     const [{ data: prods }, { data: brands }] = await Promise.all([
-      supabase.from('reward_products').select('id,name,brand_id,image_url,reward_type,reward_value').eq('active', true),
+      supabase.from('reward_products').select('id,name,brand_id,image_url,reward_type,reward_value').eq('active', true).eq('status', 'approved'),
       supabase.from('reward_brands').select('id,name'),
     ])
     const bn = new Map((brands || []).map(b => [b.id, b.name]))

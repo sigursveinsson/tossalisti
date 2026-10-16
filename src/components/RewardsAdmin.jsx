@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
-import { IconBarcode, IconCamera, IconGift, IconSearch, IconShoppingBag, IconX } from '@tabler/icons-react'
+import { IconBarcode, IconCamera, IconCheck, IconGift, IconSearch, IconShoppingBag, IconX } from '@tabler/icons-react'
 
 // Býr til leitarorð úr heiti + stærð (t.d. "Pepsi Max" + "330 ml" → pepsi, max, 330).
 const STOP = new Set(['ml', 'cl', 'dl', 'og', 'the', 'kg', 'gr', 'stk', 'dos', 'dós', 'box', 'pk', 'pakki'])
@@ -130,9 +130,39 @@ export default function RewardsAdmin({ onClose }) {
           <button className={'adm-ads-switch' + (enabled ? ' on' : '')} onClick={toggleEnabled} aria-label="Kveikja/slökkva" />
         </div>
 
+        {data.products.some(p => p.status === 'pending') && (
+          <>
+            <div className="adm-head">Bíða samþykkis <small className="rw-pendcount">{data.products.filter(p => p.status === 'pending').length}</small></div>
+            <p className="muted-p">Vörur sem heildsali skráði sjálfur. Yfirfarðu leitarorðin — þau ráða hvaða kvittanalínur gefa stig.</p>
+            <div className="rw-prodlist">
+            {data.products.filter(p => p.status === 'pending').map(p => (
+              <div className="rw-prod rw-pending" key={p.id}>
+                <div className="rw-prod-top">
+                  {p.image_url ? <img className="rw-thumb" src={p.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
+                  <div className="rw-prod-id">
+                    <b>{p.name}</b>
+                    <small>{[p.size, p.barcode].filter(Boolean).join(' · ') || 'engin stærð/strikamerki'}{p.submitted_by ? ` · frá ${p.submitted_by}` : ''}</small>
+                  </div>
+                </div>
+                <div className="rw-kwedit-row">
+                  <span className="rw-kwlbl">Passar við</span>
+                  <input className="rw-kwedit" defaultValue={(p.match_keywords || []).join(', ')}
+                    onBlur={e => { const kws = e.target.value.split(',').map(s => s.trim()).filter(Boolean); if (kws.join('|') !== (p.match_keywords || []).join('|')) setField(p, { match_keywords: kws }) }} />
+                </div>
+                <div className="rw-prod-row">
+                  <span className="rw-unit">{p.reward_type === 'percent' ? `${p.reward_value}% af verði` : `${p.reward_value} stig per eining`}</span>
+                  <button className="primary-btn rw-approve" onClick={async () => { await store.reviewRewardProduct(p.id, 'approved'); load() }}><IconCheck size={15} stroke={2.2} /> Samþykkja</button>
+                  <button className="ghost-btn" onClick={async () => { const note = window.prompt('Athugasemd til heildsalans (valfrjálst):', ''); if (note === null) return; await store.reviewRewardProduct(p.id, 'rejected', note); load() }}>Hafna</button>
+                </div>
+              </div>
+            ))}
+            </div>
+          </>
+        )}
+
         <div className="adm-head">Verðlaunavörur</div>
         <div className="rw-prodlist">
-        {data.products.map(p => (
+        {data.products.filter(p => p.status !== 'pending').map(p => (
           <div className="rw-prod" key={p.id}>
             <div className="rw-prod-top">
               {p.image_url ? <img className="rw-thumb" src={p.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}

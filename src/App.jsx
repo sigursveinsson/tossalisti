@@ -13,6 +13,7 @@ import NotifSettings from './components/NotifSettings.jsx'
 import RewardsView from './components/RewardsView.jsx'
 import ReceiptsView from './components/ReceiptsView.jsx'
 import BrandDashboard from './components/BrandDashboard.jsx'
+import GriptuLanding from './components/GriptuLanding.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
@@ -214,6 +215,9 @@ export default function App() {
   const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
   // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
   const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
+  const isGriptu = typeof window !== 'undefined' && (/griptu\./i.test(window.location.hostname) || new URLSearchParams(window.location.search).has('griptu'))
+  const [griptuDash, setGriptuDash] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('griptu') === 'dash')
+  useEffect(() => { if (isGriptu && brandUser) setGriptuDash(true) }, [brandUser]) // vörumerkjanotandi: beint í mælaborð eftir innskráningu
   useEffect(() => {
     if (!isCloud || !session) { setBrandUser(null); return }
     store.myBrand().then(b => setBrandUser(b || null)).catch(() => setBrandUser(null))
@@ -396,6 +400,22 @@ export default function App() {
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
   // ReceiptScanner skráir sig sjálfur í bakk-staflann (engin tvískráning hér).
+
+  // ?add=Vöruheiti (frá griptu.is „Á listann"): bæta á fyrsta innkaupalistann þegar allt er hlaðið, einu sinni.
+  const pendingAdd = useRef(typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('add') : null)
+  useEffect(() => {
+    const name = pendingAdd.current
+    if (!name || loading || !lists.length) return
+    pendingAdd.current = null
+    const target = (list && list.type === 'shopping') ? list : lists.find(l => l.type === 'shopping')
+    if (!target) return
+    ;(async () => {
+      if (target.id !== currentId) { setView('list'); setCurrentId(target.id); setTab('list') }
+      if (target.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum') }
+      else { await store.addItem(target.id, name, { dept: departmentFor(name) }); await reload(target.id); flash(name + ' sett á listann') }
+      try { window.history.replaceState({}, '', window.location.pathname) } catch (e) {}
+    })()
+  }, [loading, lists.length])
 
   const addItem = async (name, weekday, time, assignee, image, scannedDept) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
@@ -603,6 +623,16 @@ export default function App() {
   }
 
   if (!authReady) return null
+  // griptu.is — framdyr vörumerkja. Sama kóði, annað lén (eða ?griptu til að keyra local).
+  if (isGriptu) {
+    const adminHere = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
+    if (isCloud && session && brandUser === undefined) return null
+    if (isCloud && session && (brandUser || adminHere) && griptuDash) {
+      return <BrandDashboard brandUser={brandUser || null} onClose={() => setGriptuDash(false)} onSignOut={signOut} />
+    }
+    return <GriptuLanding session={isCloud ? session : null} onSignOut={signOut}
+      onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
+  }
   if (isCloud && !session) return <Auth />
   // Vörumerkjanotandi (t.d. Nathan): beint í mælaborðið — hvorki prófíl, samþykki né listar.
   if (isCloud && session && brandUser === undefined) return null

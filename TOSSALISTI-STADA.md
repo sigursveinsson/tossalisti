@@ -25,6 +25,42 @@ _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með 
   - CSS: blokkir „Hönnunarkerfi 2/3/4" neðst í `index.css`.
 - Staðfest: babel-parse á öllum skrám + keyrslupróf (react-dom/server) á 26 íhlutum, allir rendera. Forskoðun: `honnun-skjair-forskodun.html` (Heim, Bókhald, Listapanell).
 
+## CASHBACK-KJARNI, ÁFANGI 1 (16. okt 2026) — bakendi Í LOFTINU, framendi BÍÐUR DEPLOY-S
+_Röðin sem ákveðin var: tillaga til Nathan fyrst → smíða á meðan → uppsetningarfundur þar sem Nathan skráir vörurnar sjálf → 50–100 þátttakendur → 6–8 vikna tilraun. Sverrir vill sjá þetta virka áður en farið er af stað._
+- ✅ **Stig reiknuð á netþjóni** (migration `server_side_rewards_and_brand_products`): `award_purchase(purchase_id)` SECURITY DEFINER. Notendur hafa aðeins SELECT á `reward_earnings` — öryggisgatið (⚠️ hér fyrir neðan) er lokað. Svikavörn innbyggð: einu sinni á kvittun, sama fingrafar gefur ekki aftur, kvittun 0–14 daga, hámark 3 kvittanir/dag, 5 stk. af vöru á kvittun, aðeins samþykktar vörur. Herferðir með þaki/ramma læstar með FOR UPDATE. `store.addPurchase` kallar á RPC og skilar `{earned, rewardNote}`.
+- ✅ **Vörur-flipi fyrir heildsala** (`BrandProducts.jsx`): heildsali skráir vöru (strikamerki → Open Food Facts, mynd í eigin möppu, leitarorð með skýringu, grunnstig). Ný/breytt vara fer sjálfkrafa í **bið** (trigger) og birtist hvorki notendum né á griptu.is fyrr en stjórnandi samþykkir. Heildsali getur ekki samþykkt sjálfur. **RewardsAdmin** fékk „Bíða samþykkis“-lista með Samþykkja/Hafna (+ athugasemd sem heildsalinn sér).
+- ✅ **Leitarorð — ný regla:** hvert leitarorð er valkostur (eitt dugar); orð með bili þurfa öll að koma fyrir. `kw_match()` í SQL = `rewardForName()` í JS. Breytt í gögnum: `mild,salsa` → `mild salsa`, `lucky,saint` → `lucky saint`. brand_dashboard notar sömu reglu.
+- ✅ **Snemmbúin talning** (`brand_live_counts`): grænn borði efst í Yfirliti — „12 kvittanir með ykkar vörum · 20 einingar · 980 stig · 3 í dag · síðast fyrir 5 mín“. Engin sundurliðun → engin k-regla þarf → Nathan sér frá fyrsta degi að eitthvað gerist.
+- Prófað með hermdu JWT (allt rúllað til baka): vörumerki-insert → pending ✓, sjálfssamþykkt hunsuð ✓, insert á annað vörumerki blokkað ✓, notandi sér ekki pending ✓, award 2×Cheerios=120 ✓, aftur → 'already' ✓, beint insert í earnings blokkað ✓, update 0 raðir ✓, tvítekið fingrafar → 'duplicate' ✓, 30 daga gömul → 'too_old' ✓, live_counts rétt ✓.
+- Skjölun: `supabase/server_rewards.sql`.
+- **Næst í kjarnanum:** útleysing gjafakörfu (800 stig → beiðni → samþykkt → afhent), Gríptu-skjár notanda með framvindu, boðskóði fyrir pilot-hóp (`pilot_invites`), PDF-skýrsla úr mælaborði.
+- **Fyrir uppsetningarfund með Nathan:** skrá netföng þeirra í Aðgangur-flipann sem `editor`, kveikja `rewards_enabled` þegar herferðin á að byrja (er slökkt núna).
+
+## ★★★ NATHAN SAGÐI JÁ (13. okt 2026) — PILOT Í UNDIRBÚNINGI
+_Fundurinn gekk mjög vel. Nathan er til í samstarf. Þetta opnar cashback-kjarnann (⛔ áður gated á þessu samtali)._
+- **Form:** styttra átak (4–6 vikur) með völdum vörum sem Nathan vill prófa. Notendur fá **stig** fyrir að kaupa vörurnar og skanna kvittun. **Útleysing: gjafakarfa** með Nathan-vörum þegar stigaþröskuldi er náð. → Lokað kerfi (vara, ekki peningar): engin rafeyris-regla, Nathan á útleysinguna sjálft, svik hrynja (karfa er ekki reiðufé).
+- **Fjármögnun:** Nathan leggur til körfurnar + **þjónustugjald ~50 þ.kr** til Gríptu (skönnun/AI, gagnageymsla, mælaborð, uppgjör). Ekki rætt í smáatriðum — setja í tilboð.
+- **Notendur:** Sverrir var hógvær: **50–100 manns í pilot-hóp**, slípa kerfið áður en farið er í loftið í alvöru. Nathan tók því vel.
+- **Keðjur/verð:** lítil áhyggja hjá Nathan. Bentu á að verð eru þegar opinber í vefverslunum → verðbirting minna „issue" en við reiknuðum með. **Regla heldur samt í pilot** (engin verðbirting) — endurskoða eftir pilot, ekki fyrr.
+- **Hugmynd Sverris (13. okt):** láta pilotinn líka ná yfir **borða (banner) + kostaðar vörur** — Nathan vill örugglega sjá hvernig það kemur út. Tillaga: EKKI sem „krafa" heldur einn **pilot-pakki** á einu verði (t.d. ~75 þ.kr): stigaátak + 2–3 kostaðar vörur (leit/rödd/uppskriftir, alltaf merktar) + borði + mælaborð + lokaskýrsla með samanburði á rásunum. Eftir pilot: verðskrá per rás. Varúð: með 50–100 notendum verða tölur um kostun/borða þunnar — segja það fyrirfram.
+- **Næsta skref:** setja upp plan + tilboð/pilot-lýsingu til Nathan. Tengiliður: óstaðfest (Hildur markaður / Arnar sala).
+- **Hönnunarákvarðanir sem fylgja (cashback-kjarni, útgáfa 1 = pilot):**
+  1. Stig reiknuð á NETÞJÓNI (ekki í síma) — öryggi; notandi má aðeins LESA `reward_earnings`.
+  2. Herferð = tilboð Nathan (til í kerfinu): vörur, stig per eining, tímabil, þak. Pilot-hópur = boðskóði (`pilot_invites`), aðeins þeir safna.
+  3. Gríptu-skjár notanda: „X stig af Y → gjafakarfa", framvinda, hvað gefur stig, saga. Við þröskuld: „Leysa út" → beiðni (nafn + afhending: sækja hjá Nathan / heimsending) → stjórnandi/Nathan samþykkir → afhent → merkt.
+  4. Svikavörn lágmark: fingrafar kvittana (til), sama kvittun hjá tveimur notendum → flagga, hámark kvittana/dag, dagsetning innan átaks, handsamþykkt áður en karfa fer út (með kvittanamynd — kvittanageymslan nýtist).
+  5. Mæling: 50–100 manns er of fátt fyrir samanburðarhóp → mæla í staðinn: kvittanir skannaðar, einingar staðfestar, hlutfall sem keypti tvisvar+, á lista → keypt, nýir kaupendur (fyrsta kaup í gögnum), fyrir/eftir samanburður hjá sömu notendum. Vera heiðarleg um takmörk.
+  6. Skýrsla til Nathan í lok: PDF úr mælaborði (útflutningur vantar enn).
+- **Gríptu-flipi fyrir neytendur** þarf að verða sýnilegri (nú hnappur á heimaskjá) — pilot-fólk þarf að finna stigin strax.
+
+## GRIPTU.IS — FRAMDYR VÖRUMERKJA (11. okt 2026) — AÐEINS LOCAL ENN, ekki í loftinu
+- **Ákvörðun:** EITT app, einn notendahópur, tvær framdyr. Gríptu er (a) nafn umbunarhlutans inni í Tossalista fyrir neytendur og (b) sjálfstætt B2B-vörumerki á griptu.is fyrir heildsala (okkar business.fetch.com). EKKI sérstakt neytendaapp — markaðurinn of lítill til að skipta, listinn er það sem heldur fólki, og „á lista → keypt" er aðeins til af því að listi og kvittun eru í sama appi.
+- **Neytandinn fyrst** (ákvörðun Sverris): griptu.is er þar sem fólk skoðar Gríptu-tilboðin — eins og Discover hjá Fetch. `GriptuOffers.jsx`: LIFANDI úr gagnagrunni (reward_products virkar + reward_campaigns í gangi ráða upphæð), flokkað eftir vörumerki, mynd, „+60 kr"/„15% til baka", gildir til, leit, og **„Á listann"** → `tossalisti.is/?add=Vöruheiti` → appið setur vöruna á fyrsta innkaupalistann (App.jsx `pendingAdd`). Opið öllum, engin innskráning.
+- `GriptuLanding.jsx`: hero (gæsin, „Fáðu til baka af vörunum sem þú kaupir hvort eð er"), tilboðin, 3 skref fyrir neytendur, svo B2B-hluti neðar: 4 stoðir, mælaborðs-mock, 3 skref fyrir vörumerki, pilot-kassi, innskráning samstarfsaðila (→ mælaborð) og „Bóka kynningu". Myndir í `public/griptu/`.
+- **Kveikja:** birtist þegar lénið inniheldur „griptu." EÐA slóðin hefur `?griptu`. tossalisti.is breytist ekkert. `?griptu=dash` opnar mælaborðið beint (stjórnandi).
+- **Keyra local:** `npm run dev` → http://localhost:5173/?griptu . Innskráning með eigin netfangi (stjórnandi) → „Mælaborð"-hnappur. Vörumerkjanotandi fer sjálfkrafa í mælaborðið eftir innskráningu.
+- **Þegar sett í loftið:** benda griptu.is (DNS) á sama Netlify-vef + bæta léninu við í Netlify → kveikjan á hostname sér um afganginn. Fetch-fyrirmynd: eitt neytendaapp, sér vefur fyrir vörumerki.
+
 ## VÖRUMERKJA-GÁTT (11. okt 2026) — bakendi Í LOFTINU, framendi BÍÐUR DEPLOY-S
 _Þrjú atriði sem vantaði til að heildsali gæti gert eitthvað SJÁLFUR (ekki bara horft á demo hjá Sverri)._
 - **1. Innskráning vörumerkja.** `brand_members(email, brand_id, role viewer|editor)`. Stjórnandi skráir netfang í Stjórnborði → Verðlaunakerfi → „Aðgangur vörumerkja". Þegar viðkomandi skráir sig inn í Gríptu (Google/magic link) með því netfangi fer hann BEINT í mælaborð síns vörumerkis — sér hvorki lista, kvittanir né annað (RLS prófað: 0 kvittanir, 0 listar). Vörumerkjanotandi sér EKKI skiptingu eftir keðjum (aðeins stjórnandi) — í samræmi við „gögn aðeins samanlögð".
@@ -44,7 +80,7 @@ _Þrjú atriði sem vantaði til að heildsali gæti gert eitthvað SJÁLFUR (ek
 - **Persónuvernd:** kvittanamyndir fara ALDREI til vörumerkja, ekki einu sinni samanteknar.
 - **Seinna:** rafrænar kvittanir beint frá verslunum (krefst samninga), PDF-kvittanir úr tölvupósti, ábyrgðarskírteini sem sér skjal.
 - ✅ **Öryggi lagað 11. okt** (migration `reward_products_storage_admin_only`): geymslusvæðið `reward-products` leyfði insert/update/delete án innskráningar → nú aðeins stjórnandi (lesa áfram opið).
-- ⚠️ **Öryggi — áður en cashback fer í raunnotkun:** `reward_earnings` leyfir notanda að skrifa eigin færslur (insert/update), þ.e. hann gæti breytt upphæð/stöðu. Á meðan cashback er sýnidæmi er það í lagi, en í cashback-kjarnanum þarf að færa útreikning á netþjón (edge function / security definer) og leyfa notanda aðeins að LESA.
+- ✅ **Öryggi lagað 16. okt** (sjá „Cashback-kjarni, áfangi 1“): `reward_earnings` er nú aðeins lesanleg fyrir notanda; stig reiknuð í `award_purchase()` á netþjóni.
 - `.gitignore`: `research_notes/` og `reports/` (rannsóknarvinna fer ekki í repo).
 
 ## HUGMYNDIR TIL AÐ BÆTA TOSSALISTA/GÆSINA (11. okt 2026) — forgangur: HEILDSALAR FYRST

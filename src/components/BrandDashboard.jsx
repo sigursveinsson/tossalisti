@@ -5,6 +5,16 @@ import { demoDashboard } from '../lib/brandDemo.js'
 import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout, IconPlus, IconX, IconListCheck } from '@tabler/icons-react'
 import Campaigns from './BrandCampaigns.jsx'
 import BrandAccess from './BrandAccess.jsx'
+import BrandProducts from './BrandProducts.jsx'
+import { IconReceipt } from '@tabler/icons-react'
+
+const timeAgo = (iso) => {
+  if (!iso) return ''
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (m < 2) return 'rétt í þessu'; if (m < 60) return `fyrir ${m} mín`
+  const h = Math.round(m / 60); if (h < 24) return `fyrir ${h} klst`
+  const d = Math.round(h / 24); return d === 1 ? 'í gær' : `fyrir ${d} dögum`
+}
 
 // Vörumerkja-mælaborð (Gríptu fyrir heildsala). Allar tölur koma úr gagnagrunninum
 // (brand_dashboard, k-nafnleysi). Gervigreindin útskýrir aðeins tölurnar.
@@ -28,7 +38,9 @@ const QUESTIONS = [
 export default function BrandDashboard({ onClose, brandUser = null, onSignOut }) {
   useBackClose(true, onClose)
   const isBrandUser = !!brandUser
-  const [tab, setTab] = useState('overview') // overview | campaigns | access
+  const [tab, setTab] = useState('overview') // overview | products | campaigns | access
+  const [live, setLive] = useState(null) // snemmbúin talning án sundurliðunar (brand_live_counts)
+  const [prodVer, setProdVer] = useState(0)
   const [brands, setBrands] = useState([])
   const [products, setProducts] = useState([])
   const [brandId, setBrandId] = useState('')
@@ -53,7 +65,14 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
       const nathan = (b || []).find(x => /nathan/i.test(x.name))
       setBrandId((nathan || (b || [])[0] || {}).id || '')
     }).catch(() => setErr('Gat ekki sótt vörumerki.'))
-  }, [])
+  }, [prodVer])
+
+  // Talning frá fyrsta degi (engin sundurliðun, engin k-regla þarf): sýnir að eitthvað er að gerast.
+  useEffect(() => {
+    if (!brandId) return
+    setLive(null)
+    store.brandLiveCounts(brandId).then(setLive).catch(() => setLive(null))
+  }, [brandId, prodVer])
 
   // Raungögn úr gagnagrunninum
   useEffect(() => {
@@ -117,6 +136,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
 
         <div className="bd-tabs">
           <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Yfirlit</button>
+          <button className={tab === 'products' ? 'on' : ''} onClick={() => setTab('products')}>Vörur</button>
           <button className={tab === 'campaigns' ? 'on' : ''} onClick={() => setTab('campaigns')}>Herferðir</button>
           {!isBrandUser && <button className={tab === 'access' ? 'on' : ''} onClick={() => setTab('access')}>Aðgangur</button>}
         </div>
@@ -144,6 +164,17 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
 
         {tab === 'overview' && loading && <div className="bd-empty">Sæki gögn…</div>}
         {tab === 'overview' && err && <div className="bd-empty">{err}</div>}
+
+        {tab === 'overview' && !isDemo && live && (
+          <div className="bd-live">
+            <IconReceipt size={18} stroke={1.8} className="bd-h-ico" />
+            <div>
+              <b>{num(live.receipts)}</b> {live.receipts === 1 ? 'kvittun' : 'kvittanir'} með ykkar vörum hingað til · <b>{num(live.units)}</b> einingar · <b>{num(live.points)}</b> stig veitt
+              {live.today > 0 && <> · <b>{num(live.today)}</b> í dag</>}
+              {live.last_at && <span className="bd-muted"> · síðast {timeAgo(live.last_at)}</span>}
+            </div>
+          </div>
+        )}
 
         {tab === 'overview' && data && data.insufficient && !isDemo && (
           <div className="bd-empty">
@@ -267,6 +298,19 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
                 {data.basket.length === 0 && <span className="bd-muted">Of fá gögn til að sýna körfu.</span>}
               </div>
             </div>
+          </>
+        )}
+
+        {tab === 'products' && brandId && (
+          <>
+            {!isBrandUser && (
+              <div className="bd-controls">
+                <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
+            <BrandProducts brandId={brandId} canEdit={!isBrandUser || brandUser.role === 'editor'} onChanged={() => setProdVer(v => v + 1)} />
           </>
         )}
 

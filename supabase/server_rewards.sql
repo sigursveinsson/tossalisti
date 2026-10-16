@@ -1,0 +1,28 @@
+-- ═══ Stig reiknuð á netþjóni + vörur heildsala með samþykki + snemmbúin talning ═══
+-- Keyrt sem migration "server_side_rewards_and_brand_products" (okt. 2026). Hér til skjölunar.
+--
+-- A. reward_products.status (pending/approved/rejected), submitted_by, review_note
+--    * Trigger reward_products_guard: vörumerki (ekki admin) → INSERT alltaf pending; UPDATE sem breytir
+--      name/match_keywords/barcode/size/image_url/brand_id → aftur pending. Vörumerki getur ekki samþykkt sjálft.
+--    * RLS: lesa = approved eða eigið vörumerki; vörumerki (editor) insert/update á eigin brand_id;
+--      delete aðeins ef ekki approved og engin stig til.
+--    * Myndir: reward-products/<brand_id>/… (brand_folder_ok). Admin áfram í eigin möppu.
+--
+-- B. kw_match(item, kws): hvert leitarorð er VALKOSTUR (eitt dugar); orð með bili = öll orðin í línunni.
+--    Sama regla í rewardForName() í store.js. brand_dashboard() notar kw_match.
+--    (Áður: öll leitarorð urðu að passa — "mild","salsa" → nú "mild salsa".)
+--
+-- C. award_purchase(p_purchase) — SECURITY DEFINER, aðeins eigandi kvittunar:
+--    * rewards_enabled verður að vera true
+--    * einu sinni á kvittun ('already'), sama fingrafar hjá sama notanda gefur ekki aftur ('duplicate')
+--    * kvittun 0–14 daga gömul ('too_old'), hámark 3 kvittanir með stigum á dag ('daily_limit')
+--    * hámark 5 stk. af vöru á kvittun; aðeins approved+active vörur
+--    * herferð: vöru-sértæk á undan vörumerkis-herferð; FOR UPDATE lás; þak + fjárhagsrammi virt
+--    * notendur hafa EKKI lengur insert/update á reward_earnings (aðeins select á eigin)
+--    Skilar {earned, lines} eða {earned:0, reason}.
+--
+-- D. brand_live_counts(p_brand): {receipts, units, points, today, last_at} — engin sundurliðun,
+--    svo engin k-regla þarf; birtist frá fyrsta degi.
+--
+-- Framendi: store.addPurchase → rpc('award_purchase'); BrandProducts.jsx (Vörur-flipi);
+-- RewardsAdmin: "Bíða samþykkis" listi með Samþykkja/Hafna; BrandDashboard: bd-live borði.
