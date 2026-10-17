@@ -13,9 +13,26 @@ export default function RewardsView({ onClose }) {
   const [r, setR] = useState(null)
   const [offers, setOffers] = useState([])
   const [products, setProducts] = useState([])
+  const [pts, setPts] = useState({ receipt: 0, trial: 0 })
+  const [pilot, setPilot] = useState(null) // { member, label, pilot_only }
+  const [code, setCode] = useState('')
+  const [joinMsg, setJoinMsg] = useState('')
+  const [joining, setJoining] = useState(false)
   useBackClose(true, onClose)
+  const join = async () => {
+    if (!code.trim() || joining) return
+    setJoining(true); setJoinMsg('')
+    try {
+      const res = await store.joinPilot(code)
+      if (res && res.ok) { setPilot(p => ({ ...(p || {}), member: true, label: res.label || null })); setJoinMsg('') }
+      else setJoinMsg(res && res.reason === 'full' ? 'Þessi kóði er fullnýttur.' : 'Kóðinn fannst ekki — athugaðu stafsetninguna.')
+    } catch { setJoinMsg('Náði ekki sambandi, reyndu aftur.') }
+    setJoining(false)
+  }
   useEffect(() => {
+    store.myPilot().then(setPilot).catch(() => setPilot({ member: false, pilot_only: true }))
     store.getMyRewards().then(setR).catch(() => setR({ balance: 0, pending: 0, items: [] }))
+    store.getAppSettings().then(s => setPts({ receipt: Number(s.receipt_points) || 0, trial: Number(s.trial_bonus) || 0 })).catch(() => {})
     store.getRewardData().then(d => {
       setOffers((d.offers || []).filter(o => o.active !== false).sort((a, b) => a.threshold - b.threshold))
       setProducts((d.products || []).filter(p => p.active !== false && (!p.status || p.status === 'approved')))
@@ -29,6 +46,19 @@ export default function RewardsView({ onClose }) {
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <h2><span className="h2-ico green"><IconGift size={20} stroke={1.75} /></span>Gríptu stig <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+
+        {pilot && pilot.pilot_only && !pilot.member && (
+          <div className="rv-invite">
+            <b>Gríptu er í lokaðri prufu</b>
+            <p>Ertu með boðskóða? Sláðu hann inn og þú byrjar að safna stigum af kvittunum þínum.</p>
+            <div className="rv-invite-row">
+              <input className="dialog-input" value={code} onChange={e => setCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && join()} placeholder="BOÐSKÓÐI" autoCapitalize="characters" autoComplete="off" />
+              <button className="primary-btn" onClick={join} disabled={joining || !code.trim()}>{joining ? '…' : 'Taka þátt'}</button>
+            </div>
+            {joinMsg && <div className="bc-err">{joinMsg}</div>}
+          </div>
+        )}
+        {pilot && pilot.member && pilot.label && <div className="rv-pilot-tag"><IconCheck size={13} stroke={2.5} /> {pilot.label}</div>}
 
         <div className="rv-balance">
           <div className="rv-bal-val">{stig(r.balance)} <small>stig</small></div>
@@ -44,6 +74,15 @@ export default function RewardsView({ onClose }) {
             </div>
           )}
         </div>
+
+        {(pts.receipt > 0 || pts.trial > 0) && (
+          <div className="rv-how">
+            <div className="modal-label">Svona safnarðu</div>
+            {pts.receipt > 0 && <div className="rv-how-row"><span className="rv-how-pts">+{pts.receipt}</span><span>fyrir hverja skannaða kvittun, úr hvaða búð sem er (ein á dag)</span></div>}
+            {products.length > 0 && <div className="rv-how-row"><span className="rv-how-pts">+stig</span><span>fyrir vörurnar hér fyrir neðan, ofan á kvittanastigin</span></div>}
+            {pts.trial > 0 && products.length > 0 && <div className="rv-how-row"><span className="rv-how-pts">+{pts.trial}</span><span>í fyrsta sinn sem þú kaupir hverja þeirra</span></div>}
+          </div>
+        )}
 
         {products.length > 0 && (
           <>

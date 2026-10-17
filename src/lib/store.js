@@ -490,6 +490,7 @@ const local = {
   async myBrand() { return null },
   async brandCampaigns() { return [] },
   async brandProducts() { return [] }, async brandLiveCounts() { return null }, async reviewRewardProduct() {},
+  async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {},
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
@@ -1128,6 +1129,15 @@ const cloud = {
     if (error) throw error
     return data || []
   },
+  // Boðshópur (pilot): aðeins meðlimir safna stigum meðan pilot_only er kveikt.
+  async myPilot() { const { data, error } = await supabase.rpc('my_pilot'); return error ? { member: false, pilot_only: true } : (data || { member: false, pilot_only: true }) },
+  async joinPilot(code) { const { data, error } = await supabase.rpc('join_pilot', { p_code: code }); if (error) throw error; return data },
+  async pilotOverview() { const { data, error } = await supabase.rpc('pilot_overview'); return error ? [] : (data || []) },
+  async addPilotInvite(code, label, maxUses) {
+    const { error } = await supabase.from('pilot_invites').insert({ code: (code || '').trim().toUpperCase(), label: (label || '').trim() || null, max_uses: maxUses ? Number(maxUses) : null })
+    if (error) throw error
+  },
+  async setPilotInviteActive(code, active) { const { error } = await supabase.from('pilot_invites').update({ active }).eq('code', code); if (error) throw error },
   // Snemmbúin talning án sundurliðunar: { receipts, units, points, today, last_at } — birtist frá fyrsta degi.
   async brandLiveCounts(brandId) {
     const { data, error } = await supabase.rpc('brand_live_counts', { p_brand: brandId })

@@ -26,3 +26,18 @@
 --
 -- Framendi: store.addPurchase → rpc('award_purchase'); BrandProducts.jsx (Vörur-flipi);
 -- RewardsAdmin: "Bíða samþykkis" listi með Samþykkja/Hafna; BrandDashboard: bd-live borði.
+
+-- ═══ Grunnstig (migration receipt_points_and_trial_bonus, 17. okt) ═══
+-- app_settings.receipt_points (20): stig fyrir skannaða kvittun, hámark ein á dag; færsla með brand_id/product_id NULL,
+--   product_name 'Kvittun skönnuð' → telur EKKI í mælaborð vörumerkja (brand_id null) og ekki í 3-kvittana dagshámarkið.
+-- app_settings.trial_bonus (100): aukastig í fyrsta sinn sem notandi fær stig fyrir tiltekna vöru;
+--   færsla með brand_id/product_id vörunnar, product_name '<vara> · prufubónus' → telur í "Stig veitt" hjá vörumerkinu.
+-- Bæði 0 = slökkt. Stillt í Verðlaunakerfi (RewardsAdmin → Grunnstig). Prófað: 2×Cheerios fyrst = 120+100+20=240 ✓,
+--   sama dag aftur = 60 (enginn bónus, engin kvittanastig) ✓, kvittun án Nathan-vöru sama dag = 0 ✓.
+
+-- ═══ Boðshópur (migration pilot_invites, 17. okt) ═══
+-- pilot_invites(code pk, label, max_uses, uses, active) · pilot_members(user_id pk, code) — RLS: admin allt, notandi sér eigin aðild.
+-- is_pilot_member(uid): admin, pilot_members eða brand_members (starfsfólk heildsala má prófa).
+-- join_pilot(code): normaliserar (upper/trim), hafnar óvirkum/fullnýttum, telur uses. my_pilot(): {member,label,pilot_only}.
+-- pilot_overview(): admin-yfirlit. app_settings.pilot_only (true) → award_purchase skilar 'not_in_pilot' fyrir utanhópsfólk.
+-- Framendi: RewardsView kóðareitur „Taka þátt“; HomeView „Ertu með boðskóða?“; RewardsAdmin → Boðshópur (rofi + kóðar).

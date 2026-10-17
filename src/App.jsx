@@ -211,9 +211,13 @@ export default function App() {
     store.getLearnedCategories().then(setLearnedCategories).catch(() => {})
   }, [session])
 
-  // Verðlaun (cashback)
+  // Verðlaun (Gríptu stig)
   const [myRewards, setMyRewards] = useState(null)
   const [showRewards, setShowRewards] = useState(false)
+  // Boðshópur: utan hóps lofar heimaskjárinn engum stigum, býður boðskóða. Endurlesið þegar skjánum er lokað (gæti hafa gengið í hóp).
+  const [pilot, setPilot] = useState(null)
+  useEffect(() => { if (isCloud && session && rewardsEnabled && !showRewards) store.myPilot().then(setPilot).catch(() => {}) }, [session, rewardsEnabled, showRewards])
+  const inPilot = !pilot || pilot.member || !pilot.pilot_only
   const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
   // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
   const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
@@ -736,7 +740,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping

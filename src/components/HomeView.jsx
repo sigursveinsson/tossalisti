@@ -39,7 +39,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, onScanReceipt, onOpenReceipts }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -79,7 +79,9 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <span className="home-cashback-ic"><IconGift size={22} stroke={1.75} /></span>
           {cashback > 0
             ? <span className="home-cashback-txt"><small>Gríptu stigin þín</small><b>{Math.round(cashback).toLocaleString('is-IS')} stig</b></span>
-            : <span className="home-cashback-txt"><small>Nýtt: Gríptu stig</small><b>Safnaðu stigum af innkaupum</b></span>}
+            : inPilot
+              ? <span className="home-cashback-txt"><small>Nýtt: Gríptu stig</small><b>Safnaðu stigum af innkaupum</b></span>
+              : <span className="home-cashback-txt"><small>Gríptu stig · lokuð prufa</small><b>Ertu með boðskóða?</b></span>}
           <Go />
         </button>
       )}

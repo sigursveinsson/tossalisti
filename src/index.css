@@ -1453,3 +1453,31 @@ button { font-family: inherit; cursor: pointer; }
 .rv-pfill { height: 100%; border-radius: 999px; background: var(--green-ink); transition: width .4s ease; }
 .rv-ptxt { margin-top: 6px; font-size: 13px; color: var(--ink2); }
 .rv-ptxt b { color: var(--navy); }
+
+/* ═══ Grunnstig (kvittanastig + prufubónus) ═══ */
+.rw-ptsgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.rw-pts { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.rw-pts b { font-size: 13.5px; color: var(--navy); }
+.rw-pts small { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.rw-pts input { margin-top: 6px; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; font-size: 16px; font-weight: 700; color: var(--navy); background: #fff; }
+@media (max-width: 480px) { .rw-ptsgrid { grid-template-columns: 1fr; } }
+.rv-how { margin-bottom: 4px; }
+.rv-how-row { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; color: var(--ink2); padding: 4px 0; }
+.rv-how-pts { flex: none; min-width: 44px; font-weight: 800; color: var(--green-ink); }
+
+/* ═══ Boðshópur ═══ */
+.rv-invite { margin: 0 0 14px; padding: 14px; border-radius: 14px; background: var(--gold-soft); border: 1px solid #f5a623; }
+.rv-invite b { color: var(--navy); font-size: 15px; }
+.rv-invite p { margin: 4px 0 10px; font-size: 13.5px; color: var(--ink2); line-height: 1.45; }
+.rv-invite-row { display: flex; gap: 8px; }
+.rv-invite-row .dialog-input { margin: 0; flex: 1; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.rv-invite-row .primary-btn { flex: none; }
+.rv-pilot-tag { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 10px; padding: 3px 10px; border-radius: 999px; background: #e6f9f2; color: var(--green-ink); font-size: 12px; font-weight: 700; }
+.pv-item { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line2); font-size: 13.5px; }
+.pv-item:first-of-type { border-top: 0; }
+.pv-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; letter-spacing: .06em; color: var(--navy); }
+.pv-item small { display: block; color: var(--muted); font-size: 12px; }
+.pv-n { font-weight: 700; color: var(--ink2); white-space: nowrap; }
+.pv-add { display: grid; grid-template-columns: 1.1fr 1.6fr .8fr auto; gap: 8px; margin-top: 10px; }
+.pv-add input { margin: 0; }
+@media (max-width: 560px) { .pv-add { grid-template-columns: 1fr 1fr; } }

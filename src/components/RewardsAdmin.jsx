@@ -24,6 +24,17 @@ const EMPTY = { name: '', barcode: '', size: '', keywords: '', image_url: '', re
 export default function RewardsAdmin({ onClose }) {
   const [data, setData] = useState(null)
   const [enabled, setEnabled] = useState(false)
+  const [pts, setPts] = useState({ receipt_points: 20, trial_bonus: 100 }) // kvittanastig / prufubónus (app_settings)
+  const [pilotOnly, setPilotOnly] = useState(true)
+  const [invites, setInvites] = useState([])
+  const [ni, setNi] = useState({ code: '', label: '', max_uses: '' })
+  const loadInvites = () => store.pilotOverview().then(setInvites).catch(() => setInvites([]))
+  const addInvite = async () => {
+    if (!ni.code.trim()) return
+    try { await store.addPilotInvite(ni.code, ni.label, ni.max_uses); setNi({ code: '', label: '', max_uses: '' }); loadInvites() }
+    catch (e) { setMsg('Gat ekki stofnað kóða — er hann þegar til?') }
+  }
+  const togglePilotOnly = async () => { const next = !pilotOnly; setPilotOnly(next); try { await store.setAppSetting('pilot_only', next) } catch {} }
   const [np, setNp] = useState(EMPTY)
   const [kwEdited, setKwEdited] = useState(false)
   const [no, setNo] = useState({ title: '', threshold: '', reward_desc: '' })
@@ -38,7 +49,8 @@ export default function RewardsAdmin({ onClose }) {
   useBackClose(true, onClose)
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
-  useEffect(() => { load(); store.getAppSettings().then(s => setEnabled(s.rewards_enabled === true)).catch(() => {}) }, [])
+  useEffect(() => { load(); loadInvites(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
+  const savePts = async (key, v) => { const n = Math.max(0, Number(v) || 0); setPts(p => ({ ...p, [key]: n })); try { await store.setAppSetting(key, n) } catch {} }
   // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
   useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
   useEffect(() => {
@@ -128,6 +140,44 @@ export default function RewardsAdmin({ onClose }) {
             <small>{enabled ? 'Stig reiknast þegar kvittun er skönnuð.' : 'Slökkt — kveiktu fyrir pilot/demo.'}</small>
           </div>
           <button className={'adm-ads-switch' + (enabled ? ' on' : '')} onClick={toggleEnabled} aria-label="Kveikja/slökkva" />
+        </div>
+
+        <div className="adm-head">Boðshópur</div>
+        <div className="adm-ads">
+          <div className="adm-ads-txt">
+            <b>Aðeins boðshópur safnar stigum</b>
+            <small>{pilotOnly ? 'Kveikt — notendur þurfa boðskóða (Gríptu stig → „Taka þátt“). Starfsfólk heildsala og þú teljið alltaf með.' : 'Slökkt — allir notendur safna stigum.'}</small>
+          </div>
+          <button className={'adm-ads-switch' + (pilotOnly ? ' on' : '')} onClick={togglePilotOnly} aria-label="Kveikja/slökkva" />
+        </div>
+        {invites.map(i => (
+          <div className="pv-item" key={i.code}>
+            <div><span className="pv-code">{i.code}</span>{i.label && <small>{i.label}</small>}</div>
+            <span className="pv-n">{i.members}{i.max_uses ? ` / ${i.max_uses}` : ''} {i.members === 1 ? 'þátttakandi' : 'þátttakendur'}</span>
+            <label className="rw-active"><input type="checkbox" checked={i.active} onChange={async e => { await store.setPilotInviteActive(i.code, e.target.checked); loadInvites() }} /> virkur</label>
+          </div>
+        ))}
+        <div className="pv-add">
+          <input className="dialog-input" placeholder="KÓÐI" value={ni.code} onChange={e => setNi({ ...ni, code: e.target.value.toUpperCase() })} autoCapitalize="characters" />
+          <input className="dialog-input" placeholder="Lýsing — t.d. Nathan-pilot" value={ni.label} onChange={e => setNi({ ...ni, label: e.target.value })} />
+          <input className="dialog-input" placeholder="Hámark" inputMode="numeric" value={ni.max_uses} onChange={e => setNi({ ...ni, max_uses: e.target.value })} />
+          <button className="primary-btn" onClick={addInvite} disabled={!ni.code.trim()}>Stofna</button>
+        </div>
+        <p className="muted-p" style={{ marginTop: 8 }}>Sami kóði fyrir allan hópinn er einfaldast (t.d. NATHAN26 með hámarki 100). Notandi slær hann inn einu sinni í Gríptu stig-skjánum.</p>
+
+        <div className="adm-head">Grunnstig</div>
+        <p className="muted-p">Stig sem allir fá, óháð vörum — fólk er ekki þvingað til að kaupa neitt til að safna. Vörustig heildsala bætast ofan á.</p>
+        <div className="rw-ptsgrid">
+          <label className="rw-pts">
+            <b>Kvittun skönnuð</b>
+            <small>stig fyrir hverja skannaða kvittun, hámark ein á dag · 0 = slökkt</small>
+            <input type="number" min="0" value={pts.receipt_points} onChange={e => setPts(p => ({ ...p, receipt_points: e.target.value }))} onBlur={e => savePts('receipt_points', e.target.value)} />
+          </label>
+          <label className="rw-pts">
+            <b>Prufubónus</b>
+            <small>aukastig í fyrsta sinn sem notandi kaupir hverja vöru · 0 = slökkt</small>
+            <input type="number" min="0" value={pts.trial_bonus} onChange={e => setPts(p => ({ ...p, trial_bonus: e.target.value }))} onBlur={e => savePts('trial_bonus', e.target.value)} />
+          </label>
         </div>
 
         {data.products.some(p => p.status === 'pending') && (
