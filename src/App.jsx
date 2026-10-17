@@ -697,6 +697,7 @@ export default function App() {
 
   return (
     <div className="app">
+      {showOnboarding && brandBar}
       <div className="header">
         <div className="header-top">
           <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true" style={{ flex: 'none' }}>
@@ -709,7 +710,7 @@ export default function App() {
           <span className="header-spacer" />
           <button className="admin-btn" onClick={() => setShowNotif(true)} title="Áminningar" aria-label="Áminningar"><IconBell size={20} stroke={1.75} /></button>
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð" aria-label="Stjórnborð"><IconChartBar size={20} stroke={1.75} /></button>}
-          {!isAdmin && brandUser && <button className="admin-btn brand-dash-btn" onClick={() => setBrandViewP('dash')} title={`Mælaborð ${brandUser.name}`} aria-label="Mælaborð vörumerkis"><IconChartBar size={20} stroke={1.75} /></button>}
+          {!isAdmin && brandUser && <button className="brand-dash-btn" onClick={() => setBrandViewP('dash')} title={`Mælaborð ${brandUser.name}`}><IconChartBar size={17} stroke={2} /> Mælaborð</button>}
         </div>
         {showBudget && (
           <div className="header-title">
