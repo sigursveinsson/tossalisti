@@ -27,7 +27,8 @@ const nextW = (w) => (w === 0 ? 2 : w === 2 ? 5 : 0)
 const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('is-IS', { day: 'numeric', month: 'long', year: 'numeric' }) } catch { return d } }
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
-export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
+// requireImage: boðshópur Gríptu — myndin er geymd alltaf (skoðuð áður en karfa er afhent), ekki hægt að afhaka.
+export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requireImage = false }) {
   const fileRef = useRef(null)
   const [phase, setPhase] = useState('capture') // capture | reading | review
   const [progress, setProgress] = useState(0)
@@ -89,7 +90,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
       total: total === '' ? sum(clean) : Number(total),
       items: clean,
       return_until: returnDays ? addDays(date, returnDays) : null,
-      archive: keepImage ? archive : null,
+      archive: (keepImage || requireImage) ? archive : null,
     }
     setSaving(true)
     try {
@@ -161,7 +162,10 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate }) {
                 {[0, 14, 30].map(d => <button key={d} className={returnDays === d ? 'on' : ''} onClick={() => setReturnDays(d)}>{d ? d + ' dagar' : 'Enginn'}</button>)}
               </div>
             </div>
-            {archive && (
+            {archive && requireImage && (
+              <label className="receipt-keep locked"><input type="checkbox" checked readOnly disabled /> <IconArchive size={16} stroke={1.75} /> Mynd af kvittun er geymd — Gríptu skoðar hana áður en karfa er afhent. Aðeins þú, heimilið og Gríptu sjáið hana.</label>
+            )}
+            {archive && !requireImage && (
               <label className="receipt-keep"><input type="checkbox" checked={keepImage} onChange={e => setKeepImage(e.target.checked)} /> <IconArchive size={16} stroke={1.75} /> Geyma mynd af kvittun (aðeins þú og heimilið sjáið hana)</label>
             )}
             <div className="receipt-total">

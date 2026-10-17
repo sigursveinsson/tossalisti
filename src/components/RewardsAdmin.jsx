@@ -3,6 +3,7 @@ import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import { IconBarcode, IconCamera, IconCheck, IconGift, IconSearch, IconShoppingBag, IconX } from '@tabler/icons-react'
+import RedemptionsAdmin from './RedemptionsAdmin.jsx'
 
 // Býr til leitarorð úr heiti + stærð (t.d. "Pepsi Max" + "330 ml" → pepsi, max, 330).
 const STOP = new Set(['ml', 'cl', 'dl', 'og', 'the', 'kg', 'gr', 'stk', 'dos', 'dós', 'box', 'pk', 'pakki'])
@@ -26,6 +27,9 @@ export default function RewardsAdmin({ onClose }) {
   const [enabled, setEnabled] = useState(false)
   const [pts, setPts] = useState({ receipt_points: 20, trial_bonus: 100 }) // kvittanastig / prufubónus (app_settings)
   const [pilotOnly, setPilotOnly] = useState(true)
+  const [showRedemptions, setShowRedemptions] = useState(false)
+  const [pendingRed, setPendingRed] = useState(0)
+  const loadRed = () => store.adminRedemptions().then(l => setPendingRed((l || []).filter(r => r.status === 'pending').length)).catch(() => {})
   const [invites, setInvites] = useState([])
   const [ni, setNi] = useState({ code: '', label: '', max_uses: '' })
   const loadInvites = () => store.pilotOverview().then(setInvites).catch(() => setInvites([]))
@@ -49,7 +53,7 @@ export default function RewardsAdmin({ onClose }) {
   useBackClose(true, onClose)
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
-  useEffect(() => { load(); loadInvites(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
+  useEffect(() => { load(); loadInvites(); loadRed(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
   const savePts = async (key, v) => { const n = Math.max(0, Number(v) || 0); setPts(p => ({ ...p, [key]: n })); try { await store.setAppSetting(key, n) } catch {} }
   // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
   useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
@@ -141,6 +145,13 @@ export default function RewardsAdmin({ onClose }) {
           </div>
           <button className={'adm-ads-switch' + (enabled ? ' on' : '')} onClick={toggleEnabled} aria-label="Kveikja/slökkva" />
         </div>
+
+        <button className="ra-open" onClick={() => setShowRedemptions(true)}>
+          <span className="ra-open-ic"><IconGift size={18} stroke={1.75} /></span>
+          <span className="ra-open-txt"><b>Útleysingar</b><small>{pendingRed > 0 ? `${pendingRed} ${pendingRed === 1 ? 'beiðni bíður' : 'beiðnir bíða'} yfirferðar` : 'Engin beiðni í bið'}</small></span>
+          {pendingRed > 0 && <span className="rw-pendcount">{pendingRed}</span>}
+        </button>
+        {showRedemptions && <RedemptionsAdmin onClose={() => { setShowRedemptions(false); loadRed() }} />}
 
         <div className="adm-head">Boðshópur</div>
         <div className="adm-ads">

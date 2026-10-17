@@ -6,6 +6,7 @@ import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout,
 import Campaigns from './BrandCampaigns.jsx'
 import BrandAccess from './BrandAccess.jsx'
 import BrandProducts from './BrandProducts.jsx'
+import BrandRedemptions from './BrandRedemptions.jsx'
 import { IconReceipt, IconShoppingBag, IconInfoCircle } from '@tabler/icons-react'
 
 const timeAgo = (iso) => {
@@ -40,6 +41,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
   const isBrandUser = !!brandUser
   const [tab, setTab] = useState('overview') // overview | products | campaigns | access
   const [live, setLive] = useState(null) // snemmbúin talning án sundurliðunar (brand_live_counts)
+  const [openRed, setOpenRed] = useState(0) // samþykktar útleysingar sem bíða afhendingar
   const [prodVer, setProdVer] = useState(0)
   const [brands, setBrands] = useState([])
   const [products, setProducts] = useState([])
@@ -72,7 +74,8 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
     if (!brandId) return
     setLive(null)
     store.brandLiveCounts(brandId).then(setLive).catch(() => setLive(null))
-  }, [brandId, prodVer])
+    store.brandRedemptions(brandId).then(l => setOpenRed((l || []).filter(r => r.status === 'approved').length)).catch(() => {})
+  }, [brandId, prodVer, tab])
 
   // Raungögn úr gagnagrunninum
   useEffect(() => {
@@ -146,6 +149,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
           <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Yfirlit</button>
           <button className={tab === 'products' ? 'on' : ''} onClick={() => setTab('products')}>Vörur</button>
           <button className={tab === 'campaigns' ? 'on' : ''} onClick={() => setTab('campaigns')}>Herferðir</button>
+          <button className={tab === 'redemptions' ? 'on' : ''} onClick={() => setTab('redemptions')}>Útleysingar{openRed > 0 && <span className="bd-tabcount">{openRed}</span>}</button>
           {!isBrandUser && <button className={tab === 'access' ? 'on' : ''} onClick={() => setTab('access')}>Aðgangur</button>}
         </div>
 
@@ -319,6 +323,19 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
               </div>
             )}
             <BrandProducts brandId={brandId} canEdit={!isBrandUser || brandUser.role === 'editor'} onChanged={() => setProdVer(v => v + 1)} />
+          </>
+        )}
+
+        {tab === 'redemptions' && brandId && (
+          <>
+            {!isBrandUser && (
+              <div className="bd-controls">
+                <select className="bd-select" value={brandId} onChange={e => setBrandId(e.target.value)}>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
+            <BrandRedemptions brandId={brandId} canEdit={!isBrandUser || brandUser.role === 'editor'} />
           </>
         )}
 

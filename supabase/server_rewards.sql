@@ -41,3 +41,17 @@
 -- join_pilot(code): normaliserar (upper/trim), hafnar óvirkum/fullnýttum, telur uses. my_pilot(): {member,label,pilot_only}.
 -- pilot_overview(): admin-yfirlit. app_settings.pilot_only (true) → award_purchase skilar 'not_in_pilot' fyrir utanhópsfólk.
 -- Framendi: RewardsView kóðareitur „Taka þátt“; HomeView „Ertu með boðskóða?“; RewardsAdmin → Boðshópur (rofi + kóðar).
+
+-- ═══ Útleysingar (migration griptu_redemptions_and_admin_review + points_available_pending_only, 17. okt) ═══
+-- griptu_redemptions (reward_redemptions er heimilis-verðlaunatafla leikjavæðingar — ósnert!)
+--   status: pending → approved → delivered | rejected. name/phone/delivery/address frá þátttakanda.
+-- points_available(user) = pending+approved − redeemed − frátekið í beiðnum í BIÐ (approved er þegar bókað sem redeemed).
+-- request_redemption(offer, name, phone, delivery, address): krefst tiltækra stiga ≥ threshold; nafn ≥2, sími ≥7 tölur, address ef home.
+-- review_redemption(id, 'approved'|'rejected', note) — admin: approved → ÖLL pending stig notandans verða approved
+--   (kvittanir skoðaðar) + 'redeemed'-færsla upp á threshold; rejected → review_note, stigin standa.
+-- mark_delivered(id) — admin eða brand editor: approved → delivered.
+-- admin_redemptions(), admin_user_receipts(user, days) (með dup_users = sama fingrafar hjá öðrum), my_redemptions(), brand_redemptions(brand).
+-- receipts_read storage policy: + is_admin() má lesa allar kvittanamyndir.
+-- Framendi: RewardsView „Leysa út“ + RedeemForm + Beiðnirnar mínar; RedemptionsAdmin (úr Verðlaunakerfi) með kvittanaskoðun+myndum;
+--   BrandDashboard flipi Útleysingar (BrandRedemptions) með „Merkja afhent“, rautt ef >10 dagar.
+-- App: REWARD_NOTE sýnir ástæðu fyrir 0 stigum; ReceiptScanner requireImage fyrir boðshóp (mynd alltaf geymd).

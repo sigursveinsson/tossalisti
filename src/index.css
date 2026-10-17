@@ -1481,3 +1481,63 @@ button { font-family: inherit; cursor: pointer; }
 .pv-add { display: grid; grid-template-columns: 1.1fr 1.6fr .8fr auto; gap: 8px; margin-top: 10px; }
 .pv-add input { margin: 0; }
 @media (max-width: 560px) { .pv-add { grid-template-columns: 1fr 1fr; } }
+
+/* ═══ Útleysing (notandi) ═══ */
+.rv-redeem-btn { padding: 7px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.rv-redeem > b { color: var(--navy); font-size: 15px; }
+.rv-redeem-desc { color: var(--ink2); font-size: 13px; margin-top: -4px; }
+.rv-delivery { display: flex; gap: 8px; }
+.rv-delivery button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; border: 1px solid var(--line2); background: #fff; color: var(--ink2); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.rv-delivery button.on { border-color: var(--navy); background: var(--soft); color: var(--navy); }
+.rv-redeem-note { font-size: 12px; color: var(--faint); line-height: 1.45; }
+
+/* ═══ Útleysingar (stjórnandi) ═══ */
+.ra-item { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; background: #fff; overflow: hidden; }
+.ra-item.open { border-color: var(--navy); }
+.ra-item-h { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.ra-who b, .ra-what span { display: block; font-size: 14px; color: var(--navy); font-weight: 700; }
+.ra-who small, .ra-what small { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ra-review { padding: 10px 12px 12px; border-top: 1px solid var(--line2); background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; }
+.ra-sum { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink2); }
+.ra-sum b { color: var(--navy); }
+.ra-flag { display: inline-flex; align-items: center; gap: 3px; color: #B3261E; font-weight: 700; font-size: 12px; }
+.ra-rcpt { border: 1px solid var(--line2); border-radius: 10px; background: #fff; overflow: hidden; }
+.ra-rcpt.warn { border-color: #B3261E; }
+.ra-rcpt-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 0; background: transparent; cursor: pointer; text-align: left; }
+.ra-rcpt-store { font-size: 13.5px; font-weight: 600; color: var(--navy); }
+.ra-rcpt-store small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.ra-rcpt-meta { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
+.ra-rcpt-meta b { color: var(--green-ink); }
+.ra-has-img { color: var(--green-ink); }
+.ra-noimg { font-size: 11.5px; color: #B3261E; }
+.ra-rcpt-body { padding: 8px 10px 10px; border-top: 1px solid var(--line2); display: flex; flex-direction: column; gap: 8px; }
+.ra-img { width: 100%; max-height: 520px; object-fit: contain; border-radius: 8px; background: var(--soft); }
+.ra-noimg-box { padding: 10px; border-radius: 8px; background: #fdecea; color: #B3261E; font-size: 13px; }
+.ra-lines { display: flex; flex-direction: column; }
+.ra-line { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 2px 0; color: var(--ink2); }
+.ra-line.hit { color: var(--navy); font-weight: 600; }
+.ra-earn { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.ra-earn span { padding: 2px 8px; border-radius: 999px; background: #e6f9f2; color: var(--green-ink); }
+.ra-earn b { margin-left: 3px; }
+.ghost-btn.danger { color: #B3261E; }
+@media (max-width: 560px) { .ra-item-h { grid-template-columns: 1fr; } .ra-item-h .bc-status { justify-self: start; } }
+.ra-open { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); text-align: left; cursor: pointer; }
+.ra-open-ic { width: 36px; height: 36px; border-radius: 10px; background: #e6f9f2; color: var(--green-ink); display: grid; place-items: center; flex: none; }
+.ra-open-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ra-open-txt b { font-size: 14px; color: var(--navy); }
+.ra-open-txt small { font-size: 12px; color: var(--muted); }
+
+/* ═══ Útleysingar (vörumerki) ═══ */
+.bd-tabcount { display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 5px; border-radius: 999px; background: #f5a623; color: var(--navy); font-size: 11px; font-weight: 800; text-align: center; vertical-align: 1px; }
+.br-head { display: flex; align-items: center; gap: 6px; margin: 12px 0 6px; font-size: 12px; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
+.br-head b { color: var(--navy); }
+.br-item { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line2); }
+.br-item:first-of-type { border-top: 0; }
+.br-item.late .br-what small { color: #B3261E; font-weight: 600; }
+.br-who b, .br-what span { display: block; font-size: 14px; color: var(--navy); font-weight: 700; }
+.br-who small, .br-what small { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink2); margin-top: 2px; }
+.br-who a { color: var(--navy); text-decoration: none; font-weight: 600; }
+.br-btn { padding: 7px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.br-note { margin-top: 10px; }
+@media (max-width: 560px) { .br-item { grid-template-columns: 1fr; } }
+.receipt-keep.locked { opacity: .85; }

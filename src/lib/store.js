@@ -490,6 +490,7 @@ const local = {
   async myBrand() { return null },
   async brandCampaigns() { return [] },
   async brandProducts() { return [] }, async brandLiveCounts() { return null }, async reviewRewardProduct() {},
+  async pointsAvailable() { return 0 }, async requestRedemption() { return { ok: false, reason: 'local' } }, async myRedemptions() { return [] }, async adminRedemptions() { return [] }, async adminUserReceipts() { return [] }, async reviewRedemption() {}, async markDelivered() {}, async brandRedemptions() { return [] },
   async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {},
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
@@ -1138,6 +1139,18 @@ const cloud = {
     if (error) throw error
   },
   async setPilotInviteActive(code, active) { const { error } = await supabase.from('pilot_invites').update({ active }).eq('code', code); if (error) throw error },
+  // Útleysingar (Gríptu): þátttakandi biður → stjórnandi fer yfir kvittanir → vörumerki afhendir.
+  async pointsAvailable() { const { data: { user } } = await supabase.auth.getUser(); if (!user) return 0; const { data } = await supabase.rpc('points_available', { p_user: user.id }); return Number(data) || 0 },
+  async requestRedemption(offerId, { name, phone, delivery, address }) {
+    const { data, error } = await supabase.rpc('request_redemption', { p_offer: offerId, p_name: name, p_phone: phone, p_delivery: delivery, p_address: address || null })
+    if (error) throw error; return data
+  },
+  async myRedemptions() { const { data, error } = await supabase.rpc('my_redemptions'); return error ? [] : (data || []) },
+  async adminRedemptions() { const { data, error } = await supabase.rpc('admin_redemptions'); return error ? [] : (data || []) },
+  async adminUserReceipts(userId, days = 60) { const { data, error } = await supabase.rpc('admin_user_receipts', { p_user: userId, p_days: days }); return error ? [] : (data || []) },
+  async reviewRedemption(id, action, note) { const { data, error } = await supabase.rpc('review_redemption', { p_id: id, p_action: action, p_note: note || null }); if (error) throw error; return data },
+  async markDelivered(id) { const { data, error } = await supabase.rpc('mark_delivered', { p_id: id }); if (error) throw error; return data },
+  async brandRedemptions(brandId) { const { data, error } = await supabase.rpc('brand_redemptions', { p_brand: brandId }); return error ? [] : (data || []) },
   // Snemmbúin talning án sundurliðunar: { receipts, units, points, today, last_at } — birtist frá fyrsta degi.
   async brandLiveCounts(brandId) {
     const { data, error } = await supabase.rpc('brand_live_counts', { p_brand: brandId })
