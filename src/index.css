@@ -1429,8 +1429,8 @@ button { font-family: inherit; cursor: pointer; }
 .bp-preview { width: 72px; height: 72px; object-fit: contain; border-radius: 10px; background: var(--soft); }
 .bp-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ink2); }
 .bp-field small { font-weight: 400; color: var(--faint); line-height: 1.4; }
-.rw-prod.rw-pending { border: 1px solid var(--gold); background: var(--gold-soft); }
-.rw-pendcount { display: inline-block; margin-left: 6px; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--gold); color: var(--navy); font-size: 12px; text-align: center; }
+.rw-prod.rw-pending { border: 1px solid #f5a623; background: var(--gold-soft); }
+.rw-pendcount { display: inline-block; margin-left: 6px; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #f5a623; color: var(--navy); font-size: 12px; text-align: center; }
 .rw-approve { padding: 6px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
 @media (max-width: 560px) { .bp-item { grid-template-columns: 44px 1fr; } .bp-item .bc-status, .bp-tools { grid-column: 2; justify-self: start; } }
 
@@ -1440,8 +1440,8 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ═══ Heildsalanotandi: rofi milli mælaborðs og apps ═══ */
 .bd-topbtns { display: flex; gap: 6px; }
-.bd-openapp { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 700; }
+.bd-openapp { background: #f5a623; color: var(--navy); border-color: #f5a623; font-weight: 700; }
 .bd-hint { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: var(--soft); color: var(--ink2); font-size: 13px; line-height: 1.45; }
 .bd-hint svg { flex: none; margin-top: 2px; }
-.brand-dash-btn { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 13px; font-weight: 700; flex: none; cursor: pointer; }
+.brand-dash-btn { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 11px; border-radius: 9px; border: 1px solid #f5a623; background: #f5a623; color: var(--navy); font-size: 13px; font-weight: 700; flex: none; cursor: pointer; }
 .brand-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5000; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--navy); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(21,49,94,.25); cursor: pointer; }
