@@ -1444,3 +1444,4 @@ button { font-family: inherit; cursor: pointer; }
 .bd-hint { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: var(--soft); color: var(--ink2); font-size: 13px; line-height: 1.45; }
 .bd-hint svg { flex: none; margin-top: 2px; }
 .brand-dash-btn { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+.brand-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 60; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--navy); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(21,49,94,.25); cursor: pointer; }

@@ -647,14 +647,19 @@ export default function App() {
   if (isCloud && session && brandUser && brandView === 'dash') {
     return <BrandDashboard brandUser={brandUser} onClose={() => {}} onSignOut={signOut} onOpenApp={() => setBrandViewP('app')} />
   }
+  // Heildsalanotandi í appinu: skjáir án hauss (prófíll, samþykki, tómur listi, villa) fá fastan borða til baka í mælaborðið.
+  const brandBar = (isCloud && session && brandUser && brandView === 'app')
+    ? <button className="brand-bar" onClick={() => setBrandViewP('dash')}><IconChartBar size={16} stroke={2} /> Mælaborð {brandUser.name}</button>
+    : null
+  const withBar = (el) => brandBar ? <>{brandBar}{el}</> : el
   if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
-    return <ProfileSetup initial={profile} onSave={saveProfile} />
+    return withBar(<ProfileSetup initial={profile} onSave={saveProfile} />)
   }
   if (isCloud && session && profileLoaded && profile && profile.name && !profile.consent_at) {
-    return <ConsentNotice onAccept={async () => { await store.recordConsent('v1'); setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1' })) }} />
+    return withBar(<ConsentNotice onAccept={async () => { await store.recordConsent('v1'); setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1' })) }} />)
   }
-  if (loading) return <div className="empty">Hleð…</div>
-  if (error && !list) return (
+  if (loading) return withBar(<div className="empty">Hleð…</div>)
+  if (error && !list) return withBar(
     <div className="empty" style={{ padding: '0 24px' }}>
       <p>Eitthvað fór úrskeiðis við að sækja gögnin:</p>
       <p style={{ color: 'var(--accent)', wordBreak: 'break-word' }}>{error}</p>
@@ -672,7 +677,7 @@ export default function App() {
       </div>
     </div>
   )
-  if (!list && view !== 'home' && view !== 'budget') return (
+  if (!list && view !== 'home' && view !== 'budget') return withBar(
     <div className="empty">
       <p>Enginn listi enn.</p>
       <button
