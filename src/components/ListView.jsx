@@ -85,7 +85,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const sponSugg = (isTask || isSchedule || !adsEnabled) ? [] : sponsoredSuggest(text)
   const rewardFor = (name) => (rewardProducts && rewardProducts.length) ? rewardForName(name, rewardProducts) : null
   // Cashback-merki: gjafatákn + upphæð (hönnunarkerfi: grænt útlínumerki, engin emoji).
-  const rewardLabel = (p) => <><IconGift size={12} stroke={2} />{p.reward_type === 'percent' ? `${p.reward_value}%` : `+${p.reward_value} kr`}</>
+  const rewardLabel = (p) => <><IconGift size={12} stroke={2} />{p.reward_type === 'percent' ? `${p.reward_value}%` : `+${p.reward_value} stig`}</>
   // Skráðar verðlaunavörur birtast sem fyrsta flokks tillögur (heiti + mynd + cashback).
   const rq = normMatch(text)
   const rewardSuggAll = (isShopping && rq.length >= 2 && rewardProducts && rewardProducts.length)
@@ -408,7 +408,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             if (!rp && !sp) return null
             return (
               <span className="item-tags">
-                {rp && <span className="item-reward" title={`Cashback frá ${rp.name} — skannaðu kvittunina`}>{rewardLabel(rp)}</span>}
+                {rp && <span className="item-reward" title={`Gríptu stig frá ${rp.name} — skannaðu kvittunina`}>{rewardLabel(rp)}</span>}
                 {sp && <span className="item-spon">Kostað · {sp.brand}</span>}
               </span>
             )

@@ -4,7 +4,7 @@ import { CatIcon } from '../data/icons.jsx'
 import { departmentFor } from '../data/products.js'
 import { IconGift, IconPlus, IconSearch } from '@tabler/icons-react'
 
-// Gríptu-tilboðin fyrir neytendur: allar vörur sem gefa cashback NÚNA, lifandi úr gagnagrunninum.
+// Gríptu-tilboðin fyrir neytendur: allar vörur sem gefa stig NÚNA, lifandi úr gagnagrunninum.
 // Opið öllum (engin innskráning). Herferð í gangi ræður upphæð; vara án herferðar sýnir eigin verðlaun.
 // „Setja á lista" opnar Tossalista með vöruna (?add=…) — þar lendir hún á innkaupalistanum.
 
@@ -12,7 +12,8 @@ const num = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\
 const todayISO = () => new Date().toISOString().slice(0, 10)
 export const APP_URL = 'https://tossalisti.is'
 
-export function rewardLabel(p) { return p.reward_type === 'percent' ? `${num(p.reward_value)}% til baka` : `+${num(p.reward_value)} kr` }
+// Stig, ekki krónur: lokað kerfi (stig → gjafakarfa við þröskuld). 'percent' = stig sem hlutfall af verði.
+export function rewardLabel(p) { return p.reward_type === 'percent' ? `${num(p.reward_value)}% í stigum` : `+${num(p.reward_value)} stig` }
 
 export async function fetchOffers() {
   if (!supabase) return []

@@ -37,10 +37,10 @@ function Form({ brandId, products, onDone, onCancel }) {
       </div>
       <div className="bc-row">
         <select className="bd-select" value={f.reward_type} onChange={set('reward_type')}>
-          <option value="fixed">kr til baka per eining</option>
-          <option value="percent">% af verði</option>
+          <option value="fixed">stig per eining</option>
+          <option value="percent">% af verði í stigum</option>
         </select>
-        <input className="dialog-input" value={f.reward_value} onChange={set('reward_value')} placeholder={f.reward_type === 'fixed' ? 'kr' : '%'} inputMode="decimal" />
+        <input className="dialog-input" value={f.reward_value} onChange={set('reward_value')} placeholder={f.reward_type === 'fixed' ? 'stig' : '%'} inputMode="decimal" />
       </div>
       <div className="bc-row">
         <label>Frá <input className="dialog-input" type="date" value={f.starts_on} onChange={set('starts_on')} /></label>
@@ -48,9 +48,9 @@ function Form({ brandId, products, onDone, onCancel }) {
       </div>
       <div className="bc-row">
         <label>Þak (innlausnir) <input className="dialog-input" value={f.max_redemptions} onChange={set('max_redemptions')} placeholder="t.d. 500" inputMode="numeric" /></label>
-        <label>Fjárhagsrammi (kr) <input className="dialog-input" value={f.budget_kr} onChange={set('budget_kr')} placeholder="t.d. 50.000" inputMode="numeric" /></label>
+        <label>Hámark stiga alls <input className="dialog-input" value={f.budget_kr} onChange={set('budget_kr')} placeholder="t.d. 50.000" inputMode="numeric" /></label>
       </div>
-      {est != null && <div className="bd-muted">Hámarkskostnaður við þakið: <b>{num(est)} kr</b>. Herferðin stöðvast sjálfkrafa þegar þaki eða ramma er náð.</div>}
+      {est != null && <div className="bd-muted">Hámarksstig við þakið: <b>{num(est)} stig</b>. Herferðin stöðvast sjálfkrafa þegar þaki eða hámarki er náð.</div>}
       {err && <div className="bc-err">{err}</div>}
       <div className="bc-actions">
         <button className="ghost-btn" onClick={onCancel}>Hætta við</button>
@@ -71,7 +71,7 @@ export default function Campaigns({ brandId, brandName, products = [], canEdit }
 
   return (
     <div className="bd-card">
-      <div className="bd-card-h"><IconTarget size={17} stroke={1.75} className="bd-h-ico" /> Herferðir <span>tímabil, þak og fjárhagsrammi — greitt aðeins fyrir staðfest kaup</span></div>
+      <div className="bd-card-h"><IconTarget size={17} stroke={1.75} className="bd-h-ico" /> Herferðir <span>tímabil, þak og hámark stiga — stig aðeins fyrir staðfest kaup</span></div>
       {list === null && <div className="bd-muted">Sæki…</div>}
       {list && list.length === 0 && !adding && <div className="bd-muted">Engin herferð enn{canEdit ? ' — stofnaðu þá fyrstu.' : '.'}</div>}
       {list && list.map(c => {
@@ -80,12 +80,12 @@ export default function Campaigns({ brandId, brandName, products = [], canEdit }
         return (
           <div key={c.id} className="bc-item">
             <div className="bc-head">
-              <div className="bc-title">{c.title}<small>{c.product_name || 'Allar vörur'} · {c.reward_type === 'percent' ? `${num(c.reward_value)}%` : `${num(c.reward_value)} kr`} · {fmt(c.starts_on)}–{fmt(c.ends_on)}</small></div>
+              <div className="bc-title">{c.title}<small>{c.product_name || 'Allar vörur'} · {c.reward_type === 'percent' ? `${num(c.reward_value)}%` : `${num(c.reward_value)} stig`} · {fmt(c.starts_on)}–{fmt(c.ends_on)}</small></div>
               <span className={'bc-status ' + cls}>{label}</span>
             </div>
             <div className="bc-stats">
               <span><b>{num(c.redemptions)}</b> innlausnir{c.max_redemptions ? ` af ${num(c.max_redemptions)}` : ''}</span>
-              <span><b>{num(c.spent_kr)} kr</b> greitt{c.budget_kr ? ` af ${num(c.budget_kr)} kr` : ''}</span>
+              <span><b>{num(c.spent_kr)} stig</b> veitt{c.budget_kr ? ` af ${num(c.budget_kr)}` : ''}</span>
             </div>
             {cap != null && <div className="bd-htrack"><div className={'bd-hfill' + (cap >= 1 ? ' full' : '')} style={{ width: (cap * 100) + '%' }} /></div>}
             {canEdit && (

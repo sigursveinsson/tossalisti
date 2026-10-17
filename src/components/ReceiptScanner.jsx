@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import { parseReceipt } from '../lib/receipt.js'
 import { store as db } from '../lib/store.js'
 
-// Texti á pörunar-merki: „Nathan · Nutella · +50 kr" (gjafatákn birt í JSX)
+// Texti á pörunar-merki: „Nathan · Nutella · +50 stig" (gjafatákn birt í JSX)
 const matchLabel = (p) => {
   if (!p) return ''
   const v = Number(p.reward_value) || 0
-  const val = p.reward_type === 'percent' ? `${v}% til baka` : `+${v} kr`
+  const val = p.reward_type === 'percent' ? `${v}% í stigum` : `+${v} stig`
   return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'

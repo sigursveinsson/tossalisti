@@ -464,7 +464,7 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
-    if (r && r.earned > 0) flash(`Þú vannst þér inn ${Math.round(r.earned)} kr cashback!`)
+    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!`)
     else flash('Kvittun skráð')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
@@ -578,7 +578,7 @@ export default function App() {
   const goHome = () => { setView('home') }
   const goBudget = () => { setView('budget') }
   // Bókhaldssýn: ný útgjaldafærsla er persónuleg (engum lista tengd).
-  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadMyRewards(); if (r && r.earned > 0) flash(`+${Math.round(r.earned)} kr cashback!`) }
+  const addExpense = async (data) => { const r = await store.addPurchase({ ...data, list_id: null }); await loadPurchases(); loadMyRewards(); if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!`) }
   const duplicateList = (l) => {
     const proposed = l.name + ' (afrit)'
     setDialog({

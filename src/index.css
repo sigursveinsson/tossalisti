@@ -1445,3 +1445,11 @@ button { font-family: inherit; cursor: pointer; }
 .bd-hint svg { flex: none; margin-top: 2px; }
 .brand-dash-btn { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 11px; border-radius: 9px; border: 1px solid #f5a623; background: #f5a623; color: var(--navy); font-size: 13px; font-weight: 700; flex: none; cursor: pointer; }
 .brand-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5000; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--navy); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(21,49,94,.25); cursor: pointer; }
+
+/* ═══ Gríptu stig: framvinda að útleysingu ═══ */
+.rv-bal-val small { font-size: 16px; font-weight: 600; color: var(--ink2); margin-left: 2px; }
+.rv-progress { margin-top: 12px; }
+.rv-ptrack { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.rv-pfill { height: 100%; border-radius: 999px; background: var(--green-ink); transition: width .4s ease; }
+.rv-ptxt { margin-top: 6px; font-size: 13px; color: var(--ink2); }
+.rv-ptxt b { color: var(--navy); }

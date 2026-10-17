@@ -204,7 +204,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
               <div className="bd-kpi good"><div className="v">{pct(t.repeat_rate)}</div><div className="l">Endurkaup</div><div className="s">{num(t.repeat_buyers)} keyptu aftur</div></div>
               <div className="bd-kpi good"><div className="v">{pct(t.new_rate)}</div><div className="l">Nýir kaupendur</div><div className="s">{num(t.new_buyers)} í fyrsta sinn</div></div>
               <div className="bd-kpi"><div className="v">{kr(t.revenue)}</div><div className="l">Sala af kvittunum</div><div className="s">{num(t.units)} einingar</div></div>
-              <div className="bd-kpi gold"><div className="v">{kr(t.cashback)}</div><div className="l">Cashback greitt</div><div className="s">{roi ? `${num(roi)} kr sala per greidda krónu` : 'ekkert greitt enn'}</div></div>
+              <div className="bd-kpi gold"><div className="v">{num(t.cashback)} stig</div><div className="l">Stig veitt</div><div className="s">{roi ? `${num(roi)} kr sala per stig` : 'engin stig enn'}</div></div>
             </div>
 
             {data.listed && (

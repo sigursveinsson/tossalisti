@@ -22,12 +22,12 @@ const PILLARS = [
 const STEPS = [
   ['1', 'Heimilið setur vöru á lista', 'Innkaupalistinn í Tossalista — raddstýrður, deildur með fjölskyldunni.'],
   ['2', 'Varan fer yfir kassann', 'Kvittunin er skönnuð. Gervigreindin þekkir vöruna þína, líka þegar strimillinn styttir heitið.'],
-  ['3', 'Þú sérð hvað gerðist', 'Nýir kaupendur, endurkaup, á lista → keypt, cashback greitt. Í mælaborðinu þínu, sama dag.'],
+  ['3', 'Þú sérð hvað gerðist', 'Nýir kaupendur, endurkaup, á lista → keypt, stig veitt. Í mælaborðinu þínu, sama dag.'],
 ]
 const HOW = [
-  [IconListCheck, 'Settu vöruna á listann', 'Hér á síðunni eða í appinu. Gríptu merkir vörur sem gefa cashback með gjöf.'],
+  [IconListCheck, 'Settu vöruna á listann', 'Hér á síðunni eða í appinu. Gríptu merkir vörur sem gefa stig með gjöf.'],
   [IconCamera, 'Skannaðu kvittunina', 'Eftir búðarferðina — í hvaða búð sem er. Gríptu þekkir vörurnar sjálfkrafa.'],
-  [IconCoin, 'Gríptu safnar fyrir þig', 'Cashback safnast í appinu og þú leysir út í gjafabréf — eða lætur renna til góðs málefnis.'],
+  [IconCoin, 'Gríptu safnar fyrir þig', 'Stigin safnast í appinu og þú leysir þau út í gjafakörfu eða gjafabréf — eða lætur renna til góðs málefnis.'],
 ]
 
 // Hero: gæsin á hlaupum fyrst, svo gæsin með talblöðru — rúllar á 4,5 sek fresti með mjúkri yfirfærslu.
@@ -100,7 +100,7 @@ export default function GriptuLanding({ session, onSignOut, onOpenDashboard }) {
 
       <section className="gl-hero" id="top">
         <div className="gl-hero-txt">
-          <span className="gl-kicker">Cashback á íslensku · í öllum búðum</span>
+          <span className="gl-kicker">Stig fyrir innkaupin · í öllum búðum</span>
           <h1>Fáðu <em>til baka</em> af vörunum sem þú kaupir hvort eð er.</h1>
           <p className="gl-lead">Settu vöruna á listann, skannaðu kvittunina eftir búðarferðina — og Gríptu safnar fyrir þig. Sama hvort þú verslar í Bónus, Krónunni, Nettó eða Hagkaup.</p>
           <div className="gl-cta">
@@ -192,7 +192,7 @@ export default function GriptuLanding({ session, onSignOut, onOpenDashboard }) {
         <div>
           <span className="gl-kicker">Appið</span>
           <h2>Gríptu býr í Tossalista.</h2>
-          <p className="gl-lead">Innkaupalistinn, verkin, kvittanirnar og ábyrgðirnar á einum stað — og cashback-ið safnast þar. Ókeypis, íslenskt, virkar í síma og vafra.</p>
+          <p className="gl-lead">Innkaupalistinn, verkin, kvittanirnar og ábyrgðirnar á einum stað — og Gríptu stigin safnast þar. Ókeypis, íslenskt, virkar í síma og vafra.</p>
           <a className="gl-btn primary big" href={APP_URL}><IconDeviceMobile size={18} stroke={2} /> Opna Tossalista</a>
         </div>
       </section>

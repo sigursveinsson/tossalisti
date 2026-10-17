@@ -120,12 +120,12 @@ export default function RewardsAdmin({ onClose }) {
     <div className="sheet-bg center" onClick={e => { e.stopPropagation(); onClose() }}>
       <div className="modal adm-modal" onClick={e => e.stopPropagation()}>
         <h2><span className="h2-ico"><IconGift size={20} stroke={1.75} /></span>Verðlaunakerfi <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
-        <p className="muted-p">Vörumerki: <b>{brand?.name || '—'}</b>. Skráðu hverja vöru með strikamerki, stærð og mynd svo cashback lendi á réttri vöru — t.d. Pepsi Max 330 ml, ekki bara „Pepsi".</p>
+        <p className="muted-p">Vörumerki: <b>{brand?.name || '—'}</b>. Skráðu hverja vöru með strikamerki, stærð og mynd svo stigin lendi á réttri vöru — t.d. Pepsi Max 330 ml, ekki bara „Pepsi".</p>
 
         <div className="adm-ads">
           <div className="adm-ads-txt">
             <b>Verðlaunakerfi virkt</b>
-            <small>{enabled ? 'Cashback reiknast þegar kvittun er skönnuð.' : 'Slökkt — kveiktu fyrir pilot/demo.'}</small>
+            <small>{enabled ? 'Stig reiknast þegar kvittun er skönnuð.' : 'Slökkt — kveiktu fyrir pilot/demo.'}</small>
           </div>
           <button className={'adm-ads-switch' + (enabled ? ' on' : '')} onClick={toggleEnabled} aria-label="Kveikja/slökkva" />
         </div>
@@ -174,11 +174,11 @@ export default function RewardsAdmin({ onClose }) {
             </div>
             <div className="rw-prod-row">
               <select value={p.reward_type} onChange={e => setField(p, { reward_type: e.target.value })}>
-                <option value="fixed">kr á vöru</option>
-                <option value="percent">% af verði</option>
+                <option value="fixed">stig á vöru</option>
+                <option value="percent">% af verði í stigum</option>
               </select>
               <input type="number" className="rw-val" value={p.reward_value} onChange={e => setField(p, { reward_value: Number(e.target.value) || 0 })} />
-              <span className="rw-unit">{p.reward_type === 'percent' ? '%' : 'kr'}</span>
+              <span className="rw-unit">{p.reward_type === 'percent' ? '%' : 'stig'}</span>
               <label className="rw-active"><input type="checkbox" checked={p.active} onChange={e => setField(p, { active: e.target.checked })} /> virk</label>
             </div>
             <div className="rw-kwedit-row">

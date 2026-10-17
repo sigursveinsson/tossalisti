@@ -78,8 +78,8 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         <button className={'home-cashback' + (cashback > 0 ? '' : ' promo')} onClick={() => onOpenRewards()}>
           <span className="home-cashback-ic"><IconGift size={22} stroke={1.75} /></span>
           {cashback > 0
-            ? <span className="home-cashback-txt"><small>Þitt cashback</small><b>{kr(cashback)}</b></span>
-            : <span className="home-cashback-txt"><small>Nýtt: Gríptu cashback</small><b>Fáðu til baka af innkaupum</b></span>}
+            ? <span className="home-cashback-txt"><small>Gríptu stigin þín</small><b>{Math.round(cashback).toLocaleString('is-IS')} stig</b></span>
+            : <span className="home-cashback-txt"><small>Nýtt: Gríptu stig</small><b>Safnaðu stigum af innkaupum</b></span>}
           <Go />
         </button>
       )}
@@ -100,7 +100,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <span className="home-invite-ic"><IconReceipt size={22} stroke={1.75} /></span>
           <span className="home-invite-txt">
             <b>{purchases.length ? 'Skannaðu kvittun' : 'Prófaðu að skanna kvittun'}</b>
-            <small>Taktu mynd — gervigreindin les vörurnar, flokkar útgjöldin{rewardsEnabled ? ' og finnur cashback' : ''}</small>
+            <small>Taktu mynd — gervigreindin les vörurnar, flokkar útgjöldin{rewardsEnabled ? ' og finnur Gríptu stig' : ''}</small>
           </span>
           <Go />
         </button>
