@@ -1,0 +1,5 @@
+recovery: Nýtt lykilorð á Tossalista
+confirmation: Staðfestu netfangið þitt — Tossalisti
+magic_link: Innskráningarhlekkur — Tossalisti
+invite: Þér er boðið á Tossalista
+email_change: Staðfestu nýtt netfang — Tossalisti

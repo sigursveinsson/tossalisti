@@ -21,7 +21,7 @@ import ShareModal from './components/ShareModal.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
 import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
-import Auth from './components/Auth.jsx'
+import Auth, { ResetPassword } from './components/Auth.jsx'
 import { useBackClose } from './lib/backstack.js'
 import { captureAttribution, getAttribution, pageContext } from './lib/attribution.js'
 
@@ -82,12 +82,14 @@ export default function App() {
   const [showBudgetIntro, setShowBudgetIntro] = useState(false)
 
   // Auðkenning (aðeins í ský-ham)
+  const [pwReset, setPwReset] = useState(() => new URLSearchParams(window.location.search).has('reset'))
   useEffect(() => {
     if (!isCloud) return
     supabase.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true) })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => { setSession(s); if (e === 'PASSWORD_RECOVERY') setPwReset(true) })
     return () => sub.subscription.unsubscribe()
   }, [])
+  const finishPwReset = () => { setPwReset(false); try { window.history.replaceState({}, '', window.location.pathname) } catch {} }
 
   const reload = async (keepId) => {
     try {
@@ -634,6 +636,8 @@ export default function App() {
       onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
   }
   if (isCloud && !session) return <Auth />
+  // „Gleymt lykilorð?“-hlekkur opnaður: velja nýtt lykilorð áður en lengra er haldið.
+  if (isCloud && session && pwReset) return <ResetPassword onDone={finishPwReset} />
   // Vörumerkjanotandi (t.d. Nathan): beint í mælaborðið — hvorki prófíl, samþykki né listar.
   if (isCloud && session && brandUser === undefined) return null
   if (isCloud && session && brandUser) return <BrandDashboard brandUser={brandUser} onClose={() => {}} onSignOut={signOut} />

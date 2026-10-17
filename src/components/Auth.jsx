@@ -19,15 +19,60 @@ const ICELANDIC_ERROR = (msg) => {
   return msg || 'Eitthvað fór úrskeiðis.'
 }
 
+// Nýtt lykilorð eftir „Gleymt lykilorð?“-hlekk (App.jsx sýnir þennan skjá við PASSWORD_RECOVERY).
+export function ResetPassword({ onDone }) {
+  const [pw, setPw] = useState('')
+  const [pw2, setPw2] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const save = async () => {
+    setError('')
+    if (pw.length < 6) { setError('Lykilorð þarf að vera a.m.k. 6 stafir.'); return }
+    if (pw !== pw2) { setError('Lykilorðin eru ekki eins.'); return }
+    setBusy(true)
+    const { error } = await supabase.auth.updateUser({ password: pw })
+    setBusy(false)
+    if (error) { setError(ICELANDIC_ERROR(error.message)); return }
+    onDone && onDone()
+  }
+  return (
+    <div className="landing">
+      <div className="hero">
+        <img className="hero-logo" src="/logo.svg" alt="Tossalisti" width="76" height="76" />
+        <h1>Tossa<span style={{ color: '#f5a623' }}>listi</span></h1>
+      </div>
+      <div className="signin-card">
+        <p className="signin-title">Veldu nýtt lykilorð</p>
+        <input value={pw} onChange={e => setPw(e.target.value)} placeholder="Nýtt lykilorð" type="password" autoComplete="new-password" autoFocus />
+        <input value={pw2} onChange={e => setPw2(e.target.value)} onKeyDown={e => e.key === 'Enter' && save()} placeholder="Endurtaktu lykilorðið" type="password" autoComplete="new-password" />
+        <button onClick={save} disabled={busy}>{busy ? '…' : 'Vista og halda áfram'}</button>
+        {error && <p className="signin-error">{error}</p>}
+      </div>
+    </div>
+  )
+}
+
 export default function Auth() {
-  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [mode, setMode] = useState('signin') // 'signin' | 'signup' | 'forgot'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const forgot = async () => {
+    setError(''); setInfo('')
+    if (!email.includes('@')) { setError('Sláðu inn netfangið þitt.'); return }
+    setBusy(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin + '/?reset' })
+    setBusy(false)
+    if (error) { setError(ICELANDIC_ERROR(error.message)); return }
+    setInfo('Við sendum þér hlekk á ' + email.trim() + '. Opnaðu hann til að velja nýtt lykilorð — athugaðu ruslpóstinn ef hann skilar sér ekki.')
+  }
+
   const submit = async () => {
-    setError('')
+    if (mode === 'forgot') return forgot()
+    setError(''); setInfo('')
     if (!email || !password) { setError('Sláðu inn netfang og lykilorð.'); return }
     setBusy(true)
     const { data, error } = mode === 'signup'
@@ -53,30 +98,38 @@ export default function Auth() {
       </div>
 
       <div className="signin-card">
-        <p className="signin-title">{mode === 'signup' ? 'Stofna reikning' : 'Skráðu þig inn'}</p>
+        <p className="signin-title">{mode === 'signup' ? 'Stofna reikning' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
+        {mode === 'forgot' && <p className="signin-help">Sláðu inn netfangið þitt og við sendum þér hlekk til að velja nýtt lykilorð.</p>}
         <input
           value={email}
           onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => mode === 'forgot' && e.key === 'Enter' && submit()}
           placeholder="netfang@daemi.is"
           type="email"
           autoComplete="email"
         />
-        <input
+        {mode !== 'forgot' && <input
           value={password}
           onChange={e => setPassword(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && submit()}
           placeholder="Lykilorð"
           type="password"
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-        />
+        />}
         <button onClick={submit} disabled={busy}>
-          {busy ? '…' : (mode === 'signup' ? 'Stofna reikning' : 'Skrá inn')}
+          {busy ? '…' : (mode === 'signup' ? 'Stofna reikning' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
         </button>
         {error && <p className="signin-error">{error}</p>}
+        {info && <p className="signin-info">{info}</p>}
+        {mode === 'signin' && (
+          <p className="signin-note">
+            <button className="link-btn" onClick={() => { setMode('forgot'); setError(''); setInfo('') }}>Gleymt lykilorð?</button>
+          </p>
+        )}
         <p className="signin-note">
-          {mode === 'signup' ? 'Ertu með reikning? ' : 'Ekki með reikning? '}
-          <button className="link-btn" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError('') }}>
-            {mode === 'signup' ? 'Skrá inn' : 'Nýskráning'}
+          {mode === 'signin' ? 'Ekki með reikning? ' : 'Ertu með reikning? '}
+          <button className="link-btn" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}>
+            {mode === 'signin' ? 'Nýskráning' : 'Skrá inn'}
           </button>
         </p>
       </div>
