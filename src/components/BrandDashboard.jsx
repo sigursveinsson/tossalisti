@@ -6,7 +6,7 @@ import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout,
 import Campaigns from './BrandCampaigns.jsx'
 import BrandAccess from './BrandAccess.jsx'
 import BrandProducts from './BrandProducts.jsx'
-import { IconReceipt } from '@tabler/icons-react'
+import { IconReceipt, IconShoppingBag, IconInfoCircle } from '@tabler/icons-react'
 
 const timeAgo = (iso) => {
   if (!iso) return ''
@@ -35,7 +35,7 @@ const QUESTIONS = [
 ]
 
 // brandUser: { brand_id, name, role } → vörumerkjanotandi sér AÐEINS sitt vörumerki (ekkert val, engin keðjuskipting).
-export default function BrandDashboard({ onClose, brandUser = null, onSignOut }) {
+export default function BrandDashboard({ onClose, brandUser = null, onSignOut, onOpenApp = null }) {
   useBackClose(true, onClose)
   const isBrandUser = !!brandUser
   const [tab, setTab] = useState('overview') // overview | products | campaigns | access
@@ -131,8 +131,16 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut })
             ? <div className="bd-brandmark">{brandUser.name}</div>
             : <button className="bd-back" onClick={onClose}><IconArrowLeft size={17} stroke={1.9} /> Stjórnborð</button>}
           <div className="bd-title">{isBrandUser ? 'Gríptu' : 'Vörumerkja-mælaborð'} <span>{isBrandUser ? 'mælaborð vörumerkis' : 'Gríptu fyrir heildsala'}</span></div>
-          {isBrandUser && onSignOut && <button className="bd-back bd-right" onClick={onSignOut}><IconLogout size={16} stroke={1.9} /> Útskrá</button>}
+          {isBrandUser && (
+            <div className="bd-right bd-topbtns">
+              {onOpenApp && <button className="bd-back bd-openapp" onClick={onOpenApp} title="Sjá appið eins og notendur sjá það"><IconShoppingBag size={16} stroke={1.9} /> Opna Tossalista</button>}
+              {onSignOut && <button className="bd-back" onClick={onSignOut}><IconLogout size={16} stroke={1.9} /> Útskrá</button>}
+            </div>
+          )}
         </div>
+        {isBrandUser && onOpenApp && (
+          <div className="bd-hint"><IconInfoCircle size={15} stroke={2} /> Þið getið líka notað Tossalista sjálf: skannað kvittun með ykkar vöru og séð hvernig stigin birtast notandanum. Hnappurinn <b>Opna Tossalista</b> hér fyrir ofan, og mælaborðstáknið í haus appsins leiðir til baka.</div>
+        )}
 
         <div className="bd-tabs">
           <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Yfirlit</button>

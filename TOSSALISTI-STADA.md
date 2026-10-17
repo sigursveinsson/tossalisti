@@ -35,6 +35,8 @@ _Röðin sem ákveðin var: tillaga til Nathan fyrst → smíða á meðan → u
 - Skjölun: `supabase/server_rewards.sql`.
 - **Næst í kjarnanum:** útleysing gjafakörfu (800 stig → beiðni → samþykkt → afhent), Gríptu-skjár notanda með framvindu, boðskóði fyrir pilot-hóp (`pilot_invites`), PDF-skýrsla úr mælaborði.
 - **Fyrir uppsetningarfund með Nathan:** skrá netföng þeirra í Aðgangur-flipann sem `editor`, kveikja `rewards_enabled` þegar herferðin á að byrja (er slökkt núna).
+- ✅ **Heildsalanotandi getur opnað appið** (17. okt): lendir í mælaborði, hnappur „Opna Tossalista“ efst → prófíl → samþykki → appið eins og hver annar notandi. Gult mælaborðstákn í haus appsins leiðir til baka. Val geymt í `korfan.brandview`. Áður var hann læstur í mælaborðinu og gat ekki séð hvað hann var að kaupa. ⚠️ Kaup starfsfólks Nathan telja í mælaborðið; draga frá í lokaskýrslu pilotsins (netföng úr `brand_members`).
+- ✅ **„Gleymt lykilorð?“ + íslenskur póstur** (17. okt): Auth.jsx `forgot`-hamur + `ResetPassword`-skjár; App hlustar á `PASSWORD_RECOVERY`/`?reset`. Resend: `tossalisti.is` staðfest (DNS hjá **Netlify**, ekki ISNIC — nafnaþjónar nsone.net). Supabase SMTP: smtp.resend.com:465, sendandi `tossalisti@tossalisti.is`, lykill `tossalisti-auth` (Sending access). Eldri Resend-lyklar `Supabase SMTP`/`v2`/`KontaktVDR` tilheyra öðrum verkefnum — ekki snerta. Fimm sniðmát á íslensku (`supabase/email/`). Site URL var gömul netlify-slóð → nú `https://tossalisti.is`; redirect: `tossalisti.is/**`, `www.`, `localhost:5174/**`. Prófað: póstur barst, nýtt lykilorð virkaði (stjorinn88).
 
 ## ★★★ NATHAN SAGÐI JÁ (13. okt 2026) — PILOT Í UNDIRBÚNINGI
 _Fundurinn gekk mjög vel. Nathan er til í samstarf. Þetta opnar cashback-kjarnann (⛔ áður gated á þessu samtali)._

@@ -217,6 +217,8 @@ export default function App() {
   const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
   // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
   const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
+  const [brandView, setBrandView] = useState(() => { try { return localStorage.getItem('korfan.brandview') || 'dash' } catch { return 'dash' } }) // 'dash' | 'app'
+  const setBrandViewP = (v) => { setBrandView(v); try { localStorage.setItem('korfan.brandview', v) } catch {} }
   const isGriptu = typeof window !== 'undefined' && (/griptu\./i.test(window.location.hostname) || new URLSearchParams(window.location.search).has('griptu'))
   const [griptuDash, setGriptuDash] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('griptu') === 'dash')
   useEffect(() => { if (isGriptu && brandUser) setGriptuDash(true) }, [brandUser]) // vörumerkjanotandi: beint í mælaborð eftir innskráningu
@@ -640,7 +642,11 @@ export default function App() {
   if (isCloud && session && pwReset) return <ResetPassword onDone={finishPwReset} />
   // Vörumerkjanotandi (t.d. Nathan): beint í mælaborðið — hvorki prófíl, samþykki né listar.
   if (isCloud && session && brandUser === undefined) return null
-  if (isCloud && session && brandUser) return <BrandDashboard brandUser={brandUser} onClose={() => {}} onSignOut={signOut} />
+  // Vörumerkjanotandi lendir í mælaborðinu en getur opnað appið sjálft (hann er líka neytandi og þarf að
+  // sjá hvernig stigin birtast). Gögn annarra eru varin af RLS, ekki með því að fela appið.
+  if (isCloud && session && brandUser && brandView === 'dash') {
+    return <BrandDashboard brandUser={brandUser} onClose={() => {}} onSignOut={signOut} onOpenApp={() => setBrandViewP('app')} />
+  }
   if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
     return <ProfileSetup initial={profile} onSave={saveProfile} />
   }
@@ -698,6 +704,7 @@ export default function App() {
           <span className="header-spacer" />
           <button className="admin-btn" onClick={() => setShowNotif(true)} title="Áminningar" aria-label="Áminningar"><IconBell size={20} stroke={1.75} /></button>
           {isAdmin && <button className="admin-btn" onClick={() => setShowAdmin(true)} title="Stjórnborð" aria-label="Stjórnborð"><IconChartBar size={20} stroke={1.75} /></button>}
+          {!isAdmin && brandUser && <button className="admin-btn brand-dash-btn" onClick={() => setBrandViewP('dash')} title={`Mælaborð ${brandUser.name}`} aria-label="Mælaborð vörumerkis"><IconChartBar size={20} stroke={1.75} /></button>}
         </div>
         {showBudget && (
           <div className="header-title">
