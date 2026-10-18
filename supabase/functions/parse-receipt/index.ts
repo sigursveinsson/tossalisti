@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     const today = new Date()
     const todayStr = iso(today)
 
-    const itemShape = prods.length ? '{"name":"","price":0,"w":0,"pid":null}' : '{"name":"","price":0,"w":0}'
+    const itemShape = prods.length ? '{"name":"","qty":1,"price":0,"w":0,"pid":null}' : '{"name":"","qty":1,"price":0,"w":0}'
     const prompt = [
       'Þú lest íslenska kassakvittun af mynd.',
       'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"items":[' + itemShape + '],"total":0}',
@@ -103,8 +103,11 @@ Deno.serve(async (req) => {
       '- Settu ALLTAF nákvæmlega þann textastreng sem þú last af kvittuninni í "date_raw" (t.d. "05.07.2026 14:32").',
       '',
       'VÖRUR:',
-      '- Verð eru heiltölur í íslenskum krónum.',
-      '- Settu hverja keypta vöru í items með hreinu nafni.',
+      '- Verð eru heiltölur í íslenskum krónum. "price" = SAMTALS fyrir línuna (magn × einingarverð), þ.e. talan lengst til hægri.',
+      '- Settu hverja keypta vöru í items með hreinu nafni. Slepptu einingarorðum aftast í nafni ("stk", "st", "kg").',
+      '- MAGN: Margar kvittanir (Krónan, Bónus, Nettó o.fl.) prenta magn í SÉRSTAKRI LÍNU undir vörunni, t.d. "2 stk@126   252" eða "2 x 126" eða "0,834 kg x 1.299".',
+      '  Sú lína er EKKI ný vara: hún tilheyrir vörunni í línunni fyrir ofan. Settu "qty" = magnið (2, eða 0.834 fyrir vigtaða vöru) og "price" = samtalan á þeirri línu.',
+      '- "qty" er 1 ef ekkert magn er gefið.',
       '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items.',
       '',
       'ÁBYRGÐ ("w") — fyrir hverja vöru:',
@@ -147,6 +150,32 @@ Deno.serve(async (req) => {
         }
         const before = parsed.date
         parsed.date = fixDate(parsed.date, today)
+        // Öryggisnet: magnlína sem líkanið gerði samt að sér-vöru ("2 stk@126", "2 x 126", "0,834 kg x 1.299")
+        // → sameina við vöruna fyrir ofan (magn + samtala), og hreinsa einingarorð aftast í nafni.
+        if (Array.isArray(parsed.items)) {
+          const QTY = /^\s*(\d+(?:[.,]\d+)?)\s*(?:stk|st|kg|x|×)?\s*(?:[@x×]|á)\s*([\d.,]+)\s*(?:kr)?\s*$/i
+          // „1.299“ = 1299 kr; „0,834“ = 0.834 (íslensk tala: punktur þúsund, komma tugabrot)
+          const isNum = (t: string) => Number(t.replace(/\./g, '').replace(',', '.'))
+          const merged: any[] = []
+          for (const raw of parsed.items as any[]) {
+            const it = { ...(raw || {}) }
+            const name = String(it.name || '')
+            const m = name.match(QTY)
+            if (m && merged.length) {
+              const prev = merged[merged.length - 1]
+              const q = isNum(m[1]) || 1, unit = isNum(m[2])
+              prev.qty = q
+              // Samtala reiknuð úr textanum (magn × einingarverð) — verðdálkur magnlínunnar getur verið hliðraður.
+              if (unit > 0) prev.price = Math.round(q * unit)
+              continue
+            }
+            it.name = name.replace(/\s+(stk|st|kg)\.?\s*$/i, '').trim()
+            const q = Number(it.qty)
+            it.qty = Number.isFinite(q) && q > 0 ? q : 1
+            merged.push(it)
+          }
+          parsed.items = merged
+        }
         // Varpa pid-kóðum í raunveruleg vöru-id; hafna öllu sem ekki var í listanum.
         let matched = 0
         let warranty = 0

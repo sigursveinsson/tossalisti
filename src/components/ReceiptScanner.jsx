@@ -68,7 +68,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       const res = await parseReceipt(file, setProgress, prods)
       setStore(res.store || '')
       if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
-      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
+      setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, qty: x.qty && x.qty !== 1 ? x.qty : 1, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
       )
       setArchive(res.archive || null)
       setFailed(res.failed || null)
@@ -84,11 +84,11 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
 
   const setItem = (id, field, val) => setItems(items.map(it => it.id === id ? { ...it, [field]: val } : it))
   const delItem = (id) => setItems(items.filter(it => it.id !== id))
-  const addRow = () => setItems([...items, { id: 'n_' + Date.now(), name: '', price: '', w: 0 }])
+  const addRow = () => setItems([...items, { id: 'n_' + Date.now(), name: '', qty: 1, price: '', w: 0 }])
 
   const save = async () => {
     const clean = items
-      .map(it => ({ name: (it.name || '').trim(), price: it.price === '' ? null : Number(it.price), reward_product_id: it.reward_product_id || null, warranty_until: it.w ? addYears(date, it.w) : null }))
+      .map(it => ({ name: (it.name || '').trim(), qty: Number(it.qty) > 0 ? Number(it.qty) : 1, price: it.price === '' ? null : Number(it.price), reward_product_id: it.reward_product_id || null, warranty_until: it.w ? addYears(date, it.w) : null }))
       .filter(it => it.name)
     const payload = {
       store: store.trim(),
@@ -155,6 +155,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
                 return (
                   <React.Fragment key={it.id}>
                     <div className={'receipt-row' + (mp ? ' is-match' : '')}>
+                      <input className="receipt-qty" value={it.qty ?? 1} onChange={e => setItem(it.id, 'qty', e.target.value.replace(',', '.'))} inputMode="decimal" aria-label="Magn" title="Magn" />
                       <input value={it.name} onChange={e => setItem(it.id, 'name', e.target.value)} placeholder="Vara" />
                       <input className="receipt-price" value={it.price} onChange={e => setItem(it.id, 'price', e.target.value)} placeholder="kr" inputMode="decimal" />
                       <button className={'receipt-warr' + (it.w ? ' on' : '')} onClick={() => setItem(it.id, 'w', nextW(it.w || 0))} title="Ábyrgð: ýttu til að skipta (engin / 2 ár / 5 ár)" aria-label="Ábyrgð">

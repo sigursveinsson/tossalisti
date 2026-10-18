@@ -146,6 +146,7 @@ async function visionInvoke(image, mime, products) {
   const items = Array.isArray(data.items)
     ? data.items.map(i => ({
         name: String(i.name || '').trim(),
+        qty: Number(i.qty) > 0 ? Number(i.qty) : 1,
         price: i.price == null ? null : Number(i.price),
         reward_product_id: i.reward_product_id || null,
         warranty_years: [2, 5].includes(Number(i.warranty_years)) ? Number(i.warranty_years) : 0,
