@@ -473,6 +473,7 @@ export default function App() {
     too_old: 'Kvittun skráð. Stig fást aðeins fyrir kvittanir yngri en 14 daga.',
     daily_limit: 'Kvittun skráð. Hámark þrjár kvittanir á dag gefa stig — þessi telur á morgun ekki, en er geymd.',
     duplicate: 'Kvittun skráð. Þessi kvittun hefur þegar gefið stig.',
+    outside_campaign: 'Kvittun skráð. Varan er með í Gríptu en herferðin nær ekki yfir kaupdaginn á kvittuninni — stig fást fyrir kaup innan herferðartímabilsins.',
     already: 'Kvittun skráð.',
     disabled: 'Kvittun skráð.',
   }
@@ -481,7 +482,7 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
-    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!`)
+    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : ''}`)
     else flash(REWARD_NOTE[r && r.rewardNote] || 'Kvittun skráð')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }

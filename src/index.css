@@ -1469,9 +1469,10 @@ button { font-family: inherit; cursor: pointer; }
 .rv-invite { margin: 0 0 14px; padding: 14px; border-radius: 14px; background: var(--gold-soft); border: 1px solid #f5a623; }
 .rv-invite b { color: var(--navy); font-size: 15px; }
 .rv-invite p { margin: 4px 0 10px; font-size: 13.5px; color: var(--ink2); line-height: 1.45; }
-.rv-invite-row { display: flex; gap: 8px; }
-.rv-invite-row .dialog-input { margin: 0; flex: 1; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
-.rv-invite-row .primary-btn { flex: none; }
+.rv-invite-row { display: flex; flex-direction: column; gap: 10px; }
+.rv-invite-row .dialog-input { margin: 0; width: 100%; min-width: 0; box-sizing: border-box; height: 52px; font-size: 20px; text-align: center; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--navy); }
+.rv-invite-row .dialog-input::placeholder { letter-spacing: .06em; font-weight: 600; color: var(--faint); }
+.rv-invite-row .primary-btn { width: 100%; height: 46px; font-size: 15px; }
 .rv-pilot-tag { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 10px; padding: 3px 10px; border-radius: 999px; background: #e6f9f2; color: var(--green-ink); font-size: 12px; font-weight: 700; }
 .pv-item { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line2); font-size: 13.5px; }
 .pv-item:first-of-type { border-top: 0; }

@@ -46,6 +46,7 @@ function Form({ brandId, products, onDone, onCancel }) {
         <label>Frá <input className="dialog-input" type="date" value={f.starts_on} onChange={set('starts_on')} /></label>
         <label>Til <input className="dialog-input" type="date" value={f.ends_on} onChange={set('ends_on')} /></label>
       </div>
+      <div className="bd-muted">Stig fást fyrir kaup sem eru <b>dagsett</b> innan tímabilsins — kvittun frá því fyrir „Frá“ gefur engin vörustig þótt hún sé skönnuð eftir það. Veldu fyrri dagsetningu ef eldri kaup eiga að telja.</div>
       <div className="bc-row">
         <label>Þak (innlausnir) <input className="dialog-input" value={f.max_redemptions} onChange={set('max_redemptions')} placeholder="t.d. 500" inputMode="numeric" /></label>
         <label>Hámark stiga alls <input className="dialog-input" value={f.budget_kr} onChange={set('budget_kr')} placeholder="t.d. 50.000" inputMode="numeric" /></label>
