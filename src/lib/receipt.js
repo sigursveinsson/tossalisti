@@ -157,6 +157,8 @@ async function visionInvoke(image, mime, products) {
     // Auðkenni kvittunar (svikavörn): vistast með kaupunum og flaggað á netþjóni.
     receipt_no: data.receipt_no || null, register: data.register || null, time: data.time || null,
     vat_total: data.vat_total == null ? null : Number(data.vat_total),
+    // Netþjónninn geymir það sem gervigreindin las; stig reiknast eingöngu af því.
+    scan_id: data.scan_id || null,
   }
 }
 

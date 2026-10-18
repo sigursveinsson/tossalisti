@@ -198,8 +198,37 @@ Deno.serve(async (req) => {
           ;(parsed as any)[k] = typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : null
         }
         ;(parsed as any).vat_total = Number.isFinite(Number(parsed.vat_total)) && Number(parsed.vat_total) > 0 ? Math.round(Number(parsed.vat_total)) : null
+        // Geyma það sem gervigreindin LAS á netþjóni (receipt_scans). Stig reiknast aðeins af þessu —
+        // línur sem notandi breytir eða bætir við í appinu hafa engin áhrif á stig.
+        try {
+          const SB = Deno.env.get('SUPABASE_URL'), SR = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), AN = Deno.env.get('SUPABASE_ANON_KEY')
+          const authz = req.headers.get('Authorization') || ''
+          if (SB && SR && authz) {
+            const ur = await fetch(SB + '/auth/v1/user', { headers: { Authorization: authz, apikey: AN || SR } })
+            const u = ur.ok ? await ur.json() : null
+            if (u && u.id) {
+              const row = {
+                user_id: u.id, store: parsed.store || null, purchased_at: parsed.date || null,
+                receipt_no: (parsed as any).receipt_no || null, vat_total: (parsed as any).vat_total ?? null,
+                total: Number.isFinite(Number(parsed.total)) ? Number(parsed.total) : null,
+                items: (Array.isArray(parsed.items) ? parsed.items as any[] : []).map((i) => ({
+                  name: String(i.name || '').slice(0, 120), qty: Number(i.qty) > 0 ? Number(i.qty) : 1,
+                  price: Number.isFinite(Number(i.price)) ? Number(i.price) : null, reward_product_id: i.reward_product_id || null,
+                })),
+              }
+              const ins = await fetch(SB + '/rest/v1/receipt_scans', {
+                method: 'POST',
+                headers: { apikey: SR, Authorization: 'Bearer ' + SR, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+                body: JSON.stringify(row),
+              })
+              if (ins.ok) { const saved = await ins.json(); (parsed as any).scan_id = saved && saved[0] && saved[0].id }
+              else console.log('parse-receipt scan save fail ' + ins.status)
+            }
+          }
+        } catch (e) { console.log('parse-receipt scan save error ' + String(e)) }
+        const qtyLines = Array.isArray(parsed.items) ? (parsed.items as any[]).filter((i) => Number(i.qty) !== 1).length : 0
         console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) +
-          ' prods=' + prods.length + ' matched=' + matched + ' warranty=' + warranty +
+          ' scan=' + ((parsed as any).scan_id ? 'saved' : 'none') + ' prods=' + prods.length + ' matched=' + matched + ' warranty=' + warranty + ' qtylines=' + qtyLines +
           ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
         return json(parsed)
       }

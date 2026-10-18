@@ -685,6 +685,7 @@ const cloud = {
       category: p.category || null, fingerprint: purchaseFingerprint(p),
       ...(p.return_until ? { return_until: p.return_until } : {}),
       receipt_no: p.receipt_no || null, register: p.register || null, receipt_time: p.receipt_time || null, vat_total: p.vat_total ?? null,
+      scan_id: p.scan_id || null,
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {

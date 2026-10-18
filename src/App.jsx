@@ -482,6 +482,7 @@ export default function App() {
     daily_limit: 'Kvittun skráð, en engin stig: hámark þrjár kvittanir á dag gefa stig. Kvittunin er geymd.',
     duplicate: 'Kvittun skráð, en engin stig: þessi kvittun hefur þegar verið skönnuð og gefið stig.',
     outside_campaign: 'Kvittun skráð, en engin vörustig: herferðin nær ekki yfir kaupdaginn á kvittuninni.',
+    no_scan: 'Kvittun skráð, en engin stig: stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni.',
     already: 'Kvittun skráð.',
     disabled: 'Kvittun skráð.',
   }

@@ -73,7 +73,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       )
       setArchive(res.archive || null)
       setFailed(res.failed || null)
-      setIdent({ receipt_no: res.receipt_no || null, register: res.register || null, receipt_time: res.time || null, vat_total: res.vat_total ?? null })
+      setIdent({ receipt_no: res.receipt_no || null, register: res.register || null, receipt_time: res.time || null, vat_total: res.vat_total ?? null, scan_id: res.scan_id || null })
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
       setScannedOnce(true)

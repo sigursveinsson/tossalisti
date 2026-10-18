@@ -465,3 +465,9 @@ git push
 - Listavalmynd: „🧾 Skrá kvittun" virkar.
 - Innkaupalisti: „🖼️ Fela/Sýna" felur/sýnir myndir.
 - Nýr listi: „Búa til" takkinn situr rétt í rammanum.
+
+## Svikavörn: stig af því sem gervigreindin las (18. okt 2026)
+- parse-receipt v22 vistar lesturinn í `receipt_scans` (service role) og skilar `scan_id`.
+- Framendi sendir `scan_id` með kaupum. `award_purchase` reiknar stig EINGÖNGU af `receipt_scans.items`, ekki af línum sem notandi breytir eða bætir við.
+- Engin skönnun → `no_scan` (0 stig). Sama skönnun tvisvar → `duplicate`.
+- Prófað í SQL: fölsuð "10x Cheerios" lína hunsuð, aðeins 2 stk talin.
