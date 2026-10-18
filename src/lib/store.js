@@ -505,6 +505,22 @@ const local = {
 }
 
 /* ---------------- Ský (Supabase) ---------------- */
+// Gildandi stig vöru í dag: herferð í gangi yfirskrifar grunnstig (sama regla og award_purchase á netþjóni).
+// Vara sem á herferðir en enga í gangi í dag gefur engin vörustig → effective 0.
+async function withLiveCampaigns(prods) {
+  if (!prods || !prods.length) return prods || []
+  const { data: camps } = await supabase.from('reward_campaigns').select('brand_id,product_id,reward_type,reward_value,starts_on,ends_on,active,created_at')
+  const today = new Date().toISOString().slice(0, 10)
+  const all = camps || []
+  return prods.map(p => {
+    const mine = all.filter(c => c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id))
+    if (!mine.length) return p
+    const live = mine.filter(c => c.active && c.starts_on <= today && c.ends_on >= today)
+      .sort((a, b) => (a.product_id ? 0 : 1) - (b.product_id ? 0 : 1) || String(a.created_at).localeCompare(String(b.created_at)))[0]
+    return live ? { ...p, reward_type: live.reward_type, reward_value: live.reward_value, in_campaign: true } : { ...p, reward_value: 0, in_campaign: false }
+  })
+}
+
 const cloud = {
   async getLists() {
     const { data: lists, error } = await supabase.from('lists').select('id,name,created_at,type').order('created_at')
@@ -1083,8 +1099,8 @@ const cloud = {
   },
   async lookupBarcode(bc) { return offLookup(bc) },
   async getRewardCatalog() {
-    const { data } = await supabase.from('reward_products').select('id,name,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true).eq('status', 'approved')
-    return data || []
+    const { data } = await supabase.from('reward_products').select('id,name,brand_id,size,image_url,match_keywords,reward_type,reward_value,active').eq('active', true).eq('status', 'approved')
+    return (await withLiveCampaigns(data || [])).filter(p => Number(p.reward_value) > 0)
   },
   async getRewardBrands() {
     const { data } = await supabase.from('reward_brands').select('id,name').order('name')
@@ -1188,7 +1204,7 @@ const cloud = {
       supabase.from('reward_brands').select('id,name'),
     ])
     const bn = new Map((brands || []).map(b => [b.id, b.name]))
-    return (prods || []).map(p => ({ ...p, brand: bn.get(p.brand_id) || '' }))
+    return (await withLiveCampaigns(prods || [])).map(p => ({ ...p, brand: bn.get(p.brand_id) || '' }))
   },
   // Sækir raunverulegar kvittanalínur (til að stinga upp á leitarorðum) — eigin + deildar kvittanir.
   async getReceiptTerms(query) {

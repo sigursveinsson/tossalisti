@@ -6,7 +6,8 @@ import { store as db } from '../lib/store.js'
 const matchLabel = (p) => {
   if (!p) return ''
   const v = Number(p.reward_value) || 0
-  const val = p.reward_type === 'percent' ? `${v}% í stigum` : `+${v} stig`
+  // in_campaign === false: varan á herferðir en engin er í gangi í dag → engin vörustig
+  const val = p.in_campaign === false || v <= 0 ? 'engin herferð í gangi' : p.reward_type === 'percent' ? `${v}% í stigum` : `+${v} stig á einingu`
   return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'

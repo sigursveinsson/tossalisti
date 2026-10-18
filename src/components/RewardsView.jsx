@@ -82,8 +82,9 @@ export default function RewardsView({ onClose }) {
     store.getAppSettings().then(s => setPts({ receipt: Number(s.receipt_points) || 0, trial: Number(s.trial_bonus) || 0 })).catch(() => {})
     store.getRewardData().then(d => {
       setOffers((d.offers || []).filter(o => o.active !== false).sort((a, b) => a.threshold - b.threshold))
-      setProducts((d.products || []).filter(p => p.active !== false && (!p.status || p.status === 'approved')))
     }).catch(() => {})
+    // Vörur með GILDANDI stigum í dag (herferð yfirskrifar grunnstig; vörur án stiga í dag faldar)
+    store.getRewardCatalog().then(setProducts).catch(() => {})
   }, [])
   if (!r) return null
   // Tiltæk stig = staða mínus það sem er frátekið í beiðnum í yfirferð. Framvindan miðast við þau.
