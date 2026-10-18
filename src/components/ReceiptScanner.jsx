@@ -40,6 +40,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [dup, setDup] = useState(null)
   const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
   const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
+  const [failed, setFailed] = useState(null)       // 'network' | 'decode' | 'empty' | null — af hverju lesturinn skilaði engu
   const [keepImage, setKeepImage] = useState(true)
   const [returnDays, setReturnDays] = useState(0) // 0 = enginn skilafrestur skráður
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
@@ -68,12 +69,13 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
       )
       setArchive(res.archive || null)
+      setFailed(res.failed || null)
       setIdent({ receipt_no: res.receipt_no || null, register: res.register || null, receipt_time: res.time || null, vat_total: res.vat_total ?? null })
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
       setScannedOnce(true)
     } catch (err) {
-      setItems([])
+      setItems([]); setFailed('network')
     }
     setPhase('review')
   }
@@ -138,7 +140,11 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             {dateLooksOff(date) && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</span></div>
             )}
-            {items.length === 0 && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
+            {items.length === 0 && failed === 'network' && <div className="receipt-fail"><b>Náði ekki sambandi við kvittanalesarann.</b> Athugaðu netið og reyndu aftur með „Skanna aftur“, eða skráðu línurnar handvirkt.</div>}
+            {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}
+            {items.length === 0 && failed === 'empty' && <div className="receipt-fail"><b>Kvittanalesarinn fann engar vörur á myndinni.</b> Er myndin skýr og kvittunin öll í ramma? Reyndu aftur eða skráðu handvirkt.</div>}
+            {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
+            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); fileRef.current && fileRef.current.click() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
             <div className="receipt-items">
               {items.map(it => {
                 const mp = prodById(it.reward_product_id)

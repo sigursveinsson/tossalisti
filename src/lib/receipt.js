@@ -63,6 +63,26 @@ function loadImage(file) {
 // iOS Safari drepur ferlið ef heil 12–48MP myndavélarmynd er afkóðuð í striga;
 // createImageBitmap með resizeWidth afkóðar beint í minni stærð þar sem það er stutt,
 // með mun lægra minnistoppi en new Image() + canvas.
+// Varaleið þegar createImageBitmap ræður ekki við skrána (t.d. HEIC á sumum iPhone): <img> + canvas.
+// Dýrara í minni en hráa skráin er mun verri kostur (6–9 MB strengur í JSON).
+function loadViaImageElement(file, maxW) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const scale = img.naturalWidth > maxW ? maxW / img.naturalWidth : 1
+        const c = document.createElement('canvas')
+        c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale)
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+        resolve(c)
+      } catch (e) { reject(e) } finally { URL.revokeObjectURL(url) }
+    }
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e) }
+    img.src = url
+  })
+}
+
 async function loadDownscaledCanvas(file, maxW) {
   // AÐEINS niðurkvörðuð afkóðun (createImageBitmap með resizeWidth) — JPEG afkóðast
   // beint í minni stærð svo minnistoppurinn er lágur. ENGIN full-afkóðunar-varaleið:
@@ -114,8 +134,15 @@ function canvasToVisionBase64(canvas, quality = 0.7) {
 async function visionInvoke(image, mime, products) {
   const prods = (products || []).filter(p => p && p.id && p.name).map(p => ({ id: p.id, name: p.name, brand: p.brand || '' }))
   const body = prods.length ? { image, mime, products: prods } : { image, mime }
-  const { data, error } = await supabase.functions.invoke('parse-receipt', { body })
-  if (error || !data || data.error) return null
+  // Ein endurtekning ef netið hikstar — algengasta ástæðan fyrir „ekkert gerðist“ í síma.
+  let data = null, error = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { ({ data, error } = await supabase.functions.invoke('parse-receipt', { body })) } catch (e) { error = e; data = null }
+    if (!error && data && !data.error) break
+    if (attempt === 0) await new Promise(r => setTimeout(r, 800))
+  }
+  if (error || !data || data.error) { visionInvoke.lastError = (error && error.message) || (data && data.error) || 'unknown'; return null }
+  visionInvoke.lastError = null
   const items = Array.isArray(data.items)
     ? data.items.map(i => ({
         name: String(i.name || '').trim(),
@@ -124,7 +151,12 @@ async function visionInvoke(image, mime, products) {
         warranty_years: [2, 5].includes(Number(i.warranty_years)) ? Number(i.warranty_years) : 0,
       })).filter(i => i.name)
     : []
-  return { store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null }
+  return {
+    store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null,
+    // Auðkenni kvittunar (svikavörn): vistast með kaupunum og flaggað á netþjóni.
+    receipt_no: data.receipt_no || null, register: data.register || null, time: data.time || null,
+    vat_total: data.vat_total == null ? null : Number(data.vat_total),
+  }
 }
 
 export async function parseReceiptVision(file, products) {
@@ -175,14 +207,17 @@ export async function parseReceipt(file, onProgress, products) {
   let canvas = null, image = null, mime = 'image/jpeg'
   // Mjög stór mynd (líklega há-upplausnar myndavélarmynd) → EKKI afkóða í síma,
   // senda hráu skrána beint; netþjónninn afkóðar. Varnar OOM-endurhleðslu.
-  const BIG = 6 * 1024 * 1024
+  const BIG = 12 * 1024 * 1024
   if (file.size && file.size <= BIG) {
     try {
       canvas = await loadDownscaledCanvas(file, 1100)
-      image = canvasToVisionBase64(canvas, 0.7)
-    } catch (e) { canvas = null; image = null }
+    } catch (e) {
+      try { canvas = await loadViaImageElement(file, 1100) } catch (e2) { canvas = null }
+    }
+    if (canvas) { try { image = canvasToVisionBase64(canvas, 0.7) } catch (e) { image = null } }
   }
-  if (!image) {
+  // Síðasta úrræði: hrá skrá, en aðeins ef hún er hófleg — stærri strengur sprengir minnið í síma.
+  if (!image && file.size && file.size <= 4 * 1024 * 1024) {
     try { image = await fileToBase64(file); mime = file.type || 'image/jpeg' } catch (e2) { image = null }
   }
   // Geymslumynd búin til ÁÐUR en OCR-varaleiðin breytir striganum (grátóna).
@@ -191,15 +226,18 @@ export async function parseReceipt(file, onProgress, products) {
   else if (file.size && file.size <= ARCHIVE_RAW_MAX) archive = file
 
   // 1) Sjónlíkan (nákvæmt). Virkar líka þegar afkóðun klikkaði — hráa skráin fer á netþjóninn.
+  let aiReached = false
   if (image && supabase && supabase.functions) {
     try {
       const ai = await visionInvoke(image, mime, products)
-      if (ai && ai.items && ai.items.length) return { ...ai, archive }
+      if (ai) { aiReached = true; if (ai.items && ai.items.length) return { ...ai, archive } }
     } catch (e) { /* fall back */ }
   }
 
-  // 2) Tesseract-vara — aðeins ef afkóðun tókst (annars myndi full upplausn sprengja minnið aftur).
-  if (canvas) {
+  // 2) Tesseract-vara — AÐEINS ef gervigreindin náðist ekki (ekki ef hún svaraði tómu), afkóðun tókst,
+  //    og tækið hefur minni í það (málgangur + pixlavinnsla hefur fellt síma með litlu minni).
+  const lowMem = typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory < 4
+  if (canvas && !aiReached && !lowMem) {
     _ocrProgress = onProgress
     try {
       const worker = await getOcrWorker()
@@ -208,8 +246,8 @@ export async function parseReceipt(file, onProgress, products) {
     } catch (e) { /* skila tómu */ } finally { _ocrProgress = null }
   }
 
-  // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu.
-  return { store: '', items: [], total: null, date: null, archive }
+  // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu. `failed` segir skjánum að útskýra.
+  return { store: '', items: [], total: null, date: null, archive, failed: image ? (aiReached ? 'empty' : 'network') : 'decode' }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---

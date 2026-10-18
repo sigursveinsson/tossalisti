@@ -1555,3 +1555,6 @@ button { font-family: inherit; cursor: pointer; }
 .bp-bcrow .dialog-input { flex: 1; }
 .bp-bcrow .ghost-btn { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
 .bp-hint { font-size: 12px; color: var(--faint); line-height: 1.4; margin-top: -4px; }
+.receipt-fail { margin: 6px 0 10px; padding: 10px 12px; border-radius: 10px; background: #fdecea; color: #7a1a12; font-size: 13.5px; line-height: 1.45; }
+.receipt-fail b { color: #B3261E; display: block; margin-bottom: 2px; }
+.receipt-rescan { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
