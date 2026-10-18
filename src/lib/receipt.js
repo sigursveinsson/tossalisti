@@ -199,9 +199,38 @@ function canvasToBlob(canvas, quality = 0.72) {
 }
 const ARCHIVE_RAW_MAX = 9 * 1024 * 1024
 
+// Mæling: hver skönnunartilraun skráð (líka þær sem deyja í símanum) — Stjórnborð → Skönnun.
+async function logScan(ev) {
+  try {
+    if (!supabase) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('scan_events').insert({
+      user_id: user.id, outcome: ev.outcome, stage: ev.stage || null, ms: ev.ms ?? null,
+      file_bytes: ev.file_bytes ?? null, file_type: ev.file_type || null, decoded: ev.decoded ?? null, items: ev.items ?? null,
+      device_mem: (typeof navigator !== 'undefined' && navigator.deviceMemory) || null,
+      ua: (typeof navigator !== 'undefined' && navigator.userAgent || '').slice(0, 200), error: ev.error ? String(ev.error).slice(0, 200) : null,
+    })
+  } catch (e) { /* mæling má aldrei stöðva skönnun */ }
+}
+
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
 // Skilar líka `archive` (Blob) — mynd af kvittuninni til að geyma í kvittanasafni.
 export async function parseReceipt(file, onProgress, products) {
+  const t0 = Date.now()
+  const base = { file_bytes: file.size || null, file_type: file.type || null }
+  try {
+    const res = await parseReceiptInner(file, onProgress, products)
+    const outcome = res.items && res.items.length ? 'ok' : (res.failed || 'empty')
+    logScan({ ...base, outcome, stage: res.stage || (outcome === 'ok' ? 'done' : null), ms: Date.now() - t0, decoded: !!res.decoded, items: (res.items || []).length, error: visionInvoke.lastError })
+    return res
+  } catch (e) {
+    logScan({ ...base, outcome: 'crash', ms: Date.now() - t0, error: e && (e.message || e) })
+    throw e
+  }
+}
+
+async function parseReceiptInner(file, onProgress, products) {
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
   let canvas = null, image = null, mime = 'image/jpeg'
@@ -230,7 +259,7 @@ export async function parseReceipt(file, onProgress, products) {
   if (image && supabase && supabase.functions) {
     try {
       const ai = await visionInvoke(image, mime, products)
-      if (ai) { aiReached = true; if (ai.items && ai.items.length) return { ...ai, archive } }
+      if (ai) { aiReached = true; if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas, stage: 'ai' } }
     } catch (e) { /* fall back */ }
   }
 
@@ -242,12 +271,12 @@ export async function parseReceipt(file, onProgress, products) {
     try {
       const worker = await getOcrWorker()
       const { data } = await worker.recognize(enhanceForOcr(canvas))
-      return { ...parseReceiptText(data.text || ''), archive }
+      return { ...parseReceiptText(data.text || ''), archive, decoded: true, stage: 'ocr' }
     } catch (e) { /* skila tómu */ } finally { _ocrProgress = null }
   }
 
   // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu. `failed` segir skjánum að útskýra.
-  return { store: '', items: [], total: null, date: null, archive, failed: image ? (aiReached ? 'empty' : 'network') : 'decode' }
+  return { store: '', items: [], total: null, date: null, archive, decoded: !!canvas, stage: image ? (aiReached ? 'ai' : 'upload') : 'decode', failed: image ? (aiReached ? 'empty' : 'network') : 'decode' }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---

@@ -1558,3 +1558,17 @@ button { font-family: inherit; cursor: pointer; }
 .receipt-fail { margin: 6px 0 10px; padding: 10px 12px; border-radius: 10px; background: #fdecea; color: #7a1a12; font-size: 13.5px; line-height: 1.45; }
 .receipt-fail b { color: #B3261E; display: block; margin-bottom: 2px; }
 .receipt-rescan { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+
+/* ═══ Mæling á kvittanaskönnun (Stjórnborð) ═══ */
+.adm-head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.adm-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--soft); }
+.adm-seg button { border: 0; background: transparent; padding: 4px 9px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--ink2); cursor: pointer; }
+.adm-seg button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.adm-scanbar { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; margin: 2px 0 10px; }
+.adm-scanbar div { height: 100%; background: var(--green-ink); border-radius: 999px; }
+.adm-scanbar.bad div { background: #B3261E; }
+.adm-fail { margin: 6px 0 14px; font-size: 13px; }
+.adm-fail summary { cursor: pointer; color: var(--navy); font-weight: 600; }
+.adm-fail-row { padding: 8px 0; border-top: 1px solid var(--line2); color: var(--ink2); }
+.adm-fail-row b { color: #B3261E; }
+.adm-fail-row small { display: block; color: var(--faint); font-size: 11.5px; margin-top: 2px; word-break: break-word; }

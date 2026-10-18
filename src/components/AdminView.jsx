@@ -59,6 +59,9 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
   const [showRewards, setShowRewards] = useState(false)
   const [showBrand, setShowBrand] = useState(false)
   const [tab, setTab] = useState('stats') // stats | brands
+  const [scan, setScan] = useState(null) // mæling á kvittanaskönnun (scan_stats)
+  const [scanDays, setScanDays] = useState(7)
+  useEffect(() => { store.scanStats(scanDays).then(setScan).catch(() => setScan(null)) }, [scanDays])
   useBackClose(true, onClose)
 
   const load = () => {
@@ -107,6 +110,53 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
 
         {tab === 'stats' && loading && <p className="muted-p">Sæki tölfræði…</p>}
         {tab === 'stats' && err && <p className="muted-p">Næ ekki í tölfræði (ertu skráð(ur) inn sem stjórnandi?).</p>}
+
+        {tab === 'stats' && (
+          <>
+            <div className="adm-head adm-head-row">Kvittanaskönnun
+              <span className="adm-seg">{[1, 7, 30].map(d => <button key={d} className={scanDays === d ? 'on' : ''} onClick={() => setScanDays(d)}>{d === 1 ? '24 klst' : d + ' dagar'}</button>)}</span>
+            </div>
+            {!scan && <p className="muted-p">Engar mælingar enn — hver skönnun í appinu skráist hér frá og með næstu útgáfu.</p>}
+            {scan && scan.total === 0 && <p className="muted-p">Engin skönnun á tímabilinu.</p>}
+            {scan && scan.total > 0 && (() => {
+              const rate = Math.round(scan.ok / scan.total * 100)
+              const bo = scan.by_outcome || {}
+              const OUT = { empty: 'Lásust ekki', network: 'Náðist ekki í netþjón', decode: 'Myndin opnaðist ekki', crash: 'Hrun í síma' }
+              return (
+                <>
+                  <div className="adm-grid">
+                    {metric('Tilraunir', num(scan.total))}
+                    {metric('Tókust', rate + '%', rate < 85 ? 'undir 85% — skoða' : null)}
+                    {metric('Meðaltími', scan.avg_ms_ok ? (scan.avg_ms_ok / 1000).toFixed(1) + ' s' : '—', 'þegar tekst')}
+                    {metric('Notendur með villu', num(scan.users_failing))}
+                  </div>
+                  <div className={'adm-scanbar' + (rate < 85 ? ' bad' : '')}><div style={{ width: rate + '%' }} /></div>
+                  {Object.keys(bo).filter(k => k !== 'ok').length > 0 && (
+                    <div className="adm-src-rows">
+                      {Object.entries(bo).filter(([k]) => k !== 'ok').sort((a, b) => b[1] - a[1]).map(([k, n]) => <div className="adm-src-row" key={k}><span>{OUT[k] || k}</span><b>{num(n)}</b></div>)}
+                    </div>
+                  )}
+                  {scan.by_device && scan.by_device.length > 1 && (
+                    <div className="adm-src-rows">
+                      {scan.by_device.map(d => <div className="adm-src-row" key={d.device}><span>{d.device}</span><b>{Math.round(d.ok / d.total * 100)}% af {num(d.total)}</b></div>)}
+                    </div>
+                  )}
+                  {scan.recent_failures && scan.recent_failures.length > 0 && (
+                    <details className="adm-fail">
+                      <summary>Síðustu villur ({scan.recent_failures.length})</summary>
+                      {scan.recent_failures.map((f, i) => (
+                        <div className="adm-fail-row" key={i}>
+                          <b>{OUT[f.outcome] || f.outcome}</b> · {f.stage || '—'} · {f.ms ? Math.round(f.ms / 1000) + ' s' : ''} · {f.kb ? f.kb + ' KB' : ''} {f.type || ''} · {f.decoded ? 'minnkuð' : 'ekki minnkuð'} · {f.mem ? f.mem + ' GB' : 'minni óþekkt'}
+                          <small>{f.email || ''} · {new Date(f.at).toLocaleString('is-IS')} · {f.ua}{f.error ? ' · ' + f.error : ''}</small>
+                        </div>
+                      ))}
+                    </details>
+                  )}
+                </>
+              )
+            })()}
+          </>
+        )}
 
         {tab === 'stats' && pv && (
           <>
