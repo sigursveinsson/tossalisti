@@ -150,7 +150,7 @@ export default function RewardsAdmin({ onClose }) {
 
         {testUsers.length > 0 && (
           <div className="rw-testwarn">
-            <b>Prófunarhamur er á</b> fyrir {testUsers.join(', ')}: 300 stig fyrir hverja skönnun, engar tvítekningarreglur, telur ekki hjá vörumerkjum.
+            <b>Prófunarhamur er á</b> fyrir {testUsers.join(', ')}: venjuleg stig en engar tvítekningar-, aldurs- eða dagstakmarkanir. Tæmdu listann áður en prufuhópur fer inn.
             <span>Slökkva áður en boðskóði fer til þátttakenda.</span>
             <button className="ghost-btn" onClick={clearTestUsers}>Slökkva á prófunarham</button>
           </div>
@@ -240,14 +240,19 @@ export default function RewardsAdmin({ onClose }) {
                 <b>{p.name}</b>
                 <small>{[p.size, p.barcode].filter(Boolean).join(' · ') || 'engin stærð/strikamerki'}</small>
               </div>
-              <button className="rw-del" onClick={async () => { await store.deleteRewardProduct(p.id); load() }} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
+              <button className="rw-del" onClick={async () => {
+                if (!window.confirm(`Eyða vörunni „${p.name}“? Áunnin stig notenda haldast en varan og herferðir hennar hverfa. Öruggara er að taka hakið af „virk“.`)) return
+                try { await store.deleteRewardProduct(p.id) } catch (e) { window.alert(e.message || 'Ekki tókst að eyða.') }
+                load()
+              }} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
             </div>
             <div className="rw-prod-row">
               <select value={p.reward_type} onChange={e => setField(p, { reward_type: e.target.value })}>
                 <option value="fixed">stig á vöru</option>
                 <option value="percent">% af verði í stigum</option>
               </select>
-              <input type="number" className="rw-val" value={p.reward_value} onChange={e => setField(p, { reward_value: Number(e.target.value) || 0 })} />
+              <input type="number" className="rw-val" defaultValue={p.reward_value} key={p.id + ':' + p.reward_value}
+                onBlur={e => { const v = Number(e.target.value); if (e.target.value !== '' && Number.isFinite(v) && v !== Number(p.reward_value)) setField(p, { reward_value: v }); else e.target.value = p.reward_value }} />
               <span className="rw-unit">{p.reward_type === 'percent' ? '%' : 'stig'}</span>
               <label className="rw-active"><input type="checkbox" checked={p.active} onChange={e => setField(p, { active: e.target.checked })} /> virk</label>
             </div>
@@ -309,14 +314,14 @@ export default function RewardsAdmin({ onClose }) {
         <div className="adm-head">Tilboð / útleystning</div>
         {data.offers.map(o => (
           <div className="rw-offer" key={o.id}>
-            <div className="rw-offer-txt"><b>{o.title}</b><small>Safnaðu {Math.round(o.threshold)} kr → {o.reward_desc || o.kind}</small></div>
+            <div className="rw-offer-txt"><b>{o.title}</b><small>Safnaðu {Math.round(o.threshold)} stigum → {o.reward_desc || o.kind}</small></div>
             <button className="rw-del" onClick={async () => { await store.deleteRewardOffer(o.id); load() }} aria-label="Eyða"><IconX size={20} stroke={1.75} /></button>
           </div>
         ))}
         <div className="rw-add">
           <input placeholder="Titill (t.d. Krónan gjafabréf)" value={no.title} onChange={e => setNo({ ...no, title: e.target.value })} />
           <div className="rw-add-row">
-            <input type="number" className="rw-val" placeholder="þröskuldur kr" value={no.threshold} onChange={e => setNo({ ...no, threshold: e.target.value })} />
+            <input type="number" className="rw-val" placeholder="þröskuldur (stig)" value={no.threshold} onChange={e => setNo({ ...no, threshold: e.target.value })} />
             <input placeholder="lýsing" value={no.reward_desc} onChange={e => setNo({ ...no, reward_desc: e.target.value })} />
             <button className="primary-btn rw-addbtn" onClick={addOffer}>Bæta við</button>
           </div>

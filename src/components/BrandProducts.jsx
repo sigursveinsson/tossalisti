@@ -98,7 +98,10 @@ function Form({ brandId, initial, onDone, onCancel }) {
         </select>
         <input className="dialog-input" value={f.reward_value} onChange={set('reward_value')} placeholder={f.reward_type === 'fixed' ? 'stig' : '%'} inputMode="decimal" />
       </div>
-      <div className="bd-muted"><IconInfoCircle size={14} stroke={2} /> Grunnstig gilda þegar engin herferð er í gangi. Herferð yfirskrifar þau á sínu tímabili.</div>
+      <div className="bd-muted"><IconInfoCircle size={14} stroke={2} /> Grunnstig gilda þegar engin herferð er í gangi (hámark 500 stig á einingu eða 50%). Herferð yfirskrifar þau á sínu tímabili.</div>
+      {editing && initial.status === 'approved' && (
+        <div className="bd-muted"><IconInfoCircle size={14} stroke={2} /> Nafn, stærð, mynd og stig má breyta án þess að varan fari úr loftinu. Breyting á <b>leitarorðum eða strikamerki</b> sendir hana aftur til samþykktar og stig stoppa þar til hún er samþykkt.</div>
+      )}
       {msg && <div className="bc-err">{msg}</div>}
       <div className="bc-actions">
         <button className="ghost-btn" onClick={onCancel}>Hætta við</button>

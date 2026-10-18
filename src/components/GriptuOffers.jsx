@@ -20,17 +20,16 @@ export async function fetchOffers() {
   const [{ data: prods }, { data: brands }, { data: camps }] = await Promise.all([
     supabase.from('reward_products').select('id,name,size,image_url,brand_id,reward_type,reward_value,active').eq('active', true).eq('status', 'approved').order('name'),
     supabase.from('reward_brands').select('id,name').eq('active', true),
-    supabase.from('reward_campaigns').select('id,brand_id,product_id,title,reward_type,reward_value,starts_on,ends_on,active'),
+    supabase.from('reward_campaigns_public').select('id,brand_id,product_id,title,reward_type,reward_value,starts_on,ends_on'), // aðeins herferðir í gildi
   ])
   const t = todayISO()
   const bn = new Map((brands || []).map(b => [b.id, b.name]))
   const all = camps || []
   const out = []
   for (const p of prods || []) {
-    const has = all.some(c => c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id))
-    const live = all.filter(c => c.active && c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id) && c.starts_on <= t && c.ends_on >= t)
+    const live = all.filter(c => c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id))
       .sort((a, b) => (a.product_id ? 0 : 1) - (b.product_id ? 0 : 1))[0]
-    if (has && !live) continue // herferðir til en engin í gangi → ekkert tilboð núna
+    if (!live && !(Number(p.reward_value) > 0)) continue // engin herferð í gangi og engin grunnstig → ekkert tilboð núna
     out.push({ ...p, brand: bn.get(p.brand_id) || '', ...(live ? { reward_type: live.reward_type, reward_value: live.reward_value, campaign: live.title, ends_on: live.ends_on } : {}) })
   }
   return out

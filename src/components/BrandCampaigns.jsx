@@ -68,7 +68,11 @@ export default function Campaigns({ brandId, brandName, products = [], canEdit }
   useEffect(() => { setList(null); if (brandId) load() }, [brandId])
 
   const toggle = async (c) => { await store.updateCampaign(c.id, { active: !c.active }); load() }
-  const del = async (c) => { if (window.confirm(`Eyða herferðinni „${c.title}“?`)) { await store.deleteCampaign(c.id); load() } }
+  const del = async (c) => {
+    if (!window.confirm(`Eyða herferðinni „${c.title}“? Herferð sem hefur gefið stig má ekki eyða — settu hana í bið í staðinn.`)) return
+    try { await store.deleteCampaign(c.id) } catch (e) { window.alert(e.message || 'Ekki tókst að eyða herferðinni.') }
+    load()
+  }
 
   return (
     <div className="bd-card">

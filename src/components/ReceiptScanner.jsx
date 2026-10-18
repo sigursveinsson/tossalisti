@@ -39,6 +39,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [items, setItems] = useState([])
   const [total, setTotal] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState(null)     // vistun klikkaði — sýnt notanda í stað þess að gleypa villuna
   const [dup, setDup] = useState(null)
   const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
   const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
@@ -100,7 +101,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       archive: (keepImage || requireImage) ? archive : null,
       ...ident,
     }
-    setSaving(true)
+    setSaving(true); setSaveErr(null)
     try {
       if (!dup && onCheckDuplicate) {
         const existing = await onCheckDuplicate(payload)
@@ -110,6 +111,10 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       onClose()
     } catch (e) {
       setSaving(false)
+      const m = String((e && e.message) || e || '')
+      setSaveErr(/Failed to fetch|NetworkError|Load failed|network/i.test(m)
+        ? 'Ekki náðist samband. Kvittunin er ekki vistuð — athugaðu netið og ýttu aftur á „Vista kvittun“.'
+        : m || 'Ekki tókst að vista kvittunina. Reyndu aftur.')
     }
   }
 
@@ -188,6 +193,15 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
               <input value={total} onChange={e => setTotal(e.target.value)} placeholder={String(sum(items.map(i => ({ price: i.price }))))} inputMode="decimal" />
               <span>kr</span>
             </div>
+            {requireImage && !archive && (
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Engin mynd fylgir — stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni. Kvittunin vistast í bókhaldið þitt.</span></div>
+            )}
+            {requireImage && archive && !ident.scan_id && (
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Lesturinn tókst ekki, svo þessi kvittun gefur engin stig þótt þú skráir línurnar handvirkt. Prófaðu „Skanna aftur“ í betri birtu ef þú vilt stigin.</span></div>
+            )}
+            {saveErr && (
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>{saveErr}</span></div>
+            )}
             {dup && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Þessi kvittun virðist þegar skráð{dup.purchased_at ? ' (' + dup.store + ', ' + fmtDate(dup.purchased_at) + ')' : ''}. Ef hún er ný, ýttu aftur á „Vista samt".</span></div>
             )}

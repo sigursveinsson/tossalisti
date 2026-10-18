@@ -471,3 +471,11 @@ git push
 - Framendi sendir `scan_id` með kaupum. `award_purchase` reiknar stig EINGÖNGU af `receipt_scans.items`, ekki af línum sem notandi breytir eða bætir við.
 - Engin skönnun → `no_scan` (0 stig). Sama skönnun tvisvar → `duplicate`.
 - Prófað í SQL: fölsuð "10x Cheerios" lína hunsuð, aðeins 2 stk talin.
+
+## Vika 0 fyrir prufuhóp — 4 kjarnalagfæringar (18. okt 2026)
+1. **award_purchase**: herferð í bið/útrunnin/fullnýtt slekkur ekki lengur á stigum — grunnstig vöru gilda þegar engin herferð er í gildi. `outside_campaign` aðeins þegar grunnstig eru 0 (t.d. Coke Zero). SQL-prófað: 2×Cheerios með herferð í bið = 720 stig.
+2. **brand_dashboard**: k≥5 þvingað á netþjóni (p_min hunsað nema admin), aðeins samþykktar vörur telja, starfsfólk vörumerkis (brand_members) undanskilið, `by_chain` aðeins fyrir admin, engar tölur undir k. `brand_live_counts`: „í dag“ aðeins ≥5, „síðast“ = dagur. `reward_campaigns` lesist nú aðeins af vörumerki/admin; appið notar sýnina `reward_campaigns_public` (engin budget/þök).
+3. **reward_products_guard**: aðeins leitarorð/strikamerki/vörumerki setja vöru í bið; nafn, stærð, mynd og stig breytast án þess að hún fari úr loftinu; höfnuð vara → breyting = send aftur. Mörk: stig ≤500/einingu, prósenta ≤50 (vörur og herferðir). Herferð með áunnin stig má ekki eyða. **Tilkynningar**: `notify_queue` + triggerar → edge-fall `notify-admin` (pg_cron kl. :07 hverja klst.) sendir admin samantekt (vörur í bið, útleysingarbeiðnir, skönnunarbilanir ≥15%), vörumerki fá samþykktar útleysingar, notandi fær samþykkt/hafnað/afhent. **Þarf RESEND_API_KEY í Edge Function secrets** (valkv. NOTIFY_FROM, ADMIN_EMAIL).
+4. **Vistun kvittunar**: villur sýndar (net, útrunnin innskráning, vörulínur); mynd skylda fyrir skannaða kvittun (2 tilraunir, annars afturkallað); `award_purchase`-bilun → biðröð á tæki (`korfan.pendingAwards`) og `retryPendingAwards()` við ræsingu/forgrunn; viðvörun í yfirferð ef engin mynd / enginn lestur (0 stig).
+- Admin: stigareitur vistar við blur (ekki hvert slag), eyðing vöru með staðfestingu, „kr“→„stig“ í tilboðum.
+- Eftir fyrir prufuhóp: tæma test_users, hreinsa prufustig, nýr boðskóði (hámark ~12), nýskráningarflæði (staðfestingarpóstur), SW-endurhleðsla, ErrorBoundary á aðalskjái, eyða reikningi/sækja gögn.

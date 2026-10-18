@@ -233,6 +233,15 @@ export default function App() {
   }, [session?.user?.email])
   const loadMyRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
   useEffect(() => { if (isCloud && !session) return; loadMyRewards() }, [session])
+  // Stig sem náðust ekki í gegn við vistun (net datt út): reynt aftur við ræsingu og þegar appið kemur í forgrunn.
+  useEffect(() => {
+    if (!isCloud || !session) return
+    const retry = () => store.retryPendingAwards().then(e => { if (e > 0) { flash(`+${Math.round(e)} Gríptu stig bættust við fyrir fyrri kvittun.`); loadMyRewards() } }).catch(() => {})
+    retry()
+    const onVis = () => { if (document.visibilityState === 'visible') retry() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [session])
   // Verðlaunavörulisti (til að sýna cashback-merki í vöruleit)
   const [rewardCatalog, setRewardCatalog] = useState([])
   useEffect(() => {
@@ -483,6 +492,7 @@ export default function App() {
     duplicate: 'Kvittun skráð, en engin stig: þessi kvittun hefur þegar verið skönnuð og gefið stig.',
     outside_campaign: 'Kvittun skráð, en engin vörustig: herferðin nær ekki yfir kaupdaginn á kvittuninni.',
     no_scan: 'Kvittun skráð, en engin stig: stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni.',
+    award_failed: 'Kvittun skráð. Náðist ekki að reikna stigin núna — þau bætast við þegar appið nær sambandi næst.',
     already: 'Kvittun skráð.',
     disabled: 'Kvittun skráð.',
   }

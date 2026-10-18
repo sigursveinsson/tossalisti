@@ -492,7 +492,7 @@ const local = {
   async brandProducts() { return [] }, async brandLiveCounts() { return null }, async reviewRewardProduct() {},
   async pointsAvailable() { return 0 }, async requestRedemption() { return { ok: false, reason: 'local' } }, async myRedemptions() { return [] }, async adminRedemptions() { return [] }, async adminUserReceipts() { return [] }, async reviewRedemption() {}, async markDelivered() {}, async brandRedemptions() { return [] },
   async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {},
-  async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {},
+  async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {}, async retryPendingAwards() { return 0 },
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
@@ -505,20 +505,25 @@ const local = {
 }
 
 /* ---------------- Ský (Supabase) ---------------- */
-// Gildandi stig vöru í dag: herferð í gangi yfirskrifar grunnstig (sama regla og award_purchase á netþjóni).
-// Vara sem á herferðir en enga í gangi í dag gefur engin vörustig → effective 0.
+// Gildandi stig vöru í dag: herferð í gangi yfirskrifar grunnstig; annars gilda grunnstig vörunnar
+// (sama regla og award_purchase á netþjóni). Lesið úr opinberri sýn sem sýnir aðeins herferðir í gildi, ekki budget/þök.
 async function withLiveCampaigns(prods) {
   if (!prods || !prods.length) return prods || []
-  const { data: camps } = await supabase.from('reward_campaigns').select('brand_id,product_id,reward_type,reward_value,starts_on,ends_on,active,created_at')
-  const today = new Date().toISOString().slice(0, 10)
+  const { data: camps } = await supabase.from('reward_campaigns_public').select('brand_id,product_id,reward_type,reward_value,created_at')
   const all = camps || []
   return prods.map(p => {
-    const mine = all.filter(c => c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id))
-    if (!mine.length) return p
-    const live = mine.filter(c => c.active && c.starts_on <= today && c.ends_on >= today)
+    const live = all.filter(c => c.brand_id === p.brand_id && (!c.product_id || c.product_id === p.id))
       .sort((a, b) => (a.product_id ? 0 : 1) - (b.product_id ? 0 : 1) || String(a.created_at).localeCompare(String(b.created_at)))[0]
-    return live ? { ...p, reward_type: live.reward_type, reward_value: live.reward_value, in_campaign: true } : { ...p, reward_value: 0, in_campaign: false }
+    return live ? { ...p, reward_type: live.reward_type, reward_value: live.reward_value, in_campaign: true } : { ...p, in_campaign: false }
   })
+}
+
+// Kaup sem fengu ekki award_purchase-svar (net datt út eftir vistun). Geymt á tækinu, reynt aftur síðar.
+const pendingAwards = {
+  key: 'korfan.pendingAwards',
+  list() { try { return JSON.parse(localStorage.getItem(this.key) || '[]') } catch { return [] } },
+  add(id) { const l = this.list(); if (!l.includes(id)) { l.push(id); try { localStorage.setItem(this.key, JSON.stringify(l.slice(-20))) } catch {} } },
+  remove(id) { try { localStorage.setItem(this.key, JSON.stringify(this.list().filter(x => x !== id))) } catch {} },
 }
 
 const cloud = {
@@ -679,6 +684,7 @@ const cloud = {
   },
   async addPurchase(p) {
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Innskráningin rann út. Skráðu þig inn aftur og vistaðu kvittunina á ný.')
     const { data: pr, error } = await supabase.from('purchases').insert({
       user_id: user.id, list_id: p.list_id || null, store: p.store || null,
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
@@ -692,19 +698,50 @@ const cloud = {
       const rows = p.items.map(i => ({ purchase_id: pr.id, name: i.name, price: i.price ?? null, qty: i.qty ?? null, barcode: i.barcode || null, category: i.category || null, reward_product_id: i.reward_product_id || null, warranty_until: i.warranty_until || null }))
       const { error: ie } = await supabase.from('purchase_items').insert(rows)
       // Varaleið: ef dálkar eru ekki til (eldri gagnagrunnur) — vista án AI-pörunar/ábyrgðar.
-      if (ie) await supabase.from('purchase_items').insert(rows.map(({ reward_product_id, warranty_until, ...r }) => r))
+      if (ie) {
+        const { error: ie2 } = await supabase.from('purchase_items').insert(rows.map(({ reward_product_id, warranty_until, ...r }) => r))
+        if (ie2) { await supabase.from('purchases').delete().eq('id', pr.id); throw new Error('Ekki tókst að vista vörulínurnar: ' + ie2.message) }
+      }
     }
     // Kvittanasafn: geyma mynd af kvittuninni (einkageymsla, aðeins eigandi og meðlimir lista sjá).
-    if (p.archive) { try { pr.receipt_path = await cloud.uploadReceiptImage(pr.id, p.archive) } catch (e) { /* myndin er valkvæð */ } }
+    // Fyrir boðshóp (p.scan_id) er myndin skylda — hún er skoðuð áður en karfa er afhent. Tvær tilraunir; annars afturkallað.
+    if (p.archive) {
+      let upErr = null
+      for (let attempt = 0; attempt < 2 && !pr.receipt_path; attempt++) {
+        try { pr.receipt_path = await cloud.uploadReceiptImage(pr.id, p.archive); upErr = null } catch (e) { upErr = e }
+      }
+      if (upErr && p.scan_id) {
+        await supabase.from('purchases').delete().eq('id', pr.id)
+        throw new Error('Ekki tókst að hlaða upp mynd af kvittuninni (hún þarf að fylgja fyrir stig). Athugaðu netið og reyndu aftur.')
+      }
+    }
     // Verðlaun (cashback) eru reiknuð á NETÞJÓNI (award_purchase): pörun, herferðir, þak, fjárhagsrammi
     // og svikavörn (tvítekin kvittun, 14 daga aldur, 3 kvittanir á dag, 5 stk. á vöru). Notandi getur ekki skrifað stig sjálfur.
+    // Ef kallið nær ekki í gegn er kaupið sett í biðröð og reynt aftur við næstu ræsingu (retryPendingAwards).
     let earned = 0, rewardNote = null
     try {
-      const { data: aw } = await supabase.rpc('award_purchase', { p_purchase: pr.id })
+      const { data: aw, error: ae } = await supabase.rpc('award_purchase', { p_purchase: pr.id })
+      if (ae) throw ae
       earned = Number(aw && aw.earned) || 0
       rewardNote = (aw && aw.reason) || null
-    } catch {}
+    } catch {
+      if (p.scan_id) { pendingAwards.add(pr.id); rewardNote = 'award_failed' }
+    }
     return { ...pr, earned, rewardNote }
+  },
+  // Stig sem náðust ekki í gegn við vistun: reynt aftur (kallað við ræsingu og þegar app kemur í forgrunn).
+  async retryPendingAwards() {
+    const ids = pendingAwards.list()
+    let earned = 0
+    for (const id of ids) {
+      try {
+        const { data: aw, error } = await supabase.rpc('award_purchase', { p_purchase: id })
+        if (error) continue
+        pendingAwards.remove(id)
+        earned += Number(aw && aw.earned) || 0
+      } catch { /* reynt aftur næst */ }
+    }
+    return earned
   },
   async getMyRewards() {
     const { data: { user } } = await supabase.auth.getUser()

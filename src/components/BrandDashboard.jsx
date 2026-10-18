@@ -191,7 +191,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
         {tab === 'overview' && data && data.insufficient && !isDemo && (
           <div className="bd-empty">
             <div className="bd-empty-big">Of fá gögn enn fyrir {data.brand || 'vörumerkið'}</div>
-            <p>{num(t.lines)} staðfest kaup frá {num(t.buyers)} {t.buyers === 1 ? 'kaupanda' : 'kaupendum'} á tímabilinu. Mælaborðið birtir tölur þegar a.m.k. <b>{data.min_group} kaupendur</b> hafa keypt — svo enginn einstaklingur verði greinanlegur.</p>
+            <p>Færri en <b>{data.min_group} kaupendur</b> hafa keypt vörur vörumerkisins á tímabilinu. Mælaborðið birtir tölur þegar a.m.k. {data.min_group} kaupendur hafa keypt — svo enginn einstaklingur verði greinanlegur. Kaup starfsfólks vörumerkisins telja ekki.</p>
             <button className="bd-btn" onClick={() => setModeP('demo')}><IconFlask size={16} stroke={1.9} /> Sjá sýnidæmi</button>
           </div>
         )}
