@@ -22,6 +22,7 @@ import ProfileSetup from './components/ProfileSetup.jsx'
 import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth, { ResetPassword } from './components/Auth.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { useBackClose } from './lib/backstack.js'
 import { captureAttribution, getAttribution, pageContext } from './lib/attribution.js'
 
@@ -814,7 +815,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ReceiptScanner requireImage={!!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={(p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} />}
+      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner requireImage={!!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={(p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} /></ErrorBoundary>}
 
       {showBudgetIntro && (
         <BudgetIntro
@@ -823,9 +824,9 @@ export default function App() {
         />
       )}
 
-      {showAdmin && <AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} />}
+      {showAdmin && <ErrorBoundary name="Stjórnborðið" onClose={() => setShowAdmin(false)}><AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} /></ErrorBoundary>}
       {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
-      {showRewards && <RewardsView onClose={() => setShowRewards(false)} />}
+      {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
