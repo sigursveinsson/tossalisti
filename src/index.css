@@ -1590,3 +1590,4 @@ button { font-family: inherit; cursor: pointer; }
 .cam-shutter:disabled { opacity: .5; }
 .receipt-alt { margin-top: 8px; width: 100%; }
 .eb-msg { font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--soft); padding: 10px; border-radius: 8px; color: #B3261E; margin: 8px 0 12px; }
+.toast.toast-warn { background: #fff7e6; color: #5c3d00; border: 1px solid #f5a623; max-width: min(92vw, 420px); white-space: normal; line-height: 1.45; text-align: left; padding: 12px 14px; cursor: pointer; box-shadow: 0 6px 20px rgba(21,49,94,.18); }

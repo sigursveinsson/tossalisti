@@ -304,7 +304,13 @@ export default function App() {
 
   const list = lists.find(l => l.id === currentId) || null
   const customDept = Object.fromEntries(customProducts.map(p => [p.name, p.dept]))
-  const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400) }
+  // Stutt skilaboð hverfa á 2,4 s. Skýringar (af hverju engin stig) fá að standa í 8 s og má loka með því að smella.
+  const toastTimer = React.useRef(null)
+  const flash = (msg, opts = {}) => {
+    clearTimeout(toastTimer.current)
+    setToast(opts.warn ? { msg, warn: true } : msg)
+    toastTimer.current = setTimeout(() => setToast(''), opts.ms || (opts.warn ? 8000 : 2400))
+  }
 
 
   // Taka við boðshlekk (?invite=token) eftir innskráningu
@@ -466,15 +472,16 @@ export default function App() {
     await loadPurchases(); loadMyRewards()
     if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${checked ? ` · ${checked} vörur merktar keyptar` : ''}`)
     else if (checked) flash(checked + ' vörur merktar keyptar')
-    else flash(REWARD_NOTE[r && r.rewardNote] || 'Kvittun skráð')
+    else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
+    else flash('Kvittun skráð')
   }
   // Af hverju kvittun gaf engin stig — notandinn á að skilja það án þess að skrifa okkur.
   const REWARD_NOTE = {
-    not_in_pilot: 'Kvittun skráð. Gríptu stig eru í lokaðri prufu — sláðu inn boðskóða undir Gríptu stig.',
-    too_old: 'Kvittun skráð. Stig fást aðeins fyrir kvittanir yngri en 14 daga.',
-    daily_limit: 'Kvittun skráð. Hámark þrjár kvittanir á dag gefa stig — þessi telur á morgun ekki, en er geymd.',
-    duplicate: 'Kvittun skráð. Þessi kvittun hefur þegar gefið stig.',
-    outside_campaign: 'Kvittun skráð. Varan er með í Gríptu en herferðin nær ekki yfir kaupdaginn á kvittuninni — stig fást fyrir kaup innan herferðartímabilsins.',
+    not_in_pilot: 'Kvittun skráð, en engin stig: Gríptu stig eru í lokaðri prufu. Sláðu inn boðskóða undir Gríptu stig.',
+    too_old: 'Kvittun skráð, en engin stig: stig fást aðeins fyrir kvittanir yngri en 14 daga.',
+    daily_limit: 'Kvittun skráð, en engin stig: hámark þrjár kvittanir á dag gefa stig. Kvittunin er geymd.',
+    duplicate: 'Kvittun skráð, en engin stig: þessi kvittun hefur þegar verið skönnuð og gefið stig.',
+    outside_campaign: 'Kvittun skráð, en engin vörustig: herferðin nær ekki yfir kaupdaginn á kvittuninni.',
     already: 'Kvittun skráð.',
     disabled: 'Kvittun skráð.',
   }
@@ -483,8 +490,9 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
-    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : ''}`)
-    else flash(REWARD_NOTE[r && r.rewardNote] || 'Kvittun skráð')
+    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : ''}`, r.rewardNote === 'outside_campaign' ? { warn: true } : {})
+    else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
+    else flash('Kvittun skráð')
   }
   const deletePurchase = async (id) => { await store.deletePurchase(id); await loadPurchases() }
   const updatePurchase = async (id, patch) => { await store.updatePurchase(id, patch); await loadPurchases() }
@@ -831,7 +839,7 @@ export default function App() {
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className={'toast' + (toast.warn ? ' toast-warn' : '')} onClick={() => setToast('')}>{toast.warn ? toast.msg : toast}</div>}
     </div>
   )
 }
