@@ -62,3 +62,9 @@
 --   · vat_mismatch (VSK/heild utan 8–21%) · no_vat (heild ≥2000 án VSK) · total_mismatch (línur víkja >15% frá heild). Vistar í purchases.flags.
 -- award_purchase kallar receipt_flags; dup_receipt_no_other_user → 'duplicate', engin stig (seinni skönnun sömu kvittunar tapar — líka hjá hjónum, viljandi).
 -- admin_user_receipts skilar auðkennum + flags; RedemptionsAdmin sýnir þau með rauðum/gulum flögum.
+
+-- ═══ Prófunarhamur (migration test_users_mode, 18. okt) ═══
+-- app_settings.test_users = ["stjorinn88@gmail.com"], test_points = 300. is_test_user(uid).
+-- award_purchase: prófunarnotandi fær fast test_points per skönnun ('Prófunarkvittun', brand_id null → telur ekki hjá Nathan),
+--   ENGAR tvítekningar-/aldurs-/dagsreglur (receipt_flags keyrt samt). ⚠️ TÆMA test_users áður en boðskóði fer út —
+--   RewardsAdmin sýnir rauða viðvörun með „Slökkva á prófunarham“.

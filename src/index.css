@@ -1548,3 +1548,7 @@ button { font-family: inherit; cursor: pointer; }
 .ra-flagchip.bad { background: #fdecea; color: #B3261E; }
 .ra-flagchip.warn { background: var(--gold-soft); color: var(--gold-ink); }
 .ra-flag.soft { color: var(--gold-ink); }
+.rw-testwarn { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid #B3261E; background: #fdecea; color: #7a1a12; font-size: 13.5px; line-height: 1.45; }
+.rw-testwarn b { color: #B3261E; }
+.rw-testwarn span { font-weight: 600; }
+.rw-testwarn .ghost-btn { align-self: flex-start; color: #B3261E; border-color: #B3261E; }

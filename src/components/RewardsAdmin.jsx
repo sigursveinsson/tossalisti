@@ -27,6 +27,8 @@ export default function RewardsAdmin({ onClose }) {
   const [enabled, setEnabled] = useState(false)
   const [pts, setPts] = useState({ receipt_points: 20, trial_bonus: 100 }) // kvittanastig / prufubónus (app_settings)
   const [pilotOnly, setPilotOnly] = useState(true)
+  const [testUsers, setTestUsers] = useState([]) // prófunarnotendur: föst stig per skönnun, engar reglur — TÆMA fyrir pilot
+  const clearTestUsers = async () => { if (!window.confirm('Slökkva á prófunarham fyrir alla? Þeir fá þá stig eftir venjulegum reglum.')) return; setTestUsers([]); try { await store.setAppSetting('test_users', []) } catch {} }
   const [showRedemptions, setShowRedemptions] = useState(false)
   const [pendingRed, setPendingRed] = useState(0)
   const loadRed = () => store.adminRedemptions().then(l => setPendingRed((l || []).filter(r => r.status === 'pending').length)).catch(() => {})
@@ -53,7 +55,7 @@ export default function RewardsAdmin({ onClose }) {
   useBackClose(true, onClose)
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
-  useEffect(() => { load(); loadInvites(); loadRed(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
+  useEffect(() => { load(); loadInvites(); loadRed(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setTestUsers(Array.isArray(s.test_users) ? s.test_users : []); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
   const savePts = async (key, v) => { const n = Math.max(0, Number(v) || 0); setPts(p => ({ ...p, [key]: n })); try { await store.setAppSetting(key, n) } catch {} }
   // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
   useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
@@ -146,6 +148,13 @@ export default function RewardsAdmin({ onClose }) {
           <button className={'adm-ads-switch' + (enabled ? ' on' : '')} onClick={toggleEnabled} aria-label="Kveikja/slökkva" />
         </div>
 
+        {testUsers.length > 0 && (
+          <div className="rw-testwarn">
+            <b>Prófunarhamur er á</b> fyrir {testUsers.join(', ')}: 300 stig fyrir hverja skönnun, engar tvítekningarreglur, telur ekki hjá vörumerkjum.
+            <span>Slökkva áður en boðskóði fer til þátttakenda.</span>
+            <button className="ghost-btn" onClick={clearTestUsers}>Slökkva á prófunarham</button>
+          </div>
+        )}
         <button className="ra-open" onClick={() => setShowRedemptions(true)}>
           <span className="ra-open-ic"><IconGift size={18} stroke={1.75} /></span>
           <span className="ra-open-txt"><b>Útleysingar</b><small>{pendingRed > 0 ? `${pendingRed} ${pendingRed === 1 ? 'beiðni bíður' : 'beiðnir bíða'} yfirferðar` : 'Engin beiðni í bið'}</small></span>
