@@ -10,6 +10,7 @@ const matchLabel = (p) => {
   return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'
+import CameraCapture from './CameraCapture.jsx'
 import { IconAlertTriangle, IconArchive, IconCamera, IconGift, IconShieldCheck, IconX } from '@tabler/icons-react'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -41,6 +42,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
   const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
   const [failed, setFailed] = useState(null)       // 'network' | 'decode' | 'empty' | null — af hverju lesturinn skilaði engu
+  const [camera, setCamera] = useState(false)      // lifandi myndataka (aðalleið í síma; sparar minni)
+  const canCamera = typeof navigator !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
   const [keepImage, setKeepImage] = useState(true)
   const [returnDays, setReturnDays] = useState(0) // 0 = enginn skilafrestur skráður
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
@@ -56,10 +59,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   useEffect(() => { matchRef.current.then(l => setMatchList(l || [])) }, [])
   const prodById = (id) => (id ? matchList.find(p => p.id === id) : null)
 
-  const onFile = async (e) => {
-    const file = e.target.files && e.target.files[0]
-    e.target.value = ''
-    if (!file) return
+  const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) handleFile(file) }
+  const handleFile = async (file) => {
+    setCamera(false)
     setPhase('reading'); setProgress(0)
     try {
       const prods = await matchRef.current
@@ -119,7 +121,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
           <>
             <p className="muted-p">Taktu mynd af kassakvittuninni. Appið les vörur og verð — þú getur lagað áður en þú vistar.</p>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
-            <button className="add-recipe-btn" onClick={() => fileRef.current && fileRef.current.click()}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
+            <button className="add-recipe-btn" onClick={() => canCamera ? setCamera(true) : fileRef.current && fileRef.current.click()}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
+            {canCamera && <button className="ghost-btn receipt-alt" onClick={() => fileRef.current && fileRef.current.click()}>Velja mynd úr myndasafni</button>}
+            {camera && <CameraCapture onCapture={handleFile} onPickFile={() => { setCamera(false); setTimeout(() => fileRef.current && fileRef.current.click(), 50) }} onClose={() => setCamera(false)} />}
           </>
         )}
 
@@ -144,7 +148,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}
             {items.length === 0 && failed === 'empty' && <div className="receipt-fail"><b>Kvittanalesarinn fann engar vörur á myndinni.</b> Er myndin skýr og kvittunin öll í ramma? Reyndu aftur eða skráðu handvirkt.</div>}
             {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
-            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); fileRef.current && fileRef.current.click() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
+            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); if (canCamera) { setPhase('capture'); setCamera(true) } else fileRef.current && fileRef.current.click() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
             <div className="receipt-items">
               {items.map(it => {
                 const mp = prodById(it.reward_product_id)
