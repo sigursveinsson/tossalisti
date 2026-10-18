@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/library'
+import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType, HTMLCanvasElementLuminanceSource, HybridBinarizer, BinaryBitmap } from '@zxing/library'
 import { IconCamera, IconX } from '@tabler/icons-react'
 
 const FORMATS_NATIVE = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
@@ -61,11 +61,13 @@ export default function BarcodeScanner({ onDetect, onClose, children }) {
     let zxingReader = null
     let timer = null
 
+    // Hærri upplausn skiptir öllu fyrir zxing á iPhone (Safari hefur ekki BarcodeDetector): strikamerkið er
+    // lítill hluti rammans og 720p dugar ekki. 1080p + miðjuklipping hér fyrir neðan = „aðdráttur“ á merkið.
     const constraints = {
       video: {
         facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
         advanced: [{ focusMode: 'continuous' }],
       },
     }
@@ -98,9 +100,36 @@ export default function BarcodeScanner({ onDetect, onClose, children }) {
           }
           loop()
         } else {
+          // Aðdráttur ef myndavélin styður (iOS 17+ gerir það): merkið fyllir meira af rammanum.
+          try {
+            const track = stream.getVideoTracks()[0]
+            const caps = track.getCapabilities ? track.getCapabilities() : {}
+            if (caps.zoom && caps.zoom.max >= 1.5) await track.applyConstraints({ advanced: [{ zoom: Math.min(2, caps.zoom.max) }] })
+          } catch (e) {}
+          // zxing á miðjuklipptum ramma: 80% breidd × 40% hæð um miðjuna (sama svæði og leiðbeiningarramminn),
+          // skalað svo klippan sé ~1000 px breið. Mun betri lestur en decodeFromStream á öllum rammanum.
           zxingReader = zxingReaderWithHints()
-          zxingReader.timeBetweenScansMillis = 150
-          zxingReader.decodeFromStream(stream, v, (result) => { if (result) handleRef.current(result.getText()) }).catch(() => {})
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d', { willReadFrequently: true })
+          const loop = async () => {
+            if (stopped) return
+            try {
+              if (v.videoWidth) {
+                const cw = v.videoWidth * 0.8, ch = v.videoHeight * 0.4
+                const cx = (v.videoWidth - cw) / 2, cy = (v.videoHeight - ch) / 2
+                const scale = cw > 1000 ? 1000 / cw : 1
+                canvas.width = Math.round(cw * scale); canvas.height = Math.round(ch * scale)
+                ctx.drawImage(v, cx, cy, cw, ch, 0, 0, canvas.width, canvas.height)
+                try {
+                  const bitmap = new BinaryBitmap(new HybridBinarizer(new HTMLCanvasElementLuminanceSource(canvas)))
+                  const res = zxingReader.decodeBitmap(bitmap)
+                  if (res) handleRef.current(res.getText())
+                } catch (e) { /* NotFound í þessum ramma — eðlilegt */ }
+              }
+            } catch (e) {}
+            timer = setTimeout(loop, 120)
+          }
+          loop()
         }
       } catch (e) {
         setError('Næ ekki í myndavél. Leyfðu myndavélaraðgang í vafranum og reyndu aftur.')
