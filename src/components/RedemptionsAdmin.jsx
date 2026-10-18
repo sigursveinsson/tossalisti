@@ -9,6 +9,10 @@ import { IconX, IconGift, IconCheck, IconCircleX, IconClock, IconTruckDelivery, 
 const num = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sep', 'okt', 'nóv', 'des']
 const fmt = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? `${Number(m[3])}. ${MONTHS[Number(m[2]) - 1]}` : '' }
+const FLAG = {
+  no_receipt_no: ['Ekkert kvittananúmer', 'warn'], no_image: ['Engin mynd', 'bad'], dup_receipt_no_other_user: ['Sama númer hjá öðrum notanda', 'bad'],
+  vat_mismatch: ['VSK gengur ekki upp', 'bad'], no_vat: ['Enginn VSK lesinn', 'warn'], total_mismatch: ['Heild stemmir ekki við línur', 'warn'],
+}
 const STATUS = { pending: ['Í yfirferð', 'pend', IconClock], approved: ['Samþykkt', 'ok', IconCheck], delivered: ['Afhent', 'ok', IconCheck], rejected: ['Hafnað', 'no', IconCircleX] }
 
 function Receipt({ r }) {
@@ -16,12 +20,15 @@ function Receipt({ r }) {
   const [open, setOpen] = useState(false)
   useEffect(() => { if (open && r.receipt_path && !url) store.getReceiptUrl(r.receipt_path).then(setUrl).catch(() => {}) }, [open])
   const pts = (r.earnings || []).reduce((s, e) => s + Number(e.value || 0), 0)
+  const flags = (r.flags || []).filter(f => FLAG[f])
+  const bad = r.dup_users > 0 || flags.some(f => FLAG[f][1] === 'bad')
   return (
-    <div className={'ra-rcpt' + (r.dup_users > 0 ? ' warn' : '')}>
+    <div className={'ra-rcpt' + (bad ? ' warn' : '')}>
       <button className="ra-rcpt-h" onClick={() => setOpen(o => !o)}>
         <span className="ra-rcpt-store">{r.store || 'Óþekkt búð'} <small>{fmt(r.purchased_at)} · {num(r.total)} kr</small></span>
         <span className="ra-rcpt-meta">
           {r.dup_users > 0 && <span className="ra-flag" title="Sama kvittun hjá öðrum notanda"><IconAlertTriangle size={13} stroke={2.2} /> {r.dup_users}</span>}
+          {flags.length > 0 && <span className={'ra-flag' + (bad ? '' : ' soft')} title={flags.map(f => FLAG[f][0]).join(', ')}><IconAlertTriangle size={13} stroke={2.2} /> {flags.length}</span>}
           {r.receipt_path ? <IconPhoto size={15} stroke={1.9} className="ra-has-img" /> : <span className="ra-noimg">engin mynd</span>}
           <b>{pts > 0 ? `+${num(pts)}` : '—'}</b>
           {open ? <IconChevronUp size={15} stroke={2} /> : <IconChevronDown size={15} stroke={2} />}
@@ -29,6 +36,11 @@ function Receipt({ r }) {
       </button>
       {open && (
         <div className="ra-rcpt-body">
+          <div className="ra-ident">
+            <span>Nr. <b>{r.receipt_no || '—'}</b></span><span>Kassi <b>{r.register || '—'}</b></span><span>Kl. <b>{r.receipt_time || '—'}</b></span>
+            <span>VSK <b>{r.vat_total != null ? `${num(r.vat_total)} kr (${Math.round(r.vat_total / (r.total || 1) * 100)}%)` : '—'}</b></span>
+          </div>
+          {flags.length > 0 && <div className="ra-flags">{flags.map(f => <span key={f} className={'ra-flagchip ' + FLAG[f][1]}>{FLAG[f][0]}</span>)}</div>}
           {r.receipt_path ? (url ? <img className="ra-img" src={url} alt="Kvittun" /> : <div className="bd-muted">Sæki mynd…</div>) : <div className="ra-noimg-box">Engin kvittanamynd var geymd með þessari kvittun.</div>}
           <div className="ra-lines">
             {(r.items || []).map((it, i) => {

@@ -55,3 +55,10 @@
 -- Framendi: RewardsView „Leysa út“ + RedeemForm + Beiðnirnar mínar; RedemptionsAdmin (úr Verðlaunakerfi) með kvittanaskoðun+myndum;
 --   BrandDashboard flipi Útleysingar (BrandRedemptions) með „Merkja afhent“, rautt ef >10 dagar.
 -- App: REWARD_NOTE sýnir ástæðu fyrir 0 stigum; ReceiptScanner requireImage fyrir boðshóp (mynd alltaf geymd).
+
+-- ═══ Auðkenni kvittunar + flögg (migration receipt_identity_and_flags, 17. okt) — svikavörn lag 3 ═══
+-- purchases.receipt_no, register, receipt_time, vat_total (lesið af parse-receipt v19), flags text[].
+-- receipt_flags(purchase): no_receipt_no · no_image · dup_receipt_no_other_user (sama nr+búð ±3 d hjá öðrum)
+--   · vat_mismatch (VSK/heild utan 8–21%) · no_vat (heild ≥2000 án VSK) · total_mismatch (línur víkja >15% frá heild). Vistar í purchases.flags.
+-- award_purchase kallar receipt_flags; dup_receipt_no_other_user → 'duplicate', engin stig (seinni skönnun sömu kvittunar tapar — líka hjá hjónum, viljandi).
+-- admin_user_receipts skilar auðkennum + flags; RedemptionsAdmin sýnir þau með rauðum/gulum flögum.

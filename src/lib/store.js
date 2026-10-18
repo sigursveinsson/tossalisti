@@ -668,6 +668,7 @@ const cloud = {
       purchased_at: p.purchased_at || new Date().toISOString().slice(0, 10), total: p.total ?? null,
       category: p.category || null, fingerprint: purchaseFingerprint(p),
       ...(p.return_until ? { return_until: p.return_until } : {}),
+      receipt_no: p.receipt_no || null, register: p.register || null, receipt_time: p.receipt_time || null, vat_total: p.vat_total ?? null,
     }).select().single()
     if (error) throw error
     if (p.items && p.items.length) {

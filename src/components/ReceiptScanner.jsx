@@ -39,6 +39,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [saving, setSaving] = useState(false)
   const [dup, setDup] = useState(null)
   const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
+  const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
   const [keepImage, setKeepImage] = useState(true)
   const [returnDays, setReturnDays] = useState(0) // 0 = enginn skilafrestur skráður
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
@@ -67,6 +68,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
       )
       setArchive(res.archive || null)
+      setIdent({ receipt_no: res.receipt_no || null, register: res.register || null, receipt_time: res.time || null, vat_total: res.vat_total ?? null })
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
       setScannedOnce(true)
@@ -91,6 +93,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       items: clean,
       return_until: returnDays ? addDays(date, returnDays) : null,
       archive: (keepImage || requireImage) ? archive : null,
+      ...ident,
     }
     setSaving(true)
     try {

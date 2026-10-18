@@ -85,7 +85,13 @@ Deno.serve(async (req) => {
     const itemShape = prods.length ? '{"name":"","price":0,"w":0,"pid":null}' : '{"name":"","price":0,"w":0}'
     const prompt = [
       'Þú lest íslenska kassakvittun af mynd.',
-      'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","items":[' + itemShape + '],"total":0}',
+      'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"items":[' + itemShape + '],"total":0}',
+      '',
+      'AUÐKENNI KVITTUNAR (notað til að þekkja sömu kvittun aftur):',
+      '- "time": klukkan sem kvittunin var prentuð, HH:MM, annars null.',
+      '- "receipt_no": kvittana-/færslunúmerið eins og það stendur (merkt "Nr", "Kvittun", "Færsla", "Afgr", "Nóta", "Bon" o.þ.h.), annars null.',
+      '- "register": kassa- eða afgreiðslunúmer ("Kassi", "Pos", "Afgreiðsla", "Till"), annars null.',
+      '- "vat_total": samanlagður virðisaukaskattur í krónum (allar VSK-línur lagðar saman, t.d. "VSK 11%" + "VSK 24%"), annars null.',
       '',
       'DAGSETNING — MIKILVÆGT:',
       '- Íslenskar kvittanir rita dagsetningu ALLTAF með DAGINN FYRST: DD.MM.YYYY, DD.MM.YY eða DD/MM/YYYY.',
@@ -109,7 +115,7 @@ Deno.serve(async (req) => {
       ...(prods.length ? [
         '',
         'TILBOÐSVÖRUR — pörun:',
-        'Hér fyrir neðan er listi yfir vörur sem gefa cashback (kóði | vörumerki | heiti).',
+        'Hér fyrir neðan er listi yfir vörur sem gefa stig (kóði | vörumerki | heiti).',
         'Fyrir HVERJA línu í items: settu "pid" = kóði vörunnar (t.d. "P3") ef línan er GREINILEGA sú vara, annars "pid": null.',
         '- Sama vörumerki OG sama vörutegund. Stærð, magn og pakkning mega vera aðrar (t.d. "NUTELLA 400G" = Nutella).',
         '- Íslenskar kvittanir stytta heiti oft (t.d. "EGILS APP 2L" = Egils Appelsín, "RITZ SALTKEX" = Ritz). Notaðu skynsemi.',
@@ -157,9 +163,15 @@ Deno.serve(async (req) => {
             return out
           })
         }
+        // Hreinsa auðkenni: strengir eða null, VSK tala eða null.
+        for (const k of ['time', 'receipt_no', 'register']) {
+          const v = (parsed as any)[k]
+          ;(parsed as any)[k] = typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : null
+        }
+        ;(parsed as any).vat_total = Number.isFinite(Number(parsed.vat_total)) && Number(parsed.vat_total) > 0 ? Math.round(Number(parsed.vat_total)) : null
         console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) +
           ' prods=' + prods.length + ' matched=' + matched + ' warranty=' + warranty +
-          ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
+          ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
         return json(parsed)
       }
       lastErr = 'model=' + model + ' status=' + r.status
