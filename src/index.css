@@ -1552,3 +1552,6 @@ button { font-family: inherit; cursor: pointer; }
 .rw-testwarn b { color: #B3261E; }
 .rw-testwarn span { font-weight: 600; }
 .rw-testwarn .ghost-btn { align-self: flex-start; color: #B3261E; border-color: #B3261E; }
+.bp-bcrow .dialog-input { flex: 1; }
+.bp-bcrow .ghost-btn { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.bp-hint { font-size: 12px; color: var(--faint); line-height: 1.4; margin-top: -4px; }

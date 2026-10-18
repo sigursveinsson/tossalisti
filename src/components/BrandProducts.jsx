@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { store } from '../lib/store.js'
 import { CatIcon } from '../data/icons.jsx'
 import { departmentFor } from '../data/products.js'
-import { IconPlus, IconPackage, IconPhoto, IconBarcode, IconPencil, IconTrash, IconClock, IconCircleCheck, IconCircleX, IconInfoCircle } from '@tabler/icons-react'
+import { IconPlus, IconPackage, IconPhoto, IconBarcode, IconPencil, IconTrash, IconClock, IconCircleCheck, IconCircleX, IconInfoCircle, IconSearch } from '@tabler/icons-react'
+import BarcodeScanner from './BarcodeScanner.jsx'
 
 // Vörur vörumerkis (Gríptu). Heildsalinn skráir sjálfur: heiti, stærð, strikamerki, mynd, leitarorð og grunnverðlaun.
 // Ný eða breytt vara fer í BIÐ þar til stjórnandi Tossalista samþykkir (trigger í gagnagrunni) —
@@ -29,6 +30,7 @@ function Form({ brandId, initial, onDone, onCancel }) {
   const [kwEdited, setKwEdited] = useState(editing)
   const [busy, setBusy] = useState(false)
   const [looking, setLooking] = useState(false)
+  const [scanning, setScanning] = useState(false)
   const [msg, setMsg] = useState('')
   const set = (k) => (e) => setF(x => ({ ...x, [k]: e.target.value }))
   const kwValue = kwEdited ? f.keywords : kwSuggest(f.name).join(', ')
@@ -43,8 +45,8 @@ function Form({ brandId, initial, onDone, onCancel }) {
     catch (err) { setMsg('Náði ekki að hlaða upp mynd.') }
     setBusy(false)
   }
-  const lookup = async () => {
-    const bc = f.barcode.trim(); if (!bc) return
+  const lookup = async (code) => {
+    const bc = (typeof code === 'string' ? code : f.barcode).trim(); if (!bc) return
     setLooking(true); setMsg('')
     try {
       const info = await store.lookupBarcode(bc)
@@ -68,10 +70,17 @@ function Form({ brandId, initial, onDone, onCancel }) {
   }
   return (
     <div className="bc-form">
-      <div className="bc-row">
+      <div className="bc-row bp-bcrow">
         <input className="dialog-input" value={f.barcode} onChange={set('barcode')} placeholder="Strikamerki (valfrjálst)" inputMode="numeric" />
-        <button className="ghost-btn" onClick={lookup} disabled={!f.barcode.trim() || looking}><IconBarcode size={15} stroke={2} /> {looking ? 'Sæki…' : 'Sækja upplýsingar'}</button>
+        <button className="ghost-btn" onClick={() => setScanning(true)} title="Skanna strikamerki með myndavél"><IconBarcode size={15} stroke={2} /> Skanna</button>
+        <button className="ghost-btn" onClick={() => lookup()} disabled={!f.barcode.trim() || looking} title="Sækja heiti, stærð og mynd eftir strikamerki"><IconSearch size={15} stroke={2} /> {looking ? 'Sæki…' : 'Sækja'}</button>
       </div>
+      <small className="bp-hint">Skannaðu strikamerkið með myndavélinni eða sláðu það inn og ýttu á Sækja — heiti, stærð og mynd koma þá sjálfkrafa þegar varan er þekkt.</small>
+      {scanning && (
+        <div onClick={e => e.stopPropagation()}>
+          <BarcodeScanner onDetect={(code) => { setF(x => ({ ...x, barcode: code })); setScanning(false); lookup(code) }} onClose={() => setScanning(false)} />
+        </div>
+      )}
       <input className="dialog-input" autoFocus value={f.name} onChange={e => { set('name')(e); setMsg('') }} placeholder="Heiti vöru — t.d. „Sproud hafradrykkur“" />
       <div className="bc-row">
         <input className="dialog-input" value={f.size} onChange={set('size')} placeholder="Stærð — t.d. 1 l" />
