@@ -43,7 +43,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [dup, setDup] = useState(null)
   const [archive, setArchive] = useState(null)   // mynd af kvittun til geymslu
   const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
-  const [failed, setFailed] = useState(null)       // 'network' | 'decode' | 'empty' | null — af hverju lesturinn skilaði engu
+  const [failed, setFailed] = useState(null)       // 'network' | 'decode' | 'empty' | 'blurry' | null — af hverju lesturinn skilaði engu
+  const [scanCheck, setScanCheck] = useState(null) // sannprófun netþjóns: {sum,total,diff,ok,…}
   const [camera, setCamera] = useState(false)      // lifandi myndataka (aðalleið í síma; sparar minni)
   const canCamera = typeof navigator !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
   const [keepImage, setKeepImage] = useState(true)
@@ -74,6 +75,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       )
       setArchive(res.archive || null)
       setFailed(res.failed || null)
+      setScanCheck(res.check || null)
       setIdent({ receipt_no: res.receipt_no || null, register: res.register || null, receipt_time: res.time || null, vat_total: res.vat_total ?? null, scan_id: res.scan_id || null })
       setTotal(res.total != null ? String(res.total) : '')
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
@@ -152,6 +154,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             )}
             {items.length === 0 && failed === 'network' && <div className="receipt-fail"><b>Náði ekki sambandi við kvittanalesarann.</b> Athugaðu netið og reyndu aftur með „Skanna aftur“, eða skráðu línurnar handvirkt.</div>}
             {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}
+            {items.length === 0 && failed === 'blurry' && <div className="receipt-fail"><b>Myndin er ekki nógu skýr til að lesa línurnar.</b> Komdu nær svo kvittunin fylli rammann, í góðri birtu og án skugga, og ýttu á „Skanna aftur“. Löng kvittun: leggðu hana flata og taktu hana alla í einni mynd.</div>}
             {items.length === 0 && failed === 'empty' && <div className="receipt-fail"><b>Kvittanalesarinn fann engar vörur á myndinni.</b> Er myndin skýr og kvittunin öll í ramma? Reyndu aftur eða skráðu handvirkt.</div>}
             {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
             {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); if (canCamera) { setPhase('capture'); setCamera(true) } else fileRef.current && fileRef.current.click() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
@@ -193,6 +196,17 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
               <input value={total} onChange={e => setTotal(e.target.value)} placeholder={String(sum(items.map(i => ({ price: i.price }))))} inputMode="decimal" />
               <span>kr</span>
             </div>
+            {(() => {
+              const t = Number(String(total).replace(/\./g, '').replace(',', '.'))
+              const sm = items.reduce((a, it) => a + (Number(it.price) || 0), 0)
+              if (!items.length || !(t > 0)) return null
+              const d = Math.round(sm - t)
+              if (Math.abs(d) <= Math.max(20, t * 0.01)) return null
+              return <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Línurnar summast í <b>{sm.toLocaleString('is-IS')} kr</b> en samtala kvittunar er <b>{t.toLocaleString('is-IS')} kr</b> ({d > 0 ? '+' : ''}{d.toLocaleString('is-IS')} kr). Athugaðu hvort lína vantar eða er tvítalin.</span></div>
+            })()}
+            {requireImage && ident.scan_id && scanCheck && scanCheck.ok === false && (
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Lesturinn stemmdi ekki alveg við samtöluna, svo þessi kvittun gefur kvittanastig en ekki vörustig. Viltu vörustigin? „Skanna aftur“ nær og í betri birtu.</span></div>
+            )}
             {requireImage && !archive && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Engin mynd fylgir — stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni. Kvittunin vistast í bókhaldið þitt.</span></div>
             )}

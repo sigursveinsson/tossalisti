@@ -159,6 +159,8 @@ async function visionInvoke(image, mime, products) {
     vat_total: data.vat_total == null ? null : Number(data.vat_total),
     // Netþjónninn geymir það sem gervigreindin las; stig reiknast eingöngu af því.
     scan_id: data.scan_id || null,
+    // Sannprófun netþjóns: línur ≈ samtala og VSK trúverðugur. unreadable = myndin of óskýr (engar línur skilaðar).
+    check: data.check || null, verified: !!data.verified, unreadable: !!data.unreadable,
   }
 }
 
@@ -262,7 +264,11 @@ async function parseReceiptInner(file, onProgress, products) {
   if (image && supabase && supabase.functions) {
     try {
       const ai = await visionInvoke(image, mime, products)
-      if (ai) { aiReached = true; if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas, stage: 'ai' } }
+      if (ai) {
+        aiReached = true
+        if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas, stage: 'ai', failed: 'blurry' }
+        if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas, stage: 'ai' }
+      }
     } catch (e) { /* fall back */ }
   }
 

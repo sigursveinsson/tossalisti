@@ -85,7 +85,12 @@ Deno.serve(async (req) => {
     const itemShape = prods.length ? '{"name":"","qty":1,"price":0,"w":0,"pid":null}' : '{"name":"","qty":1,"price":0,"w":0}'
     const prompt = [
       'Þú lest íslenska kassakvittun af mynd.',
-      'Skilaðu AÐEINS gildu JSON: {"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"items":[' + itemShape + '],"total":0}',
+      'Skilaðu AÐEINS gildu JSON: {"legible":true,"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"discount_total":0,"items":[' + itemShape + '],"total":0}',
+      '',
+      'HEIÐARLEIKI — MIKILVÆGAST AF ÖLLU:',
+      '- Skrifaðu AÐEINS vörulínur sem þú SÉRÐ greinilega á myndinni. ALDREI giska, fylla í eyður eða búa til línur sem „líklega" eru á kvittuninni.',
+      '- Ef hluti vörulínanna er ólæsilegur (óskýr mynd, skuggi, krumpa, utan myndar): settu "legible": false og slepptu þeim línum.',
+      '- Ef þú sérð engar vörulínur greinilega: "legible": false og "items": []. Það er MIKLU betra en að búa til línur.',
       '',
       'AUÐKENNI KVITTUNAR (notað til að þekkja sömu kvittun aftur):',
       '- "time": klukkan sem kvittunin var prentuð, HH:MM, annars null.',
@@ -107,8 +112,11 @@ Deno.serve(async (req) => {
       '- Settu hverja keypta vöru í items með hreinu nafni. Slepptu einingarorðum aftast í nafni ("stk", "st", "kg").',
       '- MAGN: Margar kvittanir (Krónan, Bónus, Nettó o.fl.) prenta magn í SÉRSTAKRI LÍNU undir vörunni, t.d. "2 stk@126   252" eða "2 x 126" eða "0,834 kg x 1.299".',
       '  Sú lína er EKKI ný vara: hún tilheyrir vörunni í línunni fyrir ofan. Settu "qty" = magnið (2, eða 0.834 fyrir vigtaða vöru) og "price" = samtalan á þeirri línu.',
+      '- Magnlína tilheyrir ALLTAF vörunni BEINT fyrir ofan hana. Ef vöruheitið stendur eitt í línu (ekkert verð) og næsta lína er t.d. "2 stk@292   584", er það EIN vara: heitið úr efri línunni, qty=2 og price=584. Settu magnið ALDREI á vöruna þar á undan.',
+      '- Tala INNI í vöruheiti þegar verð er á sömu línu (t.d. "FP hvítlauksbr 2stk stk   192", "Coke 6pk", "Egg 12stk") er pakkastærð, EKKI magn: qty=1, price=192.',
       '- "qty" er 1 ef ekkert magn er gefið.',
-      '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items.',
+      '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items. Settu samanlagða afslætti (jákvæð krónutala) í "discount_total", annars 0.',
+      '- SANNPRÓFUN: verð allra lína mínus discount_total á að vera jafnt "total". Ef það stemmir ekki hefurðu misst af línu, tvítalið línu eða sett magn á ranga vöru — farðu yfir aftur áður en þú svarar.',
       '',
       'ÁBYRGÐ ("w") — fyrir hverja vöru:',
       '- "w": 0 fyrir neysluvörur sem klárast eða slitna hratt (matur, drykkir, hreinlætisvörur, snyrtivörur, lyf, pappír, föt, rafhlöður, perur o.þ.h.).',
@@ -131,111 +139,174 @@ Deno.serve(async (req) => {
     ].join('\n')
 
 
+    // --- Lestur: eitt kall á líkanið (með varaleið yfir á næsta líkan) ---
     let lastErr = ''
-    for (const model of MODELS) {
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
-      // Lágmarks-„hugsun" — kvittanalestur er beinn útdráttur (sparar sekúndur).
-      const body = {
-        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mime || 'image/jpeg', data: image } }] }],
-        generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 3072 }, 0),
-      }
-      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      const data = await r.json()
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-      if (r.status === 200 && text) {
-        let parsed: Record<string, unknown> = {}
-        try { parsed = JSON.parse(text) } catch {
-          const m = text.match(/\{[\s\S]*\}/)
-          if (m) { try { parsed = JSON.parse(m[0]) } catch { /* ignore */ } }
+    async function readOnce(promptText: string): Promise<{ parsed: Record<string, any>, model: string } | null> {
+      for (const model of MODELS) {
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
+        const body = {
+          contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: mime || 'image/jpeg', data: image } }] }],
+          generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 4096 }, 0),
         }
-        const before = parsed.date
-        parsed.date = fixDate(parsed.date, today)
-        // Öryggisnet: magnlína sem líkanið gerði samt að sér-vöru ("2 stk@126", "2 x 126", "0,834 kg x 1.299")
-        // → sameina við vöruna fyrir ofan (magn + samtala), og hreinsa einingarorð aftast í nafni.
-        if (Array.isArray(parsed.items)) {
-          const QTY = /^\s*(\d+(?:[.,]\d+)?)\s*(?:stk|st|kg|x|×)?\s*(?:[@x×]|á)\s*([\d.,]+)\s*(?:kr)?\s*$/i
-          // „1.299“ = 1299 kr; „0,834“ = 0.834 (íslensk tala: punktur þúsund, komma tugabrot)
-          const isNum = (t: string) => Number(t.replace(/\./g, '').replace(',', '.'))
-          const merged: any[] = []
-          for (const raw of parsed.items as any[]) {
-            const it = { ...(raw || {}) }
-            const name = String(it.name || '')
-            const m = name.match(QTY)
-            if (m && merged.length) {
-              const prev = merged[merged.length - 1]
-              const q = isNum(m[1]) || 1, unit = isNum(m[2])
-              prev.qty = q
-              // Samtala reiknuð úr textanum (magn × einingarverð) — verðdálkur magnlínunnar getur verið hliðraður.
-              if (unit > 0) prev.price = Math.round(q * unit)
-              continue
-            }
-            it.name = name.replace(/\s+(stk|st|kg)\.?\s*$/i, '').trim()
-            const q = Number(it.qty)
-            it.qty = Number.isFinite(q) && q > 0 ? q : 1
-            merged.push(it)
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        const data = await r.json()
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (r.status === 200 && text) {
+          let parsed: Record<string, any> = {}
+          try { parsed = JSON.parse(text) } catch {
+            const m = text.match(/\{[\s\S]*\}/)
+            if (m) { try { parsed = JSON.parse(m[0]) } catch { /* ignore */ } }
           }
-          parsed.items = merged
+          return { parsed, model }
         }
-        // Varpa pid-kóðum í raunveruleg vöru-id; hafna öllu sem ekki var í listanum.
-        let matched = 0
-        let warranty = 0
-        if (Array.isArray(parsed.items)) {
-          parsed.items = (parsed.items as any[]).map((it) => {
-            const { pid, w, ...rest } = it || {}
-            const id = typeof pid === 'string' ? codeToId.get(pid.trim().toUpperCase()) : undefined
-            if (id) matched++
-            // Ábyrgðartillaga: aðeins 0/2/5 ár leyfð (neytendakaupalög: 2 ár almennt, 5 fyrir langlífa hluti).
-            const wy = Number(w) === 5 ? 5 : Number(w) === 2 ? 2 : 0
-            if (wy) warranty++
-            const out: any = { ...rest, warranty_years: wy }
-            if (id) out.reward_product_id = id
-            return out
-          })
-        }
-        // Hreinsa auðkenni: strengir eða null, VSK tala eða null.
-        for (const k of ['time', 'receipt_no', 'register']) {
-          const v = (parsed as any)[k]
-          ;(parsed as any)[k] = typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : null
-        }
-        ;(parsed as any).vat_total = Number.isFinite(Number(parsed.vat_total)) && Number(parsed.vat_total) > 0 ? Math.round(Number(parsed.vat_total)) : null
-        // Geyma það sem gervigreindin LAS á netþjóni (receipt_scans). Stig reiknast aðeins af þessu —
-        // línur sem notandi breytir eða bætir við í appinu hafa engin áhrif á stig.
-        try {
-          const SB = Deno.env.get('SUPABASE_URL'), SR = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), AN = Deno.env.get('SUPABASE_ANON_KEY')
-          const authz = req.headers.get('Authorization') || ''
-          if (SB && SR && authz) {
-            const ur = await fetch(SB + '/auth/v1/user', { headers: { Authorization: authz, apikey: AN || SR } })
-            const u = ur.ok ? await ur.json() : null
-            if (u && u.id) {
-              const row = {
-                user_id: u.id, store: parsed.store || null, purchased_at: parsed.date || null,
-                receipt_no: (parsed as any).receipt_no || null, vat_total: (parsed as any).vat_total ?? null,
-                total: Number.isFinite(Number(parsed.total)) ? Number(parsed.total) : null,
-                items: (Array.isArray(parsed.items) ? parsed.items as any[] : []).map((i) => ({
-                  name: String(i.name || '').slice(0, 120), qty: Number(i.qty) > 0 ? Number(i.qty) : 1,
-                  price: Number.isFinite(Number(i.price)) ? Number(i.price) : null, reward_product_id: i.reward_product_id || null,
-                })),
-              }
-              const ins = await fetch(SB + '/rest/v1/receipt_scans', {
-                method: 'POST',
-                headers: { apikey: SR, Authorization: 'Bearer ' + SR, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-                body: JSON.stringify(row),
-              })
-              if (ins.ok) { const saved = await ins.json(); (parsed as any).scan_id = saved && saved[0] && saved[0].id }
-              else console.log('parse-receipt scan save fail ' + ins.status)
-            }
-          }
-        } catch (e) { console.log('parse-receipt scan save error ' + String(e)) }
-        const qtyLines = Array.isArray(parsed.items) ? (parsed.items as any[]).filter((i) => Number(i.qty) !== 1).length : 0
-        console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) +
-          ' scan=' + ((parsed as any).scan_id ? 'saved' : 'none') + ' prods=' + prods.length + ' matched=' + matched + ' warranty=' + warranty + ' qtylines=' + qtyLines +
-          ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(before) + ' final=' + JSON.stringify(parsed.date))
-        return json(parsed)
+        lastErr = 'model=' + model + ' status=' + r.status
+        console.log('parse-receipt fail ' + lastErr + ' ms=' + (Date.now() - t0))
       }
-      lastErr = 'model=' + model + ' status=' + r.status
-      console.log('parse-receipt fail ' + lastErr + ' ms=' + (Date.now() - t0))
+      return null
     }
-    return json({ error: lastErr })
+
+    // --- Eftirvinnsla: dagsetning, magnlínur, pörun, auðkenni ---
+    function post(parsed: Record<string, any>) {
+      parsed.model_date = parsed.date
+      parsed.date = fixDate(parsed.date, today)
+      if (Array.isArray(parsed.items)) {
+        const QTY = /^\s*(\d+(?:[.,]\d+)?)\s*(?:stk|st|kg|x|×)?\s*(?:[@x×]|á)\s*([\d.,]+)\s*(?:kr)?\s*$/i
+        const isNum = (t: string) => Number(t.replace(/\./g, '').replace(',', '.'))
+        const merged: any[] = []
+        for (const raw of parsed.items as any[]) {
+          const it = { ...(raw || {}) }
+          const name = String(it.name || '')
+          const m = name.match(QTY)
+          if (m && merged.length) {
+            const prev = merged[merged.length - 1]
+            const q = isNum(m[1]) || 1, unit = isNum(m[2])
+            prev.qty = q
+            if (unit > 0) prev.price = Math.round(q * unit)
+            continue
+          }
+          it.name = name.replace(/\s+(stk|st|kg)\.?\s*$/i, '').trim()
+          const q = Number(it.qty)
+          it.qty = Number.isFinite(q) && q > 0 ? q : 1
+          merged.push(it)
+        }
+        parsed.items = merged
+      } else parsed.items = []
+      let matched = 0, warranty = 0
+      parsed.items = (parsed.items as any[]).map((it) => {
+        const { pid, w, ...rest } = it || {}
+        const id = typeof pid === 'string' ? codeToId.get(pid.trim().toUpperCase()) : undefined
+        if (id) matched++
+        const wy = Number(w) === 5 ? 5 : Number(w) === 2 ? 2 : 0
+        if (wy) warranty++
+        const out: any = { ...rest, warranty_years: wy }
+        if (id) out.reward_product_id = id
+        return out
+      })
+      for (const k of ['time', 'receipt_no', 'register']) {
+        const v = parsed[k]
+        parsed[k] = typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : null
+      }
+      parsed.vat_total = Number.isFinite(Number(parsed.vat_total)) && Number(parsed.vat_total) > 0 ? Math.round(Number(parsed.vat_total)) : null
+      parsed.discount_total = Number.isFinite(Number(parsed.discount_total)) && Number(parsed.discount_total) > 0 ? Math.round(Number(parsed.discount_total)) : 0
+      return { matched, warranty }
+    }
+
+    // --- Sannprófun: línur − afsláttur ≈ samtala, og VSK trúverðugur (matvara 11%, annað 24%) ---
+    function check(p: Record<string, any>) {
+      const items: any[] = Array.isArray(p.items) ? p.items : []
+      const sum = items.reduce((s, i) => s + (Number(i.price) || 0), 0) - (Number(p.discount_total) || 0)
+      const total = Number(p.total)
+      const hasTotal = Number.isFinite(total) && total > 0
+      const diff = hasTotal ? Math.round(sum - total) : null
+      const tol = hasTotal ? Math.max(20, total * 0.01) : 0
+      const vat = Number(p.vat_total)
+      const vatRatio = hasTotal && Number.isFinite(vat) && vat > 0 ? vat / total : null
+      const vatOk = vatRatio == null || (vatRatio >= 0.05 && vatRatio <= 0.25)
+      const sumOk = hasTotal && Math.abs(diff as number) <= tol
+      return {
+        sum: Math.round(sum), total: hasTotal ? total : null, diff, vat_ratio: vatRatio == null ? null : Math.round(vatRatio * 1000) / 1000,
+        vat_ok: vatOk, sum_ok: sumOk, legible: p.legible !== false, lines: items.length,
+        ok: sumOk && vatOk && p.legible !== false && items.length > 0,
+      }
+    }
+
+    // 1. lestur
+    const first = await readOnce(prompt)
+    if (!first) return json({ error: lastErr })
+    let parsed = first.parsed, model = first.model
+    let stats = post(parsed)
+    let chk = check(parsed)
+    let retried = false
+
+    // 2. endurlestur með endurgjöf ef summa/VSK stemmir ekki (en eitthvað var lesið)
+    if (!chk.ok && chk.lines > 0) {
+      const fb = [
+        prompt, '',
+        'ENDURLESTUR — fyrri lestur stóðst ekki sannprófun:',
+        '- Fyrri lestur: ' + chk.lines + ' línur sem summast í ' + chk.sum + ' kr (að frádregnum afslætti)' +
+          (chk.total ? ', en samtala kvittunar er ' + chk.total + ' kr (munur ' + chk.diff + ' kr).' : ', og samtala sást ekki.'),
+        ...(chk.vat_ok ? [] : ['- VSK ' + parsed.vat_total + ' kr passar ekki við samtöluna — lestu VSK-töfluna aftur.']),
+        '- Lestu ALLAR vörulínur aftur, eina í einu, ofan frá og niður. Leitaðu að línu sem vantar, línu sem er tvítalin og magnlínu sem er sett á ranga vöru.',
+        '- Ef línurnar eru ólæsilegar: "legible": false og búðu EKKI til línur.',
+      ].join('\n')
+      const second = await readOnce(fb)
+      if (second) {
+        const p2 = second.parsed
+        const s2 = post(p2)
+        const c2 = check(p2)
+        retried = true
+        const better = (c2.ok && !chk.ok) ||
+          (c2.lines > 0 && c2.diff != null && (chk.diff == null || Math.abs(c2.diff) < Math.abs(chk.diff)))
+        if (better) { parsed = p2; stats = s2; chk = c2; model = second.model }
+      }
+    }
+
+    // 3. Ólæsileg mynd: hafna í stað þess að skila mögulegum tilbúningi
+    const bigOff = chk.total != null && chk.diff != null && Math.abs(chk.diff) > chk.total * 0.10
+    const unreadable = chk.lines === 0 || (!chk.ok && (!chk.legible || !chk.vat_ok || bigOff))
+    parsed.check = chk
+    parsed.verified = chk.ok
+
+    if (unreadable) {
+      console.log('parse-receipt unreadable model=' + model + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' check=' + JSON.stringify(chk))
+      return json({ unreadable: true, items: [], store: parsed.store || '', date: parsed.date || null, total: chk.total, check: chk })
+    }
+
+    // 4. Geyma það sem gervigreindin LAS (receipt_scans). Stig reiknast aðeins af þessu, og
+    //    vörustig aðeins ef lesturinn stóðst sannprófun (verified).
+    try {
+      const SB = Deno.env.get('SUPABASE_URL'), SR = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'), AN = Deno.env.get('SUPABASE_ANON_KEY')
+      const authz = req.headers.get('Authorization') || ''
+      if (SB && SR && authz) {
+        const ur = await fetch(SB + '/auth/v1/user', { headers: { Authorization: authz, apikey: AN || SR } })
+        const u = ur.ok ? await ur.json() : null
+        if (u && u.id) {
+          const row = {
+            user_id: u.id, store: parsed.store || null, purchased_at: parsed.date || null,
+            receipt_no: parsed.receipt_no || null, vat_total: parsed.vat_total ?? null,
+            total: chk.total, verified: chk.ok, check: chk,
+            items: (parsed.items as any[]).map((i) => ({
+              name: String(i.name || '').slice(0, 120), qty: Number(i.qty) > 0 ? Number(i.qty) : 1,
+              price: Number.isFinite(Number(i.price)) ? Number(i.price) : null, reward_product_id: i.reward_product_id || null,
+            })),
+          }
+          const ins = await fetch(SB + '/rest/v1/receipt_scans', {
+            method: 'POST',
+            headers: { apikey: SR, Authorization: 'Bearer ' + SR, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+            body: JSON.stringify(row),
+          })
+          if (ins.ok) { const saved = await ins.json(); parsed.scan_id = saved && saved[0] && saved[0].id }
+          else console.log('parse-receipt scan save fail ' + ins.status + ' ' + (await ins.text()))
+        }
+      }
+    } catch (e) { console.log('parse-receipt scan save error ' + String(e)) }
+
+    const qtyLines = (parsed.items as any[]).filter((i) => Number(i.qty) !== 1).length
+    console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' verified=' + chk.ok +
+      ' diff=' + chk.diff + ' vat_ratio=' + chk.vat_ratio + ' legible=' + chk.legible +
+      ' scan=' + (parsed.scan_id ? 'saved' : 'none') + ' prods=' + prods.length + ' matched=' + stats.matched + ' warranty=' + stats.warranty + ' qtylines=' + qtyLines +
+      ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(parsed.model_date) + ' final=' + JSON.stringify(parsed.date))
+    return json(parsed)
   } catch (e) {
     return json({ error: String(e) }, 500)
   }

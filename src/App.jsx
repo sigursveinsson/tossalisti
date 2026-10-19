@@ -479,7 +479,7 @@ export default function App() {
       if (toCheck.length) { await reload(list.id); checked = toCheck.length }
     }
     await loadPurchases(); loadMyRewards()
-    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${checked ? ` · ${checked} vörur merktar keyptar` : ''}`)
+    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${checked ? ` · ${checked} vörur merktar keyptar` : ''}${r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, r.rewardNote === 'unverified' ? { warn: true } : {})
     else if (checked) flash(checked + ' vörur merktar keyptar')
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
     else flash('Kvittun skráð')
@@ -492,6 +492,7 @@ export default function App() {
     duplicate: 'Kvittun skráð, en engin stig: þessi kvittun hefur þegar verið skönnuð og gefið stig.',
     outside_campaign: 'Kvittun skráð, en engin vörustig: herferðin nær ekki yfir kaupdaginn á kvittuninni.',
     no_scan: 'Kvittun skráð, en engin stig: stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni.',
+    unverified: 'Kvittun skráð, en aðeins kvittanastig: línurnar stemmdu ekki við samtöluna, svo vörustig voru ekki reiknuð. Skannaðu nær og í betri birtu til að fá vörustig.',
     award_failed: 'Kvittun skráð. Náðist ekki að reikna stigin núna — þau bætast við þegar appið nær sambandi næst.',
     already: 'Kvittun skráð.',
     disabled: 'Kvittun skráð.',
@@ -501,7 +502,7 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards()
     setShowReceipt(false); setReceiptListId(null)
-    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : ''}`, r.rewardNote === 'outside_campaign' ? { warn: true } : {})
+    if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, ['outside_campaign', 'unverified'].includes(r.rewardNote) ? { warn: true } : {})
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
     else flash('Kvittun skráð')
   }

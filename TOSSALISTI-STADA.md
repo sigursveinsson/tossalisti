@@ -479,3 +479,10 @@ git push
 4. **Vistun kvittunar**: villur sýndar (net, útrunnin innskráning, vörulínur); mynd skylda fyrir skannaða kvittun (2 tilraunir, annars afturkallað); `award_purchase`-bilun → biðröð á tæki (`korfan.pendingAwards`) og `retryPendingAwards()` við ræsingu/forgrunn; viðvörun í yfirferð ef engin mynd / enginn lestur (0 stig).
 - Admin: stigareitur vistar við blur (ekki hvert slag), eyðing vöru með staðfestingu, „kr“→„stig“ í tilboðum.
 - Eftir fyrir prufuhóp: tæma test_users, hreinsa prufustig, nýr boðskóði (hámark ~12), nýskráningarflæði (staðfestingarpóstur), SW-endurhleðsla, ErrorBoundary á aðalskjái, eyða reikningi/sækja gögn.
+
+## Vörn gegn tilbúningi í kvittanalestri (19. okt 2026) — parse-receipt v23
+- Tilefni: óskýr mynd af Krónukvittun (skuggi) → Gemini bjó til trúverðuga kvittun (Kókómjólk, grísalundir…, allar línur tvisvar, VSK 1%) og hún var vistuð.
+- Fyrirmæli: `legible`-reitur, „aldrei giska“, `discount_total`, magnlína tilheyrir vörunni beint fyrir ofan (líka tveggja lína heiti), „2stk“ í heiti = pakkastærð.
+- Sannprófun: línur − afsláttur ≈ samtala (±1% / 20 kr) og VSK 5–25% af samtölu. Ef ekki: endurlestur með endurgjöf (munur í kr). Ef enn ólæsileg / VSK ómögulegur / >10% munur → `unreadable`, engar línur skilaðar, skönnun ekki vistuð, notandi beðinn að koma nær.
+- `receipt_scans.verified` + `check`. `award_purchase`: óstaðfest skönnun → aðeins kvittanastig, `reason: 'unverified'`.
+- Framendi: `failed: 'blurry'` skilaboð; summuviðvörun í yfirferð; viðvörun um að óstaðfest skönnun gefi ekki vörustig.
