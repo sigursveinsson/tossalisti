@@ -66,8 +66,13 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
     const t0 = Date.now()
-    const { image, mime, products } = await req.json()
-    if (!image) return json({ error: 'no image' }, 400)
+    const reqBody = await req.json()
+    const products = reqBody.products
+    // Ein mynd ({image, mime}) eða löng kvittun í 2–4 hlutum ({images: [{image, mime}]}, ofan frá og niður).
+    const imgs: { image: string, mime?: string }[] = Array.isArray(reqBody.images) && reqBody.images.length
+      ? reqBody.images.filter((m: any) => m && m.image).slice(0, 4)
+      : (reqBody.image ? [{ image: reqBody.image, mime: reqBody.mime }] : [])
+    if (!imgs.length) return json({ error: 'no image' }, 400)
 
     // AI-pörun: valkvæður listi yfir tilboðsvörur. Stuttir kóðar (P1, P2…) í stað uuid
     // svo líkanið rugli þeim ekki; netþjónninn varpar til baka og hafnar ógildum kóðum.
@@ -84,7 +89,15 @@ Deno.serve(async (req) => {
 
     const itemShape = prods.length ? '{"name":"","qty":1,"price":0,"w":0,"pid":null}' : '{"name":"","qty":1,"price":0,"w":0}'
     const prompt = [
-      'Þú lest íslenska kassakvittun af mynd.',
+      imgs.length > 1 ? 'Þú lest íslenska kassakvittun af ' + imgs.length + ' myndum.' : 'Þú lest íslenska kassakvittun af mynd.',
+      ...(imgs.length > 1 ? [
+        '',
+        'LÖNG KVITTUN Í HLUTUM — MIKILVÆGT:',
+        '- Myndirnar ' + imgs.length + ' eru samliggjandi hlutar SÖMU kvittunar, í röð ofan frá og niður (mynd 1 = efst með haus, síðasta mynd = neðst með samtölu).',
+        '- Hlutarnir skarast: síðustu línur einnar myndar sjást oft aftur efst á næstu mynd. Slíka línu skal telja EINU SINNI.',
+        '- Sama vara sem er keypt tvisvar stendur í tveimur línum Á SÖMU MYND. Ef eins lína sést neðst á mynd N og efst á mynd N+1 er það skörun, ekki tvö kaup.',
+        '- Skilaðu einni sameinaðri kvittun: allar vörulínur í réttri röð, haus (verslun, dagsetning, númer) og samtala/VSK þaðan sem þær sjást.',
+      ] : []),
       'Skilaðu AÐEINS gildu JSON: {"legible":true,"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"discount_total":0,"items":[' + itemShape + '],"total":0}',
       '',
       'HEIÐARLEIKI — MIKILVÆGAST AF ÖLLU:',
@@ -145,8 +158,8 @@ Deno.serve(async (req) => {
       for (const model of MODELS) {
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
         const body = {
-          contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: mime || 'image/jpeg', data: image } }] }],
-          generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 4096 }, 0),
+          contents: [{ parts: [{ text: promptText }, ...imgs.map((m) => ({ inlineData: { mimeType: m.mime || 'image/jpeg', data: m.image } }))] }],
+          generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 8192 }, 0),
         }
         const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         const data = await r.json()
@@ -225,7 +238,8 @@ Deno.serve(async (req) => {
       const total = Number(p.total)
       const hasTotal = Number.isFinite(total) && total > 0
       const diff = hasTotal ? Math.round(sum - total) : null
-      const tol = hasTotal ? Math.max(20, total * 0.01) : 0
+      // Kassakvittun summast upp á krónu: 0,2% vikmörk (lágmark 5 kr fyrir aurajöfnun/námundun vigtaðra vara).
+      const tol = hasTotal ? Math.max(5, total * 0.002) : 0
       const vat = Number(p.vat_total)
       const vatRatio = hasTotal && Number.isFinite(vat) && vat > 0 ? vat / total : null
       const vatOk = vatRatio == null || (vatRatio >= 0.05 && vatRatio <= 0.25)
@@ -279,7 +293,7 @@ Deno.serve(async (req) => {
     parsed.verified = chk.ok
 
     if (unreadable) {
-      console.log('parse-receipt unreadable model=' + model + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' check=' + JSON.stringify(chk))
+      console.log('parse-receipt unreadable model=' + model + ' imgs=' + imgs.length + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' check=' + JSON.stringify(chk))
       return json({ unreadable: true, items: [], store: parsed.store || '', date: parsed.date || null, total: chk.total, check: chk })
     }
 
@@ -313,7 +327,7 @@ Deno.serve(async (req) => {
     } catch (e) { console.log('parse-receipt scan save error ' + String(e)) }
 
     const qtyLines = (parsed.items as any[]).filter((i) => Number(i.qty) !== 1).length
-    console.log('parse-receipt ok model=' + model + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' verified=' + chk.ok +
+    console.log('parse-receipt ok model=' + model + ' imgs=' + imgs.length + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' verified=' + chk.ok +
       ' diff=' + chk.diff + ' vat_ratio=' + chk.vat_ratio + ' legible=' + chk.legible +
       ' scan=' + (parsed.scan_id ? 'saved' : 'none') + ' prods=' + prods.length + ' matched=' + stats.matched + ' warranty=' + stats.warranty + ' qtylines=' + qtyLines +
       ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(parsed.model_date) + ' final=' + JSON.stringify(parsed.date))

@@ -36,7 +36,7 @@ async function toJpegFile(source, srcW, srcH, rotate, kind) {
   return new File([blob], `kvittun-cam-${kind}-${w}x${h}.jpg`, { type: 'image/jpeg' })
 }
 
-export default function CameraCapture({ onCapture, onPickFile, onClose }) {
+export default function CameraCapture({ onCapture, onPickFile, onClose, title }) {
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const [err, setErr] = useState('')
@@ -123,7 +123,7 @@ export default function CameraCapture({ onCapture, onPickFile, onClose }) {
   return (
     <div className="cam-wrap" onClick={e => e.stopPropagation()}>
       <div className="cam-top">
-        <span>Komdu nær: kvittunin á að fylla rammann</span>
+        <span>{title || 'Komdu nær: kvittunin á að fylla breiddina'}</span>
         <button className="cam-x" onClick={onClose} aria-label="Loka"><IconX size={22} stroke={1.9} /></button>
       </div>
       {!err && (

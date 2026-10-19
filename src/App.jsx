@@ -233,6 +233,18 @@ export default function App() {
   }, [session?.user?.email])
   const loadMyRewards = () => store.getMyRewards().then(setMyRewards).catch(() => {})
   useEffect(() => { if (isCloud && !session) return; loadMyRewards() }, [session])
+  // Síminn slökkti á appinu á meðan myndavél símans var opin (lítið minni)? ReceiptScanner merkir „skönnun í gangi“
+  // áður en myndavélin opnast; finnist merkið við ræsingu skiptir þessi sími varanlega í innbyggðu myndavélina.
+  useEffect(() => {
+    try {
+      const t = Number(localStorage.getItem('korfan.scanPending') || 0)
+      localStorage.removeItem('korfan.scanPending')
+      if (t && Date.now() - t < 10 * 60 * 1000 && localStorage.getItem('korfan.camMode') !== 'live') {
+        localStorage.setItem('korfan.camMode', 'live')
+        setTimeout(() => flash('Síminn lokaði appinu á meðan myndavélin var opin (lítið minni). Héðan í frá notar appið sína eigin myndavél. Opnaðu „Skrá kvittun“ aftur.', { warn: true }), 600)
+      }
+    } catch {}
+  }, [])
   // Stig sem náðust ekki í gegn við vistun (net datt út): reynt aftur við ræsingu og þegar appið kemur í forgrunn.
   useEffect(() => {
     if (!isCloud || !session) return

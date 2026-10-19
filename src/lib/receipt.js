@@ -131,9 +131,11 @@ function canvasToVisionBase64(canvas, quality = 0.7) {
 
 // Kallar edge-fallið og vinnur úr svarinu.
 // products (valkvætt): tilboðsvörur [{id,name,brand}] sem gervigreindin parar kvittanalínur við.
-async function visionInvoke(image, mime, products) {
+// images: [{ image, mime }] — ein mynd, eða 2–4 samliggjandi hlutar langrar kvittunar (ofan frá og niður).
+async function visionInvoke(images, products) {
   const prods = (products || []).filter(p => p && p.id && p.name).map(p => ({ id: p.id, name: p.name, brand: p.brand || '' }))
-  const body = prods.length ? { image, mime, products: prods } : { image, mime }
+  const body = images.length === 1 ? { image: images[0].image, mime: images[0].mime } : { images }
+  if (prods.length) body.products = prods
   // Ein endurtekning ef netið hikstar — algengasta ástæðan fyrir „ekkert gerðist“ í síma.
   let data = null, error = null
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -174,7 +176,7 @@ export async function parseReceiptVision(file, products) {
     // Afkóðun klikkaði (t.d. minnislaust) — sendu hráu skrána, netþjónninn afkóðar.
     image = await fileToBase64(file); mime = file.type || 'image/jpeg'
   }
-  return visionInvoke(image, mime, products)
+  return visionInvoke([{ image, mime }], products)
 }
 
 // Þrálátur Tesseract-worker — búinn til EINU sinni og endurnýttur.
@@ -222,12 +224,19 @@ async function logScan(ev) {
 
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
 // Skilar líka `archive` (Blob) — mynd af kvittuninni til að geyma í kvittanasafni.
-export async function parseReceipt(file, onProgress, products) {
+// input: ein skrá, eða listi af skrám (löng kvittun tekin í hlutum, ofan frá og niður).
+export async function parseReceipt(input, onProgress, products) {
   const t0 = Date.now()
+  const files = (Array.isArray(input) ? input : [input]).filter(Boolean).slice(0, 4)
+  const file = files[0]
   const camM = /^kvittun-cam-(photo|frame)-(\d+x\d+)/.exec(file.name || '')
-  const base = { file_bytes: file.size || null, file_type: file.type || null, capture: camM ? camM[1] + '-' + camM[2] : 'file' }
+  const one = camM ? camM[1] + '-' + camM[2] : 'file'
+  const base = {
+    file_bytes: files.reduce((a, f) => a + (f.size || 0), 0) || null, file_type: file.type || null,
+    capture: files.length > 1 ? 'multi' + files.length + '-' + one : one,
+  }
   try {
-    const res = await parseReceiptInner(file, onProgress, products)
+    const res = files.length > 1 ? await parseReceiptMulti(files, onProgress, products) : await parseReceiptInner(file, onProgress, products)
     const outcome = res.items && res.items.length ? 'ok' : (res.failed || 'empty')
     logScan({ ...base, outcome, stage: res.stage || (outcome === 'ok' ? 'done' : null), ms: Date.now() - t0, decoded: !!res.decoded, items: (res.items || []).length, error: visionInvoke.lastError })
     return res
@@ -235,6 +244,80 @@ export async function parseReceipt(file, onProgress, products) {
     logScan({ ...base, outcome: 'crash', ms: Date.now() - t0, error: e && (e.message || e) })
     throw e
   }
+}
+
+// Breidd fyrir afkóðun stakrar myndar: 2400 px nema síminn gefi til kynna lítið minni.
+function singleWidth() {
+  const dm = typeof navigator !== 'undefined' && navigator.deviceMemory
+  return dm && dm < 4 ? 1600 : 2400
+}
+
+// Ein mynd → { image (base64), mime, canvas? } fyrir sjónlíkanið. Hlutar langrar kvittunar eru teknir nær,
+// svo 1600 px breidd dugar og heildarstærð sendingar helst hófleg (allt að 4 myndir).
+async function prepPart(file, maxW) {
+  const fromCam = /^kvittun-cam-/.test(file.name || '') && file.size && file.size <= 4 * 1024 * 1024
+  if (fromCam) return { image: await fileToBase64(file), mime: 'image/jpeg', file }
+  let canvas = null
+  try { canvas = await loadDownscaledCanvas(file, maxW) } catch (e) {
+    try { canvas = await loadViaImageElement(file, maxW) } catch (e2) { canvas = null }
+  }
+  if (canvas) {
+    // Stóri striginn losaður strax; aðeins 900 px afrit geymt fyrir geymslumyndina (heldur minni niðri með 4 hlutum).
+    const image = canvasToVisionBase64(canvas, 0.85)
+    const tw = 900, th = Math.round(canvas.height * (tw / canvas.width))
+    const thumb = document.createElement('canvas'); thumb.width = tw; thumb.height = th
+    thumb.getContext('2d').drawImage(canvas, 0, 0, tw, th)
+    canvas.width = canvas.height = 0
+    return { image, mime: 'image/jpeg', canvas: thumb }
+  }
+  if (file.size && file.size <= 4 * 1024 * 1024) return { image: await fileToBase64(file), mime: file.type || 'image/jpeg', file }
+  return null
+}
+
+// Geymslumynd fyrir langa kvittun: hlutarnir staflaðir hver undir annan í eina mynd (900 px breið).
+async function stitchArchive(parts) {
+  const ARCH_W = 900
+  const bmps = []
+  try {
+    for (const p of parts) {
+      if (p.canvas) bmps.push(p.canvas)
+      else if (p.file) bmps.push(await createImageBitmap(p.file, { resizeWidth: ARCH_W, resizeQuality: 'medium' }))
+    }
+    if (!bmps.length) return null
+    const hs = bmps.map(b => Math.round(b.height * (ARCH_W / b.width)))
+    const H = Math.min(hs.reduce((a, b) => a + b, 0), 12000)
+    const c = document.createElement('canvas'); c.width = ARCH_W; c.height = H
+    const ctx = c.getContext('2d')
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, ARCH_W, H)
+    let y = 0
+    bmps.forEach((b, i) => { ctx.drawImage(b, 0, y, ARCH_W, hs[i]); y += hs[i] })
+    const blob = await canvasToBlob(c, 0.72)
+    c.width = c.height = 0
+    return blob
+  } catch (e) { return null } finally { bmps.forEach(b => b.close && b.close()) }
+}
+
+// Löng kvittun í 2–4 hlutum: allir hlutar fara saman í EITT kall og gervigreindin sameinar þá.
+async function parseReceiptMulti(files, onProgress, products) {
+  const parts = []
+  for (let i = 0; i < files.length; i++) {
+    const p = await prepPart(files[i], 1600)
+    if (p) parts.push(p)
+    if (onProgress) onProgress((i + 1) / (files.length + 2))
+  }
+  const archive = await stitchArchive(parts)
+  if (!parts.length) return { store: '', items: [], total: null, date: null, archive, decoded: false, stage: 'decode', failed: 'decode' }
+  const images = parts.map(p => ({ image: p.image, mime: p.mime }))
+  parts.forEach(p => { if (p.canvas) { p.canvas.width = p.canvas.height = 0 } })
+  try {
+    const ai = await visionInvoke(images, products)
+    if (ai) {
+      if (ai.unreadable) return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: 'blurry' }
+      if (ai.items && ai.items.length) return { ...ai, archive, decoded: true, stage: 'ai' }
+      return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'empty' }
+    }
+  } catch (e) { /* netvilla */ }
+  return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'upload', failed: 'network' }
 }
 
 async function parseReceiptInner(file, onProgress, products) {
@@ -248,16 +331,18 @@ async function parseReceiptInner(file, onProgress, products) {
     try { image = await fileToBase64(file); mime = 'image/jpeg' } catch (e) { image = null }
   }
   // Mynd úr myndasafni/myndavélarforriti: afkóðuð EINU SINNI í minnkaðri stærð.
-  // 1600 px breidd (áður 1100): löng kvittun þarf upplausn til að smátt letur verði læsilegt.
+  // Kvittun er mjó ræma í miðri myndinni, svo hver pixill skiptir máli: 2400 px breidd á símum
+  // með nóg minni (áður 1100), 1600 px á símum með lítið minni.
   // Mjög stór mynd → EKKI afkóða í síma, senda hráu skrána beint; netþjónninn afkóðar. Varnar OOM-endurhleðslu.
+  const W = singleWidth()
   const BIG = 12 * 1024 * 1024
   if (!image && file.size && file.size <= BIG) {
     try {
-      canvas = await loadDownscaledCanvas(file, 1600)
+      canvas = await loadDownscaledCanvas(file, W)
     } catch (e) {
-      try { canvas = await loadViaImageElement(file, 1600) } catch (e2) { canvas = null }
+      try { canvas = await loadViaImageElement(file, W) } catch (e2) { canvas = null }
     }
-    if (canvas) { try { image = canvasToVisionBase64(canvas, 0.8) } catch (e) { image = null } }
+    if (canvas) { try { image = canvasToVisionBase64(canvas, 0.85) } catch (e) { image = null } }
   }
   // Síðasta úrræði: hrá skrá, en aðeins ef hún er hófleg — stærri strengur sprengir minnið í síma.
   if (!image && file.size && file.size <= 4 * 1024 * 1024) {
@@ -273,7 +358,7 @@ async function parseReceiptInner(file, onProgress, products) {
   let aiReached = false
   if (image && supabase && supabase.functions) {
     try {
-      const ai = await visionInvoke(image, mime, products)
+      const ai = await visionInvoke([{ image, mime }], products)
       if (ai) {
         aiReached = true
         if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'blurry' }

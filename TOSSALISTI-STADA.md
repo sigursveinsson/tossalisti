@@ -493,3 +493,10 @@ git push
 - receipt.js: mynd úr myndatöku send beint (ekki minnkuð aftur); myndasafn 1600 px breidd, JPEG 0,8. `scan_events.capture` = photo-WxH / frame-WxH / file.
 - VSK ekki lengur höfnunarástæða ef summa stemmir (mislesinn VSK → null).
 - Kvittananúmer: Gemini beðinn um „Kvitt“-númer frekar en „Færsla“; staðlað í síðustu 8 tölustafi (hrátt í `receipt_scans.receipt_no_raw`).
+
+## Blönduð myndataka + langar kvittanir (20. okt 2026) — parse-receipt v26
+- Myndavél símans (file input, capture) er aftur aðalleið: bestu gæðin (multi-frame, skerping, fókus). Merki `korfan.scanPending` sett áður en hún opnast; ef appið ræsist aftur með merkið (síminn slökkti á vafranum) → `korfan.camMode='live'` varanlega + skilaboð. Notandi getur líka skipt handvirkt (hlekkur undir hnöppum).
+- Myndasafn hefur nú sér input án `capture` (áður opnaði „Velja mynd úr myndasafni“ myndavélina á Android).
+- Upplausn: stök mynd úr myndavél símans afkóðuð í 2400 px breidd (1600 á símum með deviceMemory < 4), JPEG 0,85.
+- Löng kvittun í hlutum: 2–4 myndir, allar í EITT Gemini-kall (`images: [...]`) með fyrirmælum um skörun; geymslumynd = hlutar staflaðir (900 px). Boðið eftir 'blurry' eða óstaðfestan lestur. `scan_events.capture` = `multiN-…`.
+- Vikmörk summu hert: 0,2% (lágmark 5 kr). maxOutputTokens 8192.

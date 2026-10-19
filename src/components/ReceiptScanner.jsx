@@ -45,8 +45,17 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [ident, setIdent] = useState({})          // auðkenni af kvittun: receipt_no, register, time, vat_total (svikavörn)
   const [failed, setFailed] = useState(null)       // 'network' | 'decode' | 'empty' | 'blurry' | null — af hverju lesturinn skilaði engu
   const [scanCheck, setScanCheck] = useState(null) // sannprófun netþjóns: {sum,total,diff,ok,…}
-  const [camera, setCamera] = useState(false)      // lifandi myndataka (aðalleið í síma; sparar minni)
+  const [camera, setCamera] = useState(false)      // lifandi myndataka í appinu (fyrir síma sem slökkva á vafranum)
   const canCamera = typeof navigator !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+  // Myndataka: 'app' = myndavél símans (bestu gæðin, sjálfgefið) | 'live' = innbyggð myndavél í appinu.
+  // Ef síminn slekkur á vafranum á meðan myndavél símans er opin (lítið minni) skiptir App.jsx varanlega í 'live'.
+  const [mode, setMode] = useState(() => { try { return localStorage.getItem('korfan.camMode') || 'app' } catch { return 'app' } })
+  const setModeP = (m) => { setMode(m); try { localStorage.setItem('korfan.camMode', m) } catch {} }
+  const galleryRef = useRef(null)
+  const gotFileRef = useRef(false)
+  // Löng kvittun: teknar 2–4 myndir ofan frá og niður, lesnar saman.
+  const [multi, setMulti] = useState(false)
+  const [parts, setParts] = useState([])
   const [keepImage, setKeepImage] = useState(true)
   const [returnDays, setReturnDays] = useState(0) // 0 = enginn skilafrestur skráður
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
@@ -62,13 +71,35 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   useEffect(() => { matchRef.current.then(l => setMatchList(l || [])) }, [])
   const prodById = (id) => (id ? matchList.find(p => p.id === id) : null)
 
-  const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) handleFile(file) }
-  const handleFile = async (file) => {
+  const clearPending = () => { try { localStorage.removeItem('korfan.scanPending') } catch {} }
+  // Myndavél símans: merkt „skönnun í gangi“ áður en hún opnast. Lifi síðan af (verður sýnileg aftur) er merkið
+  // fjarlægt; ef síminn slökkti á vafranum sér App.jsx merkið við endurræsingu og skiptir í innbyggða myndavél.
+  const openAppCamera = () => {
+    gotFileRef.current = false
+    try { localStorage.setItem('korfan.scanPending', String(Date.now())) } catch {}
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return
+      document.removeEventListener('visibilitychange', onVis)
+      setTimeout(() => { if (!gotFileRef.current) clearPending() }, 3000)
+    }
+    document.addEventListener('visibilitychange', onVis)
+    fileRef.current && fileRef.current.click()
+  }
+  const openCamera = () => (mode === 'live' && canCamera) ? setCamera(true) : openAppCamera()
+  const startMulti = () => { setMulti(true); setParts([]); setFailed(null); setPhase('capture'); openCamera() }
+
+  const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) { gotFileRef.current = true; onShot(file) } else clearPending() }
+  const onShot = (file) => {
+    setCamera(false)
+    if (multi) { setParts(p => [...p, file].slice(0, 4)); setPhase('parts'); clearPending() }
+    else handleFile(file)
+  }
+  const handleFile = async (input) => {
     setCamera(false)
     setPhase('reading'); setProgress(0)
     try {
       const prods = await matchRef.current
-      const res = await parseReceipt(file, setProgress, prods)
+      const res = await parseReceipt(input, setProgress, prods)
       setStore(res.store || '')
       if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, qty: x.qty && x.qty !== 1 ? x.qty : 1, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
@@ -83,6 +114,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
     } catch (err) {
       setItems([]); setFailed('network')
     }
+    clearPending()
+    setMulti(false); setParts([])
     setPhase('review')
   }
 
@@ -125,14 +158,34 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       <div className="modal receipt-modal" onClick={e => e.stopPropagation()}>
         <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
+        <input ref={galleryRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
+        {camera && <CameraCapture title={multi ? `Hluti ${parts.length + 1} af kvittuninni` : undefined}
+          onCapture={onShot} onPickFile={() => { setCamera(false); setTimeout(() => galleryRef.current && galleryRef.current.click(), 50) }} onClose={() => setCamera(false)} />}
+
         {phase === 'capture' && (
           <>
             <p className="muted-p">Taktu mynd af kassakvittuninni. Appið les vörur og verð — þú getur lagað áður en þú vistar.</p>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
-            <button className="add-recipe-btn" onClick={() => canCamera ? setCamera(true) : fileRef.current && fileRef.current.click()}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
-            {canCamera && <button className="ghost-btn receipt-alt" onClick={() => fileRef.current && fileRef.current.click()}>Velja mynd úr myndasafni</button>}
-            {camera && <CameraCapture onCapture={handleFile} onPickFile={() => { setCamera(false); setTimeout(() => fileRef.current && fileRef.current.click(), 50) }} onClose={() => setCamera(false)} />}
+            <div className="receipt-tip"><b>Kvittunin á að fylla breidd myndarinnar.</b> Flöt, í góðri birtu og án skugga. Ef hún er of löng til að komast öll fyrir þannig, taktu hana í hlutum.</div>
+            <button className="add-recipe-btn" onClick={() => { setMulti(false); openCamera() }}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
+            <button className="ghost-btn receipt-alt" onClick={startMulti}>Löng kvittun? Taka í hlutum</button>
+            <button className="ghost-btn receipt-alt" onClick={() => { setMulti(false); galleryRef.current && galleryRef.current.click() }}>Velja mynd úr myndasafni</button>
+            {canCamera && (
+              <button className="receipt-modelink" onClick={() => setModeP(mode === 'live' ? 'app' : 'live')}>
+                {mode === 'live' ? 'Nota myndavél símans (betri myndgæði)' : 'Myndavél símans lokar appinu? Nota innbyggða myndavél'}
+              </button>
+            )}
           </>
+        )}
+
+        {phase === 'parts' && (
+          <div className="receipt-parts">
+            <p><b>{parts.length} {parts.length === 1 ? 'hluti kominn' : 'hlutar komnir'}.</b> {parts.length < 4 ? 'Taktu næsta hluta neðar á kvittuninni. Láttu síðustu línurnar af fyrri mynd sjást aftur efst, svo ekkert detti út.' : 'Hámark 4 hlutar.'}</p>
+            <div className="receipt-parts-dots">{parts.map((_, i) => <span key={i}>{i + 1}</span>)}</div>
+            {parts.length < 4 && <button className="add-recipe-btn" onClick={openCamera}><IconCamera size={19} stroke={1.9} /> Taka hluta {parts.length + 1}</button>}
+            <button className={parts.length >= 2 ? 'add-recipe-btn' : 'ghost-btn receipt-alt'} onClick={() => handleFile(parts)} disabled={!parts.length}>Búið, lesa kvittunina ({parts.length} {parts.length === 1 ? 'mynd' : 'myndir'})</button>
+            <button className="receipt-modelink" onClick={() => { setParts([]); setMulti(false); setPhase('capture') }}>Byrja upp á nýtt</button>
+          </div>
         )}
 
         {phase === 'reading' && (
@@ -154,10 +207,11 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             )}
             {items.length === 0 && failed === 'network' && <div className="receipt-fail"><b>Náði ekki sambandi við kvittanalesarann.</b> Athugaðu netið og reyndu aftur með „Skanna aftur“, eða skráðu línurnar handvirkt.</div>}
             {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}
-            {items.length === 0 && failed === 'blurry' && <div className="receipt-fail"><b>Myndin er ekki nógu skýr til að lesa línurnar.</b> Komdu nær svo kvittunin fylli rammann, í góðri birtu og án skugga, og ýttu á „Skanna aftur“. Löng kvittun: leggðu hana flata og taktu hana alla í einni mynd.</div>}
+            {items.length === 0 && failed === 'blurry' && <div className="receipt-fail"><b>Myndin er ekki nógu skýr til að lesa línurnar.</b> Komdu nær svo kvittunin fylli breidd myndarinnar, í góðri birtu og án skugga. Ef hún er löng, taktu hana í hlutum.</div>}
             {items.length === 0 && failed === 'empty' && <div className="receipt-fail"><b>Kvittanalesarinn fann engar vörur á myndinni.</b> Er myndin skýr og kvittunin öll í ramma? Reyndu aftur eða skráðu handvirkt.</div>}
             {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
-            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); if (canCamera) { setPhase('capture'); setCamera(true) } else fileRef.current && fileRef.current.click() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
+            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
+            {(failed === 'blurry' || (scanCheck && scanCheck.ok === false)) && <button className="ghost-btn receipt-rescan" onClick={startMulti}>Taka kvittunina í hlutum (betra fyrir langar kvittanir)</button>}
             <div className="receipt-items">
               {items.map(it => {
                 const mp = prodById(it.reward_product_id)
@@ -201,11 +255,11 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
               const sm = items.reduce((a, it) => a + (Number(it.price) || 0), 0)
               if (!items.length || !(t > 0)) return null
               const d = Math.round(sm - t)
-              if (Math.abs(d) <= Math.max(20, t * 0.01)) return null
+              if (Math.abs(d) <= Math.max(5, t * 0.002)) return null
               return <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Línurnar summast í <b>{sm.toLocaleString('is-IS')} kr</b> en samtala kvittunar er <b>{t.toLocaleString('is-IS')} kr</b> ({d > 0 ? '+' : ''}{d.toLocaleString('is-IS')} kr). Athugaðu hvort lína vantar eða er tvítalin.</span></div>
             })()}
             {requireImage && ident.scan_id && scanCheck && scanCheck.ok === false && (
-              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Lesturinn stemmdi ekki alveg við samtöluna, svo þessi kvittun gefur kvittanastig en ekki vörustig. Viltu vörustigin? „Skanna aftur“ nær og í betri birtu.</span></div>
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Lesturinn stemmdi ekki alveg við samtöluna, svo þessi kvittun gefur kvittanastig en ekki vörustig. Viltu vörustigin? Skannaðu aftur nær, eða taktu kvittunina í hlutum.</span></div>
             )}
             {requireImage && !archive && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Engin mynd fylgir — stig fást aðeins fyrir kvittanir sem eru skannaðar með myndavélinni. Kvittunin vistast í bókhaldið þitt.</span></div>
