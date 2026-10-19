@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       '',
       'AUÐKENNI KVITTUNAR (notað til að þekkja sömu kvittun aftur):',
       '- "time": klukkan sem kvittunin var prentuð, HH:MM, annars null.',
-      '- "receipt_no": kvittana-/færslunúmerið eins og það stendur (merkt "Nr", "Kvittun", "Færsla", "Afgr", "Nóta", "Bon" o.þ.h.), annars null.',
+      '- "receipt_no": KVITTANANÚMERIÐ, merkt "Kvitt", "Kvittun", "Nóta", "Reikn." eða "Nr". Ef bæði kvittananúmer og "Færsla"/"Afgr" standa á kvittuninni: notaðu ALLTAF kvittananúmerið, ekki færslunúmerið. Afritaðu tölustafina nákvæmlega, staf fyrir staf (líka núllin). Annars null.',
       '- "register": kassa- eða afgreiðslunúmer ("Kassi", "Pos", "Afgreiðsla", "Till"), annars null.',
       '- "vat_total": samanlagður virðisaukaskattur í krónum (allar VSK-línur lagðar saman, t.d. "VSK 11%" + "VSK 24%"), annars null.',
       '',
@@ -206,6 +206,13 @@ Deno.serve(async (req) => {
         const v = parsed[k]
         parsed[k] = typeof v === 'string' && v.trim() ? v.trim().slice(0, 40) : null
       }
+      // Kvittananúmer staðlað: aðeins tölustafir, síðustu 8. Langar núllaraðir lesast stundum með einu núlli
+      // of mikið/lítið („0000021149000079305“ → „00000211490000079305“); síðustu 8 stafirnir eru stöðugir.
+      parsed.receipt_no_raw = parsed.receipt_no
+      if (parsed.receipt_no) {
+        const dg = String(parsed.receipt_no).replace(/\D/g, '')
+        parsed.receipt_no = dg.length >= 4 ? dg.slice(-8) : parsed.receipt_no
+      }
       parsed.vat_total = Number.isFinite(Number(parsed.vat_total)) && Number(parsed.vat_total) > 0 ? Math.round(Number(parsed.vat_total)) : null
       parsed.discount_total = Number.isFinite(Number(parsed.discount_total)) && Number(parsed.discount_total) > 0 ? Math.round(Number(parsed.discount_total)) : 0
       return { matched, warranty }
@@ -226,7 +233,9 @@ Deno.serve(async (req) => {
       return {
         sum: Math.round(sum), total: hasTotal ? total : null, diff, vat_ratio: vatRatio == null ? null : Math.round(vatRatio * 1000) / 1000,
         vat_ok: vatOk, sum_ok: sumOk, legible: p.legible !== false, lines: items.length,
-        ok: sumOk && vatOk && p.legible !== false && items.length > 0,
+        // Summan ræður: stemmi línurnar við samtöluna er lesturinn traustur, jafnvel þótt VSK sé mislesinn
+        // (líkanið ruglar oft dálkum í VSK-töflunni). VSK skiptir aðeins máli þegar summan stemmir ekki.
+        ok: sumOk && p.legible !== false && items.length > 0,
       }
     }
 
@@ -264,6 +273,8 @@ Deno.serve(async (req) => {
     // 3. Ólæsileg mynd: hafna í stað þess að skila mögulegum tilbúningi
     const bigOff = chk.total != null && chk.diff != null && Math.abs(chk.diff) > chk.total * 0.10
     const unreadable = chk.lines === 0 || (!chk.ok && (!chk.legible || !chk.vat_ok || bigOff))
+    // Mislesinn VSK á annars réttum lestri: ekki geyma ranga tölu (hún er notuð sem auðkenni kvittunar)
+    if (chk.ok && !chk.vat_ok) parsed.vat_total = null
     parsed.check = chk
     parsed.verified = chk.ok
 
@@ -283,7 +294,7 @@ Deno.serve(async (req) => {
         if (u && u.id) {
           const row = {
             user_id: u.id, store: parsed.store || null, purchased_at: parsed.date || null,
-            receipt_no: parsed.receipt_no || null, vat_total: parsed.vat_total ?? null,
+            receipt_no: parsed.receipt_no || null, receipt_no_raw: parsed.receipt_no_raw || null, vat_total: parsed.vat_total ?? null,
             total: chk.total, verified: chk.ok, check: chk,
             items: (parsed.items as any[]).map((i) => ({
               name: String(i.name || '').slice(0, 120), qty: Number(i.qty) > 0 ? Number(i.qty) : 1,

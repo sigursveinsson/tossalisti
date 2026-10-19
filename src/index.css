@@ -1592,3 +1592,6 @@ button { font-family: inherit; cursor: pointer; }
 .eb-msg { font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--soft); padding: 10px; border-radius: 8px; color: #B3261E; margin: 8px 0 12px; }
 .toast.toast-warn { background: #fff7e6; color: #5c3d00; border: 1px solid #f5a623; max-width: min(92vw, 420px); white-space: normal; line-height: 1.45; text-align: left; padding: 12px 14px; cursor: pointer; box-shadow: 0 6px 20px rgba(21,49,94,.18); }
 .receipt-row input.receipt-qty { flex: 0 0 44px; padding: 0 4px; text-align: center; font-weight: 700; color: var(--navy); }
+
+/* Myndataka: leiðbeining neðst í forsýn */
+.cam-hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: rgba(0,0,0,.55); color: #fff; font-size: 13px; padding: 6px 12px; border-radius: 999px; white-space: nowrap; pointer-events: none; }

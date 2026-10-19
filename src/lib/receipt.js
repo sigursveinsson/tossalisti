@@ -214,6 +214,7 @@ async function logScan(ev) {
       user_id: user.id, outcome: ev.outcome, stage: ev.stage || null, ms: ev.ms ?? null,
       file_bytes: ev.file_bytes ?? null, file_type: ev.file_type || null, decoded: ev.decoded ?? null, items: ev.items ?? null,
       device_mem: (typeof navigator !== 'undefined' && navigator.deviceMemory) || null,
+      capture: ev.capture || null,
       ua: (typeof navigator !== 'undefined' && navigator.userAgent || '').slice(0, 200), error: ev.error ? String(ev.error).slice(0, 200) : null,
     })
   } catch (e) { /* mæling má aldrei stöðva skönnun */ }
@@ -223,7 +224,8 @@ async function logScan(ev) {
 // Skilar líka `archive` (Blob) — mynd af kvittuninni til að geyma í kvittanasafni.
 export async function parseReceipt(file, onProgress, products) {
   const t0 = Date.now()
-  const base = { file_bytes: file.size || null, file_type: file.type || null }
+  const camM = /^kvittun-cam-(photo|frame)-(\d+x\d+)/.exec(file.name || '')
+  const base = { file_bytes: file.size || null, file_type: file.type || null, capture: camM ? camM[1] + '-' + camM[2] : 'file' }
   try {
     const res = await parseReceiptInner(file, onProgress, products)
     const outcome = res.items && res.items.length ? 'ok' : (res.failed || 'empty')
@@ -239,16 +241,23 @@ async function parseReceiptInner(file, onProgress, products) {
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
   let canvas = null, image = null, mime = 'image/jpeg'
-  // Mjög stór mynd (líklega há-upplausnar myndavélarmynd) → EKKI afkóða í síma,
-  // senda hráu skrána beint; netþjónninn afkóðar. Varnar OOM-endurhleðslu.
+  // Mynd úr lifandi myndatöku (CameraCapture) er ÞEGAR í réttri stærð (≤2400 px) og gæðum —
+  // send beint, ekki afkóðuð og minnkuð aftur (það henti áður burt upplausn sem smátt letur þarf).
+  const fromCam = /^kvittun-cam-/.test(file.name || '') && file.size && file.size <= 4 * 1024 * 1024
+  if (fromCam) {
+    try { image = await fileToBase64(file); mime = 'image/jpeg' } catch (e) { image = null }
+  }
+  // Mynd úr myndasafni/myndavélarforriti: afkóðuð EINU SINNI í minnkaðri stærð.
+  // 1600 px breidd (áður 1100): löng kvittun þarf upplausn til að smátt letur verði læsilegt.
+  // Mjög stór mynd → EKKI afkóða í síma, senda hráu skrána beint; netþjónninn afkóðar. Varnar OOM-endurhleðslu.
   const BIG = 12 * 1024 * 1024
-  if (file.size && file.size <= BIG) {
+  if (!image && file.size && file.size <= BIG) {
     try {
-      canvas = await loadDownscaledCanvas(file, 1100)
+      canvas = await loadDownscaledCanvas(file, 1600)
     } catch (e) {
-      try { canvas = await loadViaImageElement(file, 1100) } catch (e2) { canvas = null }
+      try { canvas = await loadViaImageElement(file, 1600) } catch (e2) { canvas = null }
     }
-    if (canvas) { try { image = canvasToVisionBase64(canvas, 0.7) } catch (e) { image = null } }
+    if (canvas) { try { image = canvasToVisionBase64(canvas, 0.8) } catch (e) { image = null } }
   }
   // Síðasta úrræði: hrá skrá, en aðeins ef hún er hófleg — stærri strengur sprengir minnið í síma.
   if (!image && file.size && file.size <= 4 * 1024 * 1024) {
@@ -256,7 +265,8 @@ async function parseReceiptInner(file, onProgress, products) {
   }
   // Geymslumynd búin til ÁÐUR en OCR-varaleiðin breytir striganum (grátóna).
   let archive = null
-  if (canvas) archive = await canvasToBlob(canvas)
+  if (fromCam) archive = file
+  else if (canvas) archive = await canvasToBlob(canvas)
   else if (file.size && file.size <= ARCHIVE_RAW_MAX) archive = file
 
   // 1) Sjónlíkan (nákvæmt). Virkar líka þegar afkóðun klikkaði — hráa skráin fer á netþjóninn.
@@ -266,8 +276,8 @@ async function parseReceiptInner(file, onProgress, products) {
       const ai = await visionInvoke(image, mime, products)
       if (ai) {
         aiReached = true
-        if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas, stage: 'ai', failed: 'blurry' }
-        if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas, stage: 'ai' }
+        if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'blurry' }
+        if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas || fromCam, stage: 'ai' }
       }
     } catch (e) { /* fall back */ }
   }
@@ -285,7 +295,7 @@ async function parseReceiptInner(file, onProgress, products) {
   }
 
   // Ekkert tókst — notandi skráir handvirkt í yfirferðar-skrefinu. `failed` segir skjánum að útskýra.
-  return { store: '', items: [], total: null, date: null, archive, decoded: !!canvas, stage: image ? (aiReached ? 'ai' : 'upload') : 'decode', failed: image ? (aiReached ? 'empty' : 'network') : 'decode' }
+  return { store: '', items: [], total: null, date: null, archive, decoded: !!canvas || fromCam, stage: image ? (aiReached ? 'ai' : 'upload') : 'decode', failed: image ? (aiReached ? 'empty' : 'network') : 'decode' }
 }
 
 // --- Pörun kvittunarlína við vörur á lista ---

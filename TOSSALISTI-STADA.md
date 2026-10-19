@@ -486,3 +486,10 @@ git push
 - Sannprófun: línur − afsláttur ≈ samtala (±1% / 20 kr) og VSK 5–25% af samtölu. Ef ekki: endurlestur með endurgjöf (munur í kr). Ef enn ólæsileg / VSK ómögulegur / >10% munur → `unreadable`, engar línur skilaðar, skönnun ekki vistuð, notandi beðinn að koma nær.
 - `receipt_scans.verified` + `check`. `award_purchase`: óstaðfest skönnun → aðeins kvittanastig, `reason: 'unverified'`.
 - Framendi: `failed: 'blurry'` skilaboð; summuviðvörun í yfirferð; viðvörun um að óstaðfest skönnun gefi ekki vörustig.
+
+## Myndgæði og kvittananúmer (19. okt 2026) — parse-receipt v25
+- Orsök versnandi lesturs: lifandi myndataka (18. okt 11:18) tók ramma úr myndbandi (~200 KB) í stað ljósmyndar (~2,3 MB), og receipt.js minnkaði svo í 1100 px breidd með JPEG 0,7.
+- CameraCapture: Chrome/Android tekur ALVÖRU ljósmynd (ImageCapture.takePhoto, ~2560 px, samfelldur fókus), snýr ef þarf, skalar í 2400 px langhlið, JPEG 0,86. iPhone: hæsta upplausn straumsins (biður um 4K). Leiðbeining á skjá („Komdu nær…“).
+- receipt.js: mynd úr myndatöku send beint (ekki minnkuð aftur); myndasafn 1600 px breidd, JPEG 0,8. `scan_events.capture` = photo-WxH / frame-WxH / file.
+- VSK ekki lengur höfnunarástæða ef summa stemmir (mislesinn VSK → null).
+- Kvittananúmer: Gemini beðinn um „Kvitt“-númer frekar en „Færsla“; staðlað í síðustu 8 tölustafi (hrátt í `receipt_scans.receipt_no_raw`).
