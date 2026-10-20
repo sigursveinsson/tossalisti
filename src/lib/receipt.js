@@ -140,9 +140,11 @@ async function visionInvoke(images, products) {
   let data = null, error = null
   for (let attempt = 0; attempt < 2; attempt++) {
     try { ({ data, error } = await supabase.functions.invoke('parse-receipt', { body })) } catch (e) { error = e; data = null }
-    if (!error && data && !data.error) break
+    if (!error && data && (!data.error || data.ai_down)) break
     if (attempt === 0) await new Promise(r => setTimeout(r, 800))
   }
+  // Gemini liggur niðri (greiðsla/kvóti/bilun hjá Google): EKKI falla á lélegan varalestur — segja satt.
+  if (data && data.ai_down) { visionInvoke.lastError = data.error || 'ai_down'; return { ai_down: true } }
   if (error || !data || data.error) { visionInvoke.lastError = (error && error.message) || (data && data.error) || 'unknown'; return null }
   visionInvoke.lastError = null
   const items = Array.isArray(data.items)
@@ -237,7 +239,7 @@ export async function parseReceipt(input, onProgress, products) {
   }
   try {
     const res = files.length > 1 ? await parseReceiptMulti(files, onProgress, products) : await parseReceiptInner(file, onProgress, products)
-    const outcome = res.items && res.items.length ? 'ok' : (res.failed || 'empty')
+    const outcome = res.failed ? res.failed : res.stage === 'ocr' ? 'ocr_fallback' : (res.items && res.items.length ? 'ok' : 'empty')
     logScan({ ...base, outcome, stage: res.stage || (outcome === 'ok' ? 'done' : null), ms: Date.now() - t0, decoded: !!res.decoded, items: (res.items || []).length, error: visionInvoke.lastError })
     return res
   } catch (e) {
@@ -312,6 +314,7 @@ async function parseReceiptMulti(files, onProgress, products) {
   try {
     const ai = await visionInvoke(images, products)
     if (ai) {
+      if (ai.ai_down) return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'ai_down' }
       if (ai.unreadable) return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: 'blurry' }
       if (ai.items && ai.items.length) return { ...ai, archive, decoded: true, stage: 'ai' }
       return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'empty' }
@@ -361,6 +364,7 @@ async function parseReceiptInner(file, onProgress, products) {
       const ai = await visionInvoke([{ image, mime }], products)
       if (ai) {
         aiReached = true
+        if (ai.ai_down) return { store: '', items: [], total: null, date: null, archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'ai_down' }
         if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'blurry' }
         if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas || fromCam, stage: 'ai' }
       }

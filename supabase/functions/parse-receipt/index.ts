@@ -178,6 +178,26 @@ Deno.serve(async (req) => {
       return null
     }
 
+    // --- Tilkynning til stjórnanda þegar Gemini liggur niðri ---
+    async function notifyAiDown(err: string) {
+      try {
+        const SB = Deno.env.get('SUPABASE_URL'), SR = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+        if (!SB || !SR) return
+        const H = { apikey: SR, Authorization: 'Bearer ' + SR, 'Content-Type': 'application/json' }
+        const since = new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+        const r = await fetch(SB + '/rest/v1/notify_queue?kind=eq.ai_down&created_at=gte.' + since + '&select=id&limit=1', { headers: H })
+        const recent = r.ok ? await r.json() : []
+        if (recent.length) return
+        await fetch(SB + '/rest/v1/notify_queue', { method: 'POST', headers: H,
+          body: JSON.stringify({ kind: 'ai_down', payload: { error: err, at: new Date().toISOString() } }) })
+        // Senda strax (notify-admin hefur sína eigin 5 mín hraðatakmörkun)
+        await Promise.race([
+          fetch(SB + '/functions/v1/notify-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+          new Promise((res) => setTimeout(res, 4000)),
+        ])
+      } catch (e) { console.log('notifyAiDown error ' + String(e)) }
+    }
+
     // --- Eftirvinnsla: dagsetning, magnlínur, pörun, auðkenni ---
     function post(parsed: Record<string, any>) {
       parsed.model_date = parsed.date
@@ -255,7 +275,12 @@ Deno.serve(async (req) => {
 
     // 1. lestur
     const first = await readOnce(prompt)
-    if (!first) return json({ error: lastErr })
+    if (!first) {
+      // Gemini svarar ekki (greiðsla/kvóti/bilun). Appið á EKKI að falla á lélegan varalestur heldur segja satt
+      // og bjóða endurtekningu. Stjórnandi fær tilkynningu strax (einu sinni á 2 klst).
+      await notifyAiDown(lastErr)
+      return json({ error: lastErr, ai_down: true })
+    }
     let parsed = first.parsed, model = first.model
     let stats = post(parsed)
     let chk = check(parsed)

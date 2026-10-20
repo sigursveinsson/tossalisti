@@ -94,7 +94,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
     if (multi) { setParts(p => [...p, file].slice(0, 4)); setPhase('parts'); clearPending() }
     else handleFile(file)
   }
+  const lastInputRef = useRef(null) // síðasta mynd(ir) — til að reyna aftur án nýrrar myndatöku
   const handleFile = async (input) => {
+    lastInputRef.current = input
     setCamera(false)
     setPhase('reading'); setProgress(0)
     try {
@@ -204,6 +206,10 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             </div>
             {dateLooksOff(date) && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</span></div>
+            )}
+            {items.length === 0 && failed === 'ai_down' && <div className="receipt-fail"><b>Kvittanalesturinn liggur niðri í augnablikinu.</b> Þetta er ekki myndin þín. Við höfum fengið tilkynningu og erum að laga þetta. Reyndu aftur eftir smá stund með sömu mynd, eða skráðu kvittunina síðar.</div>}
+            {items.length === 0 && (failed === 'ai_down' || failed === 'network') && lastInputRef.current && (
+              <button className="add-recipe-btn" onClick={() => handleFile(lastInputRef.current)}>Reyna aftur með sömu mynd</button>
             )}
             {items.length === 0 && failed === 'network' && <div className="receipt-fail"><b>Náði ekki sambandi við kvittanalesarann.</b> Athugaðu netið og reyndu aftur með „Skanna aftur“, eða skráðu línurnar handvirkt.</div>}
             {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}

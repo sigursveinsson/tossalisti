@@ -71,6 +71,10 @@ Deno.serve(async () => {
     const prod = rows.filter((r) => r.kind === 'product_pending')
     const req = rows.filter((r) => r.kind === 'redemption_requested')
     const parts: string[] = []
+    const down = rows.filter((r) => r.kind === 'ai_down')
+    if (down.length) parts.push('<h3 style="font-size:15px;color:#b42318">Kvittanalesturinn (Gemini) liggur niðri</h3>' +
+      '<p>Google svaraði: <code>' + esc(down[0].payload.error) + '</code>. 402 = greiðsla/inneign (aistudio.google.com → Billing), 429 = kvóti, 5xx = bilun hjá Google. ' +
+      'Notendur fá skilaboð um að reyna aftur; engin stig tapast en kvittanir lesast ekki fyrr en þetta er lagað.</p>')
     if (prod.length) parts.push('<h3 style="font-size:15px">Vörur sem bíða samþykkis (' + prod.length + ')</h3><ul>' +
       prod.map((r) => li('<b>' + esc(r.payload.name) + '</b> · ' + esc(r.payload.brand) + ' · frá ' + esc(r.payload.by || '—'))).join('') +
       '</ul><p><a href="' + APP + '">Opna Verðlaunakerfi → Bíða samþykkis</a></p>')
@@ -80,7 +84,7 @@ Deno.serve(async () => {
     if (scanAlert) parts.push('<h3 style="font-size:15px;color:#b42318">Skönnun: ' + bad + ' af ' + n + ' kvittunum klikkuðu síðustu 24 klst (' + Math.round(bad / n * 100) + '%)</h3>' +
       '<p>Skoðaðu Stjórnborð → Tölfræði → Kvittanaskönnun.</p>')
     if (parts.length) {
-      await send(key, from, admin, 'Gríptu: ' + [prod.length && prod.length + ' vörur í bið', req.length && req.length + ' útleysingar', scanAlert && 'skönnunarbilanir'].filter(Boolean).join(', '),
+      await send(key, from, admin, 'Gríptu: ' + [down.length && 'KVITTANALESTUR NIÐRI', prod.length && prod.length + ' vörur í bið', req.length && req.length + ' útleysingar', scanAlert && 'skönnunarbilanir'].filter(Boolean).join(', '),
         wrap('Það bíður þín', parts.join('')))
       sent++
       if (scanAlert) await q('app_settings', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' },

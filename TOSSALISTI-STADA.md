@@ -500,3 +500,10 @@ git push
 - Upplausn: stök mynd úr myndavél símans afkóðuð í 2400 px breidd (1600 á símum með deviceMemory < 4), JPEG 0,85.
 - Löng kvittun í hlutum: 2–4 myndir, allar í EITT Gemini-kall (`images: [...]`) með fyrirmælum um skörun; geymslumynd = hlutar staflaðir (900 px). Boðið eftir 'blurry' eða óstaðfestan lestur. `scan_events.capture` = `multiN-…`.
 - Vikmörk summu hert: 0,2% (lágmark 5 kr). maxOutputTokens 8192.
+
+## Þegar Gemini liggur niðri (20. okt 2026) — parse-receipt v27, notify-admin v2
+- Tilefni: Google krafðist fyrirframgreiðslu (prepay) → 402 á öll köll frá 13:27; appið féll á Tesseract (rusl, engin stig) og mælingar sögðu „ok“. Lagað með prepay-inneign. Gemini-kostnaður 1.–20. okt: $0,99.
+- parse-receipt: ef öll líkön bregðast → `{ai_down:true}` + röð í `notify_queue` (kind `ai_down`, mest 1 á 2 klst) + tafarlaust kall á notify-admin.
+- notify-admin: rauður kafli „Kvittanalesturinn liggur niðri“ með villukóða og skýringu (402/429/5xx).
+- receipt.js: ai_down → `failed:'ai_down'`, engin Tesseract-varaleið, engin endurtekning. Mæling: `ai_down`, `ocr_fallback` teljast bilanir.
+- ReceiptScanner: skýr skilaboð + „Reyna aftur með sömu mynd“ (líka við netvillu).
