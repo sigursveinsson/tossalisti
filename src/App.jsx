@@ -45,6 +45,7 @@ import { makeEmojiImage } from './lib/img.js'
 import { departmentFor } from './data/products.js'
 import { setLearnedCategories } from './data/categories.js'
 import { matchListItems } from './lib/receipt.js'
+import GriptuTab from './components/GriptuTab.jsx'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -744,6 +745,18 @@ export default function App() {
   const open = list ? list.items.filter(i => !i.checked).length : 0
   const isAdmin = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
   const isShopping = list?.type === 'shopping'
+  // Gríptu-flipi: aðeins fyrir notendur í tryggðarkerfinu (boðshópur, t.d. Nathan-herferð). Útgjöld/bókhald
+  // eru áfram aðgengileg af heimasíðu og úr fellivalmynd (Listarnir mínir → Bókhald).
+  const showGriptuTab = isShopping && rewardsEnabled && !!(pilot && pilot.member)
+  const griptuInList = (name) => {
+    const n = String(name || '').toLowerCase().trim()
+    return !!(list && list.items.some(i => !i.checked && String(i.name || '').toLowerCase().trim() === n))
+  }
+  const griptuAdd = async (name) => {
+    const exists = list.items.some(i => i.name === String(name).toLowerCase().trim())
+    await addItem(name) // sýnir sjálft „er nú þegar á listanum“ ef svo er
+    if (!exists) flash('„' + name + '“ sett á listann')
+  }
   const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : list?.type === 'budget' ? 'Bókhald' : 'Innkaupalisti'
 
   return (
@@ -781,7 +794,7 @@ export default function App() {
           <div className="tabs">
             <button className={'tab' + (tab === 'list' ? ' active' : '')} onClick={() => setTab('list')}>{firstTabLabel}</button>
             {isShopping && <button className={'tab' + (tab === 'recipes' ? ' active' : '')} onClick={() => setTab('recipes')}>Uppskriftir</button>}
-            {isShopping && <button className={'tab' + (tab === 'spending' ? ' active' : '')} onClick={() => setTab('spending')}>Útgjöld</button>}
+            {showGriptuTab && <button className={'tab tab-griptu' + (tab === 'griptu' ? ' active' : '')} onClick={() => setTab('griptu')}>Gríptu</button>}
           </div>
         )}
       </div>
@@ -792,6 +805,8 @@ export default function App() {
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
+            : tab === 'griptu' && showGriptuTab
+            ? <GriptuTab points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
               : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}

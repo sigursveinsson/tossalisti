@@ -1603,3 +1603,18 @@ button { font-family: inherit; cursor: pointer; }
 .receipt-parts-dots { display: flex; gap: 8px; margin: 0 0 14px; }
 .receipt-parts-dots span { width: 30px; height: 30px; border-radius: 50%; background: #f5a623; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .receipt-parts .add-recipe-btn, .receipt-parts .receipt-alt { margin-bottom: 8px; }
+
+/* Gríptu-flipi á innkaupalista */
+.gt { padding: 4px 0 24px; }
+.gt-hero { display: block; width: 100%; text-align: left; border: 0; cursor: pointer; background: var(--navy, #16305c); color: #fff; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
+.gt-hero-top { display: flex; align-items: center; gap: 8px; }
+.gt-hero-top svg:first-child { color: #f5a623; }
+.gt-pts { font-size: 15px; } .gt-pts b { font-size: 22px; font-weight: 800; }
+.gt-goal { font-size: 13px; opacity: .75; }
+.gt-chev { margin-left: auto; opacity: .7; }
+.gt-bar { height: 8px; background: rgba(255,255,255,.18); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+.gt-bar div { height: 100%; background: #f5a623; border-radius: 99px; }
+.gt-scan { margin-bottom: 18px; }
+.gt-h { font-size: 16px; font-weight: 800; color: var(--navy, #16305c); margin: 4px 0 12px; }
+button.go-add { border: 0; cursor: pointer; font-family: inherit; }
+.go-add.go-added { background: #e8f5ec; color: #1f7a3d; cursor: default; }

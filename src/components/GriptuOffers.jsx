@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { CatIcon } from '../data/icons.jsx'
 import { departmentFor } from '../data/products.js'
-import { IconGift, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconGift, IconPlus, IconSearch, IconCheck } from '@tabler/icons-react'
 
 // Gríptu-tilboðin fyrir neytendur: allar vörur sem gefa stig NÚNA, lifandi úr gagnagrunninum.
 // Opið öllum (engin innskráning). Herferð í gangi ræður upphæð; vara án herferðar sýnir eigin verðlaun.
@@ -35,7 +35,9 @@ export async function fetchOffers() {
   return out
 }
 
-export default function GriptuOffers({ limit, onCount }) {
+// onAdd(name): inni í appinu — setur vöruna beint á núverandi innkaupalista (í stað tengils á tossalisti.is).
+// onList(name): satt ef varan er þegar á listanum (sýnt sem „Á listanum“).
+export default function GriptuOffers({ limit, onCount, onAdd, onList }) {
   const [offers, setOffers] = useState(null)
   const [q, setQ] = useState('')
   useEffect(() => { fetchOffers().then(o => { setOffers(o); onCount && onCount(o.length) }).catch(() => setOffers([])) }, [])
@@ -67,7 +69,11 @@ export default function GriptuOffers({ limit, onCount }) {
                 <div className="go-name">{o.name}{o.size ? <small> · {o.size}</small> : null}</div>
                 <div className="go-reward"><IconGift size={14} stroke={2} /> {rewardLabel(o)}</div>
                 {o.ends_on && <div className="go-until">til {o.ends_on.split('-').reverse().slice(0, 2).join('.')}</div>}
-                <a className="go-add" href={`${APP_URL}/?add=${encodeURIComponent(o.name)}`}><IconPlus size={15} stroke={2.25} /> Á listann</a>
+                {onAdd
+                  ? (onList && onList(o.name)
+                      ? <span className="go-add go-added"><IconCheck size={15} stroke={2.25} /> Á listanum</span>
+                      : <button className="go-add" onClick={() => onAdd(o.name)}><IconPlus size={15} stroke={2.25} /> Á listann</button>)
+                  : <a className="go-add" href={`${APP_URL}/?add=${encodeURIComponent(o.name)}`}><IconPlus size={15} stroke={2.25} /> Á listann</a>}
               </div>
             ))}
           </div>
