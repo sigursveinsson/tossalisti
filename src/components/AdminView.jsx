@@ -31,6 +31,7 @@ const activitySummary = (u) => {
   if (u.items > 0) parts.push(u.items + ' vörur/verk')
   if (u.completions > 0) parts.push(u.completions + ' verk')
   if (u.purchases > 0) parts.push(u.purchases + ' kvitt.')
+  if (u.scans > 0) parts.push(u.scans + ' skannanir')
   if (u.kids > 0) parts.push(u.kids + ' börn')
   if (u.memberships > u.lists_owned) parts.push('gekk í ' + (u.memberships - u.lists_owned) + ' deilda')
   return parts.length ? parts.join(' · ') : 'skráði sig, engin virkni enn'
@@ -183,7 +184,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
               {metric('Notendur alls', num(stats.users_total))}
               {metric('Virkir í dag', num(stats.users_active_today))}
               {metric('Virkir 7 daga', num(stats.users_active_7d))}
-              {metric('Nýir í dag', num(stats.users_new_today))}
+              {metric('Nýir í dag', num(stats.users_new_today), stats.users_new_7d != null ? num(stats.users_new_7d) + ' síðustu 7 daga' : undefined)}
             </div>
             <div className="adm-head">Notkun</div>
             <div className="adm-grid">
@@ -194,6 +195,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
             <div className="adm-head">Kvittanir & útgjöld</div>
             <div className="adm-grid">
               {metric('Kvittanir', num(stats.receipts_total), '+' + num(stats.receipts_today) + ' í dag')}
+              {stats.scans_total != null && metric('Skannanir', num(stats.scans_total), '+' + num(stats.scans_today) + ' í dag')}
               {metric('Útgjöld (mánuður)', kr(stats.spend_month))}
               {metric('Útgjöld alls', kr(stats.spend_total))}
             </div>
