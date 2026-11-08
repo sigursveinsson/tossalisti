@@ -556,3 +556,12 @@ git push
 - Netfang má bæta við áður en notandi skráir sig — gengur sjálfkrafa í hópinn við skráningu.
 - NATHANTEST gerður óvirkur; Eva og stjórinn settir á listann. Boðskóðar áfram til (faldir undir „details“) fyrir stærri hóp síðar.
 - RewardsAdmin: „Prufuhópur eftir netfangi“ með textareit, merkingu, stöðulista og fjarlægja.
+
+## Herferðavél: skyndiherferðir, stimpilkort, kóðaverðlaun (8. nóv 2026)
+- Töflur: `reward_prizes` (verðlaun vörumerkis: bíómiði, máltíð; kind code/qr/manual), `prize_codes` (kóðabanki, einn kóði á notanda), `campaign_progress` (stimplar), `campaign_awards` (vinningar: pending_review/awarded/rejected).
+- `reward_campaigns.kind`: points (óbreytt) | instant (kaup → verðlaun strax, `min_line_qty`, `max_redemptions`=hámark vinninga) | stamps (`stamps_required` kvittanir, 1 stimpill/dag). `per_user_limit`, `open_to_all` (líka utan prufuhóps), `description`.
+- `apply_campaigns()` kallað úr `award_purchase` eftir pörun: grunsamleg kvittun (óstaðfest/flögg) → vinningur í `pending_review` (engin kóði fyrr en admin samþykkir); kóðar búnir → líka í bið. Notendur utan prufuhóps fá engin stig en geta unnið open_to_all herferðir.
+- RPC: `my_campaigns`, `my_awards` (notandi), `brand_prizes`, `brand_add_codes` (vörumerki), `admin_awards`, `review_award` (admin: approve úthlutar kóða + póstur til notanda, reject losar kóða). `brand_campaigns` skilar kind/prize/vinningum/kóðum eftir.
+- Framendi: BrandCampaigns (gerðarval, verðlaun, hámark, opin öllum), BrandPrizes (stofna verðlaun, líma kóða), GriptuTab (herferðir m. teljara/stimpilkorti, vinningar m. kóða + afrita), AwardsAdmin í Verðlaunakerfi, toast við vinning. notify-admin v4: award_review (admin), award_granted (notandi).
+- SQL-prófað: kippa → bíómiði (BIO-1), 2. kvittun → stimpilkort fullt → BIO-2, per_user_limit stöðvar endurtekningu, teljari 999 eftir.
+- EKKI prófað í vafra/síma. Svikaflögg umfram summu/flags (nýr aðgangur, tíðni, mynd af skjá) eru enn á lista (#52).

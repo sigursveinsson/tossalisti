@@ -4,6 +4,7 @@ import { useBackClose } from '../lib/backstack.js'
 import { demoDashboard } from '../lib/brandDemo.js'
 import { IconArrowLeft, IconBulb, IconFlask, IconLock, IconSparkles, IconLogout, IconPlus, IconX, IconListCheck } from '@tabler/icons-react'
 import Campaigns from './BrandCampaigns.jsx'
+import BrandPrizes from './BrandPrizes.jsx'
 import BrandAccess from './BrandAccess.jsx'
 import BrandProducts from './BrandProducts.jsx'
 import BrandRedemptions from './BrandRedemptions.jsx'
@@ -349,6 +350,7 @@ export default function BrandDashboard({ onClose, brandUser = null, onSignOut, o
               </div>
             )}
             <Campaigns brandId={brandId} brandName={brand ? brand.name : ''} products={products.filter(p => p.brand_id === brandId)} canEdit={!isBrandUser || brandUser.role === 'editor'} />
+            <BrandPrizes brandId={brandId} canEdit={!isBrandUser || brandUser.role === 'editor'} />
           </>
         )}
 

@@ -481,6 +481,19 @@ export default function App() {
     store.getCompletions(list.id).then(setCompletions).catch(() => {})
     flash('Ný vika — allt af-hakað')
   }
+  // Vinningar úr herferðum (skyndiherferð / stimpilkort) — sýnd sem sér toast, Gríptu-flipi endurhlaðinn
+  const [griptuRefresh, setGriptuRefresh] = useState(0)
+  const flashAwards = (r) => {
+    const aw = (r && Array.isArray(r.awards)) ? r.awards : []
+    if (!aw.length) return
+    setGriptuRefresh(x => x + 1)
+    for (const a of aw) {
+      if (a.result === 'awarded') flash(`🎉 Þú vannst: ${a.prize || a.title}! Kóðinn er undir Gríptu → Vinningarnir þínir.`)
+      else if (a.result === 'pending_review') flash(`Vinningur í „${a.title}“ er í yfirferð. Þú færð kóðann þegar kvittunin hefur verið staðfest.`, { warn: true })
+      else if (a.result === 'sold_out') flash(`„${a.title}“: því miður eru allir vinningar búnir.`, { warn: true })
+      else if (a.kind === 'stamps' && a.stamped) flash(`Stimpill! ${a.stamps} af ${a.required} í „${a.title}“.`)
+    }
+  }
   const savePurchase = async (purchase) => {
     const r = await store.addPurchase({ ...purchase, list_id: list?.id || null })
     // Merkja vörur á listanum sem keyptar ef þær passa við kvittunina
@@ -491,7 +504,7 @@ export default function App() {
       for (const it of toCheck) { try { await store.toggleItem(list.id, it) } catch (e) {} }
       if (toCheck.length) { await reload(list.id); checked = toCheck.length }
     }
-    await loadPurchases(); loadMyRewards()
+    await loadPurchases(); loadMyRewards(); flashAwards(r)
     if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${checked ? ` · ${checked} vörur merktar keyptar` : ''}${r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, r.rewardNote === 'unverified' ? { warn: true } : {})
     else if (checked) flash(checked + ' vörur merktar keyptar')
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
@@ -499,7 +512,7 @@ export default function App() {
   }
   // Af hverju kvittun gaf engin stig — notandinn á að skilja það án þess að skrifa okkur.
   const REWARD_NOTE = {
-    not_in_pilot: 'Kvittun skráð, en engin stig: Gríptu stig eru í lokaðri prufu. Sláðu inn boðskóða undir Gríptu stig.',
+    not_in_pilot: 'Kvittun skráð, en engin stig: Gríptu stig eru í lokaðri prufu. Hafðu samband ef þú vilt vera með.',
     too_old: 'Kvittun skráð, en engin stig: stig fást aðeins fyrir kvittanir yngri en 14 daga.',
     daily_limit: 'Kvittun skráð, en engin stig: hámark þrjár kvittanir á dag gefa stig. Kvittunin er geymd.',
     duplicate: 'Kvittun skráð, en engin stig: þessi kvittun hefur þegar verið skönnuð og gefið stig.',
@@ -513,7 +526,7 @@ export default function App() {
   // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
   const scanReceiptMenu = async (purchase) => {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
-    await loadPurchases(); loadMyRewards()
+    await loadPurchases(); loadMyRewards(); flashAwards(r)
     setShowReceipt(false); setReceiptListId(null)
     if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, ['outside_campaign', 'unverified'].includes(r.rewardNote) ? { warn: true } : {})
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
@@ -806,7 +819,7 @@ export default function App() {
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
             : tab === 'griptu' && showGriptuTab
-            ? <GriptuTab points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
+            ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
               : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}

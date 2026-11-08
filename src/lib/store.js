@@ -493,6 +493,7 @@ const local = {
   async pointsAvailable() { return 0 }, async requestRedemption() { return { ok: false, reason: 'local' } }, async myRedemptions() { return [] }, async adminRedemptions() { return [] }, async adminUserReceipts() { return [] }, async reviewRedemption() {}, async markDelivered() {}, async brandRedemptions() { return [] },
   async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {}, async pilotEmails() { return [] }, async addPilotEmails() { return { added: 0, invalid: [] } }, async removePilotEmail() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {}, async retryPendingAwards() { return 0 },
+  async brandPrizes() { return [] }, async addPrize() { throw new Error('local') }, async updatePrize() {}, async addPrizeCodes() { return { added: 0 } }, async myCampaigns() { return [] }, async myAwards() { return [] }, async adminAwards() { return [] }, async reviewAward() {},
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
@@ -1169,9 +1170,30 @@ const cloud = {
       max_redemptions: c.max_redemptions ? Number(c.max_redemptions) : null,
       budget_kr: c.budget_kr ? Number(c.budget_kr) : null,
       active: true, created_by: user?.email || null,
+      // Herferðavél: 'points' (sjálfgefið) | 'instant' (kaup → verðlaun strax) | 'stamps' (N kvittanir → verðlaun)
+      kind: c.kind || 'points', prize_id: c.prize_id || null,
+      stamps_required: c.kind === 'stamps' ? Number(c.stamps_required) || null : null,
+      min_line_qty: c.kind === 'instant' && c.min_line_qty ? Number(c.min_line_qty) : null,
+      per_user_limit: c.per_user_limit ? Number(c.per_user_limit) : 1,
+      description: (c.description || '').trim() || null,
+      open_to_all: !!c.open_to_all,
     })
     if (error) throw error
   },
+  // Verðlaun með kóðum (bíómiðar, máltíðir) — kóðabanki vörumerkis
+  async brandPrizes(brandId) { const { data, error } = await supabase.rpc('brand_prizes', { p_brand: brandId }); return error ? [] : (data || []) },
+  async addPrize(p) {
+    const { data, error } = await supabase.from('reward_prizes').insert({ brand_id: p.brand_id, title: (p.title || '').trim(), description: (p.description || '').trim() || null, kind: p.kind || 'code', expires_at: p.expires_at || null }).select().single()
+    if (error) throw error; return data
+  },
+  async updatePrize(id, patch) { const { error } = await supabase.from('reward_prizes').update(patch).eq('id', id); if (error) throw error },
+  async addPrizeCodes(prizeId, text) { const { data, error } = await supabase.rpc('brand_add_codes', { p_prize: prizeId, p_codes: text }); if (error) throw error; return data },
+  // Notandi: herferðir sem hann getur tekið þátt í og vinningar hans (kóðar)
+  async myCampaigns() { const { data, error } = await supabase.rpc('my_campaigns'); return error ? [] : (data || []) },
+  async myAwards() { const { data, error } = await supabase.rpc('my_awards'); return error ? [] : (data || []) },
+  // Admin: yfirferð vinninga (grunsamlegar kvittanir / kóðar búnir)
+  async adminAwards(status) { const { data, error } = await supabase.rpc('admin_awards', { p_status: status || null }); return error ? [] : (data || []) },
+  async reviewAward(id, action, note) { const { data, error } = await supabase.rpc('review_award', { p_id: id, p_action: action, p_note: note || null }); if (error) throw error; return data },
   async updateCampaign(id, patch) {
     const { error } = await supabase.from('reward_campaigns').update(patch).eq('id', id)
     if (error) throw error

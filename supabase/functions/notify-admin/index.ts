@@ -81,10 +81,14 @@ Deno.serve(async () => {
     if (req.length) parts.push('<h3 style="font-size:15px">Útleysingarbeiðnir (' + req.length + ')</h3><ul>' +
       req.map((r) => li('<b>' + esc(r.payload.offer) + '</b> · ' + esc(r.payload.points) + ' stig · ' + esc(r.payload.name) + ' (' + esc(r.payload.user_email) + ')')).join('') +
       '</ul><p><a href="' + APP + '">Opna Útleysingar</a></p>')
+    const rev = rows.filter((r) => r.kind === 'award_review')
+    if (rev.length) parts.push('<h3 style="font-size:15px">Vinningar í yfirferð (' + rev.length + ')</h3><ul>' +
+      rev.map((r) => li('<b>' + esc(r.payload.campaign) + '</b> · ' + esc(r.payload.brand) + ' · ' + esc(r.payload.user_email))).join('') +
+      '</ul><p>Kvittunin var grunsamleg eða kóðar búnir. <a href="' + APP + '">Verðlaunakerfi → Vinningar úr herferðum</a></p>')
     if (scanAlert) parts.push('<h3 style="font-size:15px;color:#b42318">Skönnun: ' + bad + ' af ' + n + ' kvittunum klikkuðu síðustu 24 klst (' + Math.round(bad / n * 100) + '%)</h3>' +
       '<p>Skoðaðu Stjórnborð → Tölfræði → Kvittanaskönnun.</p>')
     if (parts.length) {
-      await send(key, from, admin, 'Gríptu: ' + [down.length && 'KVITTANALESTUR NIÐRI', prod.length && prod.length + ' vörur í bið', req.length && req.length + ' útleysingar', scanAlert && 'skönnunarbilanir'].filter(Boolean).join(', '),
+      await send(key, from, admin, 'Gríptu: ' + [down.length && 'KVITTANALESTUR NIÐRI', rev.length && rev.length + ' vinningar í yfirferð', prod.length && prod.length + ' vörur í bið', req.length && req.length + ' útleysingar', scanAlert && 'skönnunarbilanir'].filter(Boolean).join(', '),
         wrap('Það bíður þín', parts.join('')))
       sent++
       if (scanAlert) await q('app_settings', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' },
@@ -111,10 +115,11 @@ Deno.serve(async () => {
       redemption_approved: ['Útleysingin þín er samþykkt', 'Beiðnin um <b>{offer}</b> hefur verið samþykkt. {brand} afhendir hana á næstu dögum og hefur samband ef þarf.'],
       redemption_rejected: ['Útleysingin þín var ekki samþykkt', 'Beiðnin um <b>{offer}</b> var ekki samþykkt{note}. Stigin eru aftur laus til notkunar. Svaraðu þessum pósti ef þú vilt fá skýringu.'],
       redemption_delivered: ['Útleysingin þín er afhent', '<b>{offer}</b> er merkt afhent. Takk fyrir að taka þátt í Gríptu!'],
+      award_granted: ['Vinningurinn þinn er staðfestur', 'Kvittunin þín var staðfest og <b>{offer}</b> frá {brand} er þinn. Kóðinn er í appinu undir Gríptu → Vinningarnir þínir.'],
     }
     for (const r of rows.filter((r) => userMsgs[r.kind] && r.payload.user_email)) {
       const [subj, tpl] = userMsgs[r.kind]
-      const body = tpl.replace('{offer}', esc(r.payload.offer)).replace('{brand}', esc(r.payload.brand || 'Vörumerkið'))
+      const body = tpl.replace('{offer}', esc(r.payload.offer || r.payload.prize)).replace('{brand}', esc(r.payload.brand || 'Vörumerkið'))
         .replace('{note}', r.payload.note ? ': „' + esc(r.payload.note) + '“' : '')
       await send(key, from, r.payload.user_email, 'Gríptu: ' + subj, wrap(subj, '<p>' + body + '</p>'))
       sent++
