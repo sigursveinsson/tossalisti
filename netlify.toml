@@ -2,6 +2,33 @@
   command = "npm run build"
   publish = "dist"
 
+# innkaupalisti.is → innkaupalistasíðan á tossalisti.is (varanleg 301-tilvísun).
+# Lénið þarf að vera skráð sem "domain alias" í Netlify og DNS hjá ISNIC að benda á Netlify.
+# Þessar reglur VERÐA að vera á undan SPA-reglunni neðst.
+[[redirects]]
+  from = "https://innkaupalisti.is/*"
+  to = "https://tossalisti.is/innkaupalisti.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.innkaupalisti.is/*"
+  to = "https://tossalisti.is/innkaupalisti.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://innkaupalisti.is/*"
+  to = "https://tossalisti.is/innkaupalisti.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.innkaupalisti.is/*"
+  to = "https://tossalisti.is/innkaupalisti.html"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

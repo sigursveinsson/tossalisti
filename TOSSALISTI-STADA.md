@@ -507,3 +507,52 @@ git push
 - notify-admin: rauður kafli „Kvittanalesturinn liggur niðri“ með villukóða og skýringu (402/429/5xx).
 - receipt.js: ai_down → `failed:'ai_down'`, engin Tesseract-varaleið, engin endurtekning. Mæling: `ai_down`, `ocr_fallback` teljast bilanir.
 - ReceiptScanner: skýr skilaboð + „Reyna aftur með sömu mynd“ (líka við netvillu).
+
+## Á dagskrá — klára síðar (skráð 4. nóv 2026)
+**Fundur:** Óli í Ölgerðinni, föstudaginn 6. nóvember 2026.
+
+**Leitarvélar (SEO)** — tossalisti.is finnst ekki á Google í dag:
+1. Google Search Console: staðfesta tossalisti.is (TXT hjá ISNIC), senda inn sitemap, biðja um skráningu forsíðu + innkaupalisti.html. (Sverrir, Claude leiðir í vafra)
+2. Forsíða: raunverulegur texti í index.html (fyrirsögn, lýsing, tenglar), Schema.org SoftwareApplication, og:-merki. (Claude)
+3. Tengja efnissíður saman og frá forsíðu — þær eru munaðarlausar í dag. (Claude)
+4. Lengja innkaupalisti.html (algengar spurningar, prentvænn listi, ráð) + ný síða: jólainnkaupalisti. Bæta lastmod í sitemap. (Claude)
+5. Utanaðkomandi tenglar: Facebook-síða, íslenskir sparnaðar-/heimilishópar, samstarfsaðilar. (Sverrir)
+6. innkaupalisti.is → 301 á tossalisti.is/innkaupalisti.html: reglan komin í netlify.toml; eftir að bæta léninu við sem domain alias í Netlify og setja DNS hjá ISNIC. (Sverrir)
+
+**Annað sem bíður:**
+- RESEND_API_KEY í Supabase secrets (tilkynningar fara ekki út án hans; prófunarpóstur bíður í notify_queue).
+- Netfangalisti í stað boðskóða fyrir prufuhóp; slökkva á NATHANTEST.
+- Stigakerfi skv. pósti til Nathan: þröskuldur 1.000, Cheerios 50 stig; Excel-innlestur vörulista.
+- Tæma test_users og hreinsa prufustig fyrir prufuhóp.
+- Eyða reikningi + persónuverndarstefna.
+
+## Fundur með Óla, Ölgerðinni (6. nóv 2026) — niðurstöður
+- Ölgerðin til í samstarf. „Ölgerðarhagkerfið“: sitja uppi með bíómiða og máltíðir (t.d. KFC) úr vöruskiptum → kjörin verðlaun, nánast enginn kostnaður fyrir þá.
+- Hugmyndir að herferðum (GEYMT, ekki byrjað að smíða):
+  - Skyndiherferð: kippa af Malt og Appelsín fyrir jólin → bíómiði, fyrstu 1.000.
+  - Stimpilkort: 10 kvittanir með Ölgerðarvörum → KFC-máltíð (tillaga: 1 stimpill á dag).
+  - Sama vél: kóðabanki + skilyrði + hámark + teljari; stig áfram fyrir aðra. Áætlun 4–6 dagar.
+  - Sameiginlegur stigagjaldmiðill (Fetch-leið) lagður til hliðar — kallar á uppgjör milli aðila.
+- Viðskiptamódel: heildsalar vilja EKKI eiga hlut, vilja vera með „úr ákveðinni fjarlægð“. Óli lagði til greiðslusamninga: auglýsingaborðar, kostaðar vörur og herferðir, samningar til nokkurra mánaða í senn.
+- Eignarhlutur heildsala: GEYMT. Sverrir telur þá ekki vilja það — þeir færu óbeint í samkeppni við kúnna sína (smásalana). Gæti komið seinna. Viðskiptaáætlun ekki uppfærð að sinni.
+- Óli: heildsalar greiða nú þegar fyrir framstillingar í búðum og í netverslunum → þekkt módel. Staðsetja kostaðar vörur/borða sem „framstillingu á innkaupalistanum“ og verðleggja í sama takti (tímabil, pláss).
+- Óli kallaði markaðsstjóra Ölgerðarinnar inn á fundinn; Sverrir fór stuttlega yfir verkefnið með honum líka. Eftirfylgni á að fara til beggja.
+- NIÐURSTAÐA: Ölgerðin vill fá tillögur að pilot fyrir prufuhóp. Þau leggja til bíómiða og máltíðir sem verðlaun. → Næsta skref: skrifa tillögu til Óla + markaðsstjóra.
+- [ ] SVIKAKVITTANIR (á lista): biðstaða „í yfirferð“ fyrir grunsamlegar kvittanir í stað sjálfvirkrar læsingar; flögg (summa/VSK, sama mynd/kvittananúmer milli notenda, mynd af skjá/breytt, nýr aðgangur sem sækir strax, óvenju tíðar skannanir, kvittun nær eingöngu herferðarvara); lokun aðgangs aðeins eftir staðfest svik. Þarf fyrir herferðir með bíómiðum/máltíðum.
+- [ ] Innlausn verðlauna (kóðabanki): fer eftir formi miða frá Ölgerðinni — stafrænir kóðar (best), QR af pappírsgjafabréfum, eða sótt í móttöku.
+- [ ] Póstur til Óla + markaðsstjóra Ölgerðarinnar (tillaga að prufu + spurningar um form miða/innlausn). Sverrir vill taka hann saman „á eftir“.
+- Hugmynd (Sverrir): veitingastaðir með lausa afkastagetu (t.d. rólegt í hádeginu) sem verðlaunaaðilar, paraðir við vörumerki. Dæmi: 10 Nathan-vörur eða 1.000 stig → 2 fyrir 1 í hádeginu. Krefst Gríptu-útgefinna QR-kóða + einfaldrar staðfestingarsíðu fyrir starfsfólk (litlir staðir hafa ekki kóðakerfi).
+- Nathan & Olsen á Emmessís → ís/frystivara getur fylgt Nathan sem viðbótarflokkur (uppfært í sölu- og tekjuáætlun v2, 8. nóv).
+- Eignatengsl (Sverrir, 8. nóv): Bera á Ölgerðina, Danól, Gæðabakstur og Kjarnavörur. → Samstæðusamningur við Beru mögulegur í 3–4 flokkum (drykkir, neytendavörur/Danól, brauð/Gæðabakstur, bakstursvörur/Kjarnavörur). Árekstrar: Danól vs Nathan í neytendavörum; Gæðabakstur vs Myllan í brauði. Uppfært í áætlun v2 (nýr flokkur: bakstursvörur/hnetur).
+
+## Ákvörðun: app fyrir iOS og Android (8. nóv 2026)
+- Ástæða: trúverðugleiki gagnvart samstarfsaðilum („appið kemur í verslanir í janúar“), push-tilkynningar fyrir herferðir, skjalaskanni, fyrsta upplifun nýrra notenda.
+- Leið: Capacitor utan um núverandi vefapp + ML Kit / VisionKit skjalaskanni + push. Nafn: Tossalisti (Gríptu sem þáttur) — staðfesta.
+- Áætlun: vika 46: Sverrir sækir um D-U-N-S, Apple Developer (fyrirtæki), Google Play. Lok nóv: Capacitor-pökkun + TestFlight/innri prófun sem samstarfsaðilar geta sett upp (sýnieintak). Des: lokuð prófun með prufuhópi (12 prófarar/14 dagar hjá Google). Jan 2027: í App Store og Google Play.
+- Forgangur í nóv: herferðavél + svikavörn fyrst (þarf fyrir Ölgerðarprufu), pökkun samhliða. Apple-kröfur sem þarf hvort sem er: eyða reikningi, persónuverndarstefna.
+
+## Prufuhópur eftir netfangi (8. nóv 2026)
+- `pilot_emails` (admin-RLS) + `pilot_emails_add(text,note)` (margar í einu, sannar snið) + `pilot_emails_overview()` (skráð? kvittanir, stig, síðast virk). `is_pilot_member` tekur netfangalistann með; `my_pilot` skilar note sem label.
+- Netfang má bæta við áður en notandi skráir sig — gengur sjálfkrafa í hópinn við skráningu.
+- NATHANTEST gerður óvirkur; Eva og stjórinn settir á listann. Boðskóðar áfram til (faldir undir „details“) fyrir stærri hóp síðar.
+- RewardsAdmin: „Prufuhópur eftir netfangi“ með textareit, merkingu, stöðulista og fjarlægja.

@@ -35,6 +35,19 @@ export default function RewardsAdmin({ onClose }) {
   const [invites, setInvites] = useState([])
   const [ni, setNi] = useState({ code: '', label: '', max_uses: '' })
   const loadInvites = () => store.pilotOverview().then(setInvites).catch(() => setInvites([]))
+  const [pilotEmails, setPilotEmails] = useState([])
+  const [pe, setPe] = useState({ text: '', note: '' })
+  const [peMsg, setPeMsg] = useState('')
+  const loadPilotEmails = () => store.pilotEmails().then(setPilotEmails).catch(() => setPilotEmails([]))
+  const addPilotEmails = async () => {
+    try {
+      const r = await store.addPilotEmails(pe.text, pe.note)
+      setPeMsg((r.added ? `${r.added} netf${r.added === 1 ? 'ang bætt' : 'öng bætt'} við.` : '') + (r.invalid && r.invalid.length ? ` Ógilt: ${r.invalid.join(', ')}` : ''))
+      setPe({ text: '', note: pe.note }); loadPilotEmails()
+    } catch (e) { setPeMsg(e.message || 'Villa') }
+  }
+  const removePilotEmail = async (email) => { if (!window.confirm(`Taka ${email} úr prufuhópnum? Notandinn hættir að safna stigum.`)) return; await store.removePilotEmail(email); loadPilotEmails() }
+  const sinceShort = (d) => { if (!d) return 'aldrei'; const h = (Date.now() - new Date(d).getTime()) / 36e5; return h < 1 ? 'rétt í þessu' : h < 24 ? `fyrir ${Math.round(h)} klst` : `fyrir ${Math.round(h / 24)} d.` }
   const addInvite = async () => {
     if (!ni.code.trim()) return
     try { await store.addPilotInvite(ni.code, ni.label, ni.max_uses); setNi({ code: '', label: '', max_uses: '' }); loadInvites() }
@@ -55,7 +68,7 @@ export default function RewardsAdmin({ onClose }) {
   useBackClose(true, onClose)
 
   const load = () => store.getRewardData().then(setData).catch(() => setData({ brands: [], products: [], offers: [] }))
-  useEffect(() => { load(); loadInvites(); loadRed(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setTestUsers(Array.isArray(s.test_users) ? s.test_users : []); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
+  useEffect(() => { load(); loadInvites(); loadPilotEmails(); loadRed(); store.getAppSettings().then(s => { setEnabled(s.rewards_enabled === true); setPilotOnly(s.pilot_only !== false); setTestUsers(Array.isArray(s.test_users) ? s.test_users : []); setPts({ receipt_points: Number(s.receipt_points ?? 20), trial_bonus: Number(s.trial_bonus ?? 100) }) }).catch(() => {}) }, [])
   const savePts = async (key, v) => { const n = Math.max(0, Number(v) || 0); setPts(p => ({ ...p, [key]: n })); try { await store.setAppSetting(key, n) } catch {} }
   // Leitarorð: fylgir fyrsta orði vöruheitis; sækir kvittanalínur sem passa.
   useEffect(() => { setRcptQ((np.name || '').trim().split(/\s+/)[0] || '') }, [np.name])
@@ -170,6 +183,30 @@ export default function RewardsAdmin({ onClose }) {
           </div>
           <button className={'adm-ads-switch' + (pilotOnly ? ' on' : '')} onClick={togglePilotOnly} aria-label="Kveikja/slökkva" />
         </div>
+        <div className="pe-box">
+          <b>Prufuhópur eftir netfangi</b>
+          <small>Límdu netföng (eitt í línu eða aðskilin með kommu). Fólk sem er ekki skráð enn fer sjálfkrafa inn þegar það stofnar aðgang með þessu netfangi.</small>
+          <textarea className="dialog-input pe-ta" rows={3} placeholder={'nafn@dæmi.is\nannar@dæmi.is'} value={pe.text} onChange={e => setPe({ ...pe, text: e.target.value })} />
+          <div className="pv-add">
+            <input className="dialog-input" placeholder="Merking — t.d. Nathan, Ölgerðin, Vinir" value={pe.note} onChange={e => setPe({ ...pe, note: e.target.value })} />
+            <button className="primary-btn" onClick={addPilotEmails} disabled={!pe.text.trim()}>Bæta við</button>
+          </div>
+          {peMsg && <div className="muted-p pe-msg">{peMsg}</div>}
+          <div className="pe-list">
+            {pilotEmails.map(p => (
+              <div className={'pe-row' + (p.registered ? '' : ' pe-unreg')} key={p.email}>
+                <div className="pe-main"><b>{p.email}</b>{p.note && <small> · {p.note}</small>}</div>
+                <div className="pe-stat">{p.registered
+                  ? <>{p.receipts} kvitt. · {Math.round(Number(p.points) || 0)} stig · virk {sinceShort(p.last_activity)}</>
+                  : <span className="pe-wait">Ekki búin(n) að skrá sig</span>}</div>
+                <button className="receipt-del" onClick={() => removePilotEmail(p.email)} aria-label="Fjarlægja"><IconX size={16} stroke={1.75} /></button>
+              </div>
+            ))}
+            {pilotEmails.length === 0 && <div className="muted-p">Enginn á listanum enn.</div>}
+          </div>
+          <small className="muted-p">{pilotEmails.length} á lista · {pilotEmails.filter(p => p.registered).length} skráð · {pilotEmails.filter(p => p.registered && p.receipts > 0).length} hafa skannað</small>
+        </div>
+        <details className="pe-codes"><summary>Boðskóðar (eldri leið, hægt að nota fyrir stærri hóp síðar)</summary>
         {invites.map(i => (
           <div className="pv-item" key={i.code}>
             <div><span className="pv-code">{i.code}</span>{i.label && <small>{i.label}</small>}</div>
@@ -183,7 +220,8 @@ export default function RewardsAdmin({ onClose }) {
           <input className="dialog-input" placeholder="Hámark" inputMode="numeric" value={ni.max_uses} onChange={e => setNi({ ...ni, max_uses: e.target.value })} />
           <button className="primary-btn" onClick={addInvite} disabled={!ni.code.trim()}>Stofna</button>
         </div>
-        <p className="muted-p" style={{ marginTop: 8 }}>Sami kóði fyrir allan hópinn er einfaldast (t.d. NATHAN26 með hámarki 100). Notandi slær hann inn einu sinni í Gríptu stig-skjánum.</p>
+        <p className="muted-p" style={{ marginTop: 8 }}>Kóði hentar þegar ekki er hægt að safna netföngum fyrirfram (t.d. kóði á pakkningu). Hann getur borist áfram — settu hámark.</p>
+        </details>
 
         <div className="adm-head">Grunnstig</div>
         <p className="muted-p">Stig sem allir fá, óháð vörum — fólk er ekki þvingað til að kaupa neitt til að safna. Vörustig heildsala bætast ofan á.</p>

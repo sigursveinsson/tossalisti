@@ -1618,3 +1618,15 @@ button { font-family: inherit; cursor: pointer; }
 .gt-h { font-size: 16px; font-weight: 800; color: var(--navy, #16305c); margin: 4px 0 12px; }
 button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .go-add.go-added { background: #e8f5ec; color: #1f7a3d; cursor: default; }
+
+/* Prufuhópur eftir netfangi (RewardsAdmin) */
+.pe-box { background: var(--surface-2, #f4f5f7); border-radius: 12px; padding: 12px 14px; margin: 10px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.pe-box > small { color: var(--text-2, #555); font-size: 12.5px; line-height: 1.4; }
+.pe-ta { resize: vertical; font-family: inherit; min-height: 64px; }
+.pe-msg { margin: 0; }
+.pe-list { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.pe-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; background: #fff; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.pe-row small { color: var(--text-3, #777); }
+.pe-stat { color: var(--text-2, #555); font-size: 12px; white-space: nowrap; }
+.pe-unreg .pe-wait { color: #b26a00; font-weight: 600; }
+.pe-codes { margin: 6px 0 4px; } .pe-codes summary { cursor: pointer; font-size: 13px; color: var(--text-2, #555); }

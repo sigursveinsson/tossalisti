@@ -491,7 +491,7 @@ const local = {
   async brandCampaigns() { return [] },
   async brandProducts() { return [] }, async brandLiveCounts() { return null }, async reviewRewardProduct() {},
   async pointsAvailable() { return 0 }, async requestRedemption() { return { ok: false, reason: 'local' } }, async myRedemptions() { return [] }, async adminRedemptions() { return [] }, async adminUserReceipts() { return [] }, async reviewRedemption() {}, async markDelivered() {}, async brandRedemptions() { return [] },
-  async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {},
+  async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {}, async pilotEmails() { return [] }, async addPilotEmails() { return { added: 0, invalid: [] } }, async removePilotEmail() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {}, async retryPendingAwards() { return 0 },
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
@@ -1190,6 +1190,10 @@ const cloud = {
   async myPilot() { const { data, error } = await supabase.rpc('my_pilot'); return error ? { member: false, pilot_only: true } : (data || { member: false, pilot_only: true }) },
   async joinPilot(code) { const { data, error } = await supabase.rpc('join_pilot', { p_code: code }); if (error) throw error; return data },
   async pilotOverview() { const { data, error } = await supabase.rpc('pilot_overview'); return error ? [] : (data || []) },
+  // Prufuhópur eftir netfangi (í stað boðskóða). Netfang má bæta við áður en notandi skráir sig.
+  async pilotEmails() { const { data, error } = await supabase.rpc('pilot_emails_overview'); return error ? [] : (data || []) },
+  async addPilotEmails(text, note) { const { data, error } = await supabase.rpc('pilot_emails_add', { p_emails: text, p_note: note || null }); if (error) throw error; return data },
+  async removePilotEmail(email) { const { error } = await supabase.from('pilot_emails').delete().eq('email', String(email).toLowerCase().trim()); if (error) throw error },
   async addPilotInvite(code, label, maxUses) {
     const { error } = await supabase.from('pilot_invites').insert({ code: (code || '').trim().toUpperCase(), label: (label || '').trim() || null, max_uses: maxUses ? Number(maxUses) : null })
     if (error) throw error
