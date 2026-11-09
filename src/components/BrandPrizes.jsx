@@ -35,7 +35,24 @@ function PrizeForm({ brandId, onDone, onCancel }) {
 }
 
 function CodeBox({ prize, onDone }) {
+  const [mode, setMode] = useState(prize.own_codes ? 'own' : 'paste')
+  const [count, setCount] = useState('100')
+  const [pin, setPin] = useState(''); const [hint, setHint] = useState(prize.redeem_hint || '')
   const [text, setText] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false)
+  const gen = async () => {
+    setBusy(true)
+    try {
+      const r = await store.generatePrizeCodes(prize.id, count)
+      let m = `${num(r.generated)} kóðar búnir til.`
+      if (pin) { const pr = await store.setPrizePin(prize.id, pin, hint); m += pr.ok ? ' PIN vistað.' : ' PIN þarf að vera 4–6 tölustafir.' }
+      else if (hint !== (prize.redeem_hint || '')) { await store.updatePrize(prize.id, { redeem_hint: hint || null }) }
+      setMsg(m); onDone()
+    } catch (e) { setMsg('Villa.') } finally { setBusy(false) }
+  }
+  const savePin = async () => {
+    setBusy(true)
+    try { const pr = await store.setPrizePin(prize.id, pin, hint); setMsg(pr.ok ? 'PIN vistað.' : 'PIN þarf að vera 4–6 tölustafir.'); setPin(''); onDone() } catch { setMsg('Villa.') } finally { setBusy(false) }
+  }
   const add = async () => {
     setBusy(true)
     try {
@@ -46,11 +63,34 @@ function CodeBox({ prize, onDone }) {
   const n = text.split(/[\s,;]+/).filter(Boolean).length
   return (
     <div className="bp-codes">
-      <textarea className="dialog-input" rows={3} value={text} onChange={e => setText(e.target.value)} placeholder={'Límdu kóða hér — einn í línu eða aðskilda með kommu\nABC123\nDEF456'} />
-      <div className="bc-actions">
-        <small className="bd-muted">{n ? `${num(n)} kóðar tilbúnir` : 'Kóðar úr Excel eða textaskrá'}</small>
-        <button className="primary-btn" onClick={add} disabled={!n || busy}>{busy ? 'Les inn…' : 'Bæta kóðum við'}</button>
+      <div className="seg-mini">
+        <button className={mode === 'paste' ? 'on' : ''} onClick={() => setMode('paste')}>Líma inn kóða frá öðrum</button>
+        <button className={mode === 'own' ? 'on' : ''} onClick={() => setMode('own')}>Gríptu býr til kóða</button>
       </div>
+      {mode === 'paste' ? (
+        <>
+          <small className="bd-muted">Fyrir miða með kóða frá kvikmyndahúsi, KFC o.s.frv. Notandinn fær kóðann og notar hjá þeim.</small>
+          <textarea className="dialog-input" rows={3} value={text} onChange={e => setText(e.target.value)} placeholder={'Límdu kóða hér — einn í línu eða aðskilda með kommu\nABC123\nDEF456'} />
+          <div className="bc-actions">
+            <small className="bd-muted">{n ? `${num(n)} kóðar tilbúnir` : 'Kóðar úr Excel eða textaskrá'}</small>
+            <button className="primary-btn" onClick={add} disabled={!n || busy}>{busy ? 'Les inn…' : 'Bæta kóðum við'}</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <small className="bd-muted">Fyrir pappírsmiða og staði án kóðakerfis. Notandinn fær QR-kóða í appinu; starfsmaður skannar hann með símanum, slær inn PIN staðarins og merkir notaðan. Hver kóði virkar einu sinni.</small>
+          <div className="bc-row">
+            <label>Fjöldi kóða <input className="dialog-input" inputMode="numeric" value={count} onChange={e => setCount(e.target.value.replace(/\D/g, ''))} /></label>
+            <label>PIN staðarins (4–6 tölustafir) <input className="dialog-input" inputMode="numeric" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder={prize.has_pin ? '•••• (sett)' : 't.d. 4821'} /></label>
+          </div>
+          <input className="dialog-input" value={hint} onChange={e => setHint(e.target.value)} placeholder="Leiðbeining til notanda — t.d. „Sýndu kóðann í afgreiðslu KFC Hafnarfirði“" />
+          <div className="bc-actions">
+            {prize.has_pin || pin ? <button className="ghost-btn" onClick={savePin} disabled={busy || pin.length < 4}>Vista PIN</button> : <span />}
+            <button className="primary-btn" onClick={gen} disabled={busy || !Number(count)}>{busy ? 'Bý til…' : `Búa til ${num(count)} kóða`}</button>
+          </div>
+          <small className="bd-muted">Gefðu starfsfólkinu PIN-ið. Án PIN getur hver sem er merkt kóða notaðan — líka notandinn sjálfur fyrir slysni.</small>
+        </>
+      )}
       {msg && <div className="bd-muted">{msg}</div>}
     </div>
   )
@@ -72,6 +112,7 @@ export default function BrandPrizes({ brandId, canEdit }) {
           <div className="bc-head">
             <div className="bc-title">{p.title}<small>{KIND[p.kind] || p.kind}{p.expires_at ? ` · rennur út ${p.expires_at.split('-').reverse().join('.')}` : ''}{p.description ? ` · ${p.description}` : ''}</small></div>
             <span className={'bc-status ' + (p.codes_free > 0 ? 'live' : 'cap')}>{p.codes_free > 0 ? `${num(p.codes_free)} eftir` : 'Engir kóðar eftir'}</span>
+            {p.own_codes && <span className={'bc-status ' + (p.has_pin ? 'live' : 'off')}>{p.has_pin ? 'QR + PIN' : 'QR án PIN'}</span>}
           </div>
           <div className="bc-stats">
             <span><IconTicket size={14} stroke={2} /> <b>{num(p.codes_total)}</b> kóðar alls</span>

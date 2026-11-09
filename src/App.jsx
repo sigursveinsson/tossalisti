@@ -14,6 +14,7 @@ import RewardsView from './components/RewardsView.jsx'
 import ReceiptsView from './components/ReceiptsView.jsx'
 import BrandDashboard from './components/BrandDashboard.jsx'
 import GriptuLanding from './components/GriptuLanding.jsx'
+import CodeCheck from './components/CodeCheck.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
@@ -693,6 +694,9 @@ export default function App() {
 
   if (!authReady) return null
   // griptu.is — framdyr vörumerkja. Sama kóði, annað lén (eða ?griptu til að keyra local).
+  // Staðfesting verðlaunakóða: /k/<kóði> — opin öllum, án innskráningar (starfsmaður skannar QR úr síma notanda)
+  const codeMatch = typeof window !== 'undefined' && /^\/k\/([A-Za-z0-9-]{4,40})\/?$/.exec(window.location.pathname)
+  if (codeMatch) return <CodeCheck code={decodeURIComponent(codeMatch[1]).toUpperCase()} />
   if (isGriptu) {
     const adminHere = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
     if (isCloud && session && brandUser === undefined) return null

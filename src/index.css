@@ -1676,3 +1676,27 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .ra-item-h .ra-amt { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #a25d00; }
 .ra-status { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
 .ra-item-h:has(.ra-status) { grid-template-columns: 1.3fr 1fr auto auto; }
+
+/* Staðfestingarsíða verðlaunakóða (/k/<kóði>) */
+.cc { min-height: 100vh; display: grid; place-items: center; background: #15315e; padding: 20px; }
+.cc-card { background: #fff; border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 380px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cc-brand { font-size: 12px; letter-spacing: .1em; font-weight: 800; color: #f5a623; }
+.cc-big { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; color: #fff; margin: 6px 0; }
+.cc-big.ok { background: #1f7a3d; } .cc-big.bad { background: #b42318; } .cc-big.used { background: #8a8f98; }
+.cc h2 { margin: 0; font-size: 22px; color: #15315e; }
+.cc-prize { display: flex; align-items: center; gap: 8px; font-size: 16px; } .cc-prize span { color: #777; font-size: 13px; }
+.cc-code { font-family: ui-monospace, Menlo, monospace; font-size: 18px; letter-spacing: 2px; background: #f4f5f7; border-radius: 10px; padding: 8px 14px; margin: 4px 0; }
+.cc-note { font-size: 13.5px; color: #555; margin: 0; line-height: 1.45; }
+.cc-redeem { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.cc-redeem label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; justify-content: center; }
+.cc-redeem label input { width: 110px; text-align: center; font-size: 20px; letter-spacing: 6px; }
+.cc-redeem small { color: #888; font-size: 12px; line-height: 1.4; }
+.cc-btn { width: 100%; font-size: 16px; padding: 14px; }
+.cc-err { color: #b42318; font-weight: 600; font-size: 14px; }
+.cc-done { color: #1f7a3d; font-weight: 700; display: inline-flex; gap: 6px; align-items: center; }
+.cc-foot { margin-top: 10px; font-size: 12px; color: #999; text-decoration: none; }
+
+.ga-qrbox { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 10px; }
+.ga-qr { background: #fff; padding: 8px; border-radius: 12px; line-height: 0; } .ga-qr svg { display: block; width: 200px; height: 200px; }
+.ga-qrbox small { font-size: 12px; color: var(--text-2, #555); text-align: center; line-height: 1.4; }
+.ga-used { opacity: .6; } .ga-usednote { color: #1f7a3d; font-weight: 600; display: inline-flex; gap: 5px; align-items: center; }

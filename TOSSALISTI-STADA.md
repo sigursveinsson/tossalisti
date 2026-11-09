@@ -565,3 +565,12 @@ git push
 - Framendi: BrandCampaigns (gerðarval, verðlaun, hámark, opin öllum), BrandPrizes (stofna verðlaun, líma kóða), GriptuTab (herferðir m. teljara/stimpilkorti, vinningar m. kóða + afrita), AwardsAdmin í Verðlaunakerfi, toast við vinning. notify-admin v4: award_review (admin), award_granted (notandi).
 - SQL-prófað: kippa → bíómiði (BIO-1), 2. kvittun → stimpilkort fullt → BIO-2, per_user_limit stöðvar endurtekningu, teljari 999 eftir.
 - EKKI prófað í vafra/síma. Svikaflögg umfram summu/flags (nýr aðgangur, tíðni, mynd af skjá) eru enn á lista (#52).
+- 9. nóv: Stuttur póstur sendur til Óla + markaðsstjóra Ölgerðarinnar (vörur, vinningsskilyrði, form miða, tengiliður). Bíðum svars.
+
+## Eigin kóðar + QR-staðfesting (9. nóv 2026)
+- `brand_generate_codes(prize, n)`: Gríptu býr til einkvæma kóða GR-XXXX-XXXX (án 0/O/1/I). `brand_set_redeem_pin` (bcrypt). `reward_prizes.own_codes/redeem_pin/redeem_hint`.
+- Opið (anon): `lookup_code(code)` → verðlaun, vörumerki, gildur/notaður/útrunninn (engin persónugögn); `redeem_code(code, pin)` → merkir notaðan, 5 rangar PIN-tilraunir/klst á kóða. `mark_my_code_used(award)` fyrir notanda.
+- Staðfestingarsíða: `tossalisti.is/k/<kóði>` (CodeCheck.jsx, engin innskráning, PIN geymt í sessionStorage síma starfsmanns). robots: Disallow /k/.
+- Appið: vinningur með eigin kóða sýnir QR (zxing BrowserQRCodeSvgWriter) + leiðbeiningu; notaður kóði grár.
+- BrandPrizes: tveir hamir — „Líma inn kóða frá öðrum“ / „Gríptu býr til kóða“ (fjöldi, PIN, leiðbeining). Chip: QR + PIN / QR án PIN.
+- SQL-prófað: 5 kóðar → PIN 1234 → rangt PIN hafnað → rétt PIN merkir notaðan → aftur = already_used.

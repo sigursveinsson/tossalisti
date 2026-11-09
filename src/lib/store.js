@@ -493,7 +493,7 @@ const local = {
   async pointsAvailable() { return 0 }, async requestRedemption() { return { ok: false, reason: 'local' } }, async myRedemptions() { return [] }, async adminRedemptions() { return [] }, async adminUserReceipts() { return [] }, async reviewRedemption() {}, async markDelivered() {}, async brandRedemptions() { return [] },
   async myPilot() { return { member: true, pilot_only: false } }, async joinPilot() { return { ok: false, reason: 'local' } }, async pilotOverview() { return [] }, async addPilotInvite() {}, async setPilotInviteActive() {}, async pilotEmails() { return [] }, async addPilotEmails() { return { added: 0, invalid: [] } }, async removePilotEmail() {},
   async addCampaign() { throw new Error('local') }, async updateCampaign() {}, async deleteCampaign() {}, async retryPendingAwards() { return 0 },
-  async brandPrizes() { return [] }, async addPrize() { throw new Error('local') }, async updatePrize() {}, async addPrizeCodes() { return { added: 0 } }, async myCampaigns() { return [] }, async myAwards() { return [] }, async adminAwards() { return [] }, async reviewAward() {},
+  async brandPrizes() { return [] }, async addPrize() { throw new Error('local') }, async updatePrize() {}, async addPrizeCodes() { return { added: 0 } }, async generatePrizeCodes() { return { generated: 0 } }, async setPrizePin() { return { ok: false } }, async myCampaigns() { return [] }, async myAwards() { return [] }, async adminAwards() { return [] }, async reviewAward() {},
   async getBrandMembers() { return [] }, async addBrandMember() {}, async removeBrandMember() {},
   async getReceiptTerms() { return [] },
   async assignItem(listId, itemId, person) {
@@ -1187,6 +1187,8 @@ const cloud = {
     if (error) throw error; return data
   },
   async updatePrize(id, patch) { const { error } = await supabase.from('reward_prizes').update(patch).eq('id', id); if (error) throw error },
+  async generatePrizeCodes(prizeId, count) { const { data, error } = await supabase.rpc('brand_generate_codes', { p_prize: prizeId, p_count: Number(count) }); if (error) throw error; return data },
+  async setPrizePin(prizeId, pin, hint) { const { data, error } = await supabase.rpc('brand_set_redeem_pin', { p_prize: prizeId, p_pin: pin, p_hint: hint || null }); if (error) throw error; return data },
   async addPrizeCodes(prizeId, text) { const { data, error } = await supabase.rpc('brand_add_codes', { p_prize: prizeId, p_codes: text }); if (error) throw error; return data },
   // Notandi: herferðir sem hann getur tekið þátt í og vinningar hans (kóðar)
   async myCampaigns() { const { data, error } = await supabase.rpc('my_campaigns'); return error ? [] : (data || []) },

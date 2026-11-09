@@ -1,7 +1,25 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import GriptuOffers from './GriptuOffers.jsx'
 import { store } from '../lib/store.js'
 import { IconGift, IconReceipt, IconChevronRight, IconTicket, IconCopy, IconCheck, IconClock } from '@tabler/icons-react'
+
+const CODE_URL = 'https://tossalisti.is/k/'
+
+// QR-kóði fyrir eigin kóða Gríptu: starfsmaður skannar með símanum sínum og lendir á staðfestingarsíðunni.
+// Teiknað með @zxing/library (sama safn og strikamerkjaskanninn) — engin ný ósjálfstæði.
+function QR({ text, size = 200 }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    let alive = true
+    import('@zxing/library').then(({ BrowserQRCodeSvgWriter }) => {
+      if (!alive || !ref.current) return
+      ref.current.innerHTML = ''
+      try { ref.current.appendChild(new BrowserQRCodeSvgWriter().write(text, size, size)) } catch { ref.current.textContent = text }
+    }).catch(() => { if (ref.current) ref.current.textContent = text })
+    return () => { alive = false }
+  }, [text, size])
+  return <div className="ga-qr" ref={ref} aria-label={text} />
+}
 
 // Gríptu-flipinn á innkaupalistanum — aðeins sýnilegur notendum í tryggðarkerfinu (boðshópur).
 // Efst: stigastaða + skanna kvittun. Svo herferðir (skyndiherferðir með teljara, stimpilkort),
@@ -35,12 +53,22 @@ function Campaign({ c }) {
 function Award({ a }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => { try { await navigator.clipboard.writeText(a.code); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch {} }
+  const used = !!a.used_at
   return (
-    <div className={'ga ga-' + a.status}>
+    <div className={'ga ga-' + a.status + (used ? ' ga-used' : '')}>
       <div className="ga-head"><IconTicket size={16} stroke={2} /><b>{a.prize}</b><small>{a.brand} · {a.campaign}</small></div>
-      {a.status === 'awarded' && a.code && (
-        <div className="ga-code"><code>{a.code}</code><button onClick={copy} aria-label="Afrita">{copied ? <IconCheck size={16} stroke={2} /> : <IconCopy size={16} stroke={2} />}</button></div>
+      {a.status === 'awarded' && a.code && !used && (
+        <div className="ga-code"><code>{a.code}</code>
+          <button onClick={copy} aria-label="Afrita">{copied ? <IconCheck size={16} stroke={2} /> : <IconCopy size={16} stroke={2} />}</button>
+        </div>
       )}
+      {a.status === 'awarded' && a.code && !used && a.own_codes && (
+        <div className="ga-qrbox">
+          <QR text={CODE_URL + a.code} />
+          <small>{a.hint || 'Sýndu þennan kóða þegar þú sækir verðlaunin. Starfsmaðurinn skannar hann.'}</small>
+        </div>
+      )}
+      {used && <div className="ga-note ga-usednote"><IconCheck size={14} stroke={2.5} /> Notað {new Date(a.used_at).toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })}</div>}
       {a.status === 'awarded' && !a.code && <div className="ga-note">Verðlaunin eru skráð á þig. {a.description || 'Þú færð upplýsingar um afhendingu.'}</div>}
       {a.status === 'awarded' && a.code && a.description && <div className="ga-note">{a.description}</div>}
       {a.status === 'awarded' && a.expires_at && <div className="ga-note">Gildir til {fmtD(a.expires_at)}</div>}

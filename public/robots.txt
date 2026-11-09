@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /k/
 
 Sitemap: https://tossalisti.is/sitemap.xml
