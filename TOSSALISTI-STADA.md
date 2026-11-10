@@ -668,3 +668,4 @@ git push
 - Framendi: hak (óhakað) við nýskráningu → user_metadata.offers_opt_in → vistað í stillingum við fyrstu innskráningu; rofi „Tilboð og herferðir í tölvupósti“ neðst í Áminningum (óháð push); `/afskra?t=` síða (Unsubscribe.jsx). robots: Disallow /afskra. Persónuverndarstefna uppfærð.
 - SQL-prófað (rollback): samþykki stimplað, prufuherferð birtist í outbox, afskráning tekur notanda út, ógildur tóki = false.
 - Eftir: DMARC á tossalisti.is; íhuga undirlén send.tossalisti.is fyrir markaðspóst (OFFERS_FROM env); Resend frítt þrep 100/dag, 3.000/mán. Enginn skráður enn — núverandi notendur þurfa að kveikja sjálfir (ekki má skrá þá sjálfkrafa).
+- **Opin ákvörðun (10. nóv): hvaða félag á appið / er ábyrgðaraðili.** Wonder ehf. (í eigu Sverris) kemur til greina — EKKI ákveðið. Þarf fyrir D-U-N-S → Apple/Google fyrirtækjaaðgang, persónuverndarstefnu (nú á nafni Sverris), fót á tossalisti.is og samninga við Nathan/Ölgerðina. Ekkert uppfært fyrr en ákveðið.
