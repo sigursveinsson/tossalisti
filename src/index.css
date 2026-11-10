@@ -1763,3 +1763,5 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .signin-optin { display: flex; align-items: flex-start; gap: 9px; text-align: left; font-size: 13px; color: var(--muted); line-height: 1.4; margin: 4px 0 10px; cursor: pointer; }
 .signin-optin input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: var(--navy); }
 .ns-offers { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.landing-legal { text-align: center; font-size: 11px; color: var(--faint); margin: 4px 0 18px; }
+.landing-legal a { color: var(--faint); }

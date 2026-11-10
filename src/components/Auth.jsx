@@ -155,6 +155,7 @@ export default function Auth() {
       </div>
 
       <p className="landing-foot">Ókeypis · íslenskt · virkar í síma og vafra</p>
+      <p className="landing-legal">Tossalisti er rekinn af Wonder ehf., kt. 471119-1560 · <a href="/personuvernd.html" target="_blank" rel="noopener">Persónuvernd</a></p>
     </div>
   )
 }

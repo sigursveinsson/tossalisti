@@ -103,6 +103,7 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
             </div>
           )}
           <div className="sheet-legal">
+            <span>Wonder ehf.</span>
             <a href="/personuvernd.html" target="_blank" rel="noopener">Persónuvernd</a>
             {onDeleteAccount && <button className="linklike" onClick={onDeleteAccount}>Eyða reikningi</button>}
           </div>
