@@ -390,7 +390,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <div className="check" style={{ background: done ? 'var(--done)' : 'transparent', borderColor: done ? 'var(--done)' : undefined }} onClick={() => onToggle(it, done)}>{done ? <IconCheck size={15} stroke={3} /> : ''}</div>
         {(() => {
           if (!chore && !showImages) return null
-          const img = it.image_url || (!chore ? catalog[it.name] : null)
+          // Engin mynd á línunni → mynd Gríptu-vörunnar ef heitið passar við hana (t.d. „Cocoa Puffs“ slegið inn handvirkt)
+          const rpImg = !chore && !it.image_url ? (rewardFor(it.name) || {}).image_url : null
+          const img = it.image_url || (!chore ? catalog[it.name] : null) || rpImg
           if (img) {
             if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
             return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />

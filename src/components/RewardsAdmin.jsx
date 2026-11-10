@@ -304,6 +304,7 @@ export default function RewardsAdmin({ onClose }) {
                 onBlur={e => { const v = Number(e.target.value); if (e.target.value !== '' && Number.isFinite(v) && v !== Number(p.reward_value)) setField(p, { reward_value: v }); else e.target.value = p.reward_value }} />
               <span className="rw-unit">{p.reward_type === 'percent' ? '%' : 'stig'}</span>
               <label className="rw-active"><input type="checkbox" checked={p.active} onChange={e => setField(p, { active: e.target.checked })} /> virk</label>
+              <label className="rw-active" title="Gefur ekki stig ef kvittunin sýnir aðra þyngd eða rúmmál en skráð stærð. Sýni kvittunin enga stærð telst varan passa."><input type="checkbox" checked={!!p.size_strict} disabled={!p.size} onChange={e => setField(p, { size_strict: e.target.checked })} /> aðeins {p.size || 'skráð stærð'}</label>
             </div>
             <div className="rw-kwedit-row">
               <span className="rw-kwlbl">Passar við</span>

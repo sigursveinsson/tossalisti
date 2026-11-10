@@ -136,7 +136,7 @@ export default function BrandProducts({ brandId, canEdit, onChanged }) {
           <div key={p.id} className="bp-item">
             <div className="bp-img">{p.image_url ? <ZoomImg src={p.image_url} alt={p.name} caption={[p.name, p.size].filter(Boolean).join(" · ")} /> : <CatIcon name={p.name} dept={departmentFor(p.name)} size={36} />}</div>
             <div className="bp-body">
-              <div className="bp-name">{p.name}{p.size ? <small> · {p.size}</small> : null}</div>
+              <div className="bp-name">{p.name}{p.size ? <small> · {p.size}{p.size_strict ? ' (aðeins þessi stærð)' : ''}</small> : null}</div>
               <div className="bp-meta">{(p.match_keywords || []).map(k => <code key={k}>{k}</code>)} · {p.reward_type === 'percent' ? `${num(p.reward_value)}%` : `${num(p.reward_value)} stig`}</div>
               {p.status === 'rejected' && p.review_note && <div className="bp-reject">Athugasemd: {p.review_note}</div>}
             </div>

@@ -619,3 +619,11 @@ git push
 - Vörumyndir frá Sverri (af nathan.is o.fl.) í `public/vorur/` (webp/jpg, 22–69 KB): libero, isio4, crawfords-kremkex, hellmanns, pop-secret, hobnobs, sun-maid. `reward_products.image_url` vísar á `https://tossalisti.is/vorur/…` → myndirnar birtast EKKI fyrr en eftir deploy. Cheerios, Cocoa Puffs, Tunnock's enn með Open Food Facts-myndir.
 - Sun-Maid myndin er með arabískum texta (Mið-Austurlandapakkning) — skipta út fyrir íslenska/evrópska pakkamynd.
 - `ads_enabled` er true (kostaðar tillögur sýnilegar öllum notendum, ekki bara prufuhópi).
+
+## „Aðeins þessi stærð“ á Gríptu-vörum (10. nóv 2026) — DB lifandi, framendi þarf deploy
+- `reward_products.size_strict` (default false). `size_tokens(text)` les þyngd/rúmmál (g, gr, kg, ml, cl, dl, l, ltr, lítri; komma eða punktur) → grömm/ml. `size_ok(lína, stærð)`: satt ef varan hefur enga þyngd/rúmmál, EÐA línan sýnir enga sambærilega stærð, EÐA stærðin passar ±3%. Stykkjafjöldi ekki borinn saman.
+- `award_purchase` (báðar leiðir: AI-pörun `reward_product_id` og leitarorð) krefst nú `not size_strict or size_ok(it.name, size)`. SQL-prófað á 17 dæmum (CHEERIOS 570G ✓, 375 GR ✗, án stærðar ✓, 0,57 kg ✓, Honey Nut 400g ✗, ISIO4 500ML ✗, Pop Secret 540G vs 544 g ✓ …).
+- Kveikt á öllum 10 Nathan-vörum. RewardsAdmin: gátreitur „aðeins <stærð>“; BrandProducts sýnir „(aðeins þessi stærð)“.
+- TAKMARKANIR: (a) kvittun án stærðar gefur stig óháð raunstærð; (b) afbrigði í sömu stærð (t.d. annað bragð) greinast ekki — þarf útilokunarorð síðar; (c) `brand_dashboard` og „+stig“-merki á innkaupalista nota enn aðeins leitarorð, ekki stærð.
+- Herferðin „Nathan Prufa“ (Cheerios 300 stig, prufa frá okt) gerð óvirk → Cheerios sýnir nú 50 stig.
+- ListView: lína án myndar notar mynd Gríptu-vörunnar ef heitið passar (Cocoa Puffs).
