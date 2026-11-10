@@ -59,6 +59,7 @@ export default function Auth() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [offers, setOffers] = useState(false) // tilboðspóstur — aldrei sjálfgefið á
 
   const forgot = async () => {
     setError(''); setInfo('')
@@ -76,7 +77,7 @@ export default function Auth() {
     if (!email || !password) { setError('Sláðu inn netfang og lykilorð.'); return }
     setBusy(true)
     const { data, error } = mode === 'signup'
-      ? await supabase.auth.signUp({ email, password })
+      ? await supabase.auth.signUp({ email, password, options: { data: { offers_opt_in: !!offers } } })
       : await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
     if (error) { setError(ICELANDIC_ERROR(error.message)); return }
@@ -116,6 +117,12 @@ export default function Auth() {
           type="password"
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
         />}
+        {mode === 'signup' && (
+          <label className="signin-optin">
+            <input type="checkbox" checked={offers} onChange={e => setOffers(e.target.checked)} />
+            <span>Já, sendið mér tölvupóst þegar nýjar herferðir og tilboð byrja (í mesta lagi einu sinni í viku)</span>
+          </label>
+        )}
         <button onClick={submit} disabled={busy}>
           {busy ? '…' : (mode === 'signup' ? 'Stofna reikning' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
         </button>

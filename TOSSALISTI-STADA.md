@@ -653,3 +653,18 @@ git push
 - Fyrsta keyrsla: Gemini gaf heiti í Title Case → prompt lagaður, allt endurunnið frá grunni.
 - Bakfyllt: 1.501 línur → 1.422 með auðkenni, 79 ekki vörur (pokar o.fl.), 706 ólíkar vörur. Samræming þvert á verslanir virkar („Pepsi Max 4x2L“ Prís = „pepsi 4*2 lítrar max“ Bónus; Myllu ostaslaufur Prís = „my ostaslaufur 4“ Bónus). Gemini skilar Title Case → `label_case()` í `canon_save` lagar (fyrsta orð stórt, skammstafanir halda sér).
 - Prófað 10. nóv: helgaogbjarki fær 1 tillögu („Fk hundasnakk“, á 9 daga fresti, síðast fyrir 9 dögum). Sverrir, Eva, stjórinn: 0 (prufukvittanir án reglulegs mynsturs). Þekkt: „d.j mangó“ m/ og án kommu fengu ólík auðkenni.
+
+## Leitarorð Nathan-vara stillt eftir Neytandanum (10. nóv 2026) — DB lifandi
+- ~12 handvirkar uppflettingar á neytandinn.is (leit: /wa/SMAction/search?searchString=…), aðeins fyrir Gríptu-vörurnar. Ákvörðun: EKKI sjálfvirk/dagleg söfnun af Neytandanum (kerfisbundin taka úr gagnagrunni); uppflettingar aðeins fyrir vörur samstarfsaðila þegar þær koma inn.
+- Nýtt: `reward_products.exclude_keywords` + `kw_any()`; `award_purchase` hafnar línu sem inniheldur útilokunarorð (báðar pörunarleiðir). `size_tokens` les nú fjölpakkningar („6x91 gr“ = 546 g, „2x500 gr“ = 1000 g) og „líter“.
+- Breytingar: Cheerios útil. honey/granola; Pop Secret útil. butter/extra; Hellmann's stærð 600 ml (strimlar sýna ml, ekki g) + útil. lig/light/garlic/swe; Crawford's leitarorð „crawford vanill“ (súkkulaðiafbrigðið útilokað); Hobnobs útil. orig/orginial/gf; Libero leitarorð „libero up“ (comfort/touch/blautklútar útilokað, öll Up&Go-stærðir telja); Tunnock's útil. „bar“ (stök stykki á 95 kr gáfu áður 50 stig).
+- SQL-prófað á 30 raunverulegum strimilstextum — allt eins og til er ætlast.
+- Spurningar fyrir Hildi: (1) teljast Cheerios-tvennur (2x500 g, algengasta Bónus-línan, 111 athuganir) — nú NEI vegna stærðar; „cheerios tvenna“ án stærðar (Krónan/Prís) telst sem 1 eining; (2) Libero: öll Up&Go eða aðeins nr. 6; (3) Sun-Maid 1 kg sást hvergi á strimlum, aðeins 500 g — selt í búðum?
+- Ekki enn: exclude_keywords í RewardsAdmin-viðmóti; brand_dashboard notar enn bara leitarorð (ekki stærð/útilokun).
+
+## Póstlisti fyrir tilboð og herferðir (10. nóv 2026) — DB + edge lifandi, framendi þarf deploy
+- `notification_settings.offers_email` (default false), `offers_email_at` (stimplað með trigger = sönnun á samþykki), `unsub_token`. `offer_email_log` (user, herferð). RPC `unsubscribe_offers(token)` (anon), `offers_outbox`/`offers_mark_sent` (aðeins service_role).
+- Edge `send-offers` (verify_jwt=false; sendir aðeins ósend pör, engin mögnun) + pg_cron `send-offers-daily` kl. 11:00. Reglur: herferð virk, í gildi, byrjaði á síðustu 14 dögum; notandi skráður, netfang staðfest, getur tekið þátt (prufuhópur eða open_to_all); max 1 tilboðspóstur á 6 daga; fleiri herferðir sameinaðar í einn póst. List-Unsubscribe haus. Hnappur „Opna Gríptu“ → /?opna=griptu.
+- Framendi: hak (óhakað) við nýskráningu → user_metadata.offers_opt_in → vistað í stillingum við fyrstu innskráningu; rofi „Tilboð og herferðir í tölvupósti“ neðst í Áminningum (óháð push); `/afskra?t=` síða (Unsubscribe.jsx). robots: Disallow /afskra. Persónuverndarstefna uppfærð.
+- SQL-prófað (rollback): samþykki stimplað, prufuherferð birtist í outbox, afskráning tekur notanda út, ógildur tóki = false.
+- Eftir: DMARC á tossalisti.is; íhuga undirlén send.tossalisti.is fyrir markaðspóst (OFFERS_FROM env); Resend frítt þrep 100/dag, 3.000/mán. Enginn skráður enn — núverandi notendur þurfa að kveikja sjálfir (ekki má skrá þá sjálfkrafa).

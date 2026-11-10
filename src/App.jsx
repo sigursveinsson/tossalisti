@@ -15,6 +15,7 @@ import ReceiptsView from './components/ReceiptsView.jsx'
 import BrandDashboard from './components/BrandDashboard.jsx'
 import GriptuLanding from './components/GriptuLanding.jsx'
 import CodeCheck from './components/CodeCheck.jsx'
+import Unsubscribe from './components/Unsubscribe.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import DeleteAccount from './components/DeleteAccount.jsx'
@@ -504,6 +505,22 @@ export default function App() {
   const [griptuRefresh, setGriptuRefresh] = useState(0)
   const [showGriptuHome, setShowGriptuHome] = useState(false)
   const [griptuListId, setGriptuListId] = useState(null)
+  // Úr tilboðspósti: /?opna=griptu opnar Gríptu af heimaskjá (aðeins ef notandinn er í tryggðarkerfinu)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('opna') !== 'griptu') return
+    if (!pilot) return
+    try { window.history.replaceState(null, '', '/') } catch {}
+    if (rewardsEnabled && pilot.member) setShowGriptuHome(true)
+  }, [pilot, rewardsEnabled])
+  // Tilboðspóstur valinn við nýskráningu (user_metadata.offers_opt_in) → vistað í stillingum einu sinni
+  useEffect(() => {
+    if (!isCloud || !session) return
+    const m = session.user && session.user.user_metadata
+    if (!m || !m.offers_opt_in) return
+    const k = 'tossa.offersApplied.' + session.user.id
+    try { if (localStorage.getItem(k)) return } catch {}
+    store.setNotifSettings({ offers_email: true }).then(() => { try { localStorage.setItem(k, '1') } catch {} }).catch(() => {})
+  }, [session])
   const flashAwards = (r) => {
     const aw = (r && Array.isArray(r.awards)) ? r.awards : []
     if (!aw.length) return
@@ -717,6 +734,8 @@ export default function App() {
   // Staðfesting verðlaunakóða: /k/<kóði> — opin öllum, án innskráningar (starfsmaður skannar QR úr síma notanda)
   const codeMatch = typeof window !== 'undefined' && /^\/k\/([A-Za-z0-9-]{4,40})\/?$/.exec(window.location.pathname)
   if (codeMatch) return <CodeCheck code={decodeURIComponent(codeMatch[1]).toUpperCase()} />
+  // Afskráning af tilboðspósti: /afskra?t=<tóki> — engin innskráning
+  if (typeof window !== 'undefined' && /^\/afskra\/?$/.test(window.location.pathname)) return <Unsubscribe token={new URLSearchParams(window.location.search).get('t')} />
   if (isGriptu) {
     const adminHere = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
     if (isCloud && session && brandUser === undefined) return null

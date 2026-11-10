@@ -106,6 +106,13 @@ export default function NotifSettings({ onClose }) {
             <p className="ns-hint">Til að fá áminningu um einstök verk á völdum tíma, kveiktu á bjöllunni við verkið í listanum.</p>
           </div>
         )}
+
+        <div className="ns-offers">
+          <label className="ns-row">
+            <span>Tilboð og herferðir í tölvupósti<small>Láttu mig vita þegar nýjar herferðir byrja í Gríptu. Í mesta lagi einn póstur á viku. Netfangið þitt fer aldrei til vörumerkja.</small></span>
+            <input type="checkbox" checked={!!s.offers_email} onChange={e => patch({ offers_email: e.target.checked })} />
+          </label>
+        </div>
       </div>
     </div>
   )
