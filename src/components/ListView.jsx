@@ -14,6 +14,7 @@ import RewardsManager from './RewardsManager.jsx'
 import GameGuide from './GameGuide.jsx'
 import BarcodeScanner from './BarcodeScanner.jsx'
 import AdBanner from './AdBanner.jsx'
+import RestockCard from './RestockCard.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
 import { lookupBarcode } from '../lib/barcode.js'
@@ -881,6 +882,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
       </div>
+      {isShopping && <RestockCard refreshKey={listId + ':' + items.length} rewardFor={rewardFor} onAdd={(name) => onAdd(name)} />}
       {bannerEnabled && <AdBanner />}
       {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {

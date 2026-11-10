@@ -454,6 +454,7 @@ const local = {
   async recordAttribution() {},
   async savePushSubscription() {},
   async deleteMyAccount() { return { ok: false, reason: 'local' } },
+  async myRestock() { return [] }, async dismissRestock() {},
   async removePushSubscription() {},
   async getNotifSettings() {
     return JSON.parse(localStorage.getItem('korfan.notif') || 'null') || { push_enabled: false, daily_tasks: false, daily_tasks_hour: 16, weekly_summary: true, quiet_start: 21, quiet_end: 8 }
@@ -1030,6 +1031,16 @@ const cloud = {
       utm_campaign: a.utm_campaign || null,
       referrer: a.referrer || null,
     }, { onConflict: 'user_id', ignoreDuplicates: true })
+  },
+  // „Líklega að klárast“: tillögur út frá kaupmynstri (≥6 kvittanir/60 d, vara keypt ≥3× reglulega). Tómt ef ekki nóg gögn.
+  async myRestock(limit = 6) {
+    const { data, error } = await supabase.rpc('my_restock', { p_limit: limit })
+    if (error) throw error
+    return Array.isArray(data) ? data : []
+  },
+  async dismissRestock(canon) {
+    const { error } = await supabase.rpc('dismiss_restock', { p_canon: canon })
+    if (error) throw error
   },
   // Eyða eigin reikningi: fyrst kvittanamyndir úr storage (SQL má ekki eyða þeim), svo RPC sem eyðir öllu öðru + auth-notanda.
   async deleteMyAccount(confirm) {

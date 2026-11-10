@@ -1,5 +1,6 @@
 import React from 'react'
 import AdBanner from './AdBanner.jsx'
+import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers } from '@tabler/icons-react'
 
@@ -39,7 +40,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -85,6 +86,8 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <Go />
         </button>
       )}
+
+      {onOpenRestock && <RestockCard compact onOpen={onOpenRestock} refreshKey={purchases.length + ':' + lists.length} />}
 
       {onOpenGriptu && (
         <button className="home-invite home-griptu" onClick={() => onOpenGriptu()}>
