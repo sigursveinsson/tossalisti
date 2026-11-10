@@ -627,3 +627,8 @@ git push
 - TAKMARKANIR: (a) kvittun án stærðar gefur stig óháð raunstærð; (b) afbrigði í sömu stærð (t.d. annað bragð) greinast ekki — þarf útilokunarorð síðar; (c) `brand_dashboard` og „+stig“-merki á innkaupalista nota enn aðeins leitarorð, ekki stærð.
 - Herferðin „Nathan Prufa“ (Cheerios 300 stig, prufa frá okt) gerð óvirk → Cheerios sýnir nú 50 stig.
 - ListView: lína án myndar notar mynd Gríptu-vörunnar ef heitið passar (Cocoa Puffs).
+
+## Gríptu af heimaskjá með listavali (10. nóv 2026) — ÞARF DEPLOY, óprófað í vafra
+- HomeView: nýr hnappur „Gríptu vörur og herferðir“ (aðeins `rewardsEnabled && pilot.member`, sama skilyrði og Gríptu-flipinn).
+- `GriptuHome.jsx`: heilskjár með sama efni og flipinn (GriptuTab) + val á innkaupalista efst (sjálfgefið síðast opni innkaupalistinn, annars sá fyrsti; einn listi → engin valmynd). `griptuHomeAdd` setur vöru á valinn lista án þess að yfirgefa heimaskjá; „Á listanum“ miðast við valinn lista. Skanna-hnappurinn tengir kvittun við valinn lista.
+- GriptuOffers sendir nú mynd vörunnar með (`onAdd(name, image_url)`) → lína á lista fær vörumyndina.

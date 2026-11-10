@@ -48,6 +48,7 @@ import { departmentFor } from './data/products.js'
 import { setLearnedCategories } from './data/categories.js'
 import { matchListItems } from './lib/receipt.js'
 import GriptuTab from './components/GriptuTab.jsx'
+import GriptuHome from './components/GriptuHome.jsx'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -492,6 +493,8 @@ export default function App() {
   }
   // Vinningar úr herferðum (skyndiherferð / stimpilkort) — sýnd sem sér toast, Gríptu-flipi endurhlaðinn
   const [griptuRefresh, setGriptuRefresh] = useState(0)
+  const [showGriptuHome, setShowGriptuHome] = useState(false)
+  const [griptuListId, setGriptuListId] = useState(null)
   const flashAwards = (r) => {
     const aw = (r && Array.isArray(r.awards)) ? r.awards : []
     if (!aw.length) return
@@ -777,10 +780,29 @@ export default function App() {
     const n = String(name || '').toLowerCase().trim()
     return !!(list && list.items.some(i => !i.checked && String(i.name || '').toLowerCase().trim() === n))
   }
-  const griptuAdd = async (name) => {
+  const griptuAdd = async (name, image) => {
     const exists = list.items.some(i => i.name === String(name).toLowerCase().trim())
-    await addItem(name) // sýnir sjálft „er nú þegar á listanum“ ef svo er
+    await addItem(name, undefined, undefined, undefined, image) // sýnir sjálft „er nú þegar á listanum“ ef svo er
     if (!exists) flash('„' + name + '“ sett á listann')
+  }
+  // Gríptu af heimaskjá: enginn listi er opinn, svo notandinn velur innkaupalista (sjálfgefið sá síðast opni / fyrsti).
+  const inGriptu = rewardsEnabled && !!(pilot && pilot.member)
+  const shoppingLists = lists.filter(l => l.type === 'shopping')
+  const griptuTarget = shoppingLists.find(l => l.id === griptuListId) || shoppingLists.find(l => l.id === currentId) || shoppingLists[0] || null
+  const griptuHomeInList = (name) => {
+    const n = String(name || '').toLowerCase().trim()
+    return !!(griptuTarget && griptuTarget.items.some(i => !i.checked && String(i.name || '').toLowerCase().trim() === n))
+  }
+  const griptuHomeAdd = async (name, image) => {
+    const t = griptuTarget
+    if (!t) { flash('Búðu fyrst til innkaupalista'); return }
+    const n = String(name).toLowerCase().trim()
+    if (t.items.some(i => String(i.name || '').toLowerCase().trim() === n)) { flash(name + ' er nú þegar á „' + t.name + '“'); return }
+    try {
+      await store.addItem(t.id, name, { dept: customDept[n] || departmentFor(name), image })
+      await reload()
+      flash('„' + name + '“ sett á „' + t.name + '“')
+    } catch (e) { flash('Tókst ekki að setja á listann. Reyndu aftur.', { warn: true }) }
   }
   const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : list?.type === 'budget' ? 'Bókhald' : 'Innkaupalisti'
 
@@ -825,7 +847,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -902,6 +924,15 @@ export default function App() {
 
       {showAdmin && <ErrorBoundary name="Stjórnborðið" onClose={() => setShowAdmin(false)}><AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} /></ErrorBoundary>}
       {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
+      {showGriptuHome && inGriptu && (
+        <ErrorBoundary name="Gríptu" onClose={() => setShowGriptuHome(false)}>
+          <GriptuHome lists={shoppingLists} listId={griptuTarget ? griptuTarget.id : null} onPickList={setGriptuListId}
+            refreshKey={griptuRefresh} points={myRewards?.balance || 0}
+            onScan={() => { setReceiptListId(griptuTarget ? griptuTarget.id : null); setShowReceipt(true) }}
+            onOpenRewards={() => setShowRewards(true)} onAdd={griptuHomeAdd} onList={griptuHomeInList}
+            onClose={() => setShowGriptuHome(false)} />
+        </ErrorBoundary>
+      )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 

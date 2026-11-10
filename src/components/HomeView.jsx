@@ -39,7 +39,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -82,6 +82,17 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             : inPilot
               ? <span className="home-cashback-txt"><small>Nýtt: Gríptu stig</small><b>Safnaðu stigum af innkaupum</b></span>
               : <span className="home-cashback-txt"><small>Gríptu stig · lokuð prufa</small><b>Ertu með boðskóða?</b></span>}
+          <Go />
+        </button>
+      )}
+
+      {onOpenGriptu && (
+        <button className="home-invite home-griptu" onClick={() => onOpenGriptu()}>
+          <span className="home-invite-ic"><IconGift size={22} stroke={1.75} /></span>
+          <span className="home-invite-txt">
+            <b>Gríptu vörur og herferðir</b>
+            <small>Sjáðu hvaða vörur gefa stig núna og settu þær á innkaupalistann</small>
+          </span>
           <Go />
         </button>
       )}

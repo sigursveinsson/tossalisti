@@ -72,7 +72,7 @@ export default function GriptuOffers({ limit, onCount, onAdd, onList }) {
                 {onAdd
                   ? (onList && onList(o.name)
                       ? <span className="go-add go-added"><IconCheck size={15} stroke={2.25} /> Á listanum</span>
-                      : <button className="go-add" onClick={() => onAdd(o.name)}><IconPlus size={15} stroke={2.25} /> Á listann</button>)
+                      : <button className="go-add" onClick={() => onAdd(o.name, o.image_url)}><IconPlus size={15} stroke={2.25} /> Á listann</button>)
                   : <a className="go-add" href={`${APP_URL}/?add=${encodeURIComponent(o.name)}`}><IconPlus size={15} stroke={2.25} /> Á listann</a>}
               </div>
             ))}
