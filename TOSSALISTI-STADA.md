@@ -632,3 +632,4 @@ git push
 - HomeView: nýr hnappur „Gríptu vörur og herferðir“ (aðeins `rewardsEnabled && pilot.member`, sama skilyrði og Gríptu-flipinn).
 - `GriptuHome.jsx`: heilskjár með sama efni og flipinn (GriptuTab) + val á innkaupalista efst (sjálfgefið síðast opni innkaupalistinn, annars sá fyrsti; einn listi → engin valmynd). `griptuHomeAdd` setur vöru á valinn lista án þess að yfirgefa heimaskjá; „Á listanum“ miðast við valinn lista. Skanna-hnappurinn tengir kvittun við valinn lista.
 - GriptuOffers sendir nú mynd vörunnar með (`onAdd(name, image_url)`) → lína á lista fær vörumyndina.
+- 10. nóv (síðar): innsláttur sýndi AÐEINS kostaðar tillögur fyrir „bleyjur“/„örbylgjupopp“ (orðin vantaði í vörubankann). Lagað: almenna varan sem slegin er inn birtist alltaf EFST merkt „almenn vara“ þegar kostaðar/Gríptu-tillögur eru í boði (`showTyped` í ListView); „bleyjur“, „blautþurrkur“, „örbylgjupopp“ bætt í products.js. Regla: kostað er viðbót, aldrei eini kosturinn. Þarf deploy.

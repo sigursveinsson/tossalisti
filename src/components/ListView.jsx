@@ -99,6 +99,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     ? Object.keys(catalog).filter(n => n.includes(text.toLowerCase().trim()) && !sugg.includes(n) && !rewardNames.has(normMatch(n))).slice(0, 5)
     : []
   const suggFiltered = sugg.filter(s => !rewardNames.has(normMatch(s)))
+  // Almenna varan sem notandinn sló inn er ALLTAF í boði, efst — kostaðar tillögur eru viðbót, aldrei eini kosturinn.
+  const typed = text.toLowerCase().trim()
+  const showTyped = isShopping && typed.length >= 2 && (sponSugg.length > 0 || rewardSugg.length > 0)
+    && !sponSugg.some(o => o.name.toLowerCase() === typed) && !rewardSugg.some(p => p.name.toLowerCase() === typed)
+  const suggPlain = showTyped ? suggFiltered.filter(s => s !== typed) : suggFiltered
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
 
@@ -452,8 +457,15 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {micAvailable && !text.trim()
         ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann"><IconMicrophone size={21} stroke={2} /></button>
         : <button className="add" onClick={() => add()} aria-label="Bæta við"><IconPlus size={22} stroke={2.25} /></button>}
-      {(rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
+      {(showTyped || rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
+          {showTyped && (
+            <div key="typed" className="suggest-off suggest-typed" onClick={() => add(typed, catalog[typed])}>
+              {catalog[typed] ? <img src={catalog[typed]} alt="" /> : <CatIcon name={typed} dept={departmentFor(typed)} size={34} />}
+              <span>{typed}</span>
+              <span className="sugg-generic">almenn vara</span>
+            </div>
+          )}
           {rewardSugg.map(p => (
             <div key={'rw_' + p.id} className="suggest-off suggest-reward" onClick={() => add(p.name, p.image_url)}>
               {p.image_url ? <img src={p.image_url} alt="" /> : <CatIcon name={p.name} dept={departmentFor(p.name)} size={34} />}
@@ -484,7 +496,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               </div>
             )
           })}
-          {suggFiltered.map(s => {
+          {suggPlain.map(s => {
             const rp = rewardFor(s)
             return (
               <div key={s} className="suggest-plain" onClick={() => add(s)}>

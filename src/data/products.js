@@ -40,7 +40,7 @@ export const PRODUCTS = {
   // Heimilið
   'klósettpappír': 'household', 'eldhúsrúlla': 'household', 'uppþvottalögur': 'household',
   'þvottaefni': 'household', 'sápa': 'household', 'tannkrem': 'household', 'sjampó': 'household',
-  'rusladpokar': 'household', 'álpappír': 'household', 'bleiur': 'household',
+  'rusladpokar': 'household', 'álpappír': 'household', 'bleiur': 'household', 'bleyjur': 'household', 'blautþurrkur': 'household',
   // Viðbætur fyrir uppskriftasafnið
   'lasagnaplötur': 'pantry', 'karrí': 'pantry', 'karrímauk': 'pantry',
   'hamborgarabrauð': 'bakery', 'tortillur': 'bakery', 'pítsadeig': 'pantry',
@@ -156,7 +156,7 @@ export const PRODUCTS = {
   'konfekt': 'candy', 'brjóstsykur': 'candy', 'karamellur': 'candy',
   // Snakk
   'snakk': 'snacks', 'kex': 'snacks', 'kremkex': 'snacks', 'kartöfluflögur': 'snacks',
-  'popp': 'snacks', 'doritos': 'snacks', 'pringles': 'snacks', 'ostapopp': 'snacks',
+  'popp': 'snacks', 'örbylgjupopp': 'snacks', 'doritos': 'snacks', 'pringles': 'snacks', 'ostapopp': 'snacks',
   'cheez doodles': 'snacks', 'tortillaflögur': 'snacks', 'saltstangir': 'snacks', 'maísflögur': 'snacks',
   'hnetur': 'snacks', 'jarðhnetur': 'snacks',
   // Bökunarvörur

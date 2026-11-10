@@ -1732,3 +1732,4 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .gh-pick-none { flex: 1; }
 .gh-body { padding: 12px 16px 96px; }
 .home-griptu .home-invite-ic { color: var(--cta); }
+.suggest .sugg-generic { margin-left: auto; font-size: 11px; color: var(--faint); white-space: nowrap; }
