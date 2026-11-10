@@ -1,0 +1,119 @@
+# Skýjabygging fyrir Tossalisti-appið (iOS + Android) — Codemagic.
+# Engin Mac þarf: Codemagic byggir iOS og sendir í TestFlight; Android fer í Google Play (internal track).
+#
+# Áður en fyrsta keyrsla virkar þarf í Codemagic → Teams → Integrations / Environment variables:
+#   App Store Connect: API-lykill (Issuer ID, Key ID, .p8) — Codemagic sér um certificates/profiles sjálft
+#   Google Play: þjónustureiknings-JSON  → GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+#   Android keystore: hlaðið upp undir „Code signing identities“ með reference-nafni tossalisti_keystore
+#   Vite: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (hópur „vite“) — sömu gildi og í Netlify
+# Lyklar eru settir inn í Codemagic-viðmótinu, aldrei í þessa skrá.
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Tossalisti ASC   # nafn integrations-tengingar í Codemagic
+    environment:
+      groups:
+        - vite
+      vars:
+        BUNDLE_ID: is.tossalisti.app
+        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+        APP_STORE_APPLE_ID: 0000000000     # Apple ID appsins úr App Store Connect (tala), sett eftir skráningu
+      node: 20
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - ios/App/Pods
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'ios-*'
+    scripts:
+      - name: npm install + vefbygging
+        script: |
+          npm ci
+          npm run build
+      - name: Capacitor sync
+        script: npx cap sync ios
+      - name: Undirritun (sjálfvirk)
+        script: |
+          xcode-project use-profiles
+      - name: Byggingarnúmer
+        script: |
+          cd ios/App
+          agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID") + 1))
+      - name: Byggja .ipa
+        script: |
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Boðshópur
+      email:
+        recipients:
+          - sigursveinsson@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  android-play-internal:
+    name: Android → Google Play (internal)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      groups:
+        - vite
+        - google_play   # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      android_signing:
+        - tossalisti_keystore
+      vars:
+        PACKAGE_NAME: is.tossalisti.app
+      node: 20
+      java: 17
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/.gradle/caches
+    triggering:
+      events: [tag]
+      tag_patterns:
+        - pattern: 'android-*'
+    scripts:
+      - name: npm install + vefbygging
+        script: |
+          npm ci
+          npm run build
+      - name: Capacitor sync
+        script: npx cap sync android
+      - name: Byggingarnúmer
+        script: |
+          LATEST=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks internal 2>/dev/null || echo 0)
+          echo "VERSION_CODE=$((LATEST + 1))" >> $CM_ENV
+      - name: Byggja .aab
+        script: |
+          cd android
+          ./gradlew bundleRelease -PversionCode=$VERSION_CODE
+    artifacts:
+      - android/app/build/outputs/**/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+      email:
+        recipients:
+          - sigursveinsson@gmail.com
+        notify:
+          success: true
+          failure: true

@@ -574,3 +574,31 @@ git push
 - Appið: vinningur með eigin kóða sýnir QR (zxing BrowserQRCodeSvgWriter) + leiðbeiningu; notaður kóði grár.
 - BrandPrizes: tveir hamir — „Líma inn kóða frá öðrum“ / „Gríptu býr til kóða“ (fjöldi, PIN, leiðbeining). Chip: QR + PIN / QR án PIN.
 - SQL-prófað: 5 kóðar → PIN 1234 → rangt PIN hafnað → rétt PIN merkir notaðan → aftur = already_used.
+- 9. nóv: Deploy staðfest (tossalisti.is/k/… virkar: „Kóðinn fannst ekki“). Fyrsta hleðsla rétt eftir push sýndi gömlu útgáfuna → SW-uppfærsla hert: reg.update() við forgrunn, reload við controllerchange (ekki við fyrstu uppsetningu), CACHE v4, aðeins /assets/ cache-first, annað network-first.
+
+## Capacitor-app: grunnur í kóða (9. nóv 2026)
+- `capacitor.config.json` (appId `is.tossalisti.app`, webDir dist, hostname tossalisti.is + https → sama origin og vefurinn, Supabase-lotur/djúptenglar ganga). `codemagic.yaml`: iOS → TestFlight við tag `ios-*`, Android → Play internal við tag `android-*`; lyklar aðeins í Codemagic-viðmóti. Leiðbeiningar í `APP-UPPSETNING.md`.
+- `src/lib/native.js`: feature-detect brú (window.Capacitor, engin static import → vefbygging brotnar ekki án pakkanna): skjalaskanni (@capgo/capacitor-document-scanner: ML Kit/VisionKit, allt að 4 síður), push-tóki (APNs/FCM), appUrlOpen, backButton, splash/statusbar.
+- ReceiptScanner: í appinu fer „Skanna“ og „Taka í hlutum“ í innfædda skjalaskannann. push.js: í appinu vistast tóki í push_subscriptions sem endpoint `apns:`/`fcm:` (send-reminders sleppir þeim — APNs/FCM-sending á lista). main.jsx: enginn SW í appinu.
+- package.json skriptur: `app:install`, `app:init`, `app:assets`, `app:sync`, `app:ios`, `app:android` (keyrðar af Sverri — sandkassinn hefur ekki npm). Pakkar EKKI uppsettir enn.
+- **Eyða reikningi** (krafa Apple/Google): `delete_my_account('EYÐA')` RPC (SQL-prófað m. gervinotanda í rollback: auth.users, profiles, push_subscriptions hreinsast; prize_codes með used_at halda notkun en assigned_to núllað). Appið eyðir kvittanamyndum úr storage fyrst (storage leyfir ekki SQL-delete). UI: Listarnir mínir → „Eyða reikningi“ (DeleteAccount.jsx), staðfesting við `/?eytt=1`.
+- **Persónuverndarstefna**: `public/personuvernd.html` (tengd neðst í listapanel). Nefnir Supabase, Netlify, Resend, Google Gemini; k≥5 gagnvart vörumerkjum; 13 ára aldurstakmark; tossalisti@tossalisti.is.
+- Næst (þarf Sverri): D-U-N-S → Apple Developer (fyrirtæki) → Google Play Console (12 prófendur/14 dagar) → Codemagic. Svo `npm run app:install && npm run app:init`, assets/icon.png 1024 + splash.png 2732, .well-known skrár fyrir djúptengla (Team ID, SHA-256), Supabase redirect URL `is.tossalisti.app://*`.
+- Ekki búið: APNs/FCM-sending, .well-known, app-tákn/splash-skrár. Android til-baka notar backstack.js (history.back lokar glugga).
+
+## Markaðsviðmið og samkeppnisárekstrar (9. nóv 2026)
+- Friðjón (Steindal heildverslun, m.a. Red Bull): framstillingar í búðum kosta 200 þús.–1 m.kr. fyrir 3–4 vikna samning, auk þess sem nánast öll framlegð vörunnar fer í framstillinguna. Fyrsta raunverulega verðviðmiðið fyrir Gríptu-herferðir. Ákveðið að uppfæra EKKI tekjuáætlunina — „látum verkin tala“.
+- **Steindal/Red Bull ekki í boði** meðan Ölgerðin er í samtali um drykkjaflokkinn: Steindal tók Red Bull-umboðið af Ölgerðinni. Samningur við Friðjón myndi stygga Ölgerðina. Varaleið ef Ölgerðin hafnar.
+- Næstu samtöl: verðlaunaaðilar (bíó, einn veitingastaður með lausa hádegisgetu) og innanhússvinna fyrir 10 manna hóp (Nathan-vörulisti, tæma test_users, hreinsa prufugögn). Stóru flokkarnir (Myllan, SS, MS) bíða þar til prufan hefur sannað sig.
+- Nathan-póstur: Sverrir sendir 9. nóv.
+
+## Hugmyndalisti — seinna, ekki núna (9. nóv 2026)
+- **Kortatenging við banka (Markaðstorg Landsbankans).** 9. nóv kynntu Landsbankinn og Reon „Brutto“ (brutto.is): rekstrarkerfi fyrir lítil fyrirtæki ofan á opnu bankakerfi Landsbankans — kort, reikningar, kvittun pöruð sjálfkrafa við kortafærslu, 4.990 kr./mán. Tossalisti gæti orðið sambærilegt fyrir heimili: kvittun pöruð við kortafærslu (bókhald hverfur fyrir notandann, nánast fullkomin svikavörn fyrir Gríptu — kvittun sem passar við raunfærslu er ekki fölsuð). Ákvörðun Sverris: koma núverandi kerfi í loftið fyrst. Þegar að því kemur: finna umsjónaraðila Markaðstorgsins hjá Landsbankanum; hitta Reon (ekki keppinautur, hafa farið í gegnum tenginguna).
+
+## Nathan-prufa: vörur komnar inn (10. nóv 2026)
+- Hildur Soffía Vignisdóttir tekur verkefnið hjá Nathan. Sendi 10 vörur m. strikamerkjum (neytendaeiningar): Cheerios, Cocoa Puffs, Pop Secret, Hellmann's majones, Isio4, Crawford's kremkex, Hobnobs Milk, Libero Up&Go 6, Tunnock's Caramel Wafer, Sun-Maid rúsínur. Gjafakarfa OK (hún spyr: ein eða fleiri → tillaga 5). Sverrir sendir tillögu að fundartíma.
+- Allar 10 í `reward_products` undir Nathan, approved, 50 stig. Myndir úr Open Food Facts (CC-BY-SA) á 7; Isio4, Crawford's, Libero myndalausar (nathan.is náðist ekki úr sandkassa; Sverrir tekur myndir í búð / Hildur sendir). Leitarorð víð (libero, hellman, cheerios…) — þrengja eftir raunkvittunum.
+- Cheerios lækkað 300 → 50. Herferðin „Nathan Prufa“ (Cheerios, til 17. nóv) er enn virk — yfirfara gildi/dagsetningar fyrir ræsingu.
+- Thai Choice eytt. Coca-Cola Zero (ekki Nathan-vara) + „Cola“-herferð + 24 stigafærslur færð á nýtt óvirkt vörumerki „Prufugögn (innanhúss)“ → sést ekki lengur hjá Nathan. Hverfur alveg við hreinsun prufugagna.
+- Þröskuldur enn 800 (pósturinn sagði 1.000) — óbreytt, bíður ákvörðunar.
+- ZoomImg.jsx: smella á vörumynd/kvittanamynd í stjórnborði stækkar hana (BrandProducts, RewardsAdmin, AwardsAdmin). Þarf deploy.

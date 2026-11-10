@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "app:install": "npm install @capacitor/core@latest @capacitor/app@latest @capacitor/push-notifications@latest @capacitor/splash-screen@latest @capacitor/status-bar@latest @capgo/capacitor-document-scanner@latest && npm install -D @capacitor/cli@latest @capacitor/ios@latest @capacitor/android@latest @capacitor/assets@latest",
+    "app:init": "npx cap add ios && npx cap add android",
+    "app:assets": "npx capacitor-assets generate --iconBackgroundColor #ffffff --splashBackgroundColor #ffffff",
+    "app:sync": "vite build && npx cap sync",
+    "app:ios": "npm run app:sync && npx cap open ios",
+    "app:android": "npm run app:sync && npx cap open android"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

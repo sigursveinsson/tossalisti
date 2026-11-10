@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import ZoomImg from './ZoomImg.jsx'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import BarcodeScanner from './BarcodeScanner.jsx'
@@ -256,7 +257,7 @@ export default function RewardsAdmin({ onClose }) {
             {data.products.filter(p => p.status === 'pending').map(p => (
               <div className="rw-prod rw-pending" key={p.id}>
                 <div className="rw-prod-top">
-                  {p.image_url ? <img className="rw-thumb" src={p.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
+                  {p.image_url ? <ZoomImg className="rw-thumb" src={p.image_url} alt={p.name} caption={[p.name, p.size].filter(Boolean).join(" · ")} /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
                   <div className="rw-prod-id">
                     <b>{p.name}</b>
                     <small>{[p.size, p.barcode].filter(Boolean).join(' · ') || 'engin stærð/strikamerki'}{p.submitted_by ? ` · frá ${p.submitted_by}` : ''}</small>
@@ -283,7 +284,7 @@ export default function RewardsAdmin({ onClose }) {
         {data.products.filter(p => p.status !== 'pending').map(p => (
           <div className="rw-prod" key={p.id}>
             <div className="rw-prod-top">
-              {p.image_url ? <img className="rw-thumb" src={p.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
+              {p.image_url ? <ZoomImg className="rw-thumb" src={p.image_url} alt={p.name} caption={[p.name, p.size].filter(Boolean).join(" · ")} /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
               <div className="rw-prod-id">
                 <b>{p.name}</b>
                 <small>{[p.size, p.barcode].filter(Boolean).join(' · ') || 'engin stærð/strikamerki'}</small>
@@ -317,7 +318,7 @@ export default function RewardsAdmin({ onClose }) {
         <div className="rw-add">
           <div className="rw-newhead">Ný vara</div>
           <div className="rw-imgrow">
-            {np.image_url ? <img className="rw-thumb" src={np.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
+            {np.image_url ? <ZoomImg className="rw-thumb" src={np.image_url} alt="" /> : <div className="rw-thumb rw-thumb-ph"><IconShoppingBag size={18} stroke={1.6} /></div>}
             <button className="rw-imgbtn" onClick={() => fileRef.current && fileRef.current.click()} disabled={uploading}>
               {uploading ? 'Hleð…' : (np.image_url ? 'Skipta um mynd' : <><IconCamera size={16} stroke={1.75} /> Bæta mynd</>)}
             </button>

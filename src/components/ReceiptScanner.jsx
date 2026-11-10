@@ -12,6 +12,7 @@ const matchLabel = (p) => {
 }
 import { useBackClose } from '../lib/backstack.js'
 import CameraCapture from './CameraCapture.jsx'
+import { hasDocumentScanner, scanDocuments } from '../lib/native.js'
 import { IconAlertTriangle, IconArchive, IconCamera, IconGift, IconShieldCheck, IconX } from '@tabler/icons-react'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -85,8 +86,21 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
     document.addEventListener('visibilitychange', onVis)
     fileRef.current && fileRef.current.click()
   }
-  const openCamera = () => (mode === 'live' && canCamera) ? setCamera(true) : openAppCamera()
-  const startMulti = () => { setMulti(true); setParts([]); setFailed(null); setPhase('capture'); openCamera() }
+  // Í iOS/Android-appinu: innbyggður skjalaskanni (ML Kit / VisionKit) — finnur brúnir, réttir og skerpir sjálfur.
+  // Löng kvittun → allt að 4 síður í einni lotu, lesnar saman. Ef notandi hættir við er ekkert gert.
+  const openNativeScanner = async (maxPages) => {
+    try {
+      const files = await scanDocuments({ maxPages })
+      if (!files || files.length === 0) return
+      setMulti(false); setParts([])
+      handleFile(files.length === 1 ? files[0] : files)
+    } catch { setFailed('decode') }
+  }
+  const openCamera = () => hasDocumentScanner() ? openNativeScanner(1) : (mode === 'live' && canCamera) ? setCamera(true) : openAppCamera()
+  const startMulti = () => {
+    if (hasDocumentScanner()) { setFailed(null); setPhase('capture'); openNativeScanner(4); return }
+    setMulti(true); setParts([]); setFailed(null); setPhase('capture'); openCamera()
+  }
 
   const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) { gotFileRef.current = true; onShot(file) } else clearPending() }
   const onShot = (file) => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import ZoomImg from './ZoomImg.jsx'
 import { store } from '../lib/store.js'
 import { CatIcon } from '../data/icons.jsx'
 import { departmentFor } from '../data/products.js'
@@ -86,7 +87,7 @@ function Form({ brandId, initial, onDone, onCancel }) {
         <input className="dialog-input" value={f.size} onChange={set('size')} placeholder="Stærð — t.d. 1 l" />
         <label className="ghost-btn bp-upload"><IconPhoto size={15} stroke={2} /> {f.image_url ? 'Skipta um mynd' : 'Mynd'}<input type="file" accept="image/*" onChange={pick} hidden /></label>
       </div>
-      {f.image_url && <img className="bp-preview" src={f.image_url} alt="" />}
+      {f.image_url && <ZoomImg className="bp-preview" src={f.image_url} alt="" />}
       <label className="bp-field">Leitarorð á kvittun
         <input className="dialog-input" value={kwValue} onChange={e => { setKwEdited(true); set('keywords')(e) }} placeholder="t.d. sproud, hafradrykkur sproud" />
         <small>Aðskilin með kommu. Eitt leitarorð dugar til að línan gefi stig; orð með bili þurfa öll að koma fyrir í línunni. Vertu nákvæm — „mild“ eitt og sér myndi ná „mild cheddar“.</small>
@@ -133,7 +134,7 @@ export default function BrandProducts({ brandId, canEdit, onChanged }) {
         const [label, cls, Ico] = STATUS[p.status] || STATUS.pending
         return (
           <div key={p.id} className="bp-item">
-            <div className="bp-img">{p.image_url ? <img src={p.image_url} alt="" /> : <CatIcon name={p.name} dept={departmentFor(p.name)} size={36} />}</div>
+            <div className="bp-img">{p.image_url ? <ZoomImg src={p.image_url} alt={p.name} caption={[p.name, p.size].filter(Boolean).join(" · ")} /> : <CatIcon name={p.name} dept={departmentFor(p.name)} size={36} />}</div>
             <div className="bp-body">
               <div className="bp-name">{p.name}{p.size ? <small> · {p.size}</small> : null}</div>
               <div className="bp-meta">{(p.match_keywords || []).map(k => <code key={k}>{k}</code>)} · {p.reward_type === 'percent' ? `${num(p.reward_value)}%` : `${num(p.reward_value)} stig`}</div>

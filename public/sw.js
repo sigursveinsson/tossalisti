@@ -1,4 +1,4 @@
-const CACHE = 'tossalisti-v3'
+const CACHE = 'tossalisti-v4' // hækka við hverja breytingu á sw.js — gamlar eignir hreinsast við activate
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -25,16 +25,27 @@ self.addEventListener('fetch', (e) => {
     return
   }
 
-  // Eignir (hash-nefndar, óbreytanlegar): cache-first, sækja af neti ef vantar. Aldrei cache-a 404/villusvör.
-  e.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-      if (res && res.ok && res.type === 'basic') {
-        const copy = res.clone()
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {})
-      }
-      return res
-    }))
-  )
+  const url = new URL(req.url)
+  const hashed = url.origin === self.location.origin && url.pathname.startsWith('/assets/')
+  if (hashed) {
+    // Hash-nefndar eignir eru óbreytanlegar: cache-first. Aldrei cache-a 404/villusvör.
+    e.respondWith(
+      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
+        if (res && res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {}) }
+        return res
+      }))
+    )
+    return
+  }
+  // Annað á eigin léni (tákn, manifest, /griptu/*): network-first, cache til vara — svo uppfærslur sjáist.
+  if (url.origin === self.location.origin) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {}) }
+        return res
+      }).catch(() => caches.match(req))
+    )
+  }
 })
 
 // Push-tilkynningar (opt-in — sendar aðeins til þeirra sem kveikja á áminningum)

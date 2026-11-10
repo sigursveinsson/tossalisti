@@ -1,0 +1,29 @@
+{
+  "appId": "is.tossalisti.app",
+  "appName": "Tossalisti",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "hostname": "tossalisti.is"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#ffffff"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#ffffff"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

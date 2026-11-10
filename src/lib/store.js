@@ -453,6 +453,7 @@ const local = {
   async hasSharedList() { return false },
   async recordAttribution() {},
   async savePushSubscription() {},
+  async deleteMyAccount() { return { ok: false, reason: 'local' } },
   async removePushSubscription() {},
   async getNotifSettings() {
     return JSON.parse(localStorage.getItem('korfan.notif') || 'null') || { push_enabled: false, daily_tasks: false, daily_tasks_hour: 16, weekly_summary: true, quiet_start: 21, quiet_end: 8 }
@@ -1029,6 +1030,23 @@ const cloud = {
       utm_campaign: a.utm_campaign || null,
       referrer: a.referrer || null,
     }, { onConflict: 'user_id', ignoreDuplicates: true })
+  },
+  // Eyða eigin reikningi: fyrst kvittanamyndir úr storage (SQL má ekki eyða þeim), svo RPC sem eyðir öllu öðru + auth-notanda.
+  async deleteMyAccount(confirm) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, reason: 'not_signed_in' }
+    if (confirm !== 'EYÐA') return { ok: false, reason: 'confirm' }
+    try {
+      for (let page = 0; page < 20; page++) {
+        const { data: files } = await supabase.storage.from('receipts').list(user.id, { limit: 100 })
+        if (!files || files.length === 0) break
+        await supabase.storage.from('receipts').remove(files.map(f => `${user.id}/${f.name}`))
+      }
+    } catch { /* myndir sem standa eftir eru taldar í svari RPC */ }
+    const { data, error } = await supabase.rpc('delete_my_account', { p_confirm: confirm })
+    if (error) throw error
+    if (data && data.ok) { try { localStorage.clear() } catch {} ; try { await supabase.auth.signOut({ scope: 'local' }) } catch {} }
+    return data
   },
   async savePushSubscription(sub) {
     const { data: { user } } = await supabase.auth.getUser()

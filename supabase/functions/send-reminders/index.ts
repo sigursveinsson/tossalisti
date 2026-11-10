@@ -27,6 +27,8 @@ const inQuiet = (h: number, start: number, end: number) =>
 async function sendTo(subs: any[], payload: any) {
   const body = JSON.stringify(payload)
   await Promise.all(subs.map(async (s) => {
+    // Tókar úr iOS/Android-appinu (endpoint „apns:…“/„fcm:…“) fara um APNs/FCM — sú sending er ekki komin enn; sleppt hér.
+    if (s.subscription?.native || !/^https?:/.test(s.endpoint || '')) return
     try { await webpush.sendNotification(s.subscription, body) }
     catch (e: any) {
       // 404/410 = úrelt áskrift → hreinsa

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import ZoomImg from './ZoomImg.jsx'
 import { store } from '../lib/store.js'
 import { IconX, IconCheck, IconBan, IconPhoto, IconTicket } from '@tabler/icons-react'
 
@@ -33,7 +34,7 @@ function Row({ a, onDone }) {
             <span>Búð <b>{a.store || '—'}</b></span><span>Samtala <b>{a.total != null ? num(a.total) + ' kr' : '—'}</b></span>
             {Array.isArray(a.flags) && a.flags.length > 0 && <span className="ra-flags">{a.flags.map(f => <em key={f}>{FLAG[f] || f}</em>)}</span>}
           </div>
-          {a.receipt_path ? (url ? <img className="ra-img" src={url} alt="Kvittun" /> : <div className="bd-muted">Sæki mynd…</div>) : <div className="ra-noimg-box">Engin kvittanamynd.</div>}
+          {a.receipt_path ? (url ? <ZoomImg className="ra-img" src={url} alt="Kvittun" /> : <div className="bd-muted">Sæki mynd…</div>) : <div className="ra-noimg-box">Engin kvittanamynd.</div>}
           {a.status === 'pending_review' && (
             <>
               <input className="dialog-input" value={note} onChange={e => setNote(e.target.value)} placeholder="Athugasemd (sést notanda ef hafnað)" />

@@ -17,6 +17,7 @@ import GriptuLanding from './components/GriptuLanding.jsx'
 import CodeCheck from './components/CodeCheck.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
+import DeleteAccount from './components/DeleteAccount.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
@@ -60,6 +61,7 @@ export default function App() {
   const [homeSum, setHomeSum] = useState(null)
   const [homeUnseen, setHomeUnseen] = useState(false)
   const [showLists, setShowLists] = useState(false)
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -86,6 +88,12 @@ export default function App() {
 
   // Auðkenning (aðeins í ský-ham)
   const [pwReset, setPwReset] = useState(() => new URLSearchParams(window.location.search).has('reset'))
+  // Eftir að reikningi var eytt: staðfesting á innskráningarskjá og slóðin hreinsuð
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('eytt')) return
+    window.history.replaceState(null, '', '/')
+    setTimeout(() => flash('Reikningnum þínum og öllum gögnum hefur verið eytt.', { ms: 8000 }), 300)
+  }, [])
   useEffect(() => {
     if (!isCloud) return
     supabase.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true) })
@@ -706,7 +714,7 @@ export default function App() {
     return <GriptuLanding session={isCloud ? session : null} onSignOut={signOut}
       onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
   }
-  if (isCloud && !session) return <Auth />
+  if (isCloud && !session) return <>{toast && <div className="toast" onClick={() => setToast('')}>{toast.warn ? toast.msg : toast}</div>}<Auth /></>
   // „Gleymt lykilorð?“-hlekkur opnaður: velja nýtt lykilorð áður en lengra er haldið.
   if (isCloud && session && pwReset) return <ResetPassword onDone={finishPwReset} />
   // Vörumerkjanotandi (t.d. Nathan): beint í mælaborðið — hvorki prófíl, samþykki né listar.
@@ -846,8 +854,12 @@ export default function App() {
           onOpenReceipts={() => { setShowLists(false); loadPurchases(); setShowReceipts(true) }}
           userEmail={session?.user?.email}
           onSignOut={isCloud ? signOut : null}
+          onDeleteAccount={isCloud ? () => { setShowLists(false); setShowDeleteAccount(true) } : null}
           onClose={() => setShowLists(false)}
         />
+      )}
+      {showDeleteAccount && (
+        <DeleteAccount onClose={() => setShowDeleteAccount(false)} onDone={() => { setShowDeleteAccount(false); window.location.replace('/?eytt=1') }} />
       )}
 
       {sharing && (

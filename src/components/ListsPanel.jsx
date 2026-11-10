@@ -9,7 +9,7 @@ const TYPE = {
   budget: { Icon: IconNotebook },
 }
 
-export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, userEmail, onSignOut, onClose }) {
+export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, userEmail, onSignOut, onDeleteAccount, onClose }) {
   const [name, setName] = useState('')
   const [newType, setNewType] = useState('shopping')
   const [creating, setCreating] = useState(false)
@@ -102,6 +102,10 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
               <button className="signout-btn" onClick={onSignOut}>Skrá út</button>
             </div>
           )}
+          <div className="sheet-legal">
+            <a href="/personuvernd.html" target="_blank" rel="noopener">Persónuvernd</a>
+            {onDeleteAccount && <button className="linklike" onClick={onDeleteAccount}>Eyða reikningi</button>}
+          </div>
         </div>
       </div>
 
