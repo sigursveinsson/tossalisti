@@ -51,7 +51,7 @@ const srcBadge = (u) => {
   return { ...s, title: s.label + (u.utm_campaign ? ' · ' + u.utm_campaign : '') }
 }
 
-export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
+export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnabled, onToggleBanner }) {
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
   const [pv, setPv] = useState(null)
@@ -102,10 +102,19 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds }) {
         {tab === 'stats' && onToggleAds && (
           <div className="adm-ads">
             <div className="adm-ads-txt">
-              <b>Kostaðar auglýsingar</b>
-              <small>Auglýsingaborði, kostaðar vörutillögur og „Kostað"-hilla (Ölgerðin). {adsEnabled ? 'Sýnilegt notendum núna.' : 'Falið — kveiktu fyrir kynningu.'}</small>
+              <b>Kostaðar vörur</b>
+              <small>Kostaðar vörutillögur við innslátt og í raddstýringu (t.d. bleyjur → Libero), „Kostað“-merki og „Kostað“-hilla. {adsEnabled ? 'Sýnilegt notendum núna.' : 'Falið.'}</small>
             </div>
-            <button className={'adm-ads-switch' + (adsEnabled ? ' on' : '')} onClick={onToggleAds} aria-label="Kveikja/slökkva á auglýsingum" />
+            <button className={'adm-ads-switch' + (adsEnabled ? ' on' : '')} onClick={onToggleAds} aria-label="Kveikja/slökkva á kostuðum vörum" />
+          </div>
+        )}
+        {tab === 'stats' && onToggleBanner && (
+          <div className="adm-ads">
+            <div className="adm-ads-txt">
+              <b>Auglýsingaborði</b>
+              <small>Borðinn á heimaskjá og listum (sýnidæmi, engir greiðandi auglýsendur enn). {bannerEnabled ? 'Sýnilegur notendum núna.' : 'Falinn — kveiktu fyrir kynningu.'}</small>
+            </div>
+            <button className={'adm-ads-switch' + (bannerEnabled ? ' on' : '')} onClick={onToggleBanner} aria-label="Kveikja/slökkva á auglýsingaborða" />
           </div>
         )}
 
