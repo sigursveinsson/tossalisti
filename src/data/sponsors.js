@@ -31,7 +31,7 @@ export const CATEGORY_SPONSORS = {
   personalcare: {
     brand: 'Nathan',
     tag: 'Kostað · Nathan',
-    terms: ['vaseline', 'krem', 'húðkrem', 'hudkrem', 'rakakrem', 'varasalvi', 'body', 'lotion', 'húð', 'hud'],
+    terms: ['vaseline', '=krem', 'húðkrem', 'hudkrem', 'rakakrem', 'varasalvi', 'body', 'lotion', 'húð', 'hud'],
     products: [
       { name: 'Vaseline Intensive Care', color: '#1F3B9B', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F340175.png' },
       { name: 'Vaseline varasalvi',      color: '#2B57C0', image: 'https://nathan.is/Admin/Public/GetImage.ashx?width=400&height=400&format=webp&compression=95&image=%2FFiles%2FUploads%2F340280.png' },
@@ -86,7 +86,44 @@ const EXTRA_SUGGEST = [
     dept: 'pantry',
     terms: ['morgunkorn', 'cheerios', 'cheerio', 'seríós', 'serios', 'seríos', 'hafrahring', 'kornflex', 'cornflakes', 'corn flakes', 'múslí', 'musli', 'cereal'],
     products: [
-      { name: 'Cheerios', color: '#F2C200', image: 'https://images.openfoodfacts.org/images/products/006/563/313/2818/front_en.4.400.jpg' },
+      { name: 'Cheerios', generic: 'Morgunkorn', color: '#F2C200', image: 'https://images.openfoodfacts.org/images/products/001/600/016/1436/front_en.3.400.jpg' },
+      { name: 'Cocoa Puffs', color: '#5B2C1A', image: 'https://images.openfoodfacts.org/images/products/001/600/015/1543/front_en.11.400.jpg' },
+    ],
+  },
+  // ---- Nathan-prufa (nóv 2026): almennt heiti → vara frá Nathan. Hugtök með „=" passa aðeins við heilt orð
+  // (svo „kex" hitti ekki „hrökkkex" og „olía" ekki „ólífuolía"). `generic` = heitið sem raddstýringin má skipta út.
+  {
+    brand: 'Nathan', dept: 'household',
+    terms: ['bleyj', 'bleij', 'bleiu', '=bleia', '=bleiur', '=bleyja', 'libero'],
+    products: [{ name: 'Libero bleyjur', generic: 'Bleyjur', color: '#2E7DD1', image: '/vorur/libero.webp' }],
+  },
+  {
+    brand: 'Nathan', dept: 'pantry',
+    terms: ['rúsín', 'rusin', 'sun maid', 'sun-maid', 'sunmaid'],
+    products: [{ name: 'Sun-Maid rúsínur', generic: 'Rúsínur', color: '#C8102E', image: '/vorur/sun-maid.jpg' }],
+  },
+  {
+    brand: 'Nathan', dept: 'pantry',
+    terms: ['matarol', 'steikingarol', 'sólblómaol', 'solblomaol', 'repjuol', '=olía', '=olia', 'isio'],
+    products: [{ name: 'Isio4 matarolía', generic: 'Matarolía', color: '#1F4FA3', image: '/vorur/isio4.webp' }],
+  },
+  {
+    brand: 'Nathan', dept: 'pantry',
+    terms: ['majó', 'majo', 'mayo', 'hellman'],
+    products: [{ name: 'Hellmann\'s majónes', generic: 'Majónes', color: '#1B4F9C', image: '/vorur/hellmanns.webp' }],
+  },
+  {
+    brand: 'Nathan', dept: 'snacks',
+    terms: ['popp', 'popcorn', 'pop secret'],
+    products: [{ name: 'Pop Secret örbylgjupopp', generic: 'Örbylgjupopp', color: '#2A6FC9', image: '/vorur/pop-secret.webp' }],
+  },
+  {
+    brand: 'Nathan', dept: 'snacks',
+    terms: ['=kex', 'kremkex', 'vanillukex', 'súkkulaðikex', 'sukkuladikex', 'hafrakex', 'karamellukex', 'hobnob', 'crawford', 'tunnock'],
+    products: [
+      { name: 'McVitie\'s Hobnobs', generic: 'Súkkulaðikex', color: '#1E73BE', image: '/vorur/hobnobs.jpg' },
+      { name: 'Crawford\'s vanillu kremkex', generic: 'Kremkex', color: '#F2C200', image: '/vorur/crawfords-kremkex.webp' },
+      { name: 'Tunnock\'s Caramel Wafer', color: '#C8102E', image: 'https://images.openfoodfacts.org/images/products/501/097/507/0095/front_en.75.400.jpg' },
     ],
   },
 ]
@@ -110,6 +147,12 @@ export function sponsoredForAI() {
   return out
 }
 
+// Hugtak passar ef það er hluti af innslættinum; hugtak með „=" fremst aðeins ef það er heilt orð í honum.
+function termMatch(q, t) {
+  if (t.charAt(0) === '=') { const w = t.slice(1); return q.split(/[\s,.;:()]+/).includes(w) }
+  return q.includes(t)
+}
+
 // Kostaðar tillögur þegar leitað er að vöru (nafn passar, eða leitarorð blokkar passar).
 export function sponsoredSuggest(query, limit = 4) {
   const q = (query || '').toLowerCase().trim()
@@ -120,7 +163,7 @@ export function sponsoredSuggest(query, limit = 4) {
   ]
   const out = []
   for (const s of blocks) {
-    const termHit = (s.terms || []).some(t => q.includes(t))
+    const termHit = (s.terms || []).some(t => termMatch(q, t))
     for (const p of s.products) {
       if (p.name.toLowerCase().includes(q) || termHit) {
         out.push({ name: p.name, brand: s.brand, dept: s.dept, color: p.color, image: p.image })

@@ -602,3 +602,20 @@ git push
 - Thai Choice eytt. Coca-Cola Zero (ekki Nathan-vara) + „Cola“-herferð + 24 stigafærslur færð á nýtt óvirkt vörumerki „Prufugögn (innanhúss)“ → sést ekki lengur hjá Nathan. Hverfur alveg við hreinsun prufugagna.
 - Þröskuldur enn 800 (pósturinn sagði 1.000) — óbreytt, bíður ákvörðunar.
 - ZoomImg.jsx: smella á vörumynd/kvittanamynd í stjórnborði stækkar hana (BrandProducts, RewardsAdmin, AwardsAdmin). Þarf deploy.
+
+## Fyrsti óþekkti ofurnotandinn (10. nóv 2026) — á bið
+- helgaogbjarki@hotmail.com: kom af Google 13. okt, 12 kvittanir á 4 vikum (6 skannaðar 10. nóv í einni lotu), 8 verslanir (Bónus ×5, Prís, Kostur, Nettó, Hagkaup, Garðheimar, JYSK), 5 innkaupalistar, allar skannanir tókust. Deilir engum lista.
+- Lærdómur: skannar í lotum (safnar í viku) → dagsmörkin 3 kvittanir/dag myndu stoppa hann; endurskoða fyrir ræsingu (t.d. mörk á kaupdag frekar en skönnunardag).
+- ÁKVEÐIÐ en EKKI STRAX: bæta honum í prufuhóp (pilot_emails) og senda stuttan boðspóst með ósk um endurgjöf. Sverrir segir til hvenær.
+
+## Markaðsefni: kvittanaskönnun + heimilisbókhald (10. nóv 2026)
+- Mappa `markadsefni/`: myndaröð `tossalisti-kvittun-1/2/3.png` (1080×1350), stök mynd `tossalisti-kvittun-stok.png` (1080×1080), myndband `tossalisti-kvittun-bokhald.mp4` (1080×1920, 17 sek., án hljóðs), textar + handrit í `kvittanaskonnun-faerslur.md`.
+- Búið til með Pillow + ffmpeg: `markadsefni/make.py` (myndir) og `video.py` (myndband; `python3 video.py út.mp4`, keyrt úr sömu möppu). Skjáir eru teiknaðir eftir hönnunarkerfinu, ekki skjáskot. Öll gögn sýnidæmi („Matvörubúðin“, 8.061 kr., 187.400 kr.).
+- Ekki birt enn. Nýskráningarflæði ætti að laga áður en greitt er fyrir dreifingu.
+
+## Kostaðar tillögur fyrir Nathan-prufuna + vörumyndir (10. nóv 2026) — ÞARF DEPLOY
+- `src/data/sponsors.js`: almennt heiti → Nathan-vara. bleyjur/bleiur→Libero, rúsínur→Sun-Maid, matarolía/olía→Isio4, majónes→Hellmann's, popp→Pop Secret, kex→Hobnobs+Crawford's+Tunnock's, morgunkorn→Cheerios+Cocoa Puffs (taco→Old El Paso var fyrir). Allar með `generic` → raddstýring má skipta almenna heitinu út.
+- Nýtt: hugtak með „=" fremst passar aðeins við heilt orð (`termMatch`): „kex" hittir ekki „hrökkkex", „olía" ekki „ólífuolía", „krem" (Vaseline) ekki „kremkex". Prófað í node.
+- Vörumyndir frá Sverri (af nathan.is o.fl.) í `public/vorur/` (webp/jpg, 22–69 KB): libero, isio4, crawfords-kremkex, hellmanns, pop-secret, hobnobs, sun-maid. `reward_products.image_url` vísar á `https://tossalisti.is/vorur/…` → myndirnar birtast EKKI fyrr en eftir deploy. Cheerios, Cocoa Puffs, Tunnock's enn með Open Food Facts-myndir.
+- Sun-Maid myndin er með arabískum texta (Mið-Austurlandapakkning) — skipta út fyrir íslenska/evrópska pakkamynd.
+- `ads_enabled` er true (kostaðar tillögur sýnilegar öllum notendum, ekki bara prufuhópi).
