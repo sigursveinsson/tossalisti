@@ -793,8 +793,8 @@ export default function App() {
     const n = String(name || '').toLowerCase().trim()
     return !!(griptuTarget && griptuTarget.items.some(i => !i.checked && String(i.name || '').toLowerCase().trim() === n))
   }
-  const griptuHomeAdd = async (name, image) => {
-    const t = griptuTarget
+  const griptuHomeAdd = async (name, image, listId) => {
+    const t = (listId && shoppingLists.find(l => l.id === listId)) || griptuTarget
     if (!t) { flash('Búðu fyrst til innkaupalista'); return }
     const n = String(name).toLowerCase().trim()
     if (t.items.some(i => String(i.name || '').toLowerCase().trim() === n)) { flash(name + ' er nú þegar á „' + t.name + '“'); return }
