@@ -276,9 +276,11 @@ export default function App() {
   const [rewardCatalog, setRewardCatalog] = useState([])
   useEffect(() => {
     if (isCloud && !session) return
-    if (!rewardsEnabled) { setRewardCatalog([]); return }
+    // „+stig“-merki og Gríptu-tillögur aðeins fyrir þá sem geta safnað stigum (prufuhópur) — annars væri lofað stigum sem koma ekki.
+    const canEarn = !!(pilot && (pilot.member || !pilot.pilot_only))
+    if (!rewardsEnabled || !canEarn) { setRewardCatalog([]); return }
     store.getRewardCatalog().then(setRewardCatalog).catch(() => setRewardCatalog([]))
-  }, [session, rewardsEnabled])
+  }, [session, rewardsEnabled, pilot && pilot.member, pilot && pilot.pilot_only])
 
   // Á notandinn deildan lista? (fyrir „bjóddu heimilisfólki"-hvata)
   const [hasShared, setHasShared] = useState(true)
