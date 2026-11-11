@@ -157,7 +157,7 @@ def month_card(c, sx, cy, sw, compact=False):
 def slide3(path):
     c=C(1080,1350,BG); logo(c,72,64,dark_bg=False)
     y=c.wrap(72,160,"Og þú sérð hvert peningarnir fara",F("pb",70),NAVY,940,86)
-    c.wrap(72,y+30,"Heimilisbókhald sem fyllir sig sjálft.",F("lr",36),MUTED,900,48)
+    c.wrap(72,y+30,"Heimilisbókhald sem sér um sig sjálft.",F("lr",36),MUTED,900,48)
     px,py,pw,ph=260,450,560,1040
     sx,sy,sw,sh=phone(c,px,py,pw,ph)
     c.rr(sx,sy,sw,118,46,fill=NAVY); c.rect(sx,sy+60,sw,58,NAVY)

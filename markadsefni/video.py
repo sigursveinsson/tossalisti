@@ -120,7 +120,7 @@ def scene_e(t):
     c.line([(x+20*k, y+33*k), (x+29*k, y+42*k), (x+45*k, y+24*k)], mix(NAVY, GOLD, p), 5.5*k)
     c.t(W/2, 870, "Tossalisti", F("pb", 116), mix(NAVY, WHITE, prog(t, 0.3, 0.6)), "mm")
     p2 = prog(t, 0.55, 0.6)
-    c.t(W/2, 990, "Heimilisbókhald sem", F("lr", 50), mix(NAVY, LIGHT, p2), "mm"); c.t(W/2, 1054, "fyllir sig sjálft", F("lr", 50), mix(NAVY, LIGHT, p2), "mm")
+    c.t(W/2, 990, "Heimilisbókhald sem", F("lr", 50), mix(NAVY, LIGHT, p2), "mm"); c.t(W/2, 1054, "sér um sig sjálft", F("lr", 50), mix(NAVY, LIGHT, p2), "mm")
     p3 = prog(t, 0.9, 0.5); f = F("pb", 58); tx = "Frítt á tossalisti.is"; wd = c.tw(tx, f); sc = 0.9 + 0.1*p3
     w_ = (wd+110)*sc; h_ = 124*sc
     c.rr(W/2-w_/2, 1250-h_/2, w_, h_, h_/2, fill=mix(NAVY, GOLD, p3)); c.t(W/2, 1252, tx, f, mix(NAVY, INK, p3), "mm")

@@ -669,3 +669,13 @@ git push
 - SQL-prófað (rollback): samþykki stimplað, prufuherferð birtist í outbox, afskráning tekur notanda út, ógildur tóki = false.
 - Eftir: DMARC á tossalisti.is; íhuga undirlén send.tossalisti.is fyrir markaðspóst (OFFERS_FROM env); Resend frítt þrep 100/dag, 3.000/mán. Enginn skráður enn — núverandi notendur þurfa að kveikja sjálfir (ekki má skrá þá sjálfkrafa).
 - **ÁKVEÐIÐ (10. nóv): Wonder ehf. á appið og er ábyrgðaraðili.** (Áður opin ákvörðun.) Þarf fyrir D-U-N-S → Apple/Google fyrirtækjaaðgang, persónuverndarstefnu (nú á nafni Sverris), fót á tossalisti.is og samninga við Nathan/Ölgerðina. Wonder ehf., kt. 471119-1560, Nesvegi 100, 170 Seltjarnarnesi — sett í persónuverndarstefnu (ábyrgðaraðili), innskráningarsíðu, listapanel og fót efnissíðna (10. nóv). Sverrir: D-U-N-S fyrir Wonder ehf.
+
+## Stefnubreyting: stofnaðild (kostun) fyrst, hvatakerfi seinna (10. nóv 2026)
+- Hugmynd Sverris: semja við fáa aðila (Ölgerðin, Nathan, Nói Siríus, MS…) um einkarétt á flokki fyrir 100–200 þús./mán, allt fé í markaðssetningu til að fjölga notendum. Borðar + kostaðar vörur + herferðir + kostaðar uppskriftir/sniðmát + mánaðarskýrsla. Hvatakerfið (stig/verðlaun) heldur áfram í Nathan-prufu og Ölgerðarherferð en er ekki forsenda. Ráð: mæla kostnað á virkan notanda (t.d. 100 þús. í FB/IG í 2 vikur) áður en lofað er tölum.
+- `Griptu-flokkar-og-pakkar.xlsx`: Tilboð Ölgerðin (drykkir grunnur + Já/Nei viðbætur: snakk, Danól, Gæðabakstur, Kjarnavörur; samstæðuafsláttur 10% við 2+ flokka), Forsendur (þrep Stór 200/Mið 150/Lítill 100 þús., pakkainnihald 15/8/4 kostaðar vörur, 3/2/1 herferðir, 4/2/1 uppskriftir, 12/6/3 borðavikur; 6 mán + 6 mán framlengingarréttur, verðendurskoðun), Flokkar (16 flokkar með undirflokkum, aðilum, stöðu). Áfengismörk 2,25% (ekki 2,5%) skv. áfengislögum; auglýsingabann. Allt tillögur.
+
+## SEO – 11. nóv. 2026
+- index.html: nýr titill/lýsing (innkaupalisti + heimilisbókhald), canonical, OG, JSON-LD (WebApplication + Organization Wonder ehf.), lesanlegur texti inni í #root (React skiptir út) með tenglum á allar leiðbeiningar.
+- Nýjar síður: fjarmal-heimilisins.html, matarkostnadur.html, kvittanir.html (Article + FAQPage JSON-LD).
+- „Fleiri leiðbeiningar“ krosstenglar á öllum leiðbeiningasíðum; sitemap.xml uppfært með lastmod.
+- Eftir: Search Console (Sverrir staðfestir lén með DNS TXT), senda inn sitemap, biðja um flokkun; innkaupalisti.is → 301 á tossalisti.is/innkaupalisti.html.
