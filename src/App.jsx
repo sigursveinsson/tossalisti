@@ -50,6 +50,7 @@ import { setLearnedCategories } from './data/categories.js'
 import { matchListItems } from './lib/receipt.js'
 import GriptuTab from './components/GriptuTab.jsx'
 import GriptuHome from './components/GriptuHome.jsx'
+import SaveAccount from './components/SaveAccount.jsx'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -102,7 +103,15 @@ export default function App() {
     const { data: sub } = supabase.auth.onAuthStateChange((e, s) => { setSession(s); if (e === 'PASSWORD_RECOVERY') setPwReset(true) })
     return () => sub.subscription.unsubscribe()
   }, [])
-  const finishPwReset = () => { setPwReset(false); try { window.history.replaceState({}, '', window.location.pathname) } catch {} }
+  const finishPwReset = () => { setPwReset(false); try { localStorage.removeItem('tossa.needPw'); window.history.replaceState({}, '', window.location.pathname) } catch {} }
+  // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
+  const isAnon = isCloud && !!session?.user?.is_anonymous
+  const [showSaveAcct, setShowSaveAcct] = useState(false)
+  // Gestur staðfesti netfang með hlekk → biðja um lykilorð einu sinni.
+  useEffect(() => {
+    if (!isCloud || !session || session.user?.is_anonymous) return
+    try { if (localStorage.getItem('tossa.needPw')) setPwReset(true) } catch {}
+  }, [session])
 
   const reload = async (keepId) => {
     try {
@@ -703,6 +712,7 @@ export default function App() {
     })
   }
   const signOut = async () => {
+    if (isAnon && !window.confirm('Þú ert ekki með vistaðan aðgang. Ef þú skráir þig út glatast listarnir þínir. Halda áfram?')) return
     if (isCloud) await supabase.auth.signOut()
     setSession(null); setLists([]); setCurrentId(null); setError(''); setLoading(false)
   }
@@ -837,6 +847,8 @@ export default function App() {
   return (
     <div className="app">
       {showOnboarding && brandBar}
+      {isAnon && <button className="guest-bar" onClick={() => setShowSaveAcct(true)}>Þú ert að prófa án aðgangs · <b>Vista aðganginn</b></button>}
+      {showSaveAcct && <SaveAccount onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}
       <div className="header">
         <div className="header-top">
           <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true" style={{ flex: 'none' }}>
@@ -902,7 +914,7 @@ export default function App() {
           onScanReceipt={() => { setShowLists(false); setReceiptListId(null); setShowReceipt(true) }}
           onOpenBudget={() => { setShowLists(false); goBudget() }}
           onOpenReceipts={() => { setShowLists(false); loadPurchases(); setShowReceipts(true) }}
-          userEmail={session?.user?.email}
+          userEmail={isAnon ? 'Gestur – aðgangur ekki vistaður' : session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onDeleteAccount={isCloud ? () => { setShowLists(false); setShowDeleteAccount(true) } : null}
           onClose={() => setShowLists(false)}

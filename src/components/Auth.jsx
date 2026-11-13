@@ -62,6 +62,15 @@ export default function Auth() {
   const [busy, setBusy] = useState(false)
   const [offers, setOffers] = useState(false) // tilboðspóstur — aldrei sjálfgefið á
 
+  // Prófa án skráningar: nafnlaus Supabase-notandi. Getur vistað aðganginn síðar (SaveAccount) og heldur öllu.
+  const tryGuest = async () => {
+    setError(''); setInfo(''); setBusy(true)
+    const { error } = await supabase.auth.signInAnonymously({ options: { data: { guest: true } } })
+    setBusy(false)
+    if (error) setError('Ekki tókst að opna án skráningar núna. Skráðu þig með netfangi hér fyrir ofan — það tekur hálfa mínútu.')
+    // App.jsx tekur við um leið og session kemur (onAuthStateChange)
+  }
+
   const forgot = async () => {
     setError(''); setInfo('')
     if (!email.includes('@')) { setError('Sláðu inn netfangið þitt.'); return }
@@ -130,6 +139,13 @@ export default function Auth() {
         </button>
         {error && <p className="signin-error">{error}</p>}
         {info && <p className="signin-info">{info}</p>}
+        {mode === 'signup' && (
+          <>
+            <div className="signin-or"><span>eða</span></div>
+            <button className="guest-btn" onClick={tryGuest} disabled={busy}>Prófa fyrst án skráningar</button>
+            <p className="signin-help guest-help">Þú getur vistað aðganginn með netfangi hvenær sem er.</p>
+          </>
+        )}
         {mode === 'signin' && (
           <p className="signin-note">
             <button className="link-btn" onClick={() => { setMode('forgot'); setError(''); setInfo('') }}>Gleymt lykilorð?</button>

@@ -222,7 +222,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                   <div className="adm-user-main">
                     <div className="adm-user-top">
                       {(() => { const b = srcBadge(u); return <span className="adm-user-src" style={{ background: b.color }} title={b.title}>{b.letter}</span> })()}
-                      <span className="adm-user-name">{u.name || u.email.split('@')[0]}</span>
+                      <span className="adm-user-name">{u.name || (u.email ? u.email.split("@")[0] : "gestur")}</span>
                       {isToday(u.created_at) && <span className="adm-user-new">NÝR</span>}
                     </div>
                     <div className="adm-user-email">{u.email}</div>

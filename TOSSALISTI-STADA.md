@@ -679,3 +679,11 @@ git push
 - Nýjar síður: fjarmal-heimilisins.html, matarkostnadur.html, kvittanir.html (Article + FAQPage JSON-LD).
 - „Fleiri leiðbeiningar“ krosstenglar á öllum leiðbeiningasíðum; sitemap.xml uppfært með lastmod.
 - Eftir: Search Console (Sverrir staðfestir lén með DNS TXT), senda inn sitemap, biðja um flokkun; innkaupalisti.is → 301 á tossalisti.is/innkaupalisti.html.
+
+## Lending og gestaaðgangur – 13. nóv. 2026
+- Meta-auglýsing skilaði ~5 raunverulegum gestum (FB-vafri, Android) 13. nóv.; enginn reyndi nýskráningu. Gestir mældir í public.pageviews.
+- Auth.jsx: nýir gestir sjá nýskráningu fyrst (localStorage tossa.known), kvittana-skilaboð, „Alveg ókeypis — byrjaðu strax“, hnappur „Byrja núna“. CSS-villa löguð: „Skrá inn“ hlekkur erfði gula hnappinn.
+- Gestaaðgangur: „Prófa fyrst án skráningar“ = supabase.auth.signInAnonymously(). Gulur borði „Vista aðganginn“ → SaveAccount.jsx (updateUser email → password; ef staðfesting krafist: tossa.needPw → ResetPassword). Útskráning gests varar við gagnatapi.
+- DB: trigger on_auth_user_email_changed heldur profiles.email í takt. Gestir eru ekki í pilot (netfang null) → engin stig.
+- KREFST: Supabase → Authentication → Sign In / Providers → „Allow anonymous sign-ins“ = ON.
+- Seinna: hreinsa gamla nafnlausa notendur (t.d. >30 daga án virkni), íhuga CAPTCHA/hámark á kvittanaskönnun.
