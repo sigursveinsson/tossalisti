@@ -390,7 +390,9 @@ export default function App() {
   }, [session])
 
   // Skrá nafnlausa heimsókn (gesta-teljari) — einu sinni á hverja hleðslu
-  useEffect(() => { store.logPageview(pageContext()) }, [])
+  // Tæki stjórnanda telst ekki með (merkt þegar stjórnandi skráir sig inn á tækinu).
+  useEffect(() => { try { if (localStorage.getItem('tossa.noTrack')) return } catch {} store.logPageview(pageContext()) }, [])
+  useEffect(() => { if (session?.user?.email === 'sigursveinsson@gmail.com') { try { localStorage.setItem('tossa.noTrack', '1') } catch {} } }, [session])
 
   // PWA install-ábending (eykur retention verulega — icon á heimaskjá)
   useEffect(() => {

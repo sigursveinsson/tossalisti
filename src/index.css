@@ -1787,3 +1787,25 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .home-first-txt b{font-size:18px;color:var(--navy);}
 .home-first-txt small{font-size:13.5px;color:#5a4413;line-height:1.35;}
 .home-first .home-row-go{color:var(--navy);}
+
+/* Stjórnborð: umferð */
+.adm-chart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px 8px;margin:10px 0;}
+.adm-chart-h{font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.adm-legend{font-weight:400;display:inline-flex;gap:6px;align-items:center;margin-left:auto;}
+.adm-legend i,.adm-bar-dots i{display:inline-block;width:8px;height:8px;border-radius:50%;}
+.lg-v{background:var(--navy);border-radius:2px!important;}
+.lg-s{background:#16a34a;}
+.lg-g{background:#f5a623;}
+.adm-bars{display:flex;align-items:flex-end;gap:4px;height:130px;}
+.adm-bars-h{height:85px;gap:2px;}
+.adm-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;height:100%;}
+.adm-bar{width:100%;max-width:26px;background:var(--navy);border-radius:4px 4px 0 0;min-height:2px;}
+.adm-bar-n{font-size:10.5px;color:var(--navy);font-weight:600;margin-bottom:2px;}
+.adm-bar-dots{height:10px;display:flex;gap:2px;margin-top:2px;}
+.adm-bar-l{font-size:10px;color:var(--faint);height:13px;}
+.adm-recent{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0;}
+.adm-recent summary{font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;}
+.adm-recent-row{display:flex;gap:10px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line);}
+.adm-recent-t{color:var(--muted);flex:none;width:110px;}
+.adm-recent-s{flex:1;color:var(--text);}
+.adm-recent-p{color:var(--faint);}

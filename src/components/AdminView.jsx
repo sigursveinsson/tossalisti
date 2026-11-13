@@ -170,19 +170,73 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
 
         {tab === 'stats' && pv && (
           <>
-            <div className="adm-head">Umferð (gestir á síðuna)</div>
+            <div className="adm-head">Umferð á tossalisti.is</div>
             <div className="adm-grid">
-              {metric('Heimsóknir í dag', num(pv.views_24h))}
-              {metric('Heimsóknir 7 daga', num(pv.views_7d))}
-              {metric('Einstakir gestir 7d', num(pv.visitors_7d))}
-              {metric('Skráningar 7d', num(pv.signups_7d), (pv.visitors_7d >= pv.signups_7d && pv.visitors_7d > 0) ? Math.round(pv.signups_7d / pv.visitors_7d * 100) + '% breyting' : null)}
+              {metric('Gestir í dag', num(pv.visitors_24h), num(pv.views_24h) + ' síðuflettingar')}
+              {metric('Gestir 7 daga', num(pv.visitors_7d), num(pv.views_7d) + ' síðuflettingar')}
+              {metric('Nýskráningar 7d', num(pv.signups_7d), pv.visitors_7d > 0 ? Math.round((pv.signups_7d || 0) / pv.visitors_7d * 100) + '% af gestum' : null)}
+              {metric('Prufuaðgangar 7d', num(pv.guests_7d), 'án skráningar')}
             </div>
+            {pv.by_day && pv.by_day.length > 0 && (() => {
+              const mx = Math.max(1, ...pv.by_day.map(d => d.visitors || 0))
+              return (
+                <div className="adm-chart">
+                  <div className="adm-chart-h">Gestir á dag · 14 dagar <span className="adm-legend"><i className="lg-v" /> gestir <i className="lg-s" /> skráðir <i className="lg-g" /> prufa</span></div>
+                  <div className="adm-bars">
+                    {pv.by_day.map(d => {
+                      const dt = new Date(d.day)
+                      return (
+                        <div className="adm-bar-col" key={d.day} title={dt.toLocaleDateString('is-IS', { weekday: 'short', day: 'numeric', month: 'short' }) + ': ' + d.visitors + ' gestir, ' + d.signups + ' skráðir, ' + d.guests + ' prufa'}>
+                          <span className="adm-bar-n">{d.visitors || ''}</span>
+                          <div className="adm-bar" style={{ height: Math.round((d.visitors || 0) / mx * 90) + 'px' }} />
+                          <div className="adm-bar-dots">{d.signups > 0 && <i className="lg-s" title={d.signups + ' skráðir'} />}{d.guests > 0 && <i className="lg-g" title={d.guests + ' prufa'} />}</div>
+                          <span className="adm-bar-l">{dt.getDate()}.</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+            {pv.by_hour && pv.by_hour.length > 0 && (() => {
+              const mx = Math.max(1, ...pv.by_hour.map(h => h.n || 0))
+              return (
+                <div className="adm-chart">
+                  <div className="adm-chart-h">Hvenær dags · síðustu 7 dagar (gestir)</div>
+                  <div className="adm-bars adm-bars-h">
+                    {pv.by_hour.map(h => (
+                      <div className="adm-bar-col" key={h.h} title={'kl. ' + h.h + ':00–' + h.h + ':59 — ' + h.n + ' gestir'}>
+                        <div className="adm-bar" style={{ height: Math.round((h.n || 0) / mx * 60) + 'px' }} />
+                        <span className="adm-bar-l">{h.h % 3 === 0 ? h.h : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
             {pv.by_source && pv.by_source.length > 0 && (
               <div className="adm-src-rows">
+                <div className="adm-chart-h">Hvaðan gestir komu · 7 dagar</div>
                 {pv.by_source.map(r => (
                   <div className="adm-src-row" key={r.source}><span>{SRC_LABEL[r.source] || r.source}</span><b>{num(r.n)}</b></div>
                 ))}
               </div>
+            )}
+            {pv.recent && pv.recent.length > 0 && (
+              <details className="adm-recent">
+                <summary>Nýjustu heimsóknir ({pv.recent.length})</summary>
+                {pv.recent.map((r, i) => {
+                  const ref = r.ref ? r.ref.replace(/^https?:\/\/(www\.|m\.|l\.)?/, '').replace(/\/.*$/, '') : ''
+                  const fromAd = r.campaign && /^\d{8,}$/.test(r.campaign)
+                  return (
+                    <div className="adm-recent-row" key={i}>
+                      <span className="adm-recent-t">{fmtDate(r.at)}</span>
+                      <span className="adm-recent-s">{fromAd ? 'Meta-auglýsing' : (SRC_LABEL[r.source] || r.source)}{ref && !fromAd ? ' · ' + ref : ''}</span>
+                      <span className="adm-recent-p">{r.path && r.path !== '/' ? r.path : ''}</span>
+                    </div>
+                  )
+                })}
+              </details>
             )}
           </>
         )}
