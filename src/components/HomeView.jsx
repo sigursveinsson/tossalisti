@@ -40,7 +40,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -132,6 +132,11 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             <small>Taktu mynd — gervigreindin les vörurnar, flokkar útgjöldin{rewardsEnabled ? ' og finnur Gríptu stig' : ''}</small>
           </span>
           <Go />
+        </button>
+      )}
+      {onScanReceipt && onDemoReceipt && purchases.length === 0 && (
+        <button className="home-demo-link" onClick={() => onDemoReceipt()}>
+          Engin kvittun við höndina? <b>Sjáðu dæmi</b>
         </button>
       )}
 

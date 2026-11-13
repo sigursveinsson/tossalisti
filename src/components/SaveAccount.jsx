@@ -5,13 +5,14 @@ import { IconX } from '@tabler/icons-react'
 // Gestur (nafnlaus innskráning) bætir við netfangi og lykilorði. Sami notandi, sama auðkenni — allir
 // listar, kvittanir og stig fylgja. Ef Supabase krefst staðfestingar á netfangi sendum við hlekk og
 // biðjum um lykilorð þegar notandinn kemur til baka (App.jsx les 'tossa.needPw').
-export default function SaveAccount({ onClose, onSaved }) {
+export default function SaveAccount({ onClose, onSaved, reason }) {
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [offers, setOffers] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const nudge = typeof reason === 'string' // birt sjálfkrafa eftir fyrstu kvittun / vörur
 
   const save = async () => {
     setError(''); setInfo('')
@@ -48,8 +49,8 @@ export default function SaveAccount({ onClose, onSaved }) {
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal saveacct" onClick={e => e.stopPropagation()}>
-        <h2>Vista aðganginn <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
-        <p className="saveacct-lead">Bættu við netfangi og lykilorði svo listarnir þínir og kvittanir glatist ekki og þú getir opnað þá í öðrum tækjum. Alveg ókeypis.</p>
+        <h2>{reason === 'receipt' ? 'Vel gert! Viltu vista þetta?' : reason === 'items' ? 'Listinn er kominn af stað!' : 'Vista aðganginn'} <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+        <p className="saveacct-lead">{nudge ? 'Bættu við netfangi og lykilorði svo þetta glatist ekki og þú getir deilt listanum með heimilinu. Tekur hálfa mínútu og er alveg ókeypis.' : 'Bættu við netfangi og lykilorði svo listarnir þínir og kvittanir glatist ekki og þú getir opnað þá í öðrum tækjum. Alveg ókeypis.'}</p>
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="netfang@daemi.is" type="email" autoComplete="email" autoFocus />
         <input value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && save()} placeholder="Veldu lykilorð (minnst 6 stafir)" type="password" autoComplete="new-password" />
         <label className="signin-optin">
@@ -59,6 +60,7 @@ export default function SaveAccount({ onClose, onSaved }) {
         <button className="primary-btn" onClick={save} disabled={busy}>{busy ? '…' : 'Vista'}</button>
         {error && <p className="signin-error">{error}</p>}
         {info && <p className="signin-info">{info}</p>}
+        {nudge && !info && <button className="linklike saveacct-later" onClick={onClose}>Seinna</button>}
       </div>
     </div>
   )

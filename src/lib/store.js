@@ -477,7 +477,7 @@ const local = {
   async getAppSettings() { return JSON.parse(localStorage.getItem('korfan.appsettings') || '{"ads_enabled":false}') },
   async setAppSetting(key, value) { const s = JSON.parse(localStorage.getItem('korfan.appsettings') || '{}'); s[key] = value; localStorage.setItem('korfan.appsettings', JSON.stringify(s)) },
   async logPageview() {},
-  async adminPageviews() { return null }, async scanStats() { return null },
+  async adminPageviews() { return null }, async adminFunnel() { return null }, async scanStats() { return null },
   async getRewardData() { return { brands: [], products: [], offers: [] } },
   async getMyRewards() { return { balance: 0, pending: 0, approved: 0, items: [] } },
   async addRewardBrand() {}, async addRewardProduct() {}, async updateRewardProduct() {},
@@ -1129,6 +1129,7 @@ const cloud = {
     } catch {}
   },
   async scanStats(days = 7) { const { data, error } = await supabase.rpc('scan_stats', { p_days: days }); return error ? null : data },
+  async adminFunnel(days = 7) { const { data, error } = await supabase.rpc('admin_funnel', { p_days: days }); return error ? null : data },
   async adminPageviews() {
     const { data, error } = await supabase.rpc('admin_pageviews')
     if (error) throw error

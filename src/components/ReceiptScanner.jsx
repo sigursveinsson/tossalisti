@@ -31,7 +31,13 @@ const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateStri
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
 // requireImage: boðshópur Gríptu — myndin er geymd alltaf (skoðuð áður en karfa er afhent), ekki hægt að afhaka.
-export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requireImage = false }) {
+// Dæmakvittun fyrir nýja notendur: sýnir lesturinn og bókhaldið án þess að vera með kvittun við höndina.
+const DEMO_ITEMS = [
+  ['Nýmjólk 1 l', 2, 398], ['Heimilisbrauð', 1, 549], ['Egg 12 stk', 1, 989], ['Bananar', 1, 412],
+  ['Kjúklingabringur 900 g', 1, 2798], ['Gúrka', 1, 279], ['Smjör 250 g', 1, 699], ['Ostur 26% sneiddur', 1, 1249],
+  ['Pasta 500 g', 2, 458], ['Coca-Cola 2 l', 1, 459], ['Uppþvottalögur', 1, 549], ['Klósettpappír 8 rúllur', 1, 1198],
+]
+export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requireImage = false, demo = false }) {
   const fileRef = useRef(null)
   const [phase, setPhase] = useState('capture') // capture | reading | review
   const [progress, setProgress] = useState(0)
@@ -62,6 +68,24 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
 
   useBackClose(true, onClose)
+
+  // Dæmi: „les“ kvittunina á ~1,5 sek og fyllir inn tilbúnar línur.
+  useEffect(() => {
+    if (!demo) return
+    setPhase('reading'); setProgress(0)
+    let p = 0
+    const t = setInterval(() => {
+      p = Math.min(1, p + 0.12); setProgress(p)
+      if (p >= 1) {
+        clearInterval(t)
+        setStore('Bónus (dæmi)')
+        setItems(DEMO_ITEMS.map(([name, qty, price], i) => ({ id: 'd' + i, name, qty, price, reward_product_id: null, w: 0 })))
+        setTotal(String(DEMO_ITEMS.reduce((s, [, , pr]) => s + pr, 0)))
+        setPhase('review')
+      }
+    }, 140)
+    return () => clearInterval(t)
+  }, [demo])
 
   // Tilboðsvörur fyrir AI-pörun — sóttar strax þegar glugginn opnast (tilbúnar áður en mynd er tekin).
   const matchRef = useRef(null)
@@ -214,6 +238,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
 
         {phase === 'review' && (
           <>
+            {demo && <div className="receipt-demo-note"><b>Dæmakvittun.</b> Svona les appið kvittunina þína: verslun, dagsetningu og hverja vöru. Ýttu á <b>Vista</b> til að sjá hvernig bókhaldið flokkar útgjöldin. Þú getur eytt dæminu hvenær sem er.</div>}
             <div className="receipt-meta">
               <input className="dialog-input" value={store} onChange={e => setStore(e.target.value)} placeholder="Verslun (t.d. Bónus)" />
               <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />

@@ -687,3 +687,9 @@ git push
 - DB: trigger on_auth_user_email_changed heldur profiles.email í takt. Gestir eru ekki í pilot (netfang null) → engin stig.
 - KREFST: Supabase → Authentication → Sign In / Providers → „Allow anonymous sign-ins“ = ON.
 - Seinna: hreinsa gamla nafnlausa notendur (t.d. >30 daga án virkni), íhuga CAPTCHA/hámark á kvittanaskönnun.
+
+## Virkjun nýrra notenda – 13. nóv. 2026
+- Dæmakvittun: HomeView „Engin kvittun við höndina? Sjáðu dæmi“ (aðeins ef engar kvittanir) → ReceiptScanner demo (12 línur, „Bónus (dæmi)“) → vistað → Bókhald opnast.
+- Vistunarhvatning: gestur fær SaveAccount („Vel gert! Viltu vista þetta?“) eftir fyrstu kvittun og þegar 3 vörur eru komnar á lista; einu sinni hvort (localStorage tossa.nudge.*), með „Seinna“.
+- Trekt: RPC admin_funnel(p_days) reiknuð úr gögnum (gestir → byrjuðu → vara → dæmi → skönnun → gestur vistaði). Sýnd í Stjórnborði > Tölfræði. Gestir merktir user_metadata.guest=true.
+- Stjórnborð: umferð á dag/klst., nýjustu heimsóknir; tæki stjórnanda talið frá (tossa.noTrack).

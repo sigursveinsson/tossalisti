@@ -86,6 +86,7 @@ export default function App() {
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
   const [showReceipt, setShowReceipt] = useState(false)
+  const [demoReceipt, setDemoReceipt] = useState(false) // dæmakvittun fyrir nýja notendur
   const [receiptListId, setReceiptListId] = useState(null) // bókhald: tengja kvittun við hóp
   const [showBudgetIntro, setShowBudgetIntro] = useState(false)
 
@@ -106,7 +107,14 @@ export default function App() {
   const finishPwReset = () => { setPwReset(false); try { localStorage.removeItem('tossa.needPw'); window.history.replaceState({}, '', window.location.pathname) } catch {} }
   // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
   const isAnon = isCloud && !!session?.user?.is_anonymous
-  const [showSaveAcct, setShowSaveAcct] = useState(false)
+  const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
+  // Biðja gest um að vista aðganginn rétt eftir að eitthvað gott gerist (einu sinni fyrir hvert tilefni).
+  const nudgeSave = (reason) => {
+    if (!isAnon) return
+    const k = 'tossa.nudge.' + reason
+    try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1') } catch {}
+    setTimeout(() => setShowSaveAcct(reason), 1200)
+  }
   // Gestur samþykkti persónuverndarstefnu með því að ýta á „Prófa án skráningar“ (texti á lendingu) → skrá það.
   useEffect(() => {
     if (!isAnon || !profileLoaded || (profile && profile.consent_at)) return
@@ -499,6 +507,7 @@ export default function App() {
     let img = image
     if (isChore && !img) { const e = suggestChoreEmoji(name); if (e) img = makeEmojiImage(e) }
     await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image: img }); await reload(list.id)
+    if (isAnon && list.items.length + 1 >= 3) nudgeSave('items')
   }
   // Skema sem áþreifanleg vika: býr til sjálfstæð verk (daglega = 7 línur, eitt per dag).
   const addSchedule = async (name, days, time, person, image) => {
@@ -582,6 +591,8 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards(); flashAwards(r)
     setShowReceipt(false); setReceiptListId(null)
+    if (demoReceipt) { setDemoReceipt(false); goBudget(); flash('Svona lítur bókhaldið út — prófaðu næst með þinni eigin kvittun'); nudgeSave('receipt'); return }
+    nudgeSave('receipt')
     if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, ['outside_campaign', 'unverified'].includes(r.rewardNote) ? { warn: true } : {})
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
     else flash('Kvittun skráð')
@@ -856,7 +867,7 @@ export default function App() {
     <div className="app">
       {showOnboarding && brandBar}
       {isAnon && <button className="guest-bar" onClick={() => setShowSaveAcct(true)}>Þú ert að prófa án aðgangs · <b>Vista aðganginn</b></button>}
-      {showSaveAcct && <SaveAccount onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}
+      {showSaveAcct && <SaveAccount reason={showSaveAcct} onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}
       <div className="header">
         <div className="header-top">
           <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true" style={{ flex: 'none' }}>
@@ -895,7 +906,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -961,7 +972,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner requireImage={!!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={(p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null) }} /></ErrorBoundary>}
+      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner demo={demoReceipt} requireImage={!demoReceipt && !!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={demoReceipt ? null : (p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null); setDemoReceipt(false) }} /></ErrorBoundary>}
 
       {showBudgetIntro && (
         <BudgetIntro

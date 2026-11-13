@@ -1809,3 +1809,16 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .adm-recent-t{color:var(--muted);flex:none;width:110px;}
 .adm-recent-s{flex:1;color:var(--text);}
 .adm-recent-p{color:var(--faint);}
+
+/* Stjórnborð: trekt */
+.adm-funnel-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;}
+.adm-funnel-l{flex:0 0 46%;color:var(--text);}
+.adm-funnel-l small{color:var(--muted);}
+.adm-funnel-bar{flex:1;height:10px;background:var(--chip);border-radius:6px;overflow:hidden;}
+.adm-funnel-bar i{display:block;height:100%;background:var(--navy);border-radius:6px;}
+.adm-funnel-n{flex:none;width:34px;text-align:right;color:var(--navy);}
+/* Dæmakvittun og vistunarhvatning */
+.home-demo-link{display:block;width:100%;background:none;border:none;color:var(--muted);font-size:13.5px;margin:-6px 0 14px;text-align:center;cursor:pointer;}
+.home-demo-link b{color:var(--navy);text-decoration:underline;}
+.receipt-demo-note{background:#fdf0d5;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--navy);margin-bottom:10px;}
+.saveacct-later{display:block;margin:12px auto 0;background:none;border:none;color:var(--muted);font-size:13.5px;text-decoration:underline;cursor:pointer;}

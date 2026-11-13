@@ -55,6 +55,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
   const [pv, setPv] = useState(null)
+  const [funnel, setFunnel] = useState(null)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showRewards, setShowRewards] = useState(false)
@@ -70,6 +71,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
     store.adminStats().then(s => { setStats(s); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
     store.adminActivity().then(setActivity).catch(() => setActivity([]))
     store.adminPageviews().then(setPv).catch(() => setPv(null))
+    store.adminFunnel(7).then(setFunnel).catch(() => setFunnel(null))
   }
   useEffect(load, [])
 
@@ -177,6 +179,29 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
               {metric('Nýskráningar 7d', num(pv.signups_7d), pv.visitors_7d > 0 ? Math.round((pv.signups_7d || 0) / pv.visitors_7d * 100) + '% af gestum' : null)}
               {metric('Prufuaðgangar 7d', num(pv.guests_7d), 'án skráningar')}
             </div>
+            {funnel && (() => {
+              const steps = [
+                ['Gestir á síðuna', funnel.visitors],
+                ['Byrjuðu (prufa eða skráning)', funnel.started],
+                ['Settu vöru á lista', funnel.added_item],
+                ['Skoðuðu dæmakvittun', funnel.demo],
+                ['Skönnuðu eigin kvittun', funnel.scanned],
+                ['Gestir sem vistuðu aðgang', funnel.guest_saved, funnel.guests ? 'af ' + funnel.guests + ' gestum' : null],
+              ]
+              const top = Math.max(1, funnel.visitors || 0)
+              return (
+                <div className="adm-chart">
+                  <div className="adm-chart-h">Hvar fólk dettur út · nýir síðustu 7 daga</div>
+                  {steps.map(([label, n, sub], i) => (
+                    <div className="adm-funnel-row" key={i}>
+                      <span className="adm-funnel-l">{label}{sub ? <small> {sub}</small> : null}</span>
+                      <span className="adm-funnel-bar"><i style={{ width: Math.max(2, Math.round((n || 0) / top * 100)) + '%' }} /></span>
+                      <b className="adm-funnel-n">{num(n || 0)}</b>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
             {pv.by_day && pv.by_day.length > 0 && (() => {
               const mx = Math.max(1, ...pv.by_day.map(d => d.visitors || 0))
               return (
