@@ -88,7 +88,8 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </button>
       )}
 
-      {onOpenRewards && (cashback > 0 || rewardsEnabled) && (
+      {/* Boðskóðaborði sýndur engum: þátttakendur eru skráðir inn með netfangi (pilot_emails). */}
+      {onOpenRewards && (cashback > 0 || (rewardsEnabled && inPilot)) && (
         <button className={'home-cashback' + (cashback > 0 ? '' : ' promo')} onClick={() => onOpenRewards()}>
           <span className="home-cashback-ic"><IconGift size={22} stroke={1.75} /></span>
           {cashback > 0
