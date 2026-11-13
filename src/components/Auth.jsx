@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
-import { IconShoppingCart, IconChecklist, IconUsers, IconChefHat, IconBolt } from '@tabler/icons-react'
+import { IconShoppingCart, IconReceipt, IconUsers, IconChefHat, IconChecklist } from '@tabler/icons-react'
 
 const FEATURES = [
-  { Icon: IconShoppingCart, title: 'Snjallir innkaupalistar', text: 'Vörur flokkast sjálfkrafa í búðardeildir — þú gengur búðina í réttri röð.' },
-  { Icon: IconChecklist, title: 'Verkefnalistar & sniðmát', text: 'Brúðkaup, útilega, flutningar og fleira — tilbúin sniðmát með einum smelli.' },
-  { Icon: IconUsers, title: 'Deildu og úthlutaðu', text: 'Deildu lista með fjölskyldu eða vinum og gerðu fólk ábyrgt fyrir einstökum liðum.' },
-  { Icon: IconChefHat, title: 'Uppskriftir → listi', text: 'Settu öll hráefni uppskriftar á listann með einum smelli, með réttu magni.' },
-  { Icon: IconBolt, title: 'Rauntíma samstilling', text: 'Hakaðu við í búðinni og hinir á listanum sjá það samstundis.' },
+  { Icon: IconReceipt, title: 'Skannaðu kvittunina — bókhaldið gerir sig sjálft', text: 'Appið les hverja vöru, flokkar útgjöldin og sýnir hvert peningarnir fara — eftir flokki og verslun.' },
+  { Icon: IconShoppingCart, title: 'Innkaupalisti fyrir alla fjölskylduna', text: 'Allir á heimilinu sjá sama listann og hakað er við í rauntíma í búðinni.' },
+  { Icon: IconChecklist, title: 'Verkefnalistar og sniðmát', text: 'Heimilisverk, útilega, flutningar — tilbúin sniðmát með einum smelli.' },
+  { Icon: IconChefHat, title: 'Uppskriftir beint á listann', text: 'Öll hráefnin á listann með einum smelli, með réttu magni.' },
+  { Icon: IconUsers, title: 'Kvittanir og ábyrgðir á einum stað', text: 'Finndu kvittunina á sekúndum og fáðu áminningu áður en skilafrestur rennur út.' },
 ]
 
 const ICELANDIC_ERROR = (msg) => {
@@ -53,7 +53,8 @@ export function ResetPassword({ onDone }) {
 }
 
 export default function Auth() {
-  const [mode, setMode] = useState('signin') // 'signin' | 'signup' | 'forgot'
+  // Nýir gestir (t.d. úr auglýsingu) sjá nýskráningu fyrst; tæki sem hefur áður skráð sig inn sér innskráningu.
+  const [mode, setMode] = useState(() => { try { return localStorage.getItem('tossa.known') ? 'signin' : 'signup' } catch { return 'signup' } }) // 'signin' | 'signup' | 'forgot'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -81,6 +82,7 @@ export default function Auth() {
       : await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
     if (error) { setError(ICELANDIC_ERROR(error.message)); return }
+    try { localStorage.setItem('tossa.known', '1') } catch {}
     if (mode === 'signup' && !data.session) {
       // Tölvupóststaðfesting er enn á — láta notanda vita
       setError('Reikningur stofnaður. Skráðu þig nú inn.')
@@ -94,12 +96,12 @@ export default function Auth() {
       <div className="hero">
         <img className="hero-logo" src="/logo.svg" alt="Tossalisti" width="76" height="76" />
         <h1>Tossa<span style={{ color: '#f5a623' }}>listi</span></h1>
-        <p className="tagline">Eitt app til að muna, versla og deila.</p>
-        <p className="lead">Innkaupalistar, verkefnalistar og uppskriftir á íslensku — deilanlegt með fjölskyldu og vinum.</p>
+        <p className="tagline">Heimilisbókhald sem sér um sig sjálft.</p>
+        <p className="lead">Skannaðu kvittunina og sjáðu hvert peningarnir fara. Innkaupalisti sem öll fjölskyldan deilir. Íslenskt og alveg ókeypis.</p>
       </div>
 
       <div className="signin-card">
-        <p className="signin-title">{mode === 'signup' ? 'Stofna reikning' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
+        <p className="signin-title">{mode === 'signup' ? 'Alveg ókeypis — byrjaðu strax' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
         {mode === 'forgot' && <p className="signin-help">Sláðu inn netfangið þitt og við sendum þér hlekk til að velja nýtt lykilorð.</p>}
         <input
           value={email}
@@ -113,7 +115,7 @@ export default function Auth() {
           value={password}
           onChange={e => setPassword(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && submit()}
-          placeholder="Lykilorð"
+          placeholder={mode === 'signup' ? 'Veldu lykilorð (minnst 6 stafir)' : 'Lykilorð'}
           type="password"
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
         />}
@@ -124,7 +126,7 @@ export default function Auth() {
           </label>
         )}
         <button onClick={submit} disabled={busy}>
-          {busy ? '…' : (mode === 'signup' ? 'Stofna reikning' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
+          {busy ? '…' : (mode === 'signup' ? 'Byrja núna' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
         </button>
         {error && <p className="signin-error">{error}</p>}
         {info && <p className="signin-info">{info}</p>}
@@ -141,7 +143,7 @@ export default function Auth() {
         </p>
       </div>
 
-      <p className="features-head">Af hverju Tossalisti?</p>
+      <p className="features-head">Það sem þú færð</p>
       <div className="features">
         {FEATURES.map((f, i) => (
           <div className="feature" key={i}>
@@ -154,7 +156,7 @@ export default function Auth() {
         ))}
       </div>
 
-      <p className="landing-foot">Ókeypis · íslenskt · virkar í síma og vafra</p>
+      <p className="landing-foot">Ókeypis · engar kortaupplýsingar · íslenskt · virkar í síma og vafra</p>
       <p className="landing-legal">Tossalisti er rekinn af Wonder ehf., kt. 471119-1560 · <a href="/personuvernd.html" target="_blank" rel="noopener">Persónuvernd</a></p>
     </div>
   )
