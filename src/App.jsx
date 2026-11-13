@@ -27,7 +27,7 @@ import Dialog from './components/Dialog.jsx'
 import Auth, { ResetPassword } from './components/Auth.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { useBackClose } from './lib/backstack.js'
-import { captureAttribution, getAttribution, pageContext } from './lib/attribution.js'
+import { captureAttribution, getAttribution, pageContext, isBot } from './lib/attribution.js'
 
 captureAttribution()
 const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
@@ -399,8 +399,9 @@ export default function App() {
 
   // Skrá nafnlausa heimsókn (gesta-teljari) — einu sinni á hverja hleðslu
   // Tæki stjórnanda telst ekki með (merkt þegar stjórnandi skráir sig inn á tækinu).
-  useEffect(() => { try { if (localStorage.getItem('tossa.noTrack')) return } catch {} store.logPageview(pageContext()) }, [])
+  useEffect(() => { if (isBot()) return; try { if (localStorage.getItem('tossa.noTrack')) return } catch {} store.logPageview(pageContext()) }, [])
   useEffect(() => { if (session?.user?.email === 'sigursveinsson@gmail.com') { try { localStorage.setItem('tossa.noTrack', '1') } catch {} } }, [session])
+  useEffect(() => { if (isCloud && session?.user?.id) store.noteSession() }, [session?.user?.id])
 
   // PWA install-ábending (eykur retention verulega — icon á heimaskjá)
   useEffect(() => {

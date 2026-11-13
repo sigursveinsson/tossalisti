@@ -28,7 +28,7 @@ function detect() {
     if (isFb(host)) source = 'facebook'
     else if (isIg(host)) source = 'instagram'
     else if (isGg(host)) source = 'google'
-    else if (host.includes('tossalisti')) source = 'tossalisti'
+    else if (host.includes('tossalisti')) source = 'direct' // eigin síða (endurhleðsla, innskráning, leiðbeiningasíður) — ekki boð
     else source = 'other'
   }
   if (source === 'direct' && p.get('fbclid')) source = 'facebook'
@@ -65,6 +65,14 @@ export function visitorId() {
 }
 
 // Samhengi þessarar heimsóknar (fyrir gesta-teljara) — uppruni þessarar hleðslu.
+// Vélmenni og forskoðunar-skriðlar (Meta, Google o.fl.) teljast ekki sem gestir.
+export function isBot() {
+  try {
+    const ua = navigator.userAgent || ''
+    return !!navigator.webdriver || /HeadlessChrome|bot|crawler|spider|meta-externalads|facebookexternalhit|Lighthouse|PageSpeed/i.test(ua)
+  } catch { return false }
+}
+
 export function pageContext() {
   const a = detect()
   return { source: a.source, utm_campaign: a.utm_campaign, referrer: a.referrer, path: (location.pathname + location.hash).slice(0, 200), visitor: visitorId() }
