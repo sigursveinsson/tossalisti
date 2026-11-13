@@ -271,15 +271,15 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
             <div className="adm-head">Notendur — virkni ({activity.length})</div>
             <div className="adm-users">
               {activity.map((u, i) => (
-                <div className={'adm-user' + (isToday(u.created_at) ? ' new' : '')} key={u.email + i}>
-                  <span className="adm-user-ava">{(u.name || u.email).slice(0, 2).toUpperCase()}</span>
+                <div className={'adm-user' + (isToday(u.created_at) ? ' new' : '')} key={(u.email || 'gestur') + i}>
+                  <span className="adm-user-ava">{(u.name || u.email || 'Gestur').slice(0, 2).toUpperCase()}</span>
                   <div className="adm-user-main">
                     <div className="adm-user-top">
                       {(() => { const b = srcBadge(u); return <span className="adm-user-src" style={{ background: b.color }} title={b.title}>{b.letter}</span> })()}
                       <span className="adm-user-name">{u.name || (u.email ? u.email.split("@")[0] : "gestur")}</span>
                       {isToday(u.created_at) && <span className="adm-user-new">NÝR</span>}
                     </div>
-                    <div className="adm-user-email">{u.email}</div>
+                    <div className="adm-user-email">{u.email || 'Gestur — prufa án skráningar'}</div>
                     <div className="adm-user-act">{activitySummary(u)}</div>
                   </div>
                   <div className="adm-user-time">
