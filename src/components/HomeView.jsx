@@ -40,7 +40,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -57,6 +57,8 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
     .filter(p => p.purchased_at && new Date(p.purchased_at) >= monthStart)
     .reduce((a, p) => a + (Number(p.total) || 0), 0)
   const hasShopping = lists.some(l => l.type === 'shopping')
+  // Fyrsta heimsókn: enginn listi með vörum enn → stór „Búa til lista“ efst.
+  const firstTime = !lists.some(l => (l.items || []).length > 0)
 
   const groups = groupFeed(s.feed)
   const alerts = receiptAlerts(purchases)
@@ -74,6 +76,17 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             : <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
+
+      {firstTime && onCreateList && (
+        <button className="home-first" onClick={() => onCreateList()}>
+          <span className="home-first-ic"><IconShoppingCart size={26} stroke={1.75} /></span>
+          <span className="home-first-txt">
+            <b>Búa til lista</b>
+            <small>Skrifaðu það sem vantar — vörurnar flokkast sjálfkrafa eftir búðardeildum</small>
+          </span>
+          <Go />
+        </button>
+      )}
 
       {onOpenRewards && (cashback > 0 || rewardsEnabled) && (
         <button className={'home-cashback' + (cashback > 0 ? '' : ' promo')} onClick={() => onOpenRewards()}>

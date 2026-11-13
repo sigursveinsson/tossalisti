@@ -1779,3 +1779,11 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .saveacct input[type=email],.saveacct input[type=password]{width:100%;height:46px;border:1px solid var(--line);border-radius:11px;padding:0 14px;font-size:16px;margin-bottom:10px;background:var(--surface);color:var(--text);}
 .saveacct-lead{font-size:14px;color:var(--muted);line-height:1.45;margin:0 0 14px;}
 .saveacct .primary-btn{width:100%;}
+
+/* Heimaskjár: fyrsta heimsókn — stór „Búa til lista“ */
+.home-first{width:100%;display:flex;align-items:center;gap:14px;padding:18px 16px;margin-bottom:14px;border:none;background:var(--cta);color:var(--cta-ink);border-radius:16px;text-align:left;box-shadow:0 8px 22px rgba(245,166,35,.28);cursor:pointer;}
+.home-first-ic{width:48px;height:48px;flex:none;border-radius:14px;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;color:var(--navy);}
+.home-first-txt{flex:1;display:flex;flex-direction:column;gap:2px;}
+.home-first-txt b{font-size:18px;color:var(--navy);}
+.home-first-txt small{font-size:13.5px;color:#5a4413;line-height:1.35;}
+.home-first .home-row-go{color:var(--navy);}

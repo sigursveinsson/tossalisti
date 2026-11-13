@@ -111,6 +111,13 @@ export default function Auth() {
 
       <div className="signin-card">
         <p className="signin-title">{mode === 'signup' ? 'Alveg ókeypis — byrjaðu strax' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
+        {mode === 'signup' && (
+          <>
+            <button onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
+            <p className="signin-help guest-help">Engin skráning. Þú getur vistað aðganginn með netfangi hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
+            <div className="signin-or"><span>eða skráðu þig með netfangi</span></div>
+          </>
+        )}
         {mode === 'forgot' && <p className="signin-help">Sláðu inn netfangið þitt og við sendum þér hlekk til að velja nýtt lykilorð.</p>}
         <input
           value={email}
@@ -134,18 +141,11 @@ export default function Auth() {
             <span>Já, sendið mér tölvupóst þegar nýjar herferðir og tilboð byrja (í mesta lagi einu sinni í viku)</span>
           </label>
         )}
-        <button onClick={submit} disabled={busy}>
-          {busy ? '…' : (mode === 'signup' ? 'Byrja núna' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
+        <button className={mode === 'signup' ? 'guest-btn' : undefined} onClick={submit} disabled={busy}>
+          {busy ? '…' : (mode === 'signup' ? 'Stofna aðgang' : mode === 'forgot' ? 'Senda hlekk' : 'Skrá inn')}
         </button>
         {error && <p className="signin-error">{error}</p>}
         {info && <p className="signin-info">{info}</p>}
-        {mode === 'signup' && (
-          <>
-            <div className="signin-or"><span>eða</span></div>
-            <button className="guest-btn" onClick={tryGuest} disabled={busy}>Prófa fyrst án skráningar</button>
-            <p className="signin-help guest-help">Þú getur vistað aðganginn með netfangi hvenær sem er.</p>
-          </>
-        )}
         {mode === 'signin' && (
           <p className="signin-note">
             <button className="link-btn" onClick={() => { setMode('forgot'); setError(''); setInfo('') }}>Gleymt lykilorð?</button>

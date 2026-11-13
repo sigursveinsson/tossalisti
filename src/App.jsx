@@ -107,6 +107,11 @@ export default function App() {
   // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
   const isAnon = isCloud && !!session?.user?.is_anonymous
   const [showSaveAcct, setShowSaveAcct] = useState(false)
+  // Gestur samþykkti persónuverndarstefnu með því að ýta á „Prófa án skráningar“ (texti á lendingu) → skrá það.
+  useEffect(() => {
+    if (!isAnon || !profileLoaded || (profile && profile.consent_at)) return
+    store.recordConsent('v1-gestur').then(() => setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1-gestur' }))).catch(() => {})
+  }, [isAnon, profileLoaded, profile && profile.consent_at])
   // Gestur staðfesti netfang með hlekk → biðja um lykilorð einu sinni.
   useEffect(() => {
     if (!isCloud || !session || session.user?.is_anonymous) return
@@ -770,10 +775,11 @@ export default function App() {
     ? <button className="brand-bar" onClick={() => setBrandViewP('dash')}><IconChartBar size={16} stroke={2} /> Mælaborð {brandUser.name}</button>
     : null
   const withBar = (el) => brandBar ? <>{brandBar}{el}</> : el
-  if (isCloud && session && profileLoaded && (!profile || !profile.name)) {
+  // Gestir (prufa án skráningar) sleppa nafni/lit — sá skjár kemur þegar aðgangur er vistaður.
+  if (isCloud && session && !isAnon && profileLoaded && (!profile || !profile.name)) {
     return withBar(<ProfileSetup initial={profile} onSave={saveProfile} />)
   }
-  if (isCloud && session && profileLoaded && profile && profile.name && !profile.consent_at) {
+  if (isCloud && session && !isAnon && profileLoaded && profile && profile.name && !profile.consent_at) {
     return withBar(<ConsentNotice onAccept={async () => { await store.recordConsent('v1'); setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1' })) }} />)
   }
   if (loading) return withBar(<div className="empty">Hleð…</div>)
@@ -887,7 +893,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={() => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
