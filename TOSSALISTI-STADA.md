@@ -702,3 +702,9 @@ git push
 - Gestaborði: „Þú ert að prófa Tossalista · Vista aðgang · Skrá inn“ + persónuverndarlína fyrir auto-gesti. „Skrá inn“ skráir út úr prufu (varar við ef vörur), setur tossa.noAuto.
 - Mæling: landing_events auto_guest/_ok/_err, app_view/app_leave. admin_funnel skilar cohorts (auto / landing / registered) + app_median_sec; tafla í Stjórnborði.
 - Hreinsun: cleanup_idle_guests() með pg_cron kl. 04:15 daglega — eyðir prufuaðgöngum >7 daga án vara/kvittana.
+
+## Google-innskráning – 14. nóv. 2026
+- GoogleButton.jsx; Auth.jsx: „Halda áfram með Google“ (signInWithOAuth) í nýskráningu og innskráningu; SaveAccount: „Vista með Google“ (linkIdentity → prufuaðgangur verður varanlegur). Falið í Facebook/Instagram-vöfrum (isInAppBrowser, Google bannar þar).
+- App: nafn forútfyllt úr Google (full_name), tossa.known sett við varanlega innskráningu, OAuth-villur úr slóð sýndar á íslensku.
+- Supabase: „Allow manual linking“ = ON (13./14. nóv). Redirect URLs innihalda https://tossalisti.is/**.
+- EFTIR (Sverrir): Google Cloud OAuth client + virkja Google í Supabase — leiðbeiningar í GOOGLE-INNSKRANING.md. Sign in with Apple fyrir iOS-app í janúar.

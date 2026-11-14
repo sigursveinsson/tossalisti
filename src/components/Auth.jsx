@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { landingEvent, startLandingTracking } from '../lib/landing.js'
+import { landingEvent, startLandingTracking, isInAppBrowser } from '../lib/landing.js'
+import GoogleButton from './GoogleButton.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 import { IconShoppingCart, IconReceipt, IconUsers, IconChefHat, IconChecklist } from '@tabler/icons-react'
 
@@ -76,6 +77,20 @@ export default function Auth() {
     // App.jsx tekur við um leið og session kemur (onAuthStateChange)
   }
 
+  // Google: aðeins í venjulegum vafra (Google bannar innskráningu inni í Facebook/Instagram-vafranum).
+  const showGoogle = !isInAppBrowser()
+  const google = async () => {
+    setError(''); setInfo(''); setBusy(true)
+    landingEvent('click_google')
+    try { localStorage.setItem('tossa.known', '1') } catch {}
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })
+    if (error) {
+      setBusy(false); landingEvent('google_err')
+      setError(/not enabled|unsupported provider/i.test(error.message || '') ? 'Innskráning með Google er ekki komin í gagnið enn — notaðu netfang eða prófaðu án skráningar.' : (error.message || 'Ekki tókst að opna Google.'))
+    }
+    // annars fer vafrinn til Google og kemur til baka innskráður
+  }
+
   const forgot = async () => {
     setError(''); setInfo('')
     if (!email.includes('@')) { setError('Sláðu inn netfangið þitt.'); return }
@@ -122,7 +137,14 @@ export default function Auth() {
           <>
             <button onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
             <p className="signin-help guest-help">Engin skráning. Þú getur vistað aðganginn með netfangi hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
+            {showGoogle && <GoogleButton onClick={google} disabled={busy} />}
             <div className="signin-or"><span>eða skráðu þig með netfangi</span></div>
+          </>
+        )}
+        {mode === 'signin' && showGoogle && (
+          <>
+            <GoogleButton onClick={google} disabled={busy} />
+            <div className="signin-or"><span>eða með netfangi</span></div>
           </>
         )}
         {mode === 'forgot' && <p className="signin-help">Sláðu inn netfangið þitt og við sendum þér hlekk til að velja nýtt lykilorð.</p>}

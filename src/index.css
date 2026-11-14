@@ -1842,3 +1842,7 @@ div.guest-bar button{background:none;border:none;color:var(--navy);font-size:13.
 .adm-cohort td{text-align:right;padding:5px 3px;border-bottom:1px solid var(--line);color:var(--text);}
 .adm-cohort td:first-child,.adm-cohort th:first-child{text-align:left;}
 .adm-cohort small{color:var(--faint);}
+
+/* Google-hnappur */
+.signin-card .google-btn,.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:48px;border:1.5px solid var(--line);background:#fff;color:#1f1f1f;border-radius:11px;font-size:15.5px;font-weight:600;margin-top:10px;cursor:pointer;}
+.google-btn:disabled{opacity:.6;}

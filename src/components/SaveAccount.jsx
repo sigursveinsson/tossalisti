@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import { IconX } from '@tabler/icons-react'
+import GoogleButton from './GoogleButton.jsx'
+import { isInAppBrowser } from '../lib/landing.js'
 
 // Gestur (nafnlaus innskráning) bætir við netfangi og lykilorði. Sami notandi, sama auðkenni — allir
 // listar, kvittanir og stig fylgja. Ef Supabase krefst staðfestingar á netfangi sendum við hlekk og
@@ -13,6 +15,17 @@ export default function SaveAccount({ onClose, onSaved, reason }) {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const nudge = typeof reason === 'string' // birt sjálfkrafa eftir fyrstu kvittun / vörur
+
+  // Tengja Google-aðgang við prufuaðganginn: sami notandi, allt fylgir. Krefst „manual linking“ í Supabase.
+  const saveGoogle = async () => {
+    setError(''); setBusy(true)
+    try { localStorage.setItem('tossa.known', '1') } catch {}
+    const { error } = await supabase.auth.linkIdentity({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })
+    if (error) {
+      setBusy(false)
+      setError(/not enabled|unsupported provider|manual linking/i.test(error.message || '') ? 'Vistun með Google er ekki komin í gagnið enn — notaðu netfang og lykilorð hér fyrir neðan.' : (error.message || 'Ekki tókst að opna Google.'))
+    }
+  }
 
   const save = async () => {
     setError(''); setInfo('')
@@ -51,7 +64,13 @@ export default function SaveAccount({ onClose, onSaved, reason }) {
       <div className="modal saveacct" onClick={e => e.stopPropagation()}>
         <h2>{reason === 'receipt' ? 'Vel gert! Viltu vista þetta?' : reason === 'items' ? 'Listinn er kominn af stað!' : 'Vista aðganginn'} <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
         <p className="saveacct-lead">{nudge ? 'Bættu við netfangi og lykilorði svo þetta glatist ekki og þú getir deilt listanum með heimilinu. Tekur hálfa mínútu og er alveg ókeypis.' : 'Bættu við netfangi og lykilorði svo listarnir þínir og kvittanir glatist ekki og þú getir opnað þá í öðrum tækjum. Alveg ókeypis.'}</p>
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="netfang@daemi.is" type="email" autoComplete="email" autoFocus />
+        {!isInAppBrowser() && (
+          <>
+            <GoogleButton onClick={saveGoogle} disabled={busy}>Vista með Google</GoogleButton>
+            <div className="signin-or"><span>eða með netfangi</span></div>
+          </>
+        )}
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="netfang@daemi.is" type="email" autoComplete="email" />
         <input value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && save()} placeholder="Veldu lykilorð (minnst 6 stafir)" type="password" autoComplete="new-password" />
         <label className="signin-optin">
           <input type="checkbox" checked={offers} onChange={e => setOffers(e.target.checked)} />

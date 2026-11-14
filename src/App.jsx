@@ -128,6 +128,16 @@ export default function App() {
     await supabase.auth.signOut()
     setSession(null)
   }
+  // Google-innskráning/tenging sem mistókst kemur til baka með villu í slóðinni → sýna á íslensku.
+  useEffect(() => {
+    const h = new URLSearchParams((window.location.hash || '').replace(/^#/, '') + '&' + window.location.search.replace(/^\?/, ''))
+    const err = h.get('error_description') || h.get('error')
+    if (!err) return
+    const m = /already|exists|linked/i.test(err) ? 'Þessi Google-aðgangur er þegar skráður. Skráðu þig inn með honum — athugaðu að prufulistarnir fylgja ekki.' : 'Innskráning með Google tókst ekki: ' + err
+    setTimeout(() => flash(m, { warn: true }), 500)
+    try { window.history.replaceState({}, '', window.location.pathname) } catch {}
+  }, [])
+  useEffect(() => { if (session && !session.user?.is_anonymous) { try { localStorage.setItem('tossa.known', '1') } catch {} } }, [session])
   const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
   // Biðja gest um að vista aðganginn rétt eftir að eitthvað gott gerist (einu sinni fyrir hvert tilefni).
   const nudgeSave = (reason) => {
@@ -813,7 +823,7 @@ export default function App() {
   const withBar = (el) => brandBar ? <>{brandBar}{el}</> : el
   // Gestir (prufa án skráningar) sleppa nafni/lit — sá skjár kemur þegar aðgangur er vistaður.
   if (isCloud && session && !isAnon && profileLoaded && (!profile || !profile.name)) {
-    return withBar(<ProfileSetup initial={profile} onSave={saveProfile} />)
+    return withBar(<ProfileSetup initial={profile?.name ? profile : { ...(profile || {}), name: ((session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').split(' ')[0]) }} onSave={saveProfile} />)
   }
   if (isCloud && session && !isAnon && profileLoaded && profile && profile.name && !profile.consent_at) {
     return withBar(<ConsentNotice onAccept={async () => { await store.recordConsent('v1'); setProfile(p => ({ ...(p || {}), consent_at: new Date().toISOString(), consent_version: 'v1' })) }} />)

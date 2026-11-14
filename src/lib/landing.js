@@ -71,3 +71,8 @@ export function shouldAutoGuest() {
     return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
   } catch { return false }
 }
+
+// Vafrar inni í öppum (Facebook, Instagram o.fl.) — Google bannar innskráningu þar („disallowed_useragent“).
+export function isInAppBrowser() {
+  try { return /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|Snapchat|TikTok|; wv\)/i.test(navigator.userAgent || '') } catch { return false }
+}
