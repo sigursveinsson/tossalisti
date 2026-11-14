@@ -16,6 +16,7 @@ import BrandDashboard from './components/BrandDashboard.jsx'
 import GriptuLanding from './components/GriptuLanding.jsx'
 import CodeCheck from './components/CodeCheck.jsx'
 import Unsubscribe from './components/Unsubscribe.jsx'
+import JoinOffers from './components/JoinOffers.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ListsPanel from './components/ListsPanel.jsx'
 import DeleteAccount from './components/DeleteAccount.jsx'
@@ -796,6 +797,8 @@ export default function App() {
   if (codeMatch) return <CodeCheck code={decodeURIComponent(codeMatch[1]).toUpperCase()} />
   // Afskráning af tilboðspósti: /afskra?t=<tóki> — engin innskráning
   if (typeof window !== 'undefined' && /^\/afskra\/?$/.test(window.location.pathname)) return <Unsubscribe token={new URLSearchParams(window.location.search).get('t')} />
+  // Skráning á póstlista úr velkomupósti: /postlisti?t=<tóki>
+  if (typeof window !== 'undefined' && /^\/postlisti\/?$/.test(window.location.pathname)) return <JoinOffers token={new URLSearchParams(window.location.search).get('t')} />
   if (isGriptu) {
     const adminHere = isCloud && session?.user?.email === 'sigursveinsson@gmail.com'
     if (isCloud && session && brandUser === undefined) return null

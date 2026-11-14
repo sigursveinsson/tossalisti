@@ -66,7 +66,7 @@ export function shouldAutoGuest() {
     if (localStorage.getItem('tossa.known') || localStorage.getItem('tossa.noAuto')) return false
     const p = new URLSearchParams(window.location.search)
     if (p.has('reset') || p.has('invite') || p.has('griptu')) return false
-    if (/^\/afskra/.test(window.location.pathname)) return false
+    if (/^\/(afskra|postlisti)/.test(window.location.pathname)) return false
     const c = pageContext()
     return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
   } catch { return false }

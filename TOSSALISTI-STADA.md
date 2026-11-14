@@ -732,3 +732,10 @@ git push
 - Ákvörðun Sverris: enginn boðshópur, Gríptu tekið út úr appinu í bili. app_settings.rewards_enabled = false (afturkræft með einum rofa í Stjórnborði → Verðlaunakerfi, eða SQL).
 - Áhrif: enginn Gríptu-flipi, stigaborði, Gríptu-hnappur á heimaskjá, +stig á vörum eða stigagjöf við kvittun. HomeView sýnir stigaborða aðeins ef rewards_enabled. „Gríptu“ tekið úr forsíðutexta (index.html).
 - Óbreytt: heildsalamælaborð (griptu.is), kostaðar vörur (ads_enabled=false nú þegar), gögn og stig í gagnagrunni (ekkert eytt).
+- Search Console (14. nóv.): eign https://tossalisti.is/ staðfest (HTML-skrá — EKKI eyða public/google1136b7d37f1d50bb.html). sitemap.xml sent inn: Success, 8 síður fundnar.
+
+## Velkomupóstur – 14. nóv. 2026
+- Sniðmát: public/postur/velkomin.html (birt á vefnum; edge-fallið sækir það við hverja keyrslu → breyta textanum = venjulegt deploy). Drög/forsýn: markadsefni/velkomupostur*.html. Myndir: public/postur/*.png (teiknaðar með markadsefni/postur.py).
+- DB: welcome_emails (user_id, token, sent_at); welcome_outbox() velur notendur með netfang, ekki nafnlausa, stofnaða frá 14.11.2026, ekki stjórnanda/stjorinn88/excluded_users/vörumerkjanotendur; welcome_mark_sent(); join_offers(token) → offers_email=true.
+- Edge send-welcome (verify_jwt=false), pg_cron „send-welcome“ */10. Einn póstur á mann.
+- /postlisti?t=<tóki> → JoinOffers.jsx (skráning á póstlista með einum smelli). robots: Disallow /postlisti.
