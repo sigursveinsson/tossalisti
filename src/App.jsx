@@ -51,6 +51,7 @@ import { matchListItems } from './lib/receipt.js'
 import GriptuTab from './components/GriptuTab.jsx'
 import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
+import { shouldAutoGuest, landingEvent, startAppTracking } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -107,6 +108,26 @@ export default function App() {
   const finishPwReset = () => { setPwReset(false); try { localStorage.removeItem('tossa.needPw'); window.history.replaceState({}, '', window.location.pathname) } catch {} }
   // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
   const isAnon = isCloud && !!session?.user?.is_anonymous
+  // Gestir úr Facebook/Instagram lenda beint í appinu (prufuaðgangur stofnaður sjálfkrafa).
+  const [autoGuest, setAutoGuest] = useState(() => shouldAutoGuest() ? 'pending' : null) // 'pending' | 'done' | 'failed' | null
+  useEffect(() => {
+    if (autoGuest !== 'pending' || !authReady) return
+    if (session) { setAutoGuest(null); return }
+    landingEvent('auto_guest')
+    supabase.auth.signInAnonymously({ options: { data: { guest: true, auto: true } } }).then(({ error }) => {
+      landingEvent(error ? 'auto_guest_err' : 'auto_guest_ok')
+      setAutoGuest(error ? 'failed' : 'done')
+    }).catch(() => { landingEvent('auto_guest_err'); setAutoGuest('failed') })
+  }, [autoGuest, authReady])
+  // Mæla tíma inni í appinu hjá gestum
+  useEffect(() => { if (isAnon) return startAppTracking() }, [isAnon])
+  // Gestur vill skrá sig inn með eigin aðgangi: út úr prufu, upphafssíða í innskráningarham.
+  const guestSignIn = async () => {
+    if (lists.some(l => (l.items || []).length > 0) && !window.confirm('Prufulistarnir þínir fylgja ekki með ef þú skráir þig inn með öðrum aðgangi. Halda áfram?')) return
+    try { localStorage.setItem('tossa.noAuto', '1'); localStorage.setItem('tossa.known', '1') } catch {}
+    await supabase.auth.signOut()
+    setSession(null)
+  }
   const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
   // Biðja gest um að vista aðganginn rétt eftir að eitthvað gott gerist (einu sinni fyrir hvert tilefni).
   const nudgeSave = (reason) => {
@@ -774,6 +795,7 @@ export default function App() {
     return <GriptuLanding session={isCloud ? session : null} onSignOut={signOut}
       onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
   }
+  if (isCloud && !session && autoGuest === 'pending') return <div className="empty">Opna Tossalista…</div>
   if (isCloud && !session) return <>{toast && <div className="toast" onClick={() => setToast('')}>{toast.warn ? toast.msg : toast}</div>}<Auth /></>
   // „Gleymt lykilorð?“-hlekkur opnaður: velja nýtt lykilorð áður en lengra er haldið.
   if (isCloud && session && pwReset) return <ResetPassword onDone={finishPwReset} />
@@ -867,7 +889,14 @@ export default function App() {
   return (
     <div className="app">
       {showOnboarding && brandBar}
-      {isAnon && <button className="guest-bar" onClick={() => setShowSaveAcct(true)}>Þú ert að prófa án aðgangs · <b>Vista aðganginn</b></button>}
+      {isAnon && (
+        <div className="guest-bar">
+          <span>Þú ert að prófa Tossalista</span>
+          <button onClick={() => setShowSaveAcct(true)}><b>Vista aðgang</b></button>
+          <button onClick={guestSignIn}>Skrá inn</button>
+          {session?.user?.user_metadata?.auto && <div className="guest-bar-legal">Ókeypis, engin skráning. Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</div>}
+        </div>
+      )}
       {showSaveAcct && <SaveAccount reason={showSaveAcct} onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}
       <div className="header">
         <div className="header-top">

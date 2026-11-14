@@ -46,3 +46,28 @@ export function startLandingTracking() {
     window.removeEventListener('pagehide', onPageHide)
   }
 }
+
+// Inni í appinu (prufuaðgangur): hve lengi gesturinn er áður en hann fer.
+export function startAppTracking() {
+  if (off()) return () => {}
+  landingEvent('app_view')
+  const onHide = () => { if (document.visibilityState === 'hidden') landingEvent('app_leave') }
+  const onPageHide = () => landingEvent('app_leave')
+  document.addEventListener('visibilitychange', onHide)
+  window.addEventListener('pagehide', onPageHide)
+  return () => { document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', onPageHide) }
+}
+
+// Gestir úr Facebook/Instagram (auglýsing eða færsla) lenda beint í appinu með prufuaðgangi.
+// Ekki ef tækið hefur áður skráð sig inn, notandi valdi „Skrá inn“, eða um vélmenni er að ræða.
+export function shouldAutoGuest() {
+  if (!isCloud || isBot()) return false
+  try {
+    if (localStorage.getItem('tossa.known') || localStorage.getItem('tossa.noAuto')) return false
+    const p = new URLSearchParams(window.location.search)
+    if (p.has('reset') || p.has('invite') || p.has('griptu')) return false
+    if (/^\/afskra/.test(window.location.pathname)) return false
+    const c = pageContext()
+    return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
+  } catch { return false }
+}

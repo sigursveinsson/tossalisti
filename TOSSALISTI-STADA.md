@@ -696,3 +696,9 @@ git push
 - Undanskilnaður stjórnanda (13. nóv.): töflur excluded_ips / excluded_users, pageviews.excluded. Trigger á pageviews merkir heimsókn ef JWT = stjórnandi eða IP í excluded_ips (IP gesta aldrei geymd). RPC note_session() (kallað við hverja innskráningu) lærir IP stjórnanda og merkir notendur af þeirri IP (prufuaðgangar). admin_stats / admin_user_activity / admin_pageviews (view pageviews_counted) / admin_funnel sía þetta út. ~300 eldri heimsóknir stjórnanda + 9 vélmenni merkt afturvirkt.
 - Mæling á upphafssíðu (13. nóv.): tafla landing_events (view, scroll, focus_email, click_guest, guest_ok/err, click_signup, signup_ok/err, click_signin, leave + ms). src/lib/landing.js (fetch keepalive), Auth.jsx kallar. RPC admin_landing → Stjórnborð „Upphafssíðan“. Stjórnandi/vélmenni síuð.
 - VILLA LÖGUÐ: IP-trigger á pageviews hafði tvírætt „ip“ → heimsóknaskráning brást 20:55–21:30 13. nóv. (1 raunverulegur gestur, endurskráður handvirkt). Triggers grípa nú allar villur svo mæling stöðvar aldrei skráningu.
+
+## Beint inn úr Facebook/Instagram – 14. nóv. 2026
+- shouldAutoGuest() (landing.js): uppruni facebook/instagram, fbclid eða Meta-auglýsinganúmer í utm_campaign, ekki vélmenni, ekki tossa.known/tossa.noAuto → App stofnar prufuaðgang sjálfkrafa (user_metadata guest=true, auto=true), „Opna Tossalista…“ á meðan. Villa → venjuleg upphafssíða.
+- Gestaborði: „Þú ert að prófa Tossalista · Vista aðgang · Skrá inn“ + persónuverndarlína fyrir auto-gesti. „Skrá inn“ skráir út úr prufu (varar við ef vörur), setur tossa.noAuto.
+- Mæling: landing_events auto_guest/_ok/_err, app_view/app_leave. admin_funnel skilar cohorts (auto / landing / registered) + app_median_sec; tafla í Stjórnborði.
+- Hreinsun: cleanup_idle_guests() með pg_cron kl. 04:15 daglega — eyðir prufuaðgöngum >7 daga án vara/kvittana.

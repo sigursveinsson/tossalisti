@@ -1831,3 +1831,14 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .starter-chip:active{background:var(--chip);}
 .starter-chip:disabled{opacity:.45;}
 .starter-sub{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.4;}
+
+/* Gestaborði (prufa): texti + Vista aðgang + Skrá inn */
+div.guest-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 12px;cursor:default;}
+div.guest-bar button{background:none;border:none;color:var(--navy);font-size:13.5px;text-decoration:underline;padding:2px 0;cursor:pointer;}
+.guest-bar-legal{flex-basis:100%;font-size:11.5px;color:#7a5a12;text-align:center;}
+.guest-bar-legal a{color:inherit;}
+.adm-cohort{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.adm-cohort th{font-weight:600;color:var(--muted);text-align:right;padding:4px 3px;border-bottom:1px solid var(--line);}
+.adm-cohort td{text-align:right;padding:5px 3px;border-bottom:1px solid var(--line);color:var(--text);}
+.adm-cohort td:first-child,.adm-cohort th:first-child{text-align:left;}
+.adm-cohort small{color:var(--faint);}

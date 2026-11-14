@@ -225,6 +225,21 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                       <b className="adm-funnel-n">{num(n || 0)}</b>
                     </div>
                   ))}
+                  {funnel.cohorts && Object.keys(funnel.cohorts).length > 0 && (
+                    <table className="adm-cohort">
+                      <thead><tr><th></th><th>Byrjuðu</th><th>1+ vara</th><th>3+ vörur</th><th>Dæmi</th><th>Kvittun</th><th>Vistuðu</th></tr></thead>
+                      <tbody>
+                        {[['auto', 'Beint inn (FB/IG)'], ['landing', 'Ýttu á „Prófa“'], ['registered', 'Skráðu sig']].filter(([k]) => funnel.cohorts[k]).map(([k, label]) => {
+                          const c = funnel.cohorts[k]
+                          const pc = (v) => c.n ? Math.round(v / c.n * 100) + '%' : '—'
+                          return (
+                            <tr key={k}><td>{label}</td><td>{c.n}</td><td>{c.added_item} <small>{pc(c.added_item)}</small></td><td>{c.items3}</td><td>{c.demo}</td><td>{c.scanned}</td><td>{k === 'registered' ? '—' : c.saved}</td></tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                  {funnel.app_median_sec != null && <div className="adm-sub" style={{ marginTop: 6 }}>Gestir eru að miðgildi {funnel.app_median_sec} sek. inni í appinu</div>}
                 </div>
               )
             })()}
