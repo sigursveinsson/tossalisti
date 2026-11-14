@@ -708,3 +708,22 @@ git push
 - App: nafn forútfyllt úr Google (full_name), tossa.known sett við varanlega innskráningu, OAuth-villur úr slóð sýndar á íslensku.
 - Supabase: „Allow manual linking“ = ON (13./14. nóv). Redirect URLs innihalda https://tossalisti.is/**.
 - KOMIÐ (14. nóv.): Google Cloud verkefni „tossalisti“, samþykkisskjár útgefinn (production), vefbiðlari „Tossalisti vefur“; Google virkjað í Supabase. Prófað: authorize-slóð opnar Google-reikningsval. Google sýnir „continue to butgofssgsmlfxtwylgf.supabase.co“ — lagast með Supabase custom domain (t.d. auth.tossalisti.is, greidd viðbót). Sign in with Apple fyrir iOS-app í janúar.
+
+## Hugmyndalisti: Listar sem vettvangur (14. nóv. 2026)
+- Hver tegund lista opnar nýjan flokk samstarfsaðila: innkaup → heildsalar (Nathan, Ölgerðin); gjafalistar → verslanir (sbr. Óskar/Aranja: ELKO, 66°N, IKEA borga fyrir sýnileika + gögn); verkefni/framkvæmdir → byggingavöruverslanir; útilega/ferðir → útivistarverslanir.
+- Tossalisti sem „ásetningslag“ heimilisins: það sem fólk ætlar að kaupa, áður en það kaupir. Samantekin gögn (k≥5) þvert á flokka.
+- Fyrsta litla skref: sniðmát „Jólagjafalisti“ + nafnlaust „Ég tek þetta“. ÁKVEÐIÐ 14. nóv.: bíður til hausts 2027 (fyrir jólin 2027) — kjarninn (innkaupalisti, bókhald, Gríptu) fyrst.
+- Möguleg tenging/samstarf við Óskar (Aranja ehf.) frekar en bein samkeppni.
+
+## Hugmyndalisti: „Veskið“ – inneignarnótur, gjafakort, afsláttarkóðar (14. nóv. 2026)
+- Undir Kvittanir & ábyrgðir: mynd/kóði → AI les verslun, upphæð, gildistíma, kóða/strikamerki → áminning fyrir gildislok → sýna strikamerki á kassa, merkja notað/eftirstöðvar → deilt með heimilinu.
+- Endurnýtir kvittanaskönnun, geymslu og áminningar. Gríptu-vinningar (gjafakóðar) lenda í sama veski.
+- Síðar: fyrirtæki senda starfsfólki gjafakort beint í Tossalista; verslanir gefa út rafræna inneign → nýr B2B-flokkur.
+- Varúð: geymum, höndlum aldrei fé (engin greiðslumiðlun/leyfi). PIN/kortanúmer falin þar til „sýna“. Strikamerki á skjá virkar ekki alls staðar.
+- Tímasetning: tilbúið fyrir janúar (skil eftir jól = mikið af inneignarnótum), samhliða app-útgáfu. Áminning til Sverris 1. des.
+
+## Svikavarnir á kóðaverðlaunum – 14. nóv. 2026 (#52 lokið)
+- Fyrir: tvítekningar (fingrafar, kvittananr. sama/annar notandi), VSK/heildar-ósamræmi, aldur >14 d., 3 vörukvittanir/dag, óstaðfestur lestur → ekki vörustig, flögguð kvittun → vinningur í yfirferð, útleysing alltaf yfirfarin handvirkt með myndum.
+- NÝTT: award_risk(user, purchase) → vinningur fer í yfirferð (pending_review) ef aðgangur <48 klst., kvittun án myndar, eða 2+ vinningar á 7 dögum; reward_campaigns.require_review (sjálfgefið false) fyrir dýr verðlaun. campaign_awards.risk skráð og sýnt í AwardsAdmin (admin_awards skilar flags + risk).
+- Meta-IP svið síuð úr tölfræði (is_meta_ip) — vélar sem yfirfara auglýsingar.
+- Search Console: public/google1136b7d37f1d50bb.html (staðfestingarskrá) — staðfesta eftir deploy.

@@ -7,7 +7,7 @@ import { IconX, IconCheck, IconBan, IconPhoto, IconTicket } from '@tabler/icons-
 // grunsamleg (óstaðfest summa, flögg) eða þegar kóðar eru búnir. Samþykki úthlutar kóða og sendir notanda póst.
 const num = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 const when = (d) => { try { return new Date(d).toLocaleString('is-IS', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) } catch { return d } }
-const FLAG = { dup_receipt_no_same_user: 'Sama kvittananúmer hjá notanda', dup_receipt_no_other_user: 'Sama númer hjá öðrum notanda', no_receipt_no: 'Ekkert kvittananúmer', no_image: 'Engin mynd' }
+const FLAG = { dup_receipt_no_same_user: 'Sama kvittananúmer hjá notanda', dup_receipt_no_other_user: 'Sama númer hjá öðrum notanda', no_receipt_no: 'Ekkert kvittananúmer', no_image: 'Engin mynd', new_account: 'Nýr aðgangur (<48 klst.)', many_awards: '2+ vinningar á 7 dögum', vat_mismatch: 'VSK gengur ekki upp', no_vat: 'Enginn VSK lesinn', total_mismatch: 'Heild stemmir ekki við línur' }
 
 function Row({ a, onDone }) {
   const [open, setOpen] = useState(false)
