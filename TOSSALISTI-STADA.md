@@ -707,4 +707,4 @@ git push
 - GoogleButton.jsx; Auth.jsx: „Halda áfram með Google“ (signInWithOAuth) í nýskráningu og innskráningu; SaveAccount: „Vista með Google“ (linkIdentity → prufuaðgangur verður varanlegur). Falið í Facebook/Instagram-vöfrum (isInAppBrowser, Google bannar þar).
 - App: nafn forútfyllt úr Google (full_name), tossa.known sett við varanlega innskráningu, OAuth-villur úr slóð sýndar á íslensku.
 - Supabase: „Allow manual linking“ = ON (13./14. nóv). Redirect URLs innihalda https://tossalisti.is/**.
-- EFTIR (Sverrir): Google Cloud OAuth client + virkja Google í Supabase — leiðbeiningar í GOOGLE-INNSKRANING.md. Sign in with Apple fyrir iOS-app í janúar.
+- KOMIÐ (14. nóv.): Google Cloud verkefni „tossalisti“, samþykkisskjár útgefinn (production), vefbiðlari „Tossalisti vefur“; Google virkjað í Supabase. Prófað: authorize-slóð opnar Google-reikningsval. Google sýnir „continue to butgofssgsmlfxtwylgf.supabase.co“ — lagast með Supabase custom domain (t.d. auth.tossalisti.is, greidd viðbót). Sign in with Apple fyrir iOS-app í janúar.
