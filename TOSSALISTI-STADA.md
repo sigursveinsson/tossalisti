@@ -727,3 +727,8 @@ git push
 - NÝTT: award_risk(user, purchase) → vinningur fer í yfirferð (pending_review) ef aðgangur <48 klst., kvittun án myndar, eða 2+ vinningar á 7 dögum; reward_campaigns.require_review (sjálfgefið false) fyrir dýr verðlaun. campaign_awards.risk skráð og sýnt í AwardsAdmin (admin_awards skilar flags + risk).
 - Meta-IP svið síuð úr tölfræði (is_meta_ip) — vélar sem yfirfara auglýsingar.
 - Search Console: public/google1136b7d37f1d50bb.html (staðfestingarskrá) — staðfesta eftir deploy.
+
+## Gríptu falið frá notendum – 14. nóv. 2026
+- Ákvörðun Sverris: enginn boðshópur, Gríptu tekið út úr appinu í bili. app_settings.rewards_enabled = false (afturkræft með einum rofa í Stjórnborði → Verðlaunakerfi, eða SQL).
+- Áhrif: enginn Gríptu-flipi, stigaborði, Gríptu-hnappur á heimaskjá, +stig á vörum eða stigagjöf við kvittun. HomeView sýnir stigaborða aðeins ef rewards_enabled. „Gríptu“ tekið úr forsíðutexta (index.html).
+- Óbreytt: heildsalamælaborð (griptu.is), kostaðar vörur (ads_enabled=false nú þegar), gögn og stig í gagnagrunni (ekkert eytt).
