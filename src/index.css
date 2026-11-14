@@ -1822,3 +1822,12 @@ button.go-add { border: 0; cursor: pointer; font-family: inherit; }
 .home-demo-link b{color:var(--navy);text-decoration:underline;}
 .receipt-demo-note{background:#fdf0d5;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--navy);margin-bottom:10px;}
 .saveacct-later{display:block;margin:12px auto 0;background:none;border:none;color:var(--muted);font-size:13.5px;text-decoration:underline;cursor:pointer;}
+
+/* Flýtihnappar á nýjum innkaupalista */
+.starter{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin:4px 0 14px;}
+.starter-h{font-size:14.5px;font-weight:600;color:var(--navy);margin-bottom:10px;}
+.starter-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.starter-chip{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:999px;padding:8px 13px;font-size:14.5px;font-weight:600;cursor:pointer;}
+.starter-chip:active{background:var(--chip);}
+.starter-chip:disabled{opacity:.45;}
+.starter-sub{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.4;}

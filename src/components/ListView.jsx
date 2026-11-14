@@ -55,10 +55,14 @@ function dueTag(it) {
   return <span className={'due-tag' + (overdue ? ' overdue' : '')}><IconCalendar size={12} stroke={2} />{label}</span>
 }
 
+// Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
+const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
+
 export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
+  const [starterBusy, setStarterBusy] = useState(null) // flýtihnappur sem er að bætast við
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('')
   const [showSchedForm, setShowSchedForm] = useState(false)
@@ -884,7 +888,23 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       </div>
       {isShopping && <RestockCard refreshKey={listId + ':' + items.length} rewardFor={rewardFor} onAdd={(name) => onAdd(name)} />}
       {bannerEnabled && <AdBanner />}
-      {groups.length === 0 && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
+      {isShopping && items.length < 6 && (() => {
+        const have = new Set(items.map(i => (i.name || '').toLowerCase().trim()))
+        const left = STARTER.filter(s => !have.has(s))
+        if (!left.length) return null
+        return (
+          <div className="starter">
+            <div className="starter-h">{items.length === 0 ? 'Byrjaðu hér — smelltu á það sem vantar' : 'Fleiri algengar vörur'}</div>
+            <div className="starter-chips">
+              {left.map(s => (
+                <button key={s} className="starter-chip" disabled={starterBusy === s} onClick={async () => { setStarterBusy(s); try { await onAdd(s) } finally { setStarterBusy(null) } }}>+ {s}</button>
+              ))}
+            </div>
+            {items.length === 0 && <div className="starter-sub">Eða skrifaðu vöru í reitinn efst — vörurnar raðast sjálfkrafa eftir búðardeildum.</div>}
+          </div>
+        )
+      })()}
+      {groups.length === 0 && !isShopping && <p className="empty">Listinn er tómur — bættu við vöru að ofan.</p>}
       {groups.map(g => {
         return (
           <div className="group" key={g.key}>

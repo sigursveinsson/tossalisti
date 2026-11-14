@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { landingEvent, startLandingTracking } from '../lib/landing.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { IconShoppingCart, IconReceipt, IconUsers, IconChefHat, IconChecklist } from '@tabler/icons-react'
 
@@ -62,11 +63,15 @@ export default function Auth() {
   const [busy, setBusy] = useState(false)
   const [offers, setOffers] = useState(false) // tilboðspóstur — aldrei sjálfgefið á
 
+  useEffect(() => startLandingTracking(), [])
+
   // Prófa án skráningar: nafnlaus Supabase-notandi. Getur vistað aðganginn síðar (SaveAccount) og heldur öllu.
   const tryGuest = async () => {
     setError(''); setInfo(''); setBusy(true)
+    landingEvent('click_guest')
     const { error } = await supabase.auth.signInAnonymously({ options: { data: { guest: true } } })
     setBusy(false)
+    landingEvent(error ? 'guest_err' : 'guest_ok')
     if (error) setError('Ekki tókst að opna án skráningar núna. Skráðu þig með netfangi hér fyrir ofan — það tekur hálfa mínútu.')
     // App.jsx tekur við um leið og session kemur (onAuthStateChange)
   }
@@ -84,13 +89,15 @@ export default function Auth() {
   const submit = async () => {
     if (mode === 'forgot') return forgot()
     setError(''); setInfo('')
+    if (mode === 'signup') landingEvent('click_signup')
     if (!email || !password) { setError('Sláðu inn netfang og lykilorð.'); return }
     setBusy(true)
     const { data, error } = mode === 'signup'
       ? await supabase.auth.signUp({ email, password, options: { data: { offers_opt_in: !!offers } } })
       : await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
-    if (error) { setError(ICELANDIC_ERROR(error.message)); return }
+    if (error) { if (mode === 'signup') landingEvent('signup_err'); setError(ICELANDIC_ERROR(error.message)); return }
+    if (mode === 'signup') landingEvent('signup_ok')
     try { localStorage.setItem('tossa.known', '1') } catch {}
     if (mode === 'signup' && !data.session) {
       // Tölvupóststaðfesting er enn á — láta notanda vita
@@ -122,6 +129,7 @@ export default function Auth() {
         <input
           value={email}
           onChange={e => setEmail(e.target.value)}
+          onFocus={() => landingEvent('focus_email')}
           onKeyDown={e => mode === 'forgot' && e.key === 'Enter' && submit()}
           placeholder="netfang@daemi.is"
           type="email"
@@ -153,7 +161,7 @@ export default function Auth() {
         )}
         <p className="signin-note">
           {mode === 'signin' ? 'Ekki með reikning? ' : 'Ertu með reikning? '}
-          <button className="link-btn" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}>
+          <button className="link-btn" onClick={() => { if (mode !== 'signin') landingEvent('click_signin'); setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}>
             {mode === 'signin' ? 'Nýskráning' : 'Skrá inn'}
           </button>
         </p>

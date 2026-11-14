@@ -56,6 +56,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
   const [activity, setActivity] = useState(null)
   const [pv, setPv] = useState(null)
   const [funnel, setFunnel] = useState(null)
+  const [landing, setLanding] = useState(null)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showRewards, setShowRewards] = useState(false)
@@ -72,6 +73,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
     store.adminActivity().then(setActivity).catch(() => setActivity([]))
     store.adminPageviews().then(setPv).catch(() => setPv(null))
     store.adminFunnel(7).then(setFunnel).catch(() => setFunnel(null))
+    store.adminLanding(7).then(setLanding).catch(() => setLanding(null))
   }
   useEffect(load, [])
 
@@ -179,6 +181,30 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
               {metric('Nýskráningar 7d', num(pv.signups_7d), pv.visitors_7d > 0 ? Math.round((pv.signups_7d || 0) / pv.visitors_7d * 100) + '% af gestum' : null)}
               {metric('Prufuaðgangar 7d', num(pv.guests_7d), 'án skráningar')}
             </div>
+            {landing && landing.viewed > 0 && (() => {
+              const rows = [
+                ['Sáu upphafssíðuna', landing.viewed],
+                ['Skrunuðu niður', landing.scrolled],
+                ['Ýttu á „Prófa strax“', landing.clicked_guest, landing.guest_err ? landing.guest_err + ' villur' : null],
+                ['Smelltu í netfangsreit', landing.focused_email],
+                ['Ýttu á „Stofna aðgang“', landing.clicked_signup],
+                ['Fóru á innskráningu', landing.clicked_signin],
+              ]
+              const top = Math.max(1, landing.viewed)
+              return (
+                <div className="adm-chart">
+                  <div className="adm-chart-h">Upphafssíðan · 7 dagar{landing.median_sec != null ? ' · miðgildi ' + landing.median_sec + ' sek. á síðu' : ''}</div>
+                  {rows.map(([label, n, sub], i) => (
+                    <div className="adm-funnel-row" key={i}>
+                      <span className="adm-funnel-l">{label}{sub ? <small> {sub}</small> : null}</span>
+                      <span className="adm-funnel-bar"><i style={{ width: Math.max(2, Math.round((n || 0) / top * 100)) + '%' }} /></span>
+                      <b className="adm-funnel-n">{num(n || 0)}</b>
+                    </div>
+                  ))}
+                  {landing.left_under_5s > 0 && <div className="adm-sub" style={{ marginTop: 6 }}>{landing.left_under_5s} fóru innan 5 sekúndna án þess að ýta á neitt</div>}
+                </div>
+              )
+            })()}
             {funnel && (() => {
               const steps = [
                 ['Gestir á síðuna', funnel.visitors],

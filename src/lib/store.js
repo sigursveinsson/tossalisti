@@ -477,7 +477,7 @@ const local = {
   async getAppSettings() { return JSON.parse(localStorage.getItem('korfan.appsettings') || '{"ads_enabled":false}') },
   async setAppSetting(key, value) { const s = JSON.parse(localStorage.getItem('korfan.appsettings') || '{}'); s[key] = value; localStorage.setItem('korfan.appsettings', JSON.stringify(s)) },
   async logPageview() {},
-  async adminPageviews() { return null }, async adminFunnel() { return null }, async noteSession() {}, async scanStats() { return null },
+  async adminPageviews() { return null }, async adminFunnel() { return null }, async adminLanding() { return null }, async noteSession() {}, async scanStats() { return null },
   async getRewardData() { return { brands: [], products: [], offers: [] } },
   async getMyRewards() { return { balance: 0, pending: 0, approved: 0, items: [] } },
   async addRewardBrand() {}, async addRewardProduct() {}, async updateRewardProduct() {},
@@ -1130,6 +1130,7 @@ const cloud = {
   },
   async scanStats(days = 7) { const { data, error } = await supabase.rpc('scan_stats', { p_days: days }); return error ? null : data },
   // Lætur netþjóninn þekkja tæki/tengingu stjórnanda (og prufuaðganga af henni) svo þau teljist ekki með í tölfræði.
+  async adminLanding(days = 7) { const { data, error } = await supabase.rpc('admin_landing', { p_days: days }); return error ? null : data },
   async noteSession() { try { await supabase.rpc('note_session') } catch {} },
   async adminFunnel(days = 7) { const { data, error } = await supabase.rpc('admin_funnel', { p_days: days }); return error ? null : data },
   async adminPageviews() {
