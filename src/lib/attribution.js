@@ -20,7 +20,10 @@ function detect() {
   let source = 'direct'
   if (invite || ref) source = 'tossalisti'           // boð/tilvísun frá öðrum notanda
   else if (utm_source) {
-    if (isFb(utm_source)) source = 'facebook'
+    // Meta {{site_source_name}}: fb, ig, an (Audience Network), msg (Messenger)
+    if (utm_source === 'ig') source = 'instagram'
+    else if (utm_source === 'fb' || utm_source === 'msg' || utm_source === 'an') source = 'facebook'
+    else if (isFb(utm_source)) source = 'facebook'
     else if (isIg(utm_source)) source = 'instagram'
     else if (isGg(utm_source)) source = 'google'
     else source = 'other'
@@ -75,5 +78,6 @@ export function isBot() {
 
 export function pageContext() {
   const a = detect()
-  return { source: a.source, utm_campaign: a.utm_campaign, referrer: a.referrer, path: (location.pathname + location.hash).slice(0, 200), visitor: visitorId() }
+  const placement = (() => { try { const p = new URLSearchParams(location.search); const s = p.get('utm_source'), m = p.get('utm_medium'); return s && m ? s + ' · ' + m : '' } catch { return '' } })()
+  return { source: a.source, utm_campaign: a.utm_campaign || placement, referrer: a.referrer, path: (location.pathname + location.hash).slice(0, 200), visitor: visitorId() }
 }

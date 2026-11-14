@@ -297,7 +297,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                   return (
                     <div className="adm-recent-row" key={i}>
                       <span className="adm-recent-t">{fmtDate(r.at)}</span>
-                      <span className="adm-recent-s">{fromAd ? 'Meta-auglýsing' : (SRC_LABEL[r.source] || r.source)}{ref && !fromAd ? ' · ' + ref : ''}</span>
+                      <span className="adm-recent-s">{fromAd ? 'Meta-auglýsing' : (SRC_LABEL[r.source] || r.source)}{r.campaign && !fromAd ? ' · ' + r.campaign : (ref && !fromAd ? ' · ' + ref : '')}</span>
                       <span className="adm-recent-p">{r.path && r.path !== '/' ? r.path : ''}</span>
                     </div>
                   )
