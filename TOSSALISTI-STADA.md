@@ -749,3 +749,4 @@ git push
 - Staða 24 klst: 57 gestir beint inn, 3 með vöru, 1 kvittun, 3 vistuðu; miðgildi 5 sek., 11/49 >15 sek. → vandinn orðinn fyrsta sýn inni í appinu.
 - WelcomeGuest.jsx: fyrir prufuaðgang án vara/kvittana, einu sinni (tossa.welcomed). „Heimilisbókhald sem sér um sig sjálft / Hvað viltu prófa fyrst?“: Skanna kvittun (gulur) · Sjá dæmi · Búa til innkaupalista · Skoða appið fyrst. Mælt: welcome_scan/demo/list/skip → admin_landing + Stjórnborð.
 - Gamla boost-herferðin (120252284559960156) var enn í gangi 15. nóv. — Sverrir setji á pásu.
+- Dæmakvittun (15. nóv.): raunveruleg kvittun Sverris, Bónus Fiskislóð 2.11.2026 (6.121 kr, 11 vörur). Mynd: public/postur/demo-kvittun.jpg — kvittananr., færslunr. og kortastafir afmáðir, strikamerki og færsluhirðisblokk skorin af. DEMO_ITEMS í ReceiptScanner.jsx (tímabundin lækkun -10 dregin af bláberjum).

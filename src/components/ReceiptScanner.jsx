@@ -32,10 +32,14 @@ const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateStri
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
 // requireImage: boðshópur Gríptu — myndin er geymd alltaf (skoðuð áður en karfa er afhent), ekki hægt að afhaka.
 // Dæmakvittun fyrir nýja notendur: sýnir lesturinn og bókhaldið án þess að vera með kvittun við höndina.
+// Raunveruleg kvittun (Bónus Fiskislóð 2.11.2026, frá Sverri) — línurnar eins og appið las þær.
+const DEMO_STORE = 'Bónus Fiskislóð (dæmi)'
+const DEMO_DATE = '2026-11-02'
+const DEMO_IMG = '/postur/demo-kvittun.jpg'
 const DEMO_ITEMS = [
-  ['Nýmjólk 1 l', 2, 398], ['Heimilisbrauð', 1, 549], ['Egg 12 stk', 1, 989], ['Bananar', 1, 412],
-  ['Kjúklingabringur 900 g', 1, 2798], ['Gúrka', 1, 279], ['Smjör 250 g', 1, 699], ['Ostur 26% sneiddur', 1, 1249],
-  ['Pasta 500 g', 2, 458], ['Coca-Cola 2 l', 1, 459], ['Uppþvottalögur', 1, 549], ['Klósettpappír 8 rúllur', 1, 1198],
+  ['Starbucks 10 stk', 1, 769], ['EF hamborgarasósa 400 ml', 1, 487], ['OS Rjómaostur 400 g', 1, 998], ['Lambhaga salat box', 1, 525],
+  ['HP kleinur 7 stk', 1, 559], ['OS Góðostur 26% biti', 1, 1313], ['SFG agúrka', 1, 275], ['ES frosin bláber', 1, 459],
+  ['DJ döðlur', 1, 369], ['MCV Hob Nobs 262 g', 1, 314], ['Bónus poki', 1, 53],
 ]
 export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requireImage = false, demo = false }) {
   const fileRef = useRef(null)
@@ -78,7 +82,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       p = Math.min(1, p + 0.12); setProgress(p)
       if (p >= 1) {
         clearInterval(t)
-        setStore('Bónus (dæmi)')
+        setStore(DEMO_STORE); setDate(DEMO_DATE)
         setItems(DEMO_ITEMS.map(([name, qty, price], i) => ({ id: 'd' + i, name, qty, price, reward_product_id: null, w: 0 })))
         setTotal(String(DEMO_ITEMS.reduce((s, [, , pr]) => s + pr, 0)))
         setPhase('review')
@@ -238,7 +242,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
 
         {phase === 'review' && (
           <>
-            {demo && <div className="receipt-demo-note"><b>Dæmakvittun.</b> Svona les appið kvittunina þína: verslun, dagsetningu og hverja vöru. Ýttu á <b>Vista</b> til að sjá hvernig bókhaldið flokkar útgjöldin. Þú getur eytt dæminu hvenær sem er.</div>}
+            {demo && <img className="receipt-demo-img" src={DEMO_IMG} alt="Kvittun úr Bónus" onError={(e) => { e.currentTarget.style.display = 'none' }} />}
+            {demo && <div className="receipt-demo-note"><b>Raunveruleg kvittun úr Bónus.</b> Svona las appið hana: verslun, dagsetningu og hverja vöru. Ýttu á <b>Vista</b> til að sjá hvernig bókhaldið flokkar útgjöldin. Þú getur eytt dæminu hvenær sem er.</div>}
             <div className="receipt-meta">
               <input className="dialog-input" value={store} onChange={e => setStore(e.target.value)} placeholder="Verslun (t.d. Bónus)" />
               <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
