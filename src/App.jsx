@@ -53,6 +53,7 @@ import GriptuTab from './components/GriptuTab.jsx'
 import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
+import WalletView from './components/WalletView.jsx'
 import { shouldAutoGuest, landingEvent, startAppTracking } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -295,6 +296,10 @@ export default function App() {
   useEffect(() => { if (isCloud && session && rewardsEnabled && !showRewards) store.myPilot().then(setPilot).catch(() => {}) }, [session, rewardsEnabled, showRewards])
   const inPilot = !pilot || pilot.member || !pilot.pilot_only
   const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
+  const [showWallet, setShowWallet] = useState(false) // Veskið: gjafakort, inneignarnótur, kóðar
+  const [wallet, setWallet] = useState([])
+  const loadWallet = () => { if (isCloud && session) store.walletList().then(setWallet).catch(() => {}) }
+  useEffect(() => { loadWallet() }, [session?.user?.id])
   // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
   const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
   const [brandView, setBrandView] = useState(() => { try { return localStorage.getItem('korfan.brandview') || 'dash' } catch { return 'dash' } }) // 'dash' | 'app'
@@ -959,7 +964,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -986,6 +991,7 @@ export default function App() {
           onScanReceipt={() => { setShowLists(false); setReceiptListId(null); setShowReceipt(true) }}
           onOpenBudget={() => { setShowLists(false); goBudget() }}
           onOpenReceipts={() => { setShowLists(false); loadPurchases(); setShowReceipts(true) }}
+          onOpenWallet={isCloud ? () => { setShowLists(false); setShowWallet(true) } : null}
           userEmail={isAnon ? 'Gestur – aðgangur ekki vistaður' : session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onDeleteAccount={isCloud ? () => { setShowLists(false); setShowDeleteAccount(true) } : null}
@@ -1046,6 +1052,7 @@ export default function App() {
         </ErrorBoundary>
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
+      {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}

@@ -2,7 +2,8 @@ import React from 'react'
 import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
-import { IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers } from '@tabler/icons-react'
+import { walletAlerts } from './WalletView.jsx'
+import { IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -40,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -62,6 +63,10 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
 
   const groups = groupFeed(s.feed)
   const alerts = receiptAlerts(purchases)
+  const wSoon = walletAlerts(wallet)
+  const wActive = wallet.filter(w => !w.used_at)
+  const wTotal = wActive.reduce((s, w) => s + (w.balance != null ? Number(w.balance) : Number(w.amount || 0)), 0)
+  const krr = (n) => Math.round(n).toLocaleString('is-IS').replace(/,/g, '.') + ' kr'
 
   const typeIcon = (t) => { const I = t === 'schedule' ? IconCalendar : t === 'task' ? IconChecklist : IconShoppingCart; return <I size={20} stroke={1.75} /> }
   const Go = () => <span className="home-row-go"><IconChevronRight size={18} stroke={1.75} /></span>
@@ -135,6 +140,20 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <Go />
         </button>
       )}
+      {onOpenWallet && (
+        <button className={'home-invite' + (wSoon.length ? ' home-alert' : ' home-wallet')} onClick={() => onOpenWallet()}>
+          <span className="home-invite-ic"><IconWallet size={22} stroke={1.75} /></span>
+          <span className="home-invite-txt">
+            {wSoon.length
+              ? <><b>{wSoon[0].store || 'Gjafakort'} rennur út eftir {Math.max(0, Math.round((new Date(wSoon[0].expires_on + 'T00:00:00Z') - new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z')) / 86400000))} daga</b><small>{wSoon.length > 1 ? `${wSoon.length - 1} í viðbót renna út fljótlega · ` : ''}Opnaðu Veskið</small></>
+              : wActive.length
+                ? <><b>Veskið · {krr(wTotal)}</b><small>á {wActive.length} {wActive.length === 1 ? 'korti' : 'kortum'} — gjafakort, inneignarnótur og kóðar</small></>
+                : <><b>Nýtt: Veskið</b><small>Geymdu gjafakort og inneignarnótur — við minnum þig áður en þau renna út</small></>}
+          </span>
+          <Go />
+        </button>
+      )}
+
       {onScanReceipt && onDemoReceipt && purchases.length === 0 && (
         <button className="home-demo-link" onClick={() => onDemoReceipt()}>
           Engin kvittun við höndina? <b>Sjáðu dæmi</b>

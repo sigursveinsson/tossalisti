@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { IconCalendar, IconChecklist, IconChevronDown, IconChevronRight, IconCopy, IconDots, IconNotebook, IconPencil, IconPlus, IconReceipt, IconShare, IconShieldCheck, IconShoppingCart, IconTemplate, IconTrash, IconX } from '@tabler/icons-react'
+import { IconCalendar, IconChecklist, IconChevronDown, IconChevronRight, IconCopy, IconDots, IconNotebook, IconPencil, IconPlus, IconReceipt, IconShare, IconShieldCheck, IconShoppingCart, IconWallet, IconTemplate, IconTrash, IconX } from '@tabler/icons-react'
 
 // Hönnunarkerfi: eitt hlutlaust tákn-box, línutákn í stað emoji og litaðra reita.
 const TYPE = {
@@ -9,7 +9,7 @@ const TYPE = {
   budget: { Icon: IconNotebook },
 }
 
-export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, userEmail, onSignOut, onDeleteAccount, onClose }) {
+export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, onOpenWallet, userEmail, onSignOut, onDeleteAccount, onClose }) {
   const [name, setName] = useState('')
   const [newType, setNewType] = useState('shopping')
   const [creating, setCreating] = useState(false)
@@ -74,6 +74,9 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
           )}
           {onOpenReceipts && (
             <button className="budget-link-btn" onClick={onOpenReceipts}><IconShieldCheck size={18} stroke={1.75} /> Kvittanir & ábyrgðir</button>
+          )}
+          {onOpenWallet && (
+            <button className="budget-link-btn" onClick={onOpenWallet}><IconWallet size={18} stroke={1.75} /> Veskið — gjafakort & inneignir</button>
           )}
 
           <div className="sheet-label">Mínir listar</div>

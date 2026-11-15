@@ -750,3 +750,16 @@ git push
 - WelcomeGuest.jsx: fyrir prufuaðgang án vara/kvittana, einu sinni (tossa.welcomed). „Heimilisbókhald sem sér um sig sjálft / Hvað viltu prófa fyrst?“: Skanna kvittun (gulur) · Sjá dæmi · Búa til innkaupalista · Skoða appið fyrst. Mælt: welcome_scan/demo/list/skip → admin_landing + Stjórnborð.
 - Gamla boost-herferðin (120252284559960156) var enn í gangi 15. nóv. — Sverrir setji á pásu.
 - Dæmakvittun (15. nóv.): raunveruleg kvittun Sverris, Bónus Fiskislóð 2.11.2026 (6.121 kr, 11 vörur). Mynd: public/postur/demo-kvittun.jpg — kvittananr., færslunr. og kortastafir afmáðir, strikamerki og færsluhirðisblokk skorin af. DEMO_ITEMS í ReceiptScanner.jsx (tímabundin lækkun -10 dregin af bláberjum).
+- Ofurnotandi helgaogbjarki@hotmail.com (15. nóv.): 13 kvittanir síðan 13. okt., 7 síðustu 7 daga, ~103 þús. kr skráð, 7 verslanir (Bónus, Prís, Kostur, Nettó, Hagkaup, Jysk, Garðheimar), skannar í lotum. ÁKVEÐIÐ: hafa samband þegar leikur/herferð er komin (endurgjöf, tilvitnun í kynningu, vinaboð gegn umbun) — ekki fyrr.
+
+## Hugmyndalisti: Samstarf við sérvöruverslanir (Jysk, Garðheimar o.fl.) – 15. nóv. 2026
+- Kveikja: ofurnotandi skannar líka Jysk/Garðheima. Kvittanir sýna útgjöld þvert á flokka (heimili, garður), ekki bara matvöru.
+- Möguleikar: (1) samantekin innsýn fyrir verslanir (k≥5): hvar heimili versla í flokknum, árstíðir, körfustærð; (2) árstíðabundin tilboð í appinu (vor → garðvörur) sem allir sjá, ekki einstaklingsmiðuð án samþykkis; (3) ábyrgðir/skilafrestir: verslun gefur rafræna kvittun/ábyrgð beint í Tossalista; (4) tengist Veskinu (inneignarnótur).
+- Varúð: einstaklingsmiðuð markaðssetning út frá kvittunum krefst skýrs samþykkis. Tímasetning: eftir kjarna + Nathan/Ölgerð.
+
+## Veskið – 15. nóv. 2026
+- DB wallet_items (kind gift_card/credit_note/coupon/membership/other, store, title, amount, balance, code, pin, expires_on, image_path, used_at, reminded_30_at/7_at). RLS: aðeins eigandi (prófað). Myndir: receipts/<uid>/wallet-<id>.jpg.
+- Edge parse-wallet (verify_jwt=true, Gemini): mynd → kind/store/amount/code/pin/expires_on.
+- send-reminders v8: push 30 og 7 dögum fyrir gildislok (kl. 10).
+- WalletView.jsx (yfirlit, taka mynd/slá inn, strikamerki Code128 úr lib/barcode.js, PIN falið, eftirstöðvar, fullnýtt, breyta/eyða). Aðgangur: Listarnir mínir → „Veskið“ + spjald á heimaskjá (rennur út / samtala / „Nýtt: Veskið“).
+- Næst: deila með heimilinu; tölvupóstáminning fyrir þá sem eru ekki með push.

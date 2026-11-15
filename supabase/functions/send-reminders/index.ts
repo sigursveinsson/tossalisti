@@ -165,6 +165,23 @@ Deno.serve(async (req) => {
       await db.from('purchase_items').update({ warranty_reminded_at: now.toISOString() }).eq('id', it.id)
       sentLog.push('warranty:' + it.id)
     }
+
+    // Veskið: gjafakort/inneignarnótur sem renna út eftir 30 og 7 daga
+    const { data: wal } = await db.from('wallet_items')
+      .select('id,user_id,store,amount,balance,expires_on,reminded_30_at,reminded_7_at')
+      .in('user_id', userIds).is('used_at', null)
+      .gte('expires_on', todayISO).lte('expires_on', plusDays(30))
+    for (const w of wal || []) {
+      if (!canSend(w.user_id)) continue
+      const left = Math.round((new Date(w.expires_on + 'T00:00:00Z').getTime() - new Date(todayISO + 'T00:00:00Z').getTime()) / 86400000)
+      const which = left <= 7 ? (w.reminded_7_at ? null : 'reminded_7_at') : (w.reminded_30_at ? null : 'reminded_30_at')
+      if (!which) continue
+      const amt = w.balance ?? w.amount
+      const amtTxt = amt ? ` (${Math.round(Number(amt)).toLocaleString('is-IS').replace(/,/g, '.')} kr)` : ''
+      await sendTo(subsByUser[w.user_id], { title: 'Gjafakort að renna út', body: `${w.store || 'Kort'}${amtTxt} rennur út ${fmtD(w.expires_on)}. Notaðu það áður!`, tag: 'wallet-' + w.id, url: '/' })
+      await db.from('wallet_items').update({ [which]: now.toISOString() }).eq('id', w.id)
+      sentLog.push('wallet:' + w.id)
+    }
   }
 
   return new Response(JSON.stringify({ ok: true, sent: sentLog.length, items: sentLog }), { headers: { 'Content-Type': 'application/json' } })

@@ -83,7 +83,7 @@ function loadViaImageElement(file, maxW) {
   })
 }
 
-async function loadDownscaledCanvas(file, maxW) {
+export async function loadDownscaledCanvas(file, maxW) {
   // AÐEINS niðurkvörðuð afkóðun (createImageBitmap með resizeWidth) — JPEG afkóðast
   // beint í minni stærð svo minnistoppurinn er lágur. ENGIN full-afkóðunar-varaleið:
   // hún gæti sprengt minnið og Android/iOS drepur þá síðuna (ógrípanlegt). Ef þetta

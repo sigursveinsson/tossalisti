@@ -228,6 +228,7 @@ const local = {
   },
   // Kvittanasafn (staðbundið): engin myndageymsla án innskráningar — ábyrgð/skilafrestur vistast.
   async uploadReceiptImage() { return null },
+  async walletList() { return [] }, async walletSave() { throw new Error('local') }, async walletDelete() {}, async walletImageUrl() { return null }, async walletParse() { return null },
   async removeReceiptImage() {},
   async getReceiptUrl() { return null },
   async setItemWarranty(itemId, until) {
@@ -773,6 +774,50 @@ const cloud = {
       const { error: ie } = await supabase.from('purchase_items').insert(rows)
       if (ie) await supabase.from('purchase_items').insert(rows.map(({ warranty_until, ...r }) => r))
     }
+  },
+  // ── Veskið: gjafakort, inneignarnótur, afsláttarkóðar ──
+  async walletList() {
+    const { data, error } = await supabase.from('wallet_items').select('*').order('used_at', { ascending: true, nullsFirst: true }).order('expires_on', { ascending: true, nullsFirst: false })
+    if (error) throw error
+    return data || []
+  },
+  // item: {id?, kind, store, title, amount, balance, code, pin, expires_on, notes, used_at}; image: Blob (valkvætt)
+  async walletSave(item, image) {
+    const row = { kind: item.kind || 'gift_card', store: item.store || null, title: item.title || null,
+      amount: item.amount === '' || item.amount == null ? null : Number(item.amount),
+      balance: item.balance === '' || item.balance == null ? null : Number(item.balance),
+      code: item.code || null, pin: item.pin || null, expires_on: item.expires_on || null, notes: item.notes || null,
+      used_at: item.used_at || null }
+    let saved
+    if (item.id) {
+      const { data, error } = await supabase.from('wallet_items').update(row).eq('id', item.id).select().single()
+      if (error) throw error; saved = data
+    } else {
+      const { data, error } = await supabase.from('wallet_items').insert(row).select().single()
+      if (error) throw error; saved = data
+    }
+    if (image) {
+      const { data: { user } } = await supabase.auth.getUser()
+      const path = `${user.id}/wallet-${saved.id}.jpg`
+      const { error } = await supabase.storage.from('receipts').upload(path, image, { upsert: true, contentType: image.type || 'image/jpeg' })
+      if (!error) { await supabase.from('wallet_items').update({ image_path: path }).eq('id', saved.id); saved.image_path = path }
+    }
+    return saved
+  },
+  async walletDelete(item) {
+    if (item.image_path) await supabase.storage.from('receipts').remove([item.image_path])
+    const { error } = await supabase.from('wallet_items').delete().eq('id', item.id)
+    if (error) throw error
+  },
+  async walletImageUrl(path) {
+    if (!path) return null
+    const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 600)
+    return error ? null : data.signedUrl
+  },
+  async walletParse(base64, mime) {
+    const { data, error } = await supabase.functions.invoke('parse-wallet', { body: { image: base64, mime: mime || 'image/jpeg' } })
+    if (error || !data || data.error) return null
+    return data
   },
   // ── Kvittana- og ábyrgðageymsla ──
   async uploadReceiptImage(purchaseId, blob) {
