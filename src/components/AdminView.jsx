@@ -202,6 +202,11 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                     </div>
                   ))}
                   {landing.left_under_5s > 0 && <div className="adm-sub" style={{ marginTop: 6 }}>{landing.left_under_5s} fóru innan 5 sekúndna án þess að ýta á neitt</div>}
+                  {landing.app_view > 0 && (
+                    <div className="adm-sub" style={{ marginTop: 8 }}>
+                      <b>Velkomuskjár</b> ({landing.app_view} beint inn): Skanna {landing.welcome_scan || 0} · Dæmi {landing.welcome_demo || 0} · Listi {landing.welcome_list || 0} · Skoða fyrst {landing.welcome_skip || 0}
+                    </div>
+                  )}
                 </div>
               )
             })()}

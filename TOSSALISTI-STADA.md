@@ -739,3 +739,13 @@ git push
 - DB: welcome_emails (user_id, token, sent_at); welcome_outbox() velur notendur með netfang, ekki nafnlausa, stofnaða frá 14.11.2026, ekki stjórnanda/stjorinn88/excluded_users/vörumerkjanotendur; welcome_mark_sent(); join_offers(token) → offers_email=true.
 - Edge send-welcome (verify_jwt=false), pg_cron „send-welcome“ */10. Einn póstur á mann.
 - /postlisti?t=<tóki> → JoinOffers.jsx (skráning á póstlista með einum smelli). robots: Disallow /postlisti.
+- 14. nóv. kl. ~20:20: einskiptis póstur „Nýtt í Tossalista: kvittanir sem verða að bókhaldi“ sendur á 27 eldri notendur (welcome_emails.kind='existing'; existing_outbox(p_exclude)). Brynjar Vigfússon undanskilinn að ósk Sverris. send-welcome tekur {kind:'existing', exclude:[…]}.
+
+## RÆÐA 15. NÓV (minna Sverri á)
+- **Vikumatseðill → innkaupalisti:** virkni sem býr til matarprógram fyrir heila viku (fjöldi, smekkur, fjárhagur, það sem er til) og innkaupalista út frá því. Byggir á uppskriftum + gervigreind.
+- **Tímasetning pósta:** markpóstur (tilboð/fréttir) á fimmtudegi kl. 11–12 eða sunnudagskvöld kl. 19–20 (skipulag vikunnar); prófa og mæla opnanir. Velkomupóstur áfram strax við skráningu.
+
+## Velkomuskjár gesta – 15. nóv. 2026
+- Staða 24 klst: 57 gestir beint inn, 3 með vöru, 1 kvittun, 3 vistuðu; miðgildi 5 sek., 11/49 >15 sek. → vandinn orðinn fyrsta sýn inni í appinu.
+- WelcomeGuest.jsx: fyrir prufuaðgang án vara/kvittana, einu sinni (tossa.welcomed). „Heimilisbókhald sem sér um sig sjálft / Hvað viltu prófa fyrst?“: Skanna kvittun (gulur) · Sjá dæmi · Búa til innkaupalista · Skoða appið fyrst. Mælt: welcome_scan/demo/list/skip → admin_landing + Stjórnborð.
+- Gamla boost-herferðin (120252284559960156) var enn í gangi 15. nóv. — Sverrir setji á pásu.

@@ -52,6 +52,7 @@ import { matchListItems } from './lib/receipt.js'
 import GriptuTab from './components/GriptuTab.jsx'
 import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
+import WelcomeGuest from './components/WelcomeGuest.jsx'
 import { shouldAutoGuest, landingEvent, startAppTracking } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -139,6 +140,7 @@ export default function App() {
     try { window.history.replaceState({}, '', window.location.pathname) } catch {}
   }, [])
   useEffect(() => { if (session && !session.user?.is_anonymous) { try { localStorage.setItem('tossa.known', '1') } catch {} } }, [session])
+  const [welcomeDone, setWelcomeDone] = useState(() => { try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } })
   const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
   // Biðja gest um að vista aðganginn rétt eftir að eitthvað gott gerist (einu sinni fyrir hvert tilefni).
   const nudgeSave = (reason) => {
@@ -902,6 +904,14 @@ export default function App() {
   return (
     <div className="app">
       {showOnboarding && brandBar}
+      {isAnon && !welcomeDone && !loading && purchases.length === 0 && !lists.some(l => (l.items || []).length > 0) && (
+        <WelcomeGuest
+          onScan={() => { setWelcomeDone(true); setReceiptListId(null); setShowReceipt(true) }}
+          onDemo={() => { setWelcomeDone(true); setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }}
+          onList={async () => { setWelcomeDone(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }}
+          onSkip={() => setWelcomeDone(true)}
+        />
+      )}
       {isAnon && (
         <div className="guest-bar">
           <span>Þú ert að prófa Tossalista</span>

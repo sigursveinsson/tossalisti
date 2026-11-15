@@ -1846,3 +1846,21 @@ div.guest-bar button{background:none;border:none;color:var(--navy);font-size:13.
 /* Google-hnappur */
 .signin-card .google-btn,.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:48px;border:1.5px solid var(--line);background:#fff;color:#1f1f1f;border-radius:11px;font-size:15.5px;font-weight:600;margin-top:10px;cursor:pointer;}
 .google-btn:disabled{opacity:.6;}
+
+/* Velkomuskjár gesta úr auglýsingu */
+.wg-bg{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;display:flex;justify-content:center;}
+.wg{width:100%;max-width:440px;padding:42px 22px 30px;text-align:center;}
+.wg-logo{display:block;margin:0 auto 14px;}
+.wg-h{font-size:27px;line-height:1.2;color:var(--navy);margin:0 0 8px;font-weight:800;}
+.wg-sub{font-size:16px;color:var(--muted);margin:0 0 22px;}
+.wg-btn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;cursor:pointer;color:var(--navy);}
+.wg-btn.primary{background:var(--cta);border-color:var(--cta);box-shadow:0 8px 22px rgba(245,166,35,.28);}
+.wg-ic{width:48px;height:48px;flex:none;border-radius:14px;background:var(--chip);display:flex;align-items:center;justify-content:center;color:var(--navy);}
+.wg-btn.primary .wg-ic{background:rgba(255,255,255,.55);}
+.wg-txt{display:flex;flex-direction:column;gap:2px;}
+.wg-txt b{font-size:17.5px;}
+.wg-txt small{font-size:13.5px;color:var(--muted);line-height:1.35;}
+.wg-btn.primary .wg-txt small{color:#5a4413;}
+.wg-skip{background:none;border:none;color:var(--muted);font-size:14.5px;text-decoration:underline;margin:10px auto 0;display:block;cursor:pointer;}
+.wg-legal{font-size:11.5px;color:var(--faint);margin-top:18px;line-height:1.4;}
+.wg-legal a{color:inherit;}
