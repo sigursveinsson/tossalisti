@@ -76,3 +76,55 @@ export function shouldAutoGuest() {
 export function isInAppBrowser() {
   try { return /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|Snapchat|TikTok|; wv\)/i.test(navigator.userAgent || '') } catch { return false }
 }
+
+// ---- Leið út úr Facebook/Instagram-vafranum ----
+// Í vafra inni í appi týnist prufuaðgangurinn þegar glugganum er lokað, ekki er hægt að setja appið á heimaskjá
+// og staðfestingarhlekkir opnast í öðrum vafra. Því er gestinum vísað í Chrome/Safari strax við komu,
+// ÁÐUR en nokkuð er búið til (innskráningartóki fer aldrei í slóð). ?esc=1 merkir að flutningur tókst.
+export function inAppPlatform() {
+  if (!isInAppBrowser()) return null
+  const ua = navigator.userAgent || ''
+  if (/Android/i.test(ua)) return 'android'
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios'
+  return null
+}
+
+export function shouldEscape() {
+  if (!isCloud || isBot()) return null
+  try {
+    const p = new URLSearchParams(window.location.search)
+    if (p.has('esc') || p.has('reset') || p.has('invite')) return null
+    if (/^\/(afskra|postlisti)/.test(window.location.pathname)) return null
+    if (sessionStorage.getItem('tossa.stay') || localStorage.getItem('tossa.known')) return null
+  } catch { return null }
+  return inAppPlatform()
+}
+
+// Sama slóð (með utm-merkjum) + esc=1 svo mælingin og „beint inn“ haldist í nýja vafranum.
+export function escapeTarget(mark = '1') {
+  const u = new URL(window.location.href)
+  u.searchParams.delete('fbclid')
+  u.searchParams.set('esc', mark)
+  return u
+}
+
+export function androidIntentUrl() {
+  const u = escapeTarget('1')
+  const fallback = escapeTarget('fail').toString()
+  return 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end'
+}
+
+// Kominn í venjulegan vafra eftir flutning: skrá og hreinsa merkið úr slóðinni.
+export function noteEscaped() {
+  try {
+    const p = new URLSearchParams(window.location.search)
+    const v = p.get('esc')
+    if (!v) return
+    if (v === '1' && !isInAppBrowser()) landingEvent('escaped')
+    else if (v === 'fail') landingEvent('escape_fail')
+    if (v === 'fail') sessionStorage.setItem('tossa.stay', '1')
+    p.delete('esc')
+    const q = p.toString()
+    window.history.replaceState({}, '', window.location.pathname + (q ? '?' + q : '') + window.location.hash)
+  } catch {}
+}

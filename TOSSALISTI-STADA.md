@@ -763,3 +763,23 @@ git push
 - send-reminders v8: push 30 og 7 dögum fyrir gildislok (kl. 10).
 - WalletView.jsx (yfirlit, taka mynd/slá inn, strikamerki Code128 úr lib/barcode.js, PIN falið, eftirstöðvar, fullnýtt, breyta/eyða). Aðgangur: Listarnir mínir → „Veskið“ + spjald á heimaskjá (rennur út / samtala / „Nýtt: Veskið“).
 - Næst: deila með heimilinu; tölvupóstáminning fyrir þá sem eru ekki með push.
+
+## Hugmyndalisti: Rafrænar kvittanir (15. nóv. 2026)
+- Staða á Íslandi: engin almenn kortatengd rafræn kvittun. Takk-appið (Hagar: Bónus, Hagkaup, Eldum rétt) sýnir kvittanir en lokað inni; Arion/Íslandsbanki: handvirk mynd tengd kortafærslu; Skatturinn í norrænu eReceipt-tilraunaverkefni 2022 (enginn staðall síðan). Erlendis: ReceiptHero (FI) með Visa/Mastercard.
+- (1) Áframsending tölvupóstkvittana: hvert heimili fær netfang (t.d. kvittun-xyz@tossalisti.is), netverslanakvittanir og rafræn gjafabréf lesin sjálfkrafa → Bókhald/Veskið. Þarf inbound-póst (Resend inbound eða sambærilegt) + edge-fall.
+- (2) Skjámynd úr Takk-appinu: líklega virkar skanninn nú þegar — prófa og nefna í leiðbeiningum.
+- (3) Langtíma: samstarf við Haga/Takk eða banka um kvittanir beint með samþykki notanda (eftir þúsundir virkra notenda).
+
+## FYRIR NÆSTU HERFERÐ (ákveðið 15. nóv. — bíða og mæla vikuna fyrst)
+Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% >15 sek; ~3% gera eitthvað (4), ~15% af þeim sem staldra við.
+1. Auglýsing: nýtt myndband sem sýnir appið á 1. sek (sími → kvittun → bókhald); síandi texti („fyrir heimili sem vilja vita hvert peningarnir fara“); 25–50 ára, aðeins FB/IG feed.
+2. Fyrsta sýn: dæmið sýnir bókhaldið sjálfkrafa (án „Vista“); stutt hreyfimynd á velkomuskjá.
+3. „Prófa seinna“: „Minntu mig á þegar ég versla næst“ (netfang/push, t.d. fim kl. 17), „Settu á heimaskjá“ á velkomuskjá.
+4. Eftirfylgnipóstar: dagur 3 („Skannaðirðu fyrstu kvittunina?“), dagur 7 („Svona var vikan þín“).
+5. Tímasetning: birta auglýsingar/pósta þegar fólk undirbýr innkaup eða er á leið í búð (fim–fös síðdegis, laugardagsmorgun, sunnudagskvöld fyrir vikuna). Skoða tölur í lok vikunnar (um 20.–22. nóv.).
+
+## 16. nóv 2026 — Leið út úr Facebook/Instagram-vafranum (lagfæring 1 af 5)
+- `EscapeGate.jsx` + `landing.js` (shouldEscape, androidIntentUrl, noteEscaped). Gildir fyrir ALLA úr in-app vafra, áður en prufuaðgangur er stofnaður.
+- Android: sjálfvirkt `intent://…;package=com.android.chrome` (fallback `?esc=fail` → heldur áfram í FB-vafra). iPhone: leiðbeiningar „••• → Opna í ytri vafra“ + „Afrita hlekk“. Alltaf „Halda áfram hér“.
+- Atburðir: escape_shown_android/ios, escape_android_auto, escape_click, escape_copy, escape_stay, escape_fail, escaped. Sýnt í Stjórnborði („Út úr Facebook-vafra“).
+- Næst: 2) OTP-kóði við vistun, 3) fyrsti skjár eftir utm_content, 4) netfang eftir fyrstu aðgerð, 5) og:image 1200×630 + first_item/email_saved.

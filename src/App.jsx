@@ -54,7 +54,8 @@ import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
 import WalletView from './components/WalletView.jsx'
-import { shouldAutoGuest, landingEvent, startAppTracking } from './lib/landing.js'
+import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped } from './lib/landing.js'
+import EscapeGate from './components/EscapeGate.jsx'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -112,16 +113,19 @@ export default function App() {
   // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
   const isAnon = isCloud && !!session?.user?.is_anonymous
   // Gestir úr Facebook/Instagram lenda beint í appinu (prufuaðgangur stofnaður sjálfkrafa).
+  // Í Facebook/Instagram-vafra: vísa fyrst í Chrome/Safari (áður en prufuaðgangur er stofnaður).
+  const [escape, setEscape] = useState(() => { const e = shouldEscape(); noteEscaped(); return e }) // 'android' | 'ios' | null
+  useEffect(() => { if (escape && authReady && session) setEscape(null) }, [escape, authReady, session])
   const [autoGuest, setAutoGuest] = useState(() => shouldAutoGuest() ? 'pending' : null) // 'pending' | 'done' | 'failed' | null
   useEffect(() => {
-    if (autoGuest !== 'pending' || !authReady) return
+    if (autoGuest !== 'pending' || !authReady || (escape && !session)) return
     if (session) { setAutoGuest(null); return }
     landingEvent('auto_guest')
     supabase.auth.signInAnonymously({ options: { data: { guest: true, auto: true } } }).then(({ error }) => {
       landingEvent(error ? 'auto_guest_err' : 'auto_guest_ok')
       setAutoGuest(error ? 'failed' : 'done')
     }).catch(() => { landingEvent('auto_guest_err'); setAutoGuest('failed') })
-  }, [autoGuest, authReady])
+  }, [autoGuest, authReady, escape])
   // Mæla tíma inni í appinu hjá gestum
   useEffect(() => { if (isAnon) return startAppTracking() }, [isAnon])
   // Gestur vill skrá sig inn með eigin aðgangi: út úr prufu, upphafssíða í innskráningarham.
@@ -815,6 +819,8 @@ export default function App() {
     return <GriptuLanding session={isCloud ? session : null} onSignOut={signOut}
       onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
   }
+  if (isCloud && escape && !authReady) return <div className="empty">Opna Tossalista…</div>
+  if (isCloud && escape && !session) return <EscapeGate platform={escape} onStay={() => setEscape(null)} />
   if (isCloud && !session && autoGuest === 'pending') return <div className="empty">Opna Tossalista…</div>
   if (isCloud && !session) return <>{toast && <div className="toast" onClick={() => setToast('')}>{toast.warn ? toast.msg : toast}</div>}<Auth /></>
   // „Gleymt lykilorð?“-hlekkur opnaður: velja nýtt lykilorð áður en lengra er haldið.
