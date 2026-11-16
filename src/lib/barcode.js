@@ -1,23 +1,85 @@
-// Code 128 (B) strikamerki sem SVG-slóð — engin ytri pakki. Fyrir kóða gjafakorta/inneignarnóta í Veskinu.
-const P = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112']
+// Flettir strikamerki (EAN/UPC) upp í Open Food Facts og skilar bestu íslensku
+// vöruheiti sem völ er á. Skilar null ef ekkert nothæft heiti finnst.
+//
+// Open Food Facts er opið, ókeypis API með CORS leyft fyrir vafra, og geymir
+// staðbundin vöruheiti í reitum eins og product_name_is (íslenska).
 
-// Skilar { bars: [{x,w}], width } eða null ef kóðinn hentar ekki (stafir utan ASCII 32–126).
-export function code128(text) {
-  const s = String(text || '').trim()
-  if (!s || s.length > 60 || /[^\x20-\x7e]/.test(s)) return null
-  const codes = [104] // Start B
-  for (const ch of s) codes.push(ch.charCodeAt(0) - 32)
-  let sum = 104
-  for (let i = 1; i < codes.length; i++) sum += codes[i] * i
-  codes.push(sum % 103, 106) // tékktala + Stop
-  const bars = []; let x = 10 // hljóðsvæði
-  for (const c of codes) {
-    const pat = P[c]
-    for (let i = 0; i < pat.length; i++) {
-      const w = Number(pat[i])
-      if (i % 2 === 0) bars.push({ x, w })
-      x += w
-    }
+const FIELDS = [
+  'product_name_is',
+  'generic_name_is',
+  'product_name',
+  'generic_name',
+  'abbreviated_product_name',
+  'brands',
+  'image_front_small_url',
+  'image_small_url',
+  'image_front_url',
+  'image_url',
+  'categories_tags',
+].join(',')
+
+// Kortleggur OFF-flokka (categories_tags) í okkar búðardeildir.
+// Röðin skiptir máli (áfengi á undan drykkjum, sælgæti á undan þurrvöru o.s.frv.).
+const CAT_RULES = [
+  ['alcohol', /alcoholic|\bwines?\b|\bbeers?\b|whisk|spirits|vodka|\bgins?\b|\brums?\b|liqueur|cognac|brennivin|ciders?|aperitif|champagne/],
+  ['dairy', /dairies|\bmilks?\b|cheeses|yogurts|yoghurts|\bbutters?\b|\bcreams?\b|skyr|dairy/],
+  ['frozen', /frozen/],
+  ['candy', /sweet-snacks|chocolates|candies|confectioner|\bsweets\b|biscuits|cookies|desserts|ice-cream/],
+  ['snacks', /salty-snacks|chips|crisps|crackers|popcorn|\bnuts\b/],
+  ['beverages', /beverages|\bwaters\b|sodas|juices|soft-drinks|carbonated|energy-drinks|\bdrinks\b/],
+  ['bakery', /\bbreads?\b|bakery|viennoiser|pastries|\bbuns\b/],
+  ['meat', /\bmeats?\b|poultry|\bfishes?\b|seafood|sausages|\bhams?\b|\bbeef\b|\bpork\b|chicken|\bfish\b/],
+  ['produce', /\bfruits?\b|vegetables|fresh-vegetables|fresh-fruits|legumes/],
+  ['baking', /\bflours?\b|\bsugars?\b|baking|yeast/],
+  ['pantry', /groceries|canned|\bpastas?\b|\brices?\b|sauces|condiments|cereals|spreads|breakfast|coffees|\bteas\b|honeys|oils/],
+  ['personalcare', /hygiene|toothpaste|shampoo|deodorant|soap|cosmetics/],
+  ['cleaning', /cleaning|detergent|laundry/],
+]
+
+function deptFromCategories(tags) {
+  if (!Array.isArray(tags) || !tags.length) return null
+  const s = tags.join(' ').toLowerCase()
+  for (const [dept, re] of CAT_RULES) { if (re.test(s)) return dept }
+  return null
+}
+
+function clean(name) {
+  if (!name) return ''
+  // Fjarlægja umframbil og einfalda. Höldum fyrsta hluta ef mörg heiti eru aðskilin með kommu.
+  let s = String(name).replace(/\s+/g, ' ').trim()
+  if (s.includes(',')) s = s.split(',')[0].trim()
+  return s
+}
+
+export async function lookupBarcode(code) {
+  const ean = String(code || '').replace(/\D/g, '')
+  if (!ean) return null
+  try {
+    const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(ean)}.json?fields=${FIELDS}`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data.status !== 1 || !data.product) return null
+    const p = data.product
+    const name =
+      p.product_name_is ||
+      p.generic_name_is ||
+      p.product_name ||
+      p.generic_name ||
+      p.abbreviated_product_name ||
+      p.brands ||
+      ''
+    const c = clean(name)
+    if (!c) return null
+    const image =
+      p.image_front_small_url ||
+      p.image_small_url ||
+      p.image_front_url ||
+      p.image_url ||
+      null
+    const dept = deptFromCategories(p.categories_tags)
+    return { name: c, image, dept }
+  } catch {
+    return null
   }
-  return { bars, width: x + 10 }
 }

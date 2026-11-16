@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { store } from '../lib/store.js'
 import { loadDownscaledCanvas } from '../lib/receipt.js'
-import { code128 } from '../lib/barcode.js'
+import { code128 } from '../lib/code128.js'
 import { useBackClose } from '../lib/backstack.js'
 import { IconX, IconWallet, IconCamera, IconPencil, IconTrash, IconArrowLeft, IconCheck, IconEye, IconEyeOff, IconPlus, IconPhoto } from '@tabler/icons-react'
 
