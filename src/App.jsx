@@ -54,7 +54,7 @@ import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
 import WalletView from './components/WalletView.jsx'
-import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped } from './lib/landing.js'
+import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped, escapeTarget } from './lib/landing.js'
 import EscapeGate from './components/EscapeGate.jsx'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -114,7 +114,18 @@ export default function App() {
   const isAnon = isCloud && !!session?.user?.is_anonymous
   // Gestir úr Facebook/Instagram lenda beint í appinu (prufuaðgangur stofnaður sjálfkrafa).
   // Í Facebook/Instagram-vafra: vísa fyrst í Chrome/Safari (áður en prufuaðgangur er stofnaður).
-  const [escape, setEscape] = useState(() => { const e = shouldEscape(); noteEscaped(); return e }) // 'android' | 'ios' | null
+  // iPhone: ekki hægt að flytja sjálfkrafa og heilsíðuskjár missti alla (16.11) → gestur fer beint inn
+  // og fær lítinn borða með leiðbeiningum. Android: sjálfvirkur flutningur í Chrome (EscapeGate).
+  const [escInit] = useState(() => { const e = shouldEscape(); noteEscaped(); return e })
+  const [escape, setEscape] = useState(escInit === 'android' ? 'android' : null)
+  const [iosHint, setIosHint] = useState(escInit === 'ios')
+  const [iosCopied, setIosCopied] = useState(false)
+  useEffect(() => { if (iosHint) landingEvent('escape_shown_ios') }, [])
+  const iosCopy = async () => {
+    landingEvent('escape_copy')
+    const url = escapeTarget('1').toString()
+    try { await navigator.clipboard.writeText(url); setIosCopied(true) } catch { window.prompt('Afritaðu hlekkinn og opnaðu hann í Safari:', url) }
+  }
   useEffect(() => { if (escape && authReady && session) setEscape(null) }, [escape, authReady, session])
   const [autoGuest, setAutoGuest] = useState(() => shouldAutoGuest() ? 'pending' : null) // 'pending' | 'done' | 'failed' | null
   useEffect(() => {
@@ -928,6 +939,13 @@ export default function App() {
           <span>Þú ert að prófa Tossalista</span>
           <button onClick={() => setShowSaveAcct(true)}><b>Vista aðgang</b></button>
           <button onClick={guestSignIn}>Skrá inn</button>
+          {iosHint && (
+            <div className="ios-hint">
+              <span>Svo listarnir geymist: ýttu á <b>•••</b> → <b>Opna í ytri vafra</b></span>
+              <button onClick={iosCopy}>{iosCopied ? 'Afritað ✓' : 'Afrita hlekk'}</button>
+              <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setIosHint(false) }}>×</button>
+            </div>
+          )}
           {session?.user?.user_metadata?.auto && <div className="guest-bar-legal">Ókeypis, engin skráning. Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</div>}
         </div>
       )}
