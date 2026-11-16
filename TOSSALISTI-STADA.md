@@ -800,3 +800,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Ákvörðun: hætta daglegum fínstillingum, auglýsingar á jöfnum lágum takti. Endurmat ~15. des: hve mörg heimili skönnuðu kvittun 3 vikur í röð?
 - Í pokahorninu (ekki byrjað): sunnudagsyfirlit vikunnar, innsýn strax eftir fyrstu kvittun, „Minntu mig á“, áminning í verslunarham, eigið myndasett, tala við 7 endurkomunotendur.
 - 16.11: Velkomuskjár 3. valkostur → „Sameiginlegur innkaupalisti“ sem býr til lista og opnar deilingu strax (welcome_list). cleanup_idle_guests eyðir ekki gesti sem hefur deilt lista með öðrum.
+- 16.11: user_days (opnaði appið á dag, via note_session + visibilitychange). Stjórnborð: Skráðir / Gestir með virkni; gestir án virkni faldir og aðeins taldir; merki „Í DAG“ og „N dagar“.

@@ -165,3 +165,15 @@ Staðsetning: ekki keppa við Meniga um bankaflokkun; vinna á samspilinu vörur
 - Notkun: heildarbókhald, áskriftaleit, spá/launadagur, svikavörn og kortatengd endurgreiðsla fyrir Gríptu.
 - Varúð: viðkvæmustu gögnin → skýrt samþykki, uppfærð persónuverndarstefna, engin auglýsingarakning.
 - Söluefni: „Meniga segir hvar. Tossalisti segir hvað.“
+
+## Vikumatseðill → innkaupalisti, með minni matarsóun (16. nóv 2026)
+Kveikja: Bring! „Weekly meal planning“ (getbring.com/blog-posts/meal-planning-for-the-week-with-bring). Vikulegi vaninn sem vantar:
+sunnudagur: plan → listi vikunnar → búð → kvittun → „vikan kostaði X“ (Bring! getur ekki síðasta skrefið).
+Grunnur (lítið): „Á þetta til“ — afvelja hráefni áður en þau fara á listann. Sækja uppskrift af vef (hlekkur → AI les hráefni, vísar á uppruna).
+Matarsóun — það sem Bring! gerir ekki:
+- Plan sem nýtir hráefni milli daga: „Þú kaupir 1 kg hakk / heilan kjúkling / poka af spínati → mánudagur bolognese, miðvikudagur tacos, föstudagur afgangasúpa.“
+- Pakkastærðir: listinn gerir ráð fyrir því sem fæst í búðinni (rjómi 250 ml) og stingur upp á rétti sem klárar afganginn.
+- Afgangar: „Þú átt hálfan rjóma og papriku síðan á mánudag — hér eru 3 réttir.“ (út frá innkaupum síðustu daga úr kvittunum).
+- Mæling: „Þessi vika: 2 hráefni nýtt í 3 réttum, áætlaður sparnaður ~1.800 kr.“
+- Tenging við kvittanir: vitum hvað var keypt (ekki bara hvað var planað) → raunhæfari tillögur.
+Tekjur seinna: uppskriftasamstarf (íslenskir matarbloggarar, vörumerki), eins og Bring! „recipe partners“.

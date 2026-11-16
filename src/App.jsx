@@ -452,6 +452,14 @@ export default function App() {
   useEffect(() => { if (isBot()) return; try { if (localStorage.getItem('tossa.noTrack')) return } catch {} store.logPageview(pageContext()) }, [])
   useEffect(() => { if (session?.user?.email === 'sigursveinsson@gmail.com') { try { localStorage.setItem('tossa.noTrack', '1') } catch {} } }, [session])
   useEffect(() => { if (isCloud && session?.user?.id) store.noteSession() }, [session?.user?.id])
+  // Appið opnað aftur úr bakgrunni (heimaskjár/PWA endurhleðst ekki) → skrá „opnaði í dag“, mest á 30 mín fresti
+  useEffect(() => {
+    if (!isCloud || !session?.user?.id) return
+    let last = Date.now()
+    const onVis = () => { if (document.visibilityState === 'visible' && Date.now() - last > 30 * 60 * 1000) { last = Date.now(); store.noteSession() } }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [session?.user?.id])
 
   // PWA install-ábending (eykur retention verulega — icon á heimaskjá)
   useEffect(() => {

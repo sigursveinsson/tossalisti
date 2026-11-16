@@ -33,6 +33,7 @@ const activitySummary = (u) => {
   if (u.purchases > 0) parts.push(u.purchases + ' kvitt.')
   if (u.scans > 0) parts.push(u.scans + ' skannanir')
   if (u.kids > 0) parts.push(u.kids + ' börn')
+  if (u.wallet > 0) parts.push(u.wallet + ' í Veski')
   if (u.memberships > u.lists_owned) parts.push('gekk í ' + (u.memberships - u.lists_owned) + ' deilda')
   return parts.length ? parts.join(' · ') : 'skráði sig, engin virkni enn'
 }
@@ -54,6 +55,7 @@ const srcBadge = (u) => {
 export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnabled, onToggleBanner }) {
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
+  const [userFilter, setUserFilter] = useState('reg') // reg | guest
   const [pv, setPv] = useState(null)
   const [funnel, setFunnel] = useState(null)
   const [landing, setLanding] = useState(null)
@@ -320,10 +322,10 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
         {tab === 'stats' && stats && (
           <>
             <div className="adm-grid">
-              {metric('Notendur alls', num(stats.users_total))}
-              {metric('Virkir í dag', num(stats.users_active_today))}
-              {metric('Virkir 7 daga', num(stats.users_active_7d))}
-              {metric('Nýir í dag', num(stats.users_new_today), stats.users_new_7d != null ? num(stats.users_new_7d) + ' síðustu 7 daga' : undefined)}
+              {metric('Skráðir notendur', num(stats.registered_total ?? stats.users_total), stats.reg_new_7d != null ? '+' + num(stats.reg_new_7d) + ' síðustu 7 daga' : undefined)}
+              {metric('Opnuðu appið í dag', num(stats.reg_opened_today ?? stats.users_active_today), 'skráðir notendur')}
+              {metric('Komu aftur (7 d)', num(stats.reg_returning_7d ?? 0), (stats.reg_opened_7d != null ? num(stats.reg_opened_7d) + ' opnuðu 7 d · ' : '') + '2+ dagar')}
+              {metric('Gestir án virkni (7 d)', num(stats.guests_idle_7d ?? 0), 'faldir í listanum')}
             </div>
             <div className="adm-head">Notkun</div>
             <div className="adm-grid">
@@ -344,9 +346,14 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
 
         {tab === 'stats' && activity && activity.length > 0 && (
           <>
-            <div className="adm-head">Notendur — virkni ({activity.length})</div>
+            <div className="adm-head adm-head-row">Notendur
+              <span className="adm-filter">
+                <button className={userFilter === 'reg' ? 'on' : ''} onClick={() => setUserFilter('reg')}>Skráðir ({activity.filter(u => !u.is_anonymous).length})</button>
+                <button className={userFilter === 'guest' ? 'on' : ''} onClick={() => setUserFilter('guest')}>Gestir með virkni ({activity.filter(u => u.is_anonymous).length})</button>
+              </span>
+            </div>
             <div className="adm-users">
-              {activity.map((u, i) => (
+              {activity.filter(u => userFilter === 'guest' ? u.is_anonymous : !u.is_anonymous).map((u, i) => (
                 <div className={'adm-user' + (isToday(u.created_at) ? ' new' : '')} key={(u.email || 'gestur') + i}>
                   <span className="adm-user-ava">{(u.name || u.email || 'Gestur').slice(0, 2).toUpperCase()}</span>
                   <div className="adm-user-main">
@@ -354,6 +361,8 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                       {(() => { const b = srcBadge(u); return <span className="adm-user-src" style={{ background: b.color }} title={b.title}>{b.letter}</span> })()}
                       <span className="adm-user-name">{u.name || (u.email ? u.email.split("@")[0] : "gestur")}</span>
                       {isToday(u.created_at) && <span className="adm-user-new">NÝR</span>}
+                      {u.opened_today && !isToday(u.created_at) && <span className="adm-user-new back">Í DAG</span>}
+                      {u.active_days > 1 && <span className="adm-user-days" title="Dagar sem notandinn opnaði appið eða gerði eitthvað">{u.active_days} dagar</span>}
                     </div>
                     <div className="adm-user-email">{u.email || 'Gestur — prufa án skráningar'}</div>
                     <div className="adm-user-act">{activitySummary(u)}</div>
