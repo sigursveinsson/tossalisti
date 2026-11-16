@@ -924,7 +924,14 @@ export default function App() {
         <WelcomeGuest
           onScan={() => { setWelcomeDone(true); setReceiptListId(null); setShowReceipt(true) }}
           onDemo={() => { setWelcomeDone(true); setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }}
-          onList={async () => { setWelcomeDone(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }}
+          onList={async () => {
+            // Sameiginlegur listi: búa til (eða nota fyrirliggjandi) og opna deilingargluggann strax
+            setWelcomeDone(true)
+            let l = lists.find(x => x.type === 'shopping')
+            if (!l) { l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id) }
+            switchList(l.id)
+            setSharing({ ...l, name: l.name || 'Innkaupalisti' })
+          }}
           onSkip={() => setWelcomeDone(true)}
         />
       )}

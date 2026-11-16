@@ -786,3 +786,17 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - 16.11 kl. 12: Fyrstu tölur eftir deploy (~10:35): Android 1/1 komst í Chrome og var í appinu. iPhone 3/3 fóru án þess að gera neitt á heilsíðuskjánum → breytt: iPhone fer beint inn og fær lítinn gulan borða (••• → Opna í ytri vafra + Afrita hlekk). Android óbreytt.
 - LÆRDÓMUR: athuga alltaf Netlify-deploy eftir push (barcode.js-yfirskrift braut deploy 15.–16.11).
 - 16.11 síðdegis: Android líka mjúk leið (borði + „Opna í Chrome“ hnappur) — sjálfvirkur flutningur missti 3 af 5. EscapeGate.jsx ekki lengur notað.
+
+## 16. nóv — Tilkynningar á sameiginlegum listum (eins og Bring!)
+- Trigger list_items_notify → list_notify_queue (aðeins innkaupalistar með ≥2 notendum). RPC notify_shopping(p_list) þegar ýtt er á „Versla“ (max 1×/klst.).
+- Edge notify-list (cron */2, x-cron-secret), hópar: bíður 90 sek eftir síðustu viðbót → „Anna bætti við: mjólk, egg og 3 fleiri“. Virðir push_enabled, nýja stillingu notification_settings.list_activity (sjálfgefið á) og næðistíma.
+- Prófað 16.11 kl. 16:35: 1 tilkynning send á síma Sverris (prófunarfærsla á „Verkefni í vinnu“).
+- Takmörkun: aðeins 3 notendur með push og 4 sameiginlegir listar. Push á iPhone krefst heimaskjás þar til app kemur í App Store.
+- Vörumyndir: 22 af 227 vörum á innkaupalistum hafa mynd. Tillaga: eigin samræmt myndasett (~150 algengar vörur) frekar en myndir af vefjum verslana (höfundarréttur).
+
+## 16. nóv kvöld — ÁKVÖRÐUN: leyfa þessu að malla
+- Staðan: 37 skráðir (án Sverris): 18 aldrei virkir, 12 einn dag, 5 í 2–4 daga, 2 í 5+ daga. Enginn daglegur.
+- Lærdómur: kvittanir = vikulegur taktur; dagleg notkun kemur frá sameiginlegum lista; fyrsta kvittun gefur of lítið; of lítið magn til að fínstilla.
+- Ákvörðun: hætta daglegum fínstillingum, auglýsingar á jöfnum lágum takti. Endurmat ~15. des: hve mörg heimili skönnuðu kvittun 3 vikur í röð?
+- Í pokahorninu (ekki byrjað): sunnudagsyfirlit vikunnar, innsýn strax eftir fyrstu kvittun, „Minntu mig á“, áminning í verslunarham, eigið myndasett, tala við 7 endurkomunotendur.
+- 16.11: Velkomuskjár 3. valkostur → „Sameiginlegur innkaupalisti“ sem býr til lista og opnar deilingu strax (welcome_list). cleanup_idle_guests eyðir ekki gesti sem hefur deilt lista með öðrum.

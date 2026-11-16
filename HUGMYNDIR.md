@@ -156,3 +156,12 @@ Lengra fram:
 6. Styrktar auglýsingar (þegar notendur eru komnir).
 7. AI-uppskriftalestur.
 8. Strikamerki + verð frá búðum (langtímamarkmið, háð samstarfi).
+
+## Bankafærslur + kvittanir — „betra en Meniga“ (16. nóv 2026)
+Kjarninn (orð Óla í Ölgerðinni): Meniga segir „þú eyddir 12.400 kr. í Hagkaup“ — Tossalisti segir HVAÐ var keypt.
+Staðsetning: ekki keppa við Meniga um bankaflokkun; vinna á samspilinu vörur (kvittanir) + heimili (sameiginlegir listar) + bankafærslur.
+- Leið A (fyrst): CSV/Excel úr netbanka → para kortafærslur við kvittanir → „Vantar kvittun? 8.783 kr. í Bónus 7. nóv.“ Ekkert leyfi.
+- Leið B (seinna): PSD2 í gegnum milliliða (Enable Banking / GoCardless ná til Landsbankans, Arion, Íslandsbanka; ekki indó). Þarf leyfi (eigið eða milliliðar) og endurnýjun samþykkis.
+- Notkun: heildarbókhald, áskriftaleit, spá/launadagur, svikavörn og kortatengd endurgreiðsla fyrir Gríptu.
+- Varúð: viðkvæmustu gögnin → skýrt samþykki, uppfærð persónuverndarstefna, engin auglýsingarakning.
+- Söluefni: „Meniga segir hvar. Tossalisti segir hvað.“

@@ -17,6 +17,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
+import { supabase, isCloud } from '../lib/supabaseClient.js'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
@@ -882,7 +883,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     <div>
       {addBar}
       <div className="list-actions">
-        <button className="shop-go" onClick={() => setShopMode(true)}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
+        <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
       </div>

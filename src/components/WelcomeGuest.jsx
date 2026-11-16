@@ -29,7 +29,7 @@ export default function WelcomeGuest({ onScan, onDemo, onList, onSkip }) {
 
         <button className="wg-btn" onClick={pick('welcome_list', onList)}>
           <span className="wg-ic"><IconShoppingCart size={24} stroke={1.9} /></span>
-          <span className="wg-txt"><b>Búa til innkaupalista</b><small>Deildu honum með heimilinu</small></span>
+          <span className="wg-txt"><b>Sameiginlegur innkaupalisti</b><small>Búðu til lista og deildu honum með fjölskyldunni</small></span>
         </button>
 
         <button className="wg-skip" onClick={pick('welcome_skip', onSkip)}>Skoða appið fyrst</button>

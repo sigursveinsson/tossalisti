@@ -80,6 +80,10 @@ export default function NotifSettings({ onClose }) {
         {s.push_enabled && (
           <div className="ns-opts">
             <label className="ns-row">
+              <span>Breytingar á sameiginlegum listum<small>„Anna bætti við mjólk“ og „Jón er að fara að versla“</small></span>
+              <input type="checkbox" checked={s.list_activity !== false} onChange={e => patch({ list_activity: e.target.checked })} />
+            </label>
+            <label className="ns-row">
               <span>Vikulegt uppgjör<small>Stig og kláruð verk, einu sinni í viku</small></span>
               <input type="checkbox" checked={!!s.weekly_summary} onChange={e => patch({ weekly_summary: e.target.checked })} />
             </label>
