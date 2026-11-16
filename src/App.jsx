@@ -54,8 +54,7 @@ import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
 import WalletView from './components/WalletView.jsx'
-import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped, escapeTarget } from './lib/landing.js'
-import EscapeGate from './components/EscapeGate.jsx'
+import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped, escapeTarget, androidIntentUrl } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
 
@@ -113,30 +112,27 @@ export default function App() {
   // Gestur (nafnlaus innskráning): getur notað allt appið strax og vistað aðganginn síðar með netfangi.
   const isAnon = isCloud && !!session?.user?.is_anonymous
   // Gestir úr Facebook/Instagram lenda beint í appinu (prufuaðgangur stofnaður sjálfkrafa).
-  // Í Facebook/Instagram-vafra: vísa fyrst í Chrome/Safari (áður en prufuaðgangur er stofnaður).
-  // iPhone: ekki hægt að flytja sjálfkrafa og heilsíðuskjár missti alla (16.11) → gestur fer beint inn
-  // og fær lítinn borða með leiðbeiningum. Android: sjálfvirkur flutningur í Chrome (EscapeGate).
-  const [escInit] = useState(() => { const e = shouldEscape(); noteEscaped(); return e })
-  const [escape, setEscape] = useState(escInit === 'android' ? 'android' : null)
-  const [iosHint, setIosHint] = useState(escInit === 'ios')
-  const [iosCopied, setIosCopied] = useState(false)
-  useEffect(() => { if (iosHint) landingEvent('escape_shown_ios') }, [])
-  const iosCopy = async () => {
+  // Í Facebook/Instagram-vafra: gestur fer beint inn og fær lítinn gulan borða um að opna í Chrome/Safari.
+  // (16.11: heilsíðuskjár missti alla á iPhone og sjálfvirkur Chrome-flutningur 3 af 5 á Android → mjúk leið.)
+  const [escHint, setEscHint] = useState(() => { const e = shouldEscape(); noteEscaped(); return e }) // 'android' | 'ios' | null
+  const [escCopied, setEscCopied] = useState(false)
+  useEffect(() => { if (escHint) landingEvent('escape_shown_' + escHint) }, [])
+  const escCopy = async () => {
     landingEvent('escape_copy')
     const url = escapeTarget('1').toString()
-    try { await navigator.clipboard.writeText(url); setIosCopied(true) } catch { window.prompt('Afritaðu hlekkinn og opnaðu hann í Safari:', url) }
+    try { await navigator.clipboard.writeText(url); setEscCopied(true) } catch { window.prompt('Afritaðu hlekkinn og opnaðu hann í vafranum:', url) }
   }
-  useEffect(() => { if (escape && authReady && session) setEscape(null) }, [escape, authReady, session])
+  const escOpenChrome = () => { landingEvent('escape_click'); window.location.href = androidIntentUrl() }
   const [autoGuest, setAutoGuest] = useState(() => shouldAutoGuest() ? 'pending' : null) // 'pending' | 'done' | 'failed' | null
   useEffect(() => {
-    if (autoGuest !== 'pending' || !authReady || (escape && !session)) return
+    if (autoGuest !== 'pending' || !authReady) return
     if (session) { setAutoGuest(null); return }
     landingEvent('auto_guest')
     supabase.auth.signInAnonymously({ options: { data: { guest: true, auto: true } } }).then(({ error }) => {
       landingEvent(error ? 'auto_guest_err' : 'auto_guest_ok')
       setAutoGuest(error ? 'failed' : 'done')
     }).catch(() => { landingEvent('auto_guest_err'); setAutoGuest('failed') })
-  }, [autoGuest, authReady, escape])
+  }, [autoGuest, authReady])
   // Mæla tíma inni í appinu hjá gestum
   useEffect(() => { if (isAnon) return startAppTracking() }, [isAnon])
   // Gestur vill skrá sig inn með eigin aðgangi: út úr prufu, upphafssíða í innskráningarham.
@@ -830,8 +826,6 @@ export default function App() {
     return <GriptuLanding session={isCloud ? session : null} onSignOut={signOut}
       onOpenDashboard={(brandUser || adminHere) ? () => setGriptuDash(true) : null} />
   }
-  if (isCloud && escape && !authReady) return <div className="empty">Opna Tossalista…</div>
-  if (isCloud && escape && !session) return <EscapeGate platform={escape} onStay={() => setEscape(null)} />
   if (isCloud && !session && autoGuest === 'pending') return <div className="empty">Opna Tossalista…</div>
   if (isCloud && !session) return <>{toast && <div className="toast" onClick={() => setToast('')}>{toast.warn ? toast.msg : toast}</div>}<Auth /></>
   // „Gleymt lykilorð?“-hlekkur opnaður: velja nýtt lykilorð áður en lengra er haldið.
@@ -939,11 +933,18 @@ export default function App() {
           <span>Þú ert að prófa Tossalista</span>
           <button onClick={() => setShowSaveAcct(true)}><b>Vista aðgang</b></button>
           <button onClick={guestSignIn}>Skrá inn</button>
-          {iosHint && (
+          {escHint === 'ios' && (
             <div className="ios-hint">
               <span>Svo listarnir geymist: ýttu á <b>•••</b> → <b>Opna í ytri vafra</b></span>
-              <button onClick={iosCopy}>{iosCopied ? 'Afritað ✓' : 'Afrita hlekk'}</button>
-              <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setIosHint(false) }}>×</button>
+              <button onClick={escCopy}>{escCopied ? 'Afritað ✓' : 'Afrita hlekk'}</button>
+              <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setEscHint(null) }}>×</button>
+            </div>
+          )}
+          {escHint === 'android' && (
+            <div className="ios-hint">
+              <span>Svo listarnir geymist og þú getur sett appið á heimaskjá</span>
+              <button onClick={escOpenChrome}>Opna í Chrome</button>
+              <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setEscHint(null) }}>×</button>
             </div>
           )}
           {session?.user?.user_metadata?.auto && <div className="guest-bar-legal">Ókeypis, engin skráning. Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</div>}

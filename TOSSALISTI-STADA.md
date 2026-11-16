@@ -785,3 +785,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Næst: 2) OTP-kóði við vistun, 3) fyrsti skjár eftir utm_content, 4) netfang eftir fyrstu aðgerð, 5) og:image 1200×630 + first_item/email_saved.
 - 16.11 kl. 12: Fyrstu tölur eftir deploy (~10:35): Android 1/1 komst í Chrome og var í appinu. iPhone 3/3 fóru án þess að gera neitt á heilsíðuskjánum → breytt: iPhone fer beint inn og fær lítinn gulan borða (••• → Opna í ytri vafra + Afrita hlekk). Android óbreytt.
 - LÆRDÓMUR: athuga alltaf Netlify-deploy eftir push (barcode.js-yfirskrift braut deploy 15.–16.11).
+- 16.11 síðdegis: Android líka mjúk leið (borði + „Opna í Chrome“ hnappur) — sjálfvirkur flutningur missti 3 af 5. EscapeGate.jsx ekki lengur notað.
