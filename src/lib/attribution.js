@@ -79,5 +79,5 @@ export function isBot() {
 export function pageContext() {
   const a = detect()
   const placement = (() => { try { const p = new URLSearchParams(location.search); const s = p.get('utm_source'), m = p.get('utm_medium'); return s && m ? s + ' · ' + m : '' } catch { return '' } })()
-  return { source: a.source, utm_campaign: a.utm_campaign || placement, referrer: a.referrer, path: (location.pathname + location.hash).slice(0, 200), visitor: visitorId() }
+  return { source: a.source, utm_campaign: a.utm_campaign || placement, referrer: a.referrer, path: (location.pathname + (/token|code=|error/i.test(location.hash) ? '#auth' : location.hash)).slice(0, 200), visitor: visitorId() }
 }
