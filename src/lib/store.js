@@ -314,6 +314,8 @@ const local = {
   },
   async ensureGenericImage() { return null },
   async setGenericImage() { return null },
+  async myStaples() { return { items: [], receipts: 0 } },
+  async setStaplePref() {},
   async adminStats() { return null },
   async adminActivity() { return [] },
   async homeSummary() { return { week_points: 0, week_done: 0, feed: [] } },
@@ -938,6 +940,18 @@ const cloud = {
     } catch (e) { url = null }
     await supabase.from('generic_images').upsert({ name_norm: nn, image_url: url, updated_at: new Date().toISOString() }, { onConflict: 'name_norm' })
     return url
+  },
+  // „Minn listi“: vörur sem notandinn kaupir oft (my_staples) + festa/fela
+  async myStaples() {
+    const { data, error } = await supabase.rpc('my_staples')
+    if (error) throw error
+    return data || { items: [], receipts: 0 }
+  },
+  async setStaplePref(key, state, label) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !key) return
+    if (!state) { await supabase.from('staple_prefs').delete().eq('user_id', user.id).eq('name_norm', key); return }
+    await supabase.from('staple_prefs').upsert({ user_id: user.id, name_norm: key, state, label: label || null }, { onConflict: 'user_id,name_norm' })
   },
   async adminStats() {
     const { data, error } = await supabase.rpc('admin_stats')

@@ -23,6 +23,7 @@ import DeleteAccount from './components/DeleteAccount.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
 import ProductImageTool from './components/ProductImageTool.jsx'
+import MyListView from './components/MyListView.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
 import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
@@ -309,6 +310,10 @@ export default function App() {
   const inPilot = !pilot || pilot.member || !pilot.pilot_only
   const [showReceipts, setShowReceipts] = useState(false) // kvittana- og ábyrgðageymsla
   const [showWallet, setShowWallet] = useState(false) // Veskið: gjafakort, inneignarnótur, kóðar
+  // Minn listi: vörur sem notandinn kaupir oft (úr kvittunum) — spjald á heimaskjá + sérskjár
+  const [showMyList, setShowMyList] = useState(false)
+  const [staples, setStaples] = useState(null)
+  const loadStaples = () => { if (!isCloud) return; store.myStaples().then(setStaples).catch(() => {}) }
   const [wallet, setWallet] = useState([])
   const loadWallet = () => { if (isCloud && session) store.walletList().then(setWallet).catch(() => {}) }
   useEffect(() => { loadWallet() }, [session?.user?.id])
@@ -391,6 +396,15 @@ export default function App() {
   }).catch(() => {})
   useEffect(() => { if (isCloud && !session) return; loadGeneric() }, [session])
 
+  // Minn listi uppfærist við innskráningu og þegar kvittunum fjölgar
+  useEffect(() => { if (isCloud && session?.user?.id) loadStaples() }, [session?.user?.id, purchases.length])
+  // Setja vöru á innkaupalista: núverandi innkaupalisti, annars sá fyrsti, annars nýr
+  const addToShopping = async (name) => {
+    let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping')
+    if (!t) { t = await store.createList('Innkaupalisti', 'shopping') }
+    await store.addItem(t.id, name)
+    await reload(t.id)
+  }
   const saveToCatalog = ({ barcode, name, image, dept }) => {
     if (!name) return
     store.upsertCatalog({ barcode, name, image: image || null, dept: dept || departmentFor(name) }).catch(() => {})
@@ -1018,7 +1032,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? () => setShowMyList(true) : null} onAddStaples={async (names) => { for (const n of names) await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á innkaupalistann') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -1107,6 +1121,7 @@ export default function App() {
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
+      {showMyList && <MyListView onClose={() => { setShowMyList(false); loadStaples() }} onAdd={addToShopping} onScan={() => { setShowMyList(false); setReceiptListId(null); setShowReceipt(true) }} catalog={catalog} genericImgs={genericImgs} onListItems={((lists.find(l => l.type === 'shopping' && l.id === currentId) || lists.find(l => l.type === 'shopping'))?.items || []).filter(i => !i.checked).map(i => i.name)} />}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}

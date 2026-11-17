@@ -3,7 +3,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { walletAlerts } from './WalletView.jsx'
-import { IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet } from '@tabler/icons-react'
+import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -41,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -140,6 +140,26 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           <Go />
         </button>
       )}
+      {onOpenMyList && staples && (staples.items?.length > 0 || purchases.length > 0) && (() => {
+        const items = staples.items || []
+        const due = items.filter(i => i.due)
+        const names = due.slice(0, 3).map(i => i.name)
+        return (
+          <div className={'home-invite home-mylist' + (due.length ? ' home-alert' : '')} role="button" tabIndex={0} onClick={() => onOpenMyList()}>
+            <span className="home-invite-ic"><IconShoppingBag size={22} stroke={1.75} /></span>
+            <span className="home-invite-txt">
+              {due.length
+                ? <><b>Minn listi · {due.length} {due.length === 1 ? 'vantar' : 'vantar'} líklega</b><small>{names.join(', ')}{due.length > 3 ? ` og ${due.length - 3} fleiri` : ''}</small></>
+                : items.length
+                  ? <><b>Minn listi · {items.length} vörur</b><small>Það sem þú kaupir oft, lært af kvittunum</small></>
+                  : <><b>Minn listi</b><small>Fyllist sjálfur eftir 2–3 kvittanir</small></>}
+            </span>
+            {due.length > 0 && onAddStaples
+              ? <button className="home-mylist-add" onClick={(e) => { e.stopPropagation(); onAddStaples(due.map(i => i.name)) }}>Á listann</button>
+              : <Go />}
+          </div>
+        )
+      })()}
       {onOpenWallet && (
         <button className={'home-invite' + (wSoon.length ? ' home-alert' : ' home-wallet')} onClick={() => onOpenWallet()}>
           <span className="home-invite-ic"><IconWallet size={22} stroke={1.75} /></span>
