@@ -71,15 +71,30 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
   useEffect(() => { store.scanStats(scanDays).then(setScan).catch(() => setScan(null)) }, [scanDays])
   useBackClose(true, onClose)
 
+  const [refreshedAt, setRefreshedAt] = useState(null)
   const load = () => {
     setLoading(true); setErr(false)
-    store.adminStats().then(s => { setStats(s); setLoading(false) }).catch(() => { setErr(true); setLoading(false) })
-    store.adminActivity().then(setActivity).catch(() => setActivity([]))
-    store.adminPageviews().then(setPv).catch(() => setPv(null))
-    store.adminFunnel(7).then(setFunnel).catch(() => setFunnel(null))
-    store.adminLanding(7).then(setLanding).catch(() => setLanding(null))
+    // Allt sótt samtímis; „Uppfært kl.“ sýnir hvenær síðast tókst (áður engin sýnileg svörun við smelli)
+    Promise.allSettled([
+      store.adminStats().then(setStats).catch(() => setErr(true)),
+      store.adminActivity().then(setActivity).catch(() => {}),
+      store.adminPageviews().then(setPv).catch(() => {}),
+      store.adminFunnel(7).then(setFunnel).catch(() => {}),
+      store.adminLanding(7).then(setLanding).catch(() => {}),
+    ]).then(() => { setLoading(false); setRefreshedAt(new Date()) })
   }
   useEffect(load, [])
+  // Uppfærist sjálft á mínútu fresti meðan stjórnborðið er opið og sýnilegt
+  useEffect(() => {
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load() }, 60000)
+    return () => clearInterval(t)
+  }, [])
+  const refreshBtn = (
+    <button className="adm-refresh" onClick={load} disabled={loading}>
+      {loading ? 'Uppfæri…' : '↻ Uppfæra'}
+      {refreshedAt && <span className="adm-refreshed"> · uppfært kl. {refreshedAt.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>}
+    </button>
+  )
 
   const metric = (label, value, sub) => (
     <div className="adm-card">
@@ -344,7 +359,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
               {metric('Útgjöld (mánuður)', kr(stats.spend_month))}
               {metric('Útgjöld alls', kr(stats.spend_total))}
             </div>
-            <button className="adm-refresh" onClick={load}>↻ Uppfæra</button>
+            {refreshBtn}
           </>
         )}
 
@@ -378,7 +393,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                 </div>
               ))}
             </div>
-            <button className="adm-refresh" onClick={load}>↻ Uppfæra</button>
+            {refreshBtn}
           </>
         )}
       </div>
