@@ -62,7 +62,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -180,6 +180,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       setVoiceState('error')
     }
   }
+  // Úr velkomuskjá („Segðu hvað vantar“): sýna stórt raddspjald. Upptakan hefst þegar ýtt er á það
+  // (vafrar, sérstaklega á iPhone, leyfa hljóðnema/hljóð aðeins eftir snertingu notanda).
+  const [voicePrompt, setVoicePrompt] = useState(false)
+  useEffect(() => { if (voiceSignal && Date.now() - voiceSignal < 8000 && canRecord()) { setLvTab('list'); setVoicePrompt(true) } }, [voiceSignal])
   const toggleVoiceItem = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, sel: !i.sel } : i) }))
   const voiceReward = (it) => (it.reward_product_id && (rewardProducts || []).find(p => p.id === it.reward_product_id)) || rewardFor(it.name)
   const toggleVoiceSpon = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, useSpon: !i.useSpon } : i) }))
@@ -906,6 +910,12 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   return (
     <div>
       {addBar}
+      {voicePrompt && isShopping && (
+        <button className="voice-cta" onClick={() => { setVoicePrompt(false); landingEvent('voice_start'); startVoice() }}>
+          <span className="voice-cta-ic"><IconMicrophone size={30} stroke={1.8} /></span>
+          <span className="voice-cta-txt"><b>Ýttu og segðu hvað vantar</b><small>t.d. „mjólk, tvö kíló af kartöflum og brauð“</small></span>
+        </button>
+      )}
       {tabs}
       <div className="list-actions">
         <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>

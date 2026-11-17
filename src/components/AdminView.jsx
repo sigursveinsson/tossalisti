@@ -230,7 +230,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                   )}
                   {landing.app_view > 0 && (
                     <div className="adm-sub" style={{ marginTop: 8 }}>
-                      <b>Velkomuskjár</b> ({landing.app_view} beint inn): Skanna {landing.welcome_scan || 0} · Dæmi {landing.welcome_demo || 0} · Listi {landing.welcome_list || 0} · Skoða fyrst {landing.welcome_skip || 0}
+                      <b>Velkomuskjár</b> ({landing.app_view} beint inn): Skanna {landing.welcome_scan || 0} · Dæmi {landing.welcome_demo || 0} · Listi {landing.welcome_list || 0} · Rödd {landing.welcome_voice || 0} · Skoða fyrst {landing.welcome_skip || 0}
                     </div>
                   )}
                 </div>

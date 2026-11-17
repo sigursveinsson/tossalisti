@@ -807,3 +807,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - 17.11: Tvískönnun: checkDuplicatePurchase grípur nú líka sama kvittananúmer, eða sömu upphæð + sama dag/sömu keðju (120 d). my_staples: tvískannaðar kvittanir (sama upphæð í sama mánuði) teljast einu sinni; ótrúverðug kaupdagsetning → skönnunardagur.
 - 17.11: „Oft keypt“ er nú flipi á innkaupalistanum (Listinn | Oft keypt) — + setur vöru á ÞANN lista. Heimaspjald opnar innkaupalistann á Oft keypt-flipanum. Sérskjárinn tekinn út.
 - 17.11: /vorumyndir flipi „Leita í Open Food Facts“: algeng heiti → edge off-search (aðeins stjórnandi via am_admin(); search-a-licious, cgi til vara) → velja mynd → sjálfgefin mynd + vörubanki.
+- 17.11: Velkomuskjár 3. valkostur → „Segðu hvað vantar“ (rödd) þar sem hljóðnemi er í boði; annars sameiginlegur listi. Opnar innkaupalista með stóru raddspjaldi (upptaka hefst við snertingu). Atburðir welcome_voice, voice_start; admin_landing telur welcome_voice.

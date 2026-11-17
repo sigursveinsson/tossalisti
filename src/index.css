@@ -2018,3 +2018,8 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .ofs-cell img { width: 100%; aspect-ratio: 1; object-fit: contain; }
 .ofs-cell span { font-size: 11px; color: #5b6475; line-height: 1.2; max-height: 2.4em; overflow: hidden; text-align: center; }
 .ofs-ok { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: #2f9e6b; color: #fff; display: flex; align-items: center; justify-content: center; }
+.voice-cta { display: flex; align-items: center; gap: 14px; width: 100%; margin: 6px 0 12px; padding: 16px; border: 0; border-radius: 16px; background: var(--navy); color: #fff; text-align: left; cursor: pointer; animation: voicePulse 1.8s ease-in-out infinite; }
+.voice-cta-ic { width: 56px; height: 56px; border-radius: 50%; background: #f2c94c; color: var(--navy); display: flex; align-items: center; justify-content: center; flex: none; }
+.voice-cta-txt b { display: block; font-size: 17px; }
+.voice-cta-txt small { opacity: .85; font-size: 13px; }
+@keyframes voicePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,201,76,.0); } 50% { box-shadow: 0 0 0 6px rgba(242,201,76,.35); } }

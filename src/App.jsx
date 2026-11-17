@@ -311,6 +311,7 @@ export default function App() {
   const [showWallet, setShowWallet] = useState(false) // Veskið: gjafakort, inneignarnótur, kóðar
   // Minn listi: vörur sem notandinn kaupir oft (úr kvittunum) — spjald á heimaskjá + sérskjár
   const [oftenSignal, setOftenSignal] = useState(0) // opnar „Oft keypt“-flipann á innkaupalistanum
+  const [voiceSignal, setVoiceSignal] = useState(0) // velkomuskjár → raddspjald á innkaupalista
   const [staples, setStaples] = useState(null)
   const loadStaples = () => { if (!isCloud) return; store.myStaples().then(setStaples).catch(() => {}) }
   const [wallet, setWallet] = useState([])
@@ -960,6 +961,13 @@ export default function App() {
         <WelcomeGuest
           onScan={() => { setWelcomeDone(true); setReceiptListId(null); setShowReceipt(true) }}
           onDemo={() => { setWelcomeDone(true); setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }}
+          onVoice={async () => {
+            setWelcomeDone(true)
+            let l = lists.find(x => x.type === 'shopping')
+            if (!l) { l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id) }
+            switchList(l.id)
+            setVoiceSignal(Date.now())
+          }}
           onList={async () => {
             // Sameiginlegur listi: búa til (eða nota fyrirliggjandi) og opna deilingargluggann strax
             setWelcomeDone(true)
@@ -1041,7 +1049,7 @@ export default function App() {
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
-              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
       {showLists && (

@@ -1,10 +1,12 @@
 import React from 'react'
-import { IconCamera, IconPlayerPlay, IconShoppingCart } from '@tabler/icons-react'
+import { IconCamera, IconPlayerPlay, IconShoppingCart, IconMicrophone } from '@tabler/icons-react'
+import { canRecord } from '../lib/voice.js'
 import { landingEvent } from '../lib/landing.js'
 
 // Fyrsta sýn gesta úr auglýsingu: segir það sama og auglýsingin og býður þrjá skýra valkosti.
 // Birtist einu sinni (localStorage 'tossa.welcomed'). Mælt í landing_events (welcome_*).
-export default function WelcomeGuest({ onScan, onDemo, onList, onSkip }) {
+export default function WelcomeGuest({ onScan, onDemo, onList, onVoice, onSkip }) {
+  const voiceOk = !!onVoice && canRecord()
   const pick = (ev, fn) => () => {
     landingEvent(ev)
     try { localStorage.setItem('tossa.welcomed', '1') } catch {}
@@ -27,10 +29,17 @@ export default function WelcomeGuest({ onScan, onDemo, onList, onSkip }) {
           <span className="wg-txt"><b>Sjá dæmi</b><small>Engin kvittun við höndina? Tekur 10 sekúndur</small></span>
         </button>
 
-        <button className="wg-btn" onClick={pick('welcome_list', onList)}>
-          <span className="wg-ic"><IconShoppingCart size={24} stroke={1.9} /></span>
-          <span className="wg-txt"><b>Sameiginlegur innkaupalisti</b><small>Búðu til lista og deildu honum með fjölskyldunni</small></span>
-        </button>
+        {voiceOk ? (
+          <button className="wg-btn" onClick={pick('welcome_voice', onVoice)}>
+            <span className="wg-ic"><IconMicrophone size={24} stroke={1.9} /></span>
+            <span className="wg-txt"><b>Segðu hvað vantar</b><small>„Mjólk, egg og brauð“ — listinn verður til sjálfur</small></span>
+          </button>
+        ) : (
+          <button className="wg-btn" onClick={pick('welcome_list', onList)}>
+            <span className="wg-ic"><IconShoppingCart size={24} stroke={1.9} /></span>
+            <span className="wg-txt"><b>Sameiginlegur innkaupalisti</b><small>Búðu til lista og deildu honum með fjölskyldunni</small></span>
+          </button>
+        )}
 
         <button className="wg-skip" onClick={pick('welcome_skip', onSkip)}>Skoða appið fyrst</button>
         <p className="wg-legal">Ókeypis, engin skráning. Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
