@@ -18,6 +18,7 @@ import RestockCard from './RestockCard.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
 import { imageFor } from '../lib/generic.js'
+import ZoomImg from './ZoomImg.jsx'
 import { supabase, isCloud } from '../lib/supabaseClient.js'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
@@ -407,7 +408,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           const img = it.image_url || (!chore ? imageFor(it.name, catalog, genericImgs) : null) || rpImg
           if (img) {
             if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
-            return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
+            // Vörumynd: smellt → stækkar (hakað er með hringnum eða heitinu)
+            if (!chore) return <ZoomImg className="item-img" src={img} alt={it.name} caption={it.name} />
+            return <img className="item-img chore" src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
           }
           // Engin alvöru mynd → samræmt flokkaíkon (aðeins innkaup)
           if (!chore) return <CatIcon name={it.name} dept={it.dept} size={44} className="item-cat" onClick={() => onToggle(it, done)} />

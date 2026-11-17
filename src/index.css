@@ -274,7 +274,7 @@ button { font-family: inherit; cursor: pointer; }
 .item-img { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid var(--line); flex: none; padding: 3px; }
 .item-img, .item-cat { transition: transform .14s ease, box-shadow .14s ease; transform-origin: left center; }
 @media (hover: hover) {
-  .item-img:hover, .item-cat:hover { transform: scale(2.8); position: relative; z-index: 40; box-shadow: 0 10px 28px rgba(21, 49, 94, .35); border-radius: 12px; }
+  .item-img.chore:hover, .item-cat:hover { transform: scale(2.8); position: relative; z-index: 40; box-shadow: 0 10px 28px rgba(21, 49, 94, .35); border-radius: 12px; }
 }
 .cat-icon { display: inline-flex; align-items: center; justify-content: center; background: var(--navy); border-radius: 13px; flex: none; box-shadow: 0 4px 12px rgba(21,49,94,.16); }
 .cat-icon-fill { width: 100%; aspect-ratio: 1 / 1; box-shadow: none; }
@@ -1066,7 +1066,8 @@ button { font-family: inherit; cursor: pointer; }
 .check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #c3ccda; }
 .cat-icon { background: var(--soft); color: var(--navy); box-shadow: none; border-radius: 11px; }
 .cat-icon-fill { background: var(--soft); }
-.item-img { width: 44px; height: 44px; border-color: var(--line2); }
+.item-img { width: 58px; height: 58px; border-color: var(--line2); cursor: zoom-in; }
+.item-img.chore { width: 44px; height: 44px; cursor: pointer; }
 .qty-step button { display: inline-flex; align-items: center; justify-content: center; border-color: var(--line2); }
 .item .del { display: inline-flex; align-items: center; }
 .recat-btn { color: var(--faint); display: inline-flex; align-items: center; }
