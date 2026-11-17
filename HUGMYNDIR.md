@@ -177,3 +177,11 @@ Matarsóun — það sem Bring! gerir ekki:
 - Mæling: „Þessi vika: 2 hráefni nýtt í 3 réttum, áætlaður sparnaður ~1.800 kr.“
 - Tenging við kvittanir: vitum hvað var keypt (ekki bara hvað var planað) → raunhæfari tillögur.
 Tekjur seinna: uppskriftasamstarf (íslenskir matarbloggarar, vörumerki), eins og Bring! „recipe partners“.
+
+## Krónan Public API (17. nóv 2026) — FORGANGUR
+https://kronan.is/kronan-public-api · Swagger: https://api.kronan.is/api/v1/schema/swagger-ui/
+Auðkenning: AccessToken sem notandinn býr til sjálfur á kronan.is (Auðkenni). REST/JSON, verð í heilum ISK.
+Tækifæri: (1) kaupsaga → sjálfvirkt bókhald + „Oft keypt“ án skönnunar, (2) „Senda í Krónuna“: listi → karfa / Skannað og skundað,
+(3) vöruupplýsingar: myndir, verð, vörumerki, næring → vörumyndir og útgáfur, (4) uppskriftir tengdar vörum og verði.
+Athuga: skilmálar fyrir þriðja aðila app, öryggi lykla (dulkóðað á netþjóni, aldrei í vafra, aftenging), eignarhald á myndum/gögnum.
+Næst: póstur til Krónunnar (kynning + skilmálar + samstarf); Sverrir býr til lykil og vistar sjálfur sem Supabase-leyndarmál til könnunar.

@@ -809,3 +809,17 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - 17.11: /vorumyndir flipi „Leita í Open Food Facts“: algeng heiti → edge off-search (aðeins stjórnandi via am_admin(); search-a-licious, cgi til vara) → velja mynd → sjálfgefin mynd + vörubanki.
 - 17.11: Velkomuskjár 3. valkostur → „Segðu hvað vantar“ (rödd) þar sem hljóðnemi er í boði; annars sameiginlegur listi. Opnar innkaupalista með stóru raddspjaldi (upptaka hefst við snertingu). Atburðir welcome_voice, voice_start; admin_landing telur welcome_voice.
 - 17.11: VILLA lagfærð: landingEvent vantaði import í ListView → raddspjald gerði ekkert. Gæsin/„Gríptu hlustar“ tekin úr raddstýringu. Nýtt próf: node scripts-undef-check.cjs <skrár> (finnur óskilgreind heiti fyrir deploy).
+
+## FYRIR NÆSTU HERFERÐ — raddstýring (17.11)
+- Myndband tilbúið: markadsefni/tossalisti-rodd-med-rodd.mp4 (rödd Sverris, 15 sek) + tossalisti-rodd-tonlist.mp4 (án raddar). Smíðað með video_rodd.py / video_rodd_rodd.py.
+- Taka röddina upp aftur með betri hljóðnema (heyrnartól með hljóðnema eða lítill USB/lavalier-hljóðnemi, rólegt herbergi, 15–20 cm frá munni). Sömu setningar: „Mjólk, tvö kíló af kartöflum, brauð og bananar.“ og „Þú talar íslensku. Tossalisti skilur.“ → Claude setur inn og samstillir.
+- Auglýsingatexti: „Segðu bara hvað vantar — á íslensku. Tossalisti býr til innkaupalistann, flokkar hann eftir búðinni og deilir honum með heimilinu. Ókeypis.“ utm_content=rodd.
+- Fréttahorn: íslensk máltækni („íslenskt app sem skilur íslensku“).
+- DAGATAL: Dagur íslenskrar tungu 16. nóv 2027 — tilvalinn dagur fyrir raddstýringarherferð og fréttatilkynningu („íslenskt app sem skilur íslensku“). Undirbúa í byrjun nóv 2027.
+
+## 17.11 kvöld — Krónan API prufa
+- KRONAN_TOKEN (Sverris) í Supabase-leyndarmálum. Edge `kronan` (verify_jwt=false; aðgangur: am_admin eða x-cron-secret=lestur). SQL-hjálpari _kronan_probe(jsonb) (aðeins postgres) til könnunar.
+- NIÐURSTÖÐUR: /me virkar. Kaupsaga (product-purchase-stats) og pantanir TÓMAR hjá Sverri þótt hann versli í Krónunni → API nær aðeins yfir netpantanir (Snjallverslun), EKKI kaup í búð. Kvittanaskönnun áfram nauðsynleg.
+- Vöruleit virkar vel: heiti, verð, verð/ltr, myndir (media.kronan.is), sku. Innkaupamiði (shopping note) tekur frjálsan texta + magn → „Senda í Krónuna“ krefst engrar vörupörunar.
+- Smíðað: hnappurinn „Krónan“ á innkaupalista (aðeins stjórnandi) sendir óhakaðar vörur á innkaupamiðann í Krónuappinu.
+- Spyrja Krónuna: kaupsaga úr búðum (kortakaup / Krónukort?), OAuth, myndanotkun.

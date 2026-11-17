@@ -2023,3 +2023,5 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .voice-cta-txt b { display: block; font-size: 17px; }
 .voice-cta-txt small { opacity: .85; font-size: 13px; }
 @keyframes voicePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,201,76,.0); } 50% { box-shadow: 0 0 0 6px rgba(242,201,76,.35); } }
+.kronan-btn { color: #c8102e; }
+.kronan-msg { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #eaf7f0; color: #1d5c3d; font-size: 14px; cursor: pointer; }

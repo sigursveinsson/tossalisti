@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { DEPARTMENTS, DEPT_ORDER } from '../data/departments.js'
 import { suggest, departmentFor } from '../data/products.js'
 import { sponsoredSuggest, sponsoredForAI, sponsorFor } from '../data/sponsors.js'
-import { IconBarcode, IconBell, IconBellOff, IconBuildingStore, IconCalendar, IconCalendarWeek, IconCamera, IconCheck, IconGift, IconListDetails, IconMicrophone, IconMinus, IconMoodKid, IconPhoto, IconPhotoOff, IconPlus, IconRefresh, IconRepeat, IconSearch, IconShoppingCart, IconTag, IconUserPlus, IconX } from '@tabler/icons-react'
+import { IconSend, IconBarcode, IconBell, IconBellOff, IconBuildingStore, IconCalendar, IconCalendarWeek, IconCamera, IconCheck, IconGift, IconListDetails, IconMicrophone, IconMinus, IconMoodKid, IconPhoto, IconPhotoOff, IconPlus, IconRefresh, IconRepeat, IconSearch, IconShoppingCart, IconTag, IconUserPlus, IconX } from '@tabler/icons-react'
 import { RECURRENCE_LABELS, TIME_OPTIONS, EMOJI_CHOICES } from '../data/chores.js'
 import { CatIcon, DeptIcon } from '../data/icons.jsx'
 import { resizeImageFile, isEmojiImage, emojiOf, makeEmojiImage } from '../lib/img.js'
@@ -63,7 +63,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, kronanEnabled = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -185,6 +185,20 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   // (vafrar, sérstaklega á iPhone, leyfa hljóðnema/hljóð aðeins eftir snertingu notanda).
   const [voicePrompt, setVoicePrompt] = useState(false)
   useEffect(() => { if (voiceSignal && Date.now() - voiceSignal < 8000 && canRecord()) { setLvTab('list'); setVoicePrompt(true) } }, [voiceSignal])
+  // Prufa (aðeins stjórnandi): senda óhakaðar vörur á innkaupamiða Krónunnar (Krónan Public API, edge-fallið kronan)
+  const [kronanBusy, setKronanBusy] = useState(false)
+  const [kronanMsg, setKronanMsg] = useState('')
+  const sendToKronan = async () => {
+    const lines = items.filter(i => !i.checked).map(i => ({ text: i.name, quantity: Math.max(1, i.qty || 1) }))
+    if (!lines.length) { setKronanMsg('Ekkert óhakað á listanum'); return }
+    setKronanBusy(true); setKronanMsg('')
+    try {
+      const { data, error } = await supabase.functions.invoke('kronan', { body: { action: 'note_add', lines } })
+      if (error || !data || data.status >= 300) throw new Error((data && JSON.stringify(data.data || data.error)) || (error && error.message) || 'villa')
+      setKronanMsg(lines.length + (lines.length === 1 ? ' vara send' : ' vörur sendar') + ' á innkaupamiðann í Krónuappinu ✓')
+    } catch (e) { setKronanMsg('Tókst ekki: ' + String(e.message || e).slice(0, 160)) }
+    setKronanBusy(false)
+  }
   const toggleVoiceItem = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, sel: !i.sel } : i) }))
   const voiceReward = (it) => (it.reward_product_id && (rewardProducts || []).find(p => p.id === it.reward_product_id)) || rewardFor(it.name)
   const toggleVoiceSpon = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, useSpon: !i.useSpon } : i) }))
@@ -921,8 +935,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       <div className="list-actions">
         <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
+        {kronanEnabled && isShopping && (
+          <button className="shelf-open kronan-btn" disabled={kronanBusy} onClick={sendToKronan} title="Senda óhakaðar vörur á innkaupamiðann í Krónuappinu">
+            <IconSend size={18} stroke={1.75} />{kronanBusy ? 'Sendi…' : 'Krónan'}
+          </button>
+        )}
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
       </div>
+      {kronanMsg && <div className="kronan-msg" onClick={() => setKronanMsg('')}>{kronanMsg}</div>}
       {isShopping && <RestockCard refreshKey={listId + ':' + items.length} rewardFor={rewardFor} onAdd={(name) => onAdd(name)} />}
       {bannerEnabled && <AdBanner />}
       {isShopping && items.length < 6 && (() => {
