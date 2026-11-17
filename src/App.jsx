@@ -22,6 +22,7 @@ import ListsPanel from './components/ListsPanel.jsx'
 import DeleteAccount from './components/DeleteAccount.jsx'
 import AddToListModal from './components/AddToListModal.jsx'
 import ShareModal from './components/ShareModal.jsx'
+import ProductImageTool from './components/ProductImageTool.jsx'
 import ProfileSetup from './components/ProfileSetup.jsx'
 import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
@@ -380,6 +381,15 @@ export default function App() {
       setCatalog(m)
     }).catch(() => {})
   }, [session])
+
+  // Sjálfgefnar myndir almennra heita („mjólk“ o.fl.) — sjá lib/generic.js
+  const [genericImgs, setGenericImgs] = useState({})
+  const loadGeneric = () => store.getGenericImages().then(rows => {
+    const m = {}
+    for (const r of rows) if (r.image_url) m[r.name_norm] = r.image_url
+    setGenericImgs(m)
+  }).catch(() => {})
+  useEffect(() => { if (isCloud && !session) return; loadGeneric() }, [session])
 
   const saveToCatalog = ({ barcode, name, image, dept }) => {
     if (!name) return
@@ -823,6 +833,10 @@ export default function App() {
   if (codeMatch) return <CodeCheck code={decodeURIComponent(codeMatch[1]).toUpperCase()} />
   // Afskráning af tilboðspósti: /afskra?t=<tóki> — engin innskráning
   if (typeof window !== 'undefined' && /^\/afskra\/?$/.test(window.location.pathname)) return <Unsubscribe token={new URLSearchParams(window.location.search).get('t')} />
+  // Tól stjórnanda: /vorumyndir — skanna vöru, velja mynd (Open Food Facts eða eigin), vista í vörubanka
+  if (typeof window !== 'undefined' && /^\/vorumyndir\/?$/.test(window.location.pathname) && isCloud && session?.user?.email === 'sigursveinsson@gmail.com') {
+    return <ProductImageTool onClose={() => { loadGeneric(); window.location.assign('/') }} />
+  }
   // Skráning á póstlista úr velkomupósti: /postlisti?t=<tóki>
   if (typeof window !== 'undefined' && /^\/postlisti\/?$/.test(window.location.pathname)) return <JoinOffers token={new URLSearchParams(window.location.search).get('t')} />
   if (isGriptu) {
@@ -1013,7 +1027,7 @@ export default function App() {
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
-              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
       {showLists && (
@@ -1080,7 +1094,7 @@ export default function App() {
         />
       )}
 
-      {showAdmin && <ErrorBoundary name="Stjórnborðið" onClose={() => setShowAdmin(false)}><AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} bannerEnabled={bannerEnabled} onToggleBanner={toggleBanner} /></ErrorBoundary>}
+      {showAdmin && <ErrorBoundary name="Stjórnborðið" onClose={() => setShowAdmin(false)}><AdminView onClose={() => setShowAdmin(false)} adsEnabled={adsEnabled} onToggleAds={toggleAds} bannerEnabled={bannerEnabled} onToggleBanner={toggleBanner} onGenericChanged={loadGeneric} /></ErrorBoundary>}
       {showNotif && <NotifSettings onClose={() => setShowNotif(false)} />}
       {showGriptuHome && inGriptu && (
         <ErrorBoundary name="Gríptu" onClose={() => setShowGriptuHome(false)}>

@@ -17,6 +17,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
+import { imageFor } from '../lib/generic.js'
 import { supabase, isCloud } from '../lib/supabaseClient.js'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
@@ -59,7 +60,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -403,7 +404,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           if (!chore && !showImages) return null
           // Engin mynd á línunni → mynd Gríptu-vörunnar ef heitið passar við hana (t.d. „Cocoa Puffs“ slegið inn handvirkt)
           const rpImg = !chore && !it.image_url ? (rewardFor(it.name) || {}).image_url : null
-          const img = it.image_url || (!chore ? catalog[it.name] : null) || rpImg
+          const img = it.image_url || (!chore ? imageFor(it.name, catalog, genericImgs) : null) || rpImg
           if (img) {
             if (isEmojiImage(img)) return <span className={'item-emoji' + (chore ? ' chore' : '')} onClick={() => onToggle(it, done)}>{emojiOf(img)}</span>
             return <img className={'item-img' + (chore ? ' chore' : '')} src={img} alt="" loading="lazy" onClick={() => onToggle(it, done)} />
@@ -466,8 +467,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {(showTyped || rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
         <div className="suggest">
           {showTyped && (
-            <div key="typed" className="suggest-off suggest-typed" onClick={() => add(typed, catalog[typed])}>
-              {catalog[typed] ? <img src={catalog[typed]} alt="" /> : <CatIcon name={typed} dept={departmentFor(typed)} size={34} />}
+            <div key="typed" className="suggest-off suggest-typed" onClick={() => add(typed, imageFor(typed, catalog, genericImgs) || undefined)}>
+              {imageFor(typed, catalog, genericImgs) ? <img src={imageFor(typed, catalog, genericImgs)} alt="" /> : <CatIcon name={typed} dept={departmentFor(typed)} size={34} />}
               <span>{typed}</span>
               <span className="sugg-generic">almenn vara</span>
             </div>

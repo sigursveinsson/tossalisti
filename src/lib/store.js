@@ -313,6 +313,7 @@ const local = {
     return Object.entries(g).filter(([, v]) => v).map(([name_norm, image_url]) => ({ name_norm, image_url }))
   },
   async ensureGenericImage() { return null },
+  async setGenericImage() { return null },
   async adminStats() { return null },
   async adminActivity() { return [] },
   async homeSummary() { return { week_points: 0, week_done: 0, feed: [] } },
@@ -898,6 +899,32 @@ const cloud = {
   async getGenericImages() {
     const { data } = await supabase.from('generic_images').select('name_norm,image_url').not('image_url', 'is', null)
     return data || []
+  },
+  // Stjórnandi: eigin mynd af vöru (strikamerki) í opinberu fötuna → slóð
+  async uploadProductPhoto(barcode, blob) {
+    const path = 'products/' + String(barcode || 'x').replace(/\D/g, '') + '-' + Date.now() + '.jpg'
+    const { error } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+    if (error) throw error
+    return supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl
+  },
+  // Stjórnandi: sjálfgefin mynd fyrir almennt heiti (blob = minnkuð mynd). Hleðst í opinberu fötuna product-images.
+  async setGenericImage(name, blob) {
+    const key = (name || '').toLowerCase().trim()
+    if (!key) return null
+    let url = typeof blob === 'string' ? blob : null
+    if (blob && typeof blob !== 'string') {
+      const path = 'generic/' + encodeURIComponent(key).replace(/%/g, '_') + '-' + Date.now() + '.jpg'
+      const { error } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+      if (error) throw error
+      url = supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl
+    }
+    if (url) {
+      const { error } = await supabase.from('generic_images').upsert({ name_norm: key, image_url: url, updated_at: new Date().toISOString() }, { onConflict: 'name_norm' })
+      if (error) throw error
+    } else {
+      await supabase.from('generic_images').delete().eq('name_norm', key)
+    }
+    return url
   },
   async ensureGenericImage(name) {
     const nn = (name || '').toLowerCase().trim()

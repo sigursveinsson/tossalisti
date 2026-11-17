@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import GenericImagesAdmin from './GenericImagesAdmin.jsx'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import RewardsAdmin from './RewardsAdmin.jsx'
 import BrandDashboard from './BrandDashboard.jsx'
-import { IconChartBar, IconGift, IconTrendingUp, IconX } from '@tabler/icons-react'
+import { IconCamera, IconChartBar, IconGift, IconTrendingUp, IconX } from '@tabler/icons-react'
 
 const kr = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr')
 const num = (n) => (n == null ? '—' : Number(n).toLocaleString('is-IS'))
@@ -52,7 +53,7 @@ const srcBadge = (u) => {
   return { ...s, title: s.label + (u.utm_campaign ? ' · ' + u.utm_campaign : '') }
 }
 
-export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnabled, onToggleBanner }) {
+export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnabled, onToggleBanner, onGenericChanged }) {
   const [stats, setStats] = useState(null)
   const [activity, setActivity] = useState(null)
   const [userFilter, setUserFilter] = useState('reg') // reg | guest
@@ -63,6 +64,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
   const [loading, setLoading] = useState(true)
   const [showRewards, setShowRewards] = useState(false)
   const [showBrand, setShowBrand] = useState(false)
+  const [showGeneric, setShowGeneric] = useState(false)
   const [tab, setTab] = useState('stats') // stats | brands
   const [scan, setScan] = useState(null) // mæling á kvittanaskönnun (scan_stats)
   const [scanDays, setScanDays] = useState(7)
@@ -99,6 +101,8 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
 
         {tab === 'brands' && (
           <>
+            <a className="adm-rewards-btn" href="/vorumyndir"><IconCamera size={18} stroke={1.75} /> Skanna vörur og myndir (tól)</a>
+            <button className="adm-rewards-btn" onClick={() => setShowGeneric(true)}><IconCamera size={18} stroke={1.75} /> Gátlisti: myndir algengra vara</button>
             <button className="adm-rewards-btn" onClick={() => setShowRewards(true)}><IconGift size={18} stroke={1.75} /> Verðlaunakerfi (vörur, verðlaun, tilboð)</button>
             <button className="adm-rewards-btn adm-brand-btn" onClick={() => setShowBrand(true)}><IconTrendingUp size={18} stroke={1.75} /> Vörumerkja-mælaborð, herferðir og aðgangur</button>
             <p className="muted-p">Aðgangur heildsala (netföng) er skráður neðst í vörumerkja-mælaborðinu.</p>
@@ -380,6 +384,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
       </div>
       {showRewards && <RewardsAdmin onClose={() => setShowRewards(false)} />}
       {showBrand && <BrandDashboard onClose={() => setShowBrand(false)} />}
+      {showGeneric && <GenericImagesAdmin onClose={() => setShowGeneric(false)} onChanged={onGenericChanged} />}
     </div>
   )
 }
