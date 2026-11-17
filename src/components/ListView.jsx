@@ -19,6 +19,7 @@ import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
 import { imageFor } from '../lib/generic.js'
 import ZoomImg from './ZoomImg.jsx'
+import MyListView from './MyListView.jsx'
 import { supabase, isCloud } from '../lib/supabaseClient.js'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
@@ -61,7 +62,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -271,6 +272,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
 
   const [shelf, setShelf] = useState(false)
   const [shopMode, setShopMode] = useState(false)
+  // Flipar á innkaupalista: „Listinn“ | „Oft keypt“ (vörur sem notandinn kaupir oft, lært af kvittunum)
+  const [lvTab, setLvTab] = useState('list')
+  useEffect(() => { if (oftenSignal) setLvTab('often') }, [oftenSignal])
+  useEffect(() => { setLvTab(Date.now() - oftenSignal < 3000 ? 'often' : 'list') }, [listId])
   const commitShelf = async (picks) => {
     for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image) }
   }
@@ -883,9 +888,25 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     .filter(g => g.items.length)
     .sort((a, b) => DEPT_ORDER[a.key] - DEPT_ORDER[b.key])
 
+  const tabs = isShopping && isCloud ? (
+    <div className="lv-tabs">
+      <button className={lvTab === 'list' ? 'on' : ''} onClick={() => setLvTab('list')}>Listinn{items.filter(i => !i.checked).length ? ` (${items.filter(i => !i.checked).length})` : ''}</button>
+      <button className={lvTab === 'often' ? 'on' : ''} onClick={() => setLvTab('often')}>Oft keypt</button>
+    </div>
+  ) : null
+  if (tabs && lvTab === 'often') {
+    return (
+      <div>
+        {tabs}
+        <MyListView embedded onAdd={(name) => onAdd(name)} catalog={catalog} genericImgs={genericImgs}
+          onListItems={items.filter(i => !i.checked).map(i => i.name)} />
+      </div>
+    )
+  }
   return (
     <div>
       {addBar}
+      {tabs}
       <div className="list-actions">
         <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>

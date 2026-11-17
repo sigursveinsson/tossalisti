@@ -1991,3 +1991,14 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .ml-pinrow { display: flex; gap: 6px; margin: 16px 14px 0; }
 .ml-pinrow input { flex: 1; padding: 10px 12px; border: 1px solid #d6dbe6; border-radius: 12px; font-size: 14px; }
 .ml-pinrow button { border: 0; background: var(--navy); color: #fff; border-radius: 12px; padding: 0 14px; }
+.ml-help { font-size: 13px; color: #5b6475; margin: 12px 14px 8px; }
+.ml-due-tag { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #8a1c14; background: #fde8e6; border-radius: 6px; padding: 0 6px; }
+.ml-bar { position: sticky; bottom: 12px; margin: 14px 12px 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--navy); color: #fff; font-size: 14px; box-shadow: 0 6px 18px rgba(21,49,94,.3); z-index: 2; }
+.ml-bar span { flex: 1; display: flex; align-items: center; gap: 6px; }
+.ml-bar button { border: 0; background: #fff; color: var(--navy); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: 13px; }
+.lv-tabs { display: flex; gap: 6px; margin: 4px 0 10px; padding: 4px; background: #eef1f6; border-radius: 12px; }
+.lv-tabs button { flex: 1; border: 0; background: none; padding: 8px; border-radius: 9px; font-size: 14px; font-weight: 600; color: #5b6475; }
+.lv-tabs button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.ml-embedded .ml { padding: 0; }
+.ml-embedded .ml-row { border-radius: 0; }
+.ml-embedded .ml-due, .ml-embedded .ml-help, .ml-embedded .ml-pinrow { margin-left: 0; margin-right: 0; }

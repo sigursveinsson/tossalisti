@@ -687,7 +687,22 @@ const cloud = {
     if (!user) return null
     const fp = purchaseFingerprint(p)
     const { data } = await supabase.from('purchases').select('id,store,purchased_at,total').eq('user_id', user.id).eq('fingerprint', fp).limit(1)
-    return (data && data[0]) || null
+    if (data && data[0]) return data[0]
+    // Sama kvittun lesin aðeins öðruvísi (verslunarheiti, dagsetning eða lína mislesin) → nákvæma fingrafarið passar ekki.
+    // 1) Sama kvittananúmer   2) sama heildarupphæð og (sami kaupdagur eða sama verslunarkeðja) síðustu 120 daga
+    const since = new Date(Date.now() - 120 * 864e5).toISOString()
+    if (p.receipt_no) {
+      const { data: byNo } = await supabase.from('purchases').select('id,store,purchased_at,total').eq('user_id', user.id).eq('receipt_no', p.receipt_no).gte('created_at', since).limit(1)
+      if (byNo && byNo[0]) return byNo[0]
+    }
+    const tot = Math.round(Number(p.total) || 0)
+    if (tot > 0) {
+      const { data: same } = await supabase.from('purchases').select('id,store,purchased_at,total').eq('user_id', user.id).gte('created_at', since).gte('total', tot - 0.5).lte('total', tot + 0.5).limit(10)
+      const chain = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/)[0]
+      const hit = (same || []).find(x => x.purchased_at === p.purchased_at || (chain(x.store) && chain(x.store) === chain(p.store)))
+      if (hit) return hit
+    }
+    return null
   },
   async addPurchase(p) {
     const { data: { user } } = await supabase.auth.getUser()

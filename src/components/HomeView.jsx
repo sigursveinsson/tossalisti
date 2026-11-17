@@ -149,10 +149,10 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
             <span className="home-invite-ic"><IconShoppingBag size={22} stroke={1.75} /></span>
             <span className="home-invite-txt">
               {due.length
-                ? <><b>Minn listi · {due.length} {due.length === 1 ? 'vantar' : 'vantar'} líklega</b><small>{names.join(', ')}{due.length > 3 ? ` og ${due.length - 3} fleiri` : ''}</small></>
+                ? <><b>Oft keypt · {due.length} {due.length === 1 ? 'vantar' : 'vantar'} líklega</b><small>{names.join(', ')}{due.length > 3 ? ` og ${due.length - 3} fleiri` : ''}</small></>
                 : items.length
-                  ? <><b>Minn listi · {items.length} vörur</b><small>Það sem þú kaupir oft, lært af kvittunum</small></>
-                  : <><b>Minn listi</b><small>Fyllist sjálfur eftir 2–3 kvittanir</small></>}
+                  ? <><b>Oft keypt · {items.length} vörur</b><small>Það sem þú kaupir oft, lært af kvittunum</small></>
+                  : <><b>Oft keypt</b><small>Fyllist sjálfur eftir 2–3 kvittanir</small></>}
             </span>
             {due.length > 0 && onAddStaples
               ? <button className="home-mylist-add" onClick={(e) => { e.stopPropagation(); onAddStaples(due.map(i => i.name)) }}>Á listann</button>

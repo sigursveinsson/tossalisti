@@ -10,7 +10,7 @@ import { CatIcon } from '../data/icons.jsx'
 const dagar = (n) => n + (n % 10 === 1 && n % 100 !== 11 ? ' dag' : ' daga')
 const sinceTxt = (d) => d == null ? '' : d === 0 ? 'keypt í dag' : d === 1 ? 'síðast í gær' : 'síðast fyrir ' + dagar(d)
 
-export default function MyListView({ onClose, onAdd, onScan, catalog = {}, genericImgs = {}, onListItems = [] }) {
+export default function MyListView({ embedded = false, onClose, onAdd, onOpenList, onScan, catalog = {}, genericImgs = {}, onListItems = [] }) {
   const [data, setData] = useState(null)
   const [added, setAdded] = useState({})
   const [newPin, setNewPin] = useState('')
@@ -21,7 +21,6 @@ export default function MyListView({ onClose, onAdd, onScan, catalog = {}, gener
 
   const items = data?.items || []
   const due = items.filter(i => i.due)
-  const rest = items.filter(i => !i.due)
   const isOn = (i) => added[i.key] || onList.has(String(i.name).toLowerCase().trim())
 
   const add = async (i) => {
@@ -44,9 +43,11 @@ export default function MyListView({ onClose, onAdd, onScan, catalog = {}, gener
         {img ? <img className="ml-img" src={img} alt="" loading="lazy" /> : <CatIcon name={i.name} dept={departmentFor(i.name)} size={44} />}
         <div className="ml-main">
           <div className="ml-name">{i.name}{i.pinned && <IconPin size={13} className="ml-pin-ic" />}</div>
-          <div className={'ml-sub' + (i.due ? ' due' : '')}>
-            {i.times > 0 ? (i.interval ? '~' + dagar(i.interval) + ' fresti' : i.times + '×') : 'Fest'}
+          <div className="ml-sub">
+            {i.times > 0 ? i.times + '× keypt' : 'Fest'}
+            {i.interval ? ' · ~' + dagar(i.interval) + ' fresti' : ''}
             {i.since != null ? ' · ' + sinceTxt(i.since) : ''}
+            {i.due && <span className="ml-due-tag">Vantar líklega</span>}
           </div>
         </div>
         <div className="ml-tools">
@@ -61,15 +62,15 @@ export default function MyListView({ onClose, onAdd, onScan, catalog = {}, gener
   }
 
   return (
-    <div className="ml-bg">
+    <div className={embedded ? 'ml-embedded' : 'ml-bg'}>
       <div className="ml">
-        <div className="ml-head">
+        {!embedded && <div className="ml-head">
           <button className="ml-back" onClick={onClose} aria-label="Til baka"><IconArrowLeft size={22} /></button>
           <div>
             <h1>Minn listi</h1>
             <small>{data ? (data.receipts > 0 ? `Byggt á ${data.receipts} ${data.receipts === 1 ? 'kvittun' : 'kvittunum'} · lærir af hverri skönnun` : 'Byggt á innkaupalistunum þínum') : 'Hleð…'}</small>
           </div>
-        </div>
+        </div>}
 
         {due.length > 0 && (
           <div className="ml-due">
@@ -87,10 +88,15 @@ export default function MyListView({ onClose, onAdd, onScan, catalog = {}, gener
           </div>
         )}
 
-        {due.length > 0 && <div className="ml-sec">Vantar líklega</div>}
-        {due.map(row)}
-        {rest.length > 0 && <div className="ml-sec">Kaupir oft</div>}
-        {rest.map(row)}
+        {items.length > 0 && <div className="ml-help">{embedded ? <>Það sem þú kaupir oftast, efst — lært af kvittunum{data?.receipts ? ` (${data.receipts})` : ''}. Ýttu á <b>+</b> til að setja vöru á þennan lista.</> : <>Vörurnar sem þú kaupir oftast, efst. Ýttu á <b>+</b> til að setja vöru á innkaupalistann.</>}</div>}
+        {items.map(row)}
+
+        {!embedded && Object.values(added).filter(Boolean).length > 0 && onOpenList && (
+          <div className="ml-bar">
+            <span><IconCheck size={16} stroke={2.4} /> {Object.values(added).filter(Boolean).length} {Object.values(added).filter(Boolean).length === 1 ? 'vara komin' : 'vörur komnar'} á innkaupalistann</span>
+            <button onClick={onOpenList}>Opna listann</button>
+          </div>
+        )}
 
         <div className="ml-pinrow">
           <input value={newPin} onChange={e => setNewPin(e.target.value)} placeholder="Festa vöru, t.d. kaffi" onKeyDown={e => e.key === 'Enter' && pinNew()} />
