@@ -18,6 +18,7 @@ import RestockCard from './RestockCard.jsx'
 import ShelfView from './ShelfView.jsx'
 import ShoppingMode from './ShoppingMode.jsx'
 import { imageFor } from '../lib/generic.js'
+import { landingEvent } from '../lib/landing.js'
 import ZoomImg from './ZoomImg.jsx'
 import MyListView from './MyListView.jsx'
 import { supabase, isCloud } from '../lib/supabaseClient.js'
@@ -218,8 +219,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         )}
         {voiceState === 'think' && (
           <>
-            <div className="voice-orb think">🪿</div>
-            <div className="voice-hint">Gríptu hlustar…</div>
+            <div className="voice-orb think"><IconMicrophone size={40} stroke={1.75} /></div>
+            <div className="voice-hint">Les það sem þú sagðir…</div>
           </>
         )}
         {voiceState === 'error' && (
