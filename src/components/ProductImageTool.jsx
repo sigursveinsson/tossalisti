@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { IconBarcode, IconCamera, IconCheck, IconArrowLeft, IconPhotoOff } from '@tabler/icons-react'
 import BarcodeScanner from './BarcodeScanner.jsx'
+import OffSearchPanel from './OffSearchPanel.jsx'
 import { store } from '../lib/store.js'
 import { resizeImageFile } from '../lib/img.js'
 import { GENERIC_TARGETS, genericKey } from '../lib/generic.js'
@@ -37,6 +38,7 @@ export default function ProductImageTool({ onClose }) {
   const [img, setImg] = useState(null)       // valin mynd: { url } eða { blob, preview }
   const [msg, setMsg] = useState('')
   const [saved, setSaved] = useState([])
+  const [mode, setMode] = useState('scan') // scan | search
 
   const reset = () => { setCode(''); setOff(null); setOurs(null); setName(''); setGeneric(''); setImg(null); setMsg('') }
 
@@ -90,7 +92,13 @@ export default function ProductImageTool({ onClose }) {
         <span className="pit-count">{saved.length ? saved.length + ' vistaðar' : ''}</span>
       </div>
 
-      {!code && (
+      <div className="lv-tabs">
+        <button className={mode === 'scan' ? 'on' : ''} onClick={() => setMode('scan')}>Skanna í búð</button>
+        <button className={mode === 'search' ? 'on' : ''} onClick={() => setMode('search')}>Leita í Open Food Facts</button>
+      </div>
+      {mode === 'search' && <OffSearchPanel />}
+
+      {mode === 'scan' && !code && (
         <div className="pit-start">
           <button className="pit-scan" onClick={() => setScanning(true)}><IconBarcode size={28} /> Skanna strikamerki</button>
           <div className="pit-manual">
@@ -100,7 +108,7 @@ export default function ProductImageTool({ onClose }) {
         </div>
       )}
 
-      {code && (
+      {mode === 'scan' && code && (
         <div className="pit-card">
           <div className="pit-code">{code}{loading && ' · leita…'}</div>
           <div className="pit-imgwrap">
