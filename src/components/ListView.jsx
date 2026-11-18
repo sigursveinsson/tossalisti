@@ -158,6 +158,17 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         }),
       })
       setVoiceState('review')
+      // Prufa (stjórnandi): finna Krónuvöru fyrir hverja raddvöru — sjálfgefið efsta niðurstaða, má fletta eða velja „almennt“
+      if (kronanEnabled && isShopping) {
+        const list = res.items.slice(0, 15)
+        const found = await Promise.all(list.map(async (it) => {
+          try {
+            const { data } = await supabase.functions.invoke('kronan', { body: { action: 'search', q: it.name, pageSize: 4 } })
+            return (data && data.hits) || []
+          } catch { return [] }
+        }))
+        setVoiceRes(r => r && ({ ...r, items: r.items.map((it, k) => found[k] && found[k].length ? { ...it, kr: found[k], krIdx: 0 } : it) }))
+      }
     } catch (e) {
       setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota raddstýringu.' : 'Náði ekki að hlusta núna — reyndu aftur.')
       setVoiceState('error')
@@ -207,6 +218,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const picks = (voiceRes ? voiceRes.items : []).filter(i => i.sel)
     setVoiceState(null)
     for (const p of picks) {
+      // Valin Krónuvara: heiti, mynd, SKU og verð Krónunnar; magn úr röddinni ef það er heil tala án einingar (eða stk)
+      if (p.kr && p.krIdx >= 0 && p.kr[p.krIdx]) {
+        const h = p.kr[p.krIdx]
+        const n = Number(String(p.qty || '').replace(',', '.'))
+        const q = (!p.unit || /^stk/i.test(p.unit)) && Number.isInteger(n) && n > 1 ? n : 1
+        await onAdd(h.name, undefined, undefined, undefined, h.image, undefined, { sku: h.sku, price: h.price, source: 'kronan', qty: q })
+        continue
+      }
       const useSp = p.sponsored && p.useSpon
       const base = useSp ? p.sponsored.name : p.name
       const full = p.qty ? `${base} ${p.qty}${p.unit ? ' ' + p.unit : ''}` : base
@@ -272,6 +291,16 @@ export default function ListView({ items, listType = 'shopping', members = [], k
                       </button>
                     )}
                     {it.qty && <span className="vi-qty">{it.qty}{it.unit ? ' ' + it.unit : ''}</span>}
+                    {it.kr && (() => {
+                      const h = it.krIdx >= 0 ? it.kr[it.krIdx] : null
+                      const next = (e) => { e.preventDefault(); setVoiceRes(r => r && ({ ...r, items: r.items.map(x => x.key === it.key ? { ...x, krIdx: x.krIdx + 1 >= x.kr.length ? -1 : x.krIdx + 1 } : x) })) }
+                      return (
+                        <span className="vi-kr" onClick={next} title="Ýttu til að velja aðra vöru">
+                          {h ? <><img src={h.image} alt="" /><span className="vi-kr-name">{h.name}<small>{(h.price || 0).toLocaleString('is-IS')} kr.</small></span></> : <span className="vi-kr-name">Almenn vara<small>ekki tengd Krónunni</small></span>}
+                          <span className="vi-kr-swap">↺</span>
+                        </span>
+                      )
+                    })()}
                     {rp && <span className="sugg-cashback">{rewardLabel(rp)}</span>}
                     {it.dup && <span className="vi-dup">á lista</span>}
                   </label>

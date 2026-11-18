@@ -2036,3 +2036,9 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .kr-total span { flex: 1; font-size: 14px; }
 .kr-total b { font-size: 18px; }
 .kr-total small { flex-basis: 100%; font-size: 12px; color: #6b7a93; }
+.voice-item { flex-wrap: wrap; }
+.vi-kr { flex-basis: 100%; display: flex; align-items: center; gap: 8px; margin: 6px 0 2px 28px; padding: 6px 8px; border-radius: 10px; background: #fff5f6; border: 1px solid #f3c9cf; cursor: pointer; }
+.vi-kr img { width: 34px; height: 34px; object-fit: contain; border-radius: 6px; background: #fff; }
+.vi-kr-name { flex: 1; display: flex; flex-direction: column; font-size: 13px; color: var(--navy); line-height: 1.2; }
+.vi-kr-name small { font-size: 12px; color: #c8102e; font-weight: 700; }
+.vi-kr-swap { font-size: 16px; color: #c8102e; padding: 0 4px; }
