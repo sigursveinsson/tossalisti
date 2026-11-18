@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { RECIPES, fmtQty, RECIPE_CATEGORIES } from '../data/recipes.js'
 import { store } from '../lib/store.js'
 import RecipeForm from './RecipeForm.jsx'
+import KronanRecipes from './KronanRecipes.jsx'
 import Dialog from './Dialog.jsx'
 import { IconArrowLeft, IconCheck, IconLock } from '@tabler/icons-react'
 
@@ -16,7 +17,8 @@ function StarRow({ value, count }) {
   )
 }
 
-export default function RecipesView({ onAddRecipe, authorName }) {
+export default function RecipesView({ onAddRecipe, authorName, kronan = false, shoppingLists = [], defaultListId, onAddKronan }) {
+  const [src, setSrc] = useState(kronan ? 'kronan' : 'tossa') // Krónuuppskriftir (prufa, stjórnandi) | eigin uppskriftir
   const [open, setOpen] = useState(null)
   const [creating, setCreating] = useState(false)
   const [servings, setServings] = useState(4)
@@ -72,6 +74,15 @@ export default function RecipesView({ onAddRecipe, authorName }) {
 
   if (creating) {
     return <RecipeForm defaultAuthor={authorName} onSubmit={saveRecipe} onClose={() => setCreating(false)} />
+  }
+  const srcTabs = kronan ? (
+    <div className="lv-tabs">
+      <button className={src === 'kronan' ? 'on' : ''} onClick={() => { setSrc('kronan'); setOpen(null) }}>Frá Krónunni</button>
+      <button className={src === 'tossa' ? 'on' : ''} onClick={() => setSrc('tossa')}>Tossalisti</button>
+    </div>
+  ) : null
+  if (kronan && src === 'kronan') {
+    return <div>{srcTabs}<KronanRecipes shoppingLists={shoppingLists} defaultListId={defaultListId} onAddToList={onAddKronan} /></div>
   }
 
   if (open) {
@@ -169,6 +180,7 @@ export default function RecipesView({ onAddRecipe, authorName }) {
 
   return (
     <div>
+      {!open && srcTabs}
       <button className="add-recipe-btn" style={{ marginTop: 4 }} onClick={() => setCreating(true)}>+ Ný uppskrift</button>
 
       <div className="addbar" style={{ marginTop: 12 }}>

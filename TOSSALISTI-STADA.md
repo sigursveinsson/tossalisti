@@ -826,3 +826,11 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - 18.11: Krónuvörur í tillögum á innkaupalista (stjórnandi): leit 350 ms eftir innslátt → mynd, verð, verð/kg; val vistar ext_sku/ext_price/ext_source á list_items; verð á línu og „Áætlað í Krónunni“ neðst; „Krónan“-hnappur sendir SKU (tengd vara) eða texta, án tvítekninga.
 - 18.11: Rödd + Krónan (stjórnandi): eftir raddgreiningu er leitað að Krónuvöru fyrir hverja vöru; sjálfgefið efsta niðurstaða, ↺ flettir (síðast „Almenn vara“). Magn úr röddinni (heil tala án einingar) → qty.
 - 18.11: Krónukarfa (stjórnandi): KronanCart.jsx — hver óhökuð vara fær Krónuvöru (valin eða efsta leit, ↺/Sleppa), forskoðun (checkout/preview-lines: staða + áætluð upphæð), „Setja í körfu“ = checkout/lines replace:false (bætir við, eyðir engu), sýnir körfu alls m. pokagjaldi + hlekk í Snjallverslun. ALDREI checkout/complete. Innkaupamiði sem varaleið.
+- NÆST (byrjað að kanna 18.11 nótt): Krónuuppskriftir — /recipes/search (query, tags), /recipes/{slug} (hráefni tengd vörum + framboð), meal-plans (autofill, ingredients, add-to-product-list). Ekkert smíðað enn. Óklárað deploy: „Krónan: frá lista í körfu“ (KronanCart) bíður push.
+
+## 18.11 nótt — Krónan: Vöruhilla, uppskriftir, tilboð (allt aðeins stjórnandi)
+- Edge `kronan` v5: recipes_search, recipe, categories, category_products (aðeins lauf-flokkar), on_sale. Allt lestur.
+- Vöruhilla: flipar „Krónan“ | „Almennar vörur“. Krónan: Tilboð + 25 yfirflokkar (táknmyndir) → undirflokkar → vörur m. mynd/verði/afslætti; leit í Krónuúrvali; val fer á lista með SKU/verði.
+- Uppskriftir: flipar „Frá Krónunni“ | „Tossalisti“. KronanRecipes.jsx: leit + flýtiflokkar, 458 uppskriftir, síðuskipting; uppskrift: mynd, tími, skammtar (± kvarðar magn), hráefni tengd Krónuvörum (afhaka það sem er til), „kostar um X kr.“, „Á innkaupalistann“ (velur lista) og „Í Krónukörfuna“ (KronanCart). Texti uppskriftar og aðferð.
+- Tilboðsmerki á innkaupalista: vörur með ext_sku sem eru á tilboði fá „Tilboð −20%“ og tilboðsverð (líka í „Áætlað í Krónunni“).
+- Prófað: gagnasnið allra endapunkta, parse + import + óskilgreind heiti. EKKI prófað í vafra (ekkert byggt hér) — þarf deploy og prufu.

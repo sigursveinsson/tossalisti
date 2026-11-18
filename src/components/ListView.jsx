@@ -328,7 +328,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   useEffect(() => { if (oftenSignal) setLvTab('often') }, [oftenSignal])
   useEffect(() => { setLvTab(Date.now() - oftenSignal < 3000 ? 'often' : 'list') }, [listId])
   const commitShelf = async (picks) => {
-    for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image) }
+    for (const p of picks) { await onAdd(p.name, undefined, undefined, undefined, p.image, undefined, p.sku ? { sku: p.sku, price: p.price, source: 'kronan' } : undefined) }
   }
 
   const canManageKids = typeof onCreateKid === 'function'
@@ -373,6 +373,18 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return () => { alive = false; clearTimeout(t) }
   }, [text, kronanEnabled, isShopping])
   const krr = (n) => Math.round(n).toLocaleString('is-IS') + ' kr.'
+  // Tilboð Krónunnar (prufa): merkja vörur á listanum sem eru á tilboði núna
+  const [krSale, setKrSale] = useState({})
+  useEffect(() => {
+    if (!kronanEnabled || !isShopping) return
+    let alive = true
+    supabase.functions.invoke('kronan', { body: { action: 'on_sale', limit: 100 } }).then(({ data }) => {
+      const m = {}
+      for (const h of (((data && data.data) || {}).results || [])) m[h.sku] = { pct: h.discountPercent, price: h.discountedPrice, was: h.price }
+      if (alive) setKrSale(m)
+    }).catch(() => {})
+    return () => { alive = false }
+  }, [kronanEnabled, isShopping])
 
   const onScan = async (code) => {
     const now = Date.now()
@@ -491,7 +503,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
-          {!chore && kronanEnabled && it.ext_price != null && <span className="item-price">{krr(it.ext_price * Math.max(1, it.qty || 1))}</span>}
+          {!chore && kronanEnabled && it.ext_price != null && <span className="item-price">{krr((krSale[it.ext_sku] ? krSale[it.ext_sku].price : it.ext_price) * Math.max(1, it.qty || 1))}</span>}
+          {!chore && kronanEnabled && it.ext_sku && krSale[it.ext_sku] && <span className="item-sale">Tilboð −{krSale[it.ext_sku].pct}%</span>}
           {!chore && (() => {
             const rp = rewardFor(it.name)
             const sp = adsEnabled ? sponsorFor(it.name) : null
@@ -1035,7 +1048,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         const open = items.filter(i => !i.checked)
         const priced = open.filter(i => i.ext_price != null)
         if (!priced.length) return null
-        const sum = priced.reduce((a, i) => a + i.ext_price * Math.max(1, i.qty || 1), 0)
+        const sum = priced.reduce((a, i) => a + (krSale[i.ext_sku] ? krSale[i.ext_sku].price : i.ext_price) * Math.max(1, i.qty || 1), 0)
         return (
           <div className="kr-total">
             <span>Áætlað í Krónunni</span><b>{krr(sum)}</b>
@@ -1048,7 +1061,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {scanner}
       {voiceModal}
       {showKronan && <KronanCart items={items} onClose={() => setShowKronan(false)} />}
-      {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
+      {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} kronan={kronanEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
       {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
   )

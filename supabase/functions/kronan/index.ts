@@ -45,6 +45,12 @@ Deno.serve(async (req) => {
       const hits = (((r.data as any)?.hits) || []).map((h: any) => ({ sku: h.sku, name: h.name, price: h.price, image: h.thumbnail, priceInfo: h.priceInfo, shortage: !!h.temporaryShortage }))
       return json({ status: r.status, hits, count: (r.data as any)?.count ?? hits.length })
     }
+    // Lestur: uppskriftir, flokkar, tilboð (prufa)
+    if (a === 'recipes_search') return json(await kr('/recipes/search/', { method: 'POST', body: JSON.stringify({ query: String(b.q || '').slice(0, 64), page: Math.max(1, +b.page || 1), ...(Array.isArray(b.tags) ? { tags: b.tags.map(Number).filter(Number.isFinite).slice(0, 10) } : {}) }) }))
+    if (a === 'recipe') return json(await kr('/recipes/' + encodeURIComponent(String(b.slug || '')) + '/'))
+    if (a === 'categories') return json(await kr('/categories/'))
+    if (a === 'category_products') return json(await kr('/categories/' + encodeURIComponent(String(b.slug || '')) + '/products/?page=' + Math.max(1, +b.page || 1) + (b.pageSize ? '&page_size=' + Math.min(60, +b.pageSize) : '')))
+    if (a === 'on_sale') return json(await kr('/products/on-sale/?limit=' + Math.min(100, +b.limit || 60) + '&offset=' + (+b.offset || 0)))
     // Karfa í Snjallverslun. ALDREI er gengið frá pöntun (checkout/complete er ekki notað) — notandinn greiðir sjálfur hjá Krónunni.
     const skuLines = () => (Array.isArray(b.lines) ? b.lines : []).slice(0, 80)
       .filter((l: any) => l && l.sku)

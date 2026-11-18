@@ -778,6 +778,20 @@ export default function App() {
   }
   // Opnar alltaf glugga þar sem hægt er að af-haka hráefni og velja lista.
   const addRecipe = (recipe, servings) => setPendingRecipe({ recipe, servings })
+  // Krónuuppskrift → innkaupalisti: hver vara með mynd, vörunúmeri, verði og magni (sleppir því sem er þegar á listanum)
+  const addKronanToList = async (listId, products) => {
+    const l = lists.find(x => x.id === listId)
+    const have = new Set(((l && l.items) || []).filter(i => !i.checked).map(i => i.name))
+    let n = 0
+    for (const p of products) {
+      if (have.has(p.name.toLowerCase().trim())) continue
+      await store.addItem(listId, p.name, { image: p.image, sku: p.sku, price: p.price, source: 'kronan', qty: p.qty })
+      n++
+    }
+    await reload(currentId)
+    flash(n + (n === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((l && l.name) || 'listann') + '“')
+    return n
+  }
 
   const createList = async (name, type = 'shopping') => {
     const l = await store.createList(name, type)
@@ -1044,7 +1058,11 @@ export default function App() {
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
-            ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''} />
+            ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''}
+                kronan={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'}
+                shoppingLists={lists.filter(l => l.type === 'shopping')}
+                defaultListId={(lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping') || {}).id}
+                onAddKronan={addKronanToList} />
             : tab === 'griptu' && showGriptuTab
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping

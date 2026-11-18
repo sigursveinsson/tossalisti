@@ -185,3 +185,12 @@ Tækifæri: (1) kaupsaga → sjálfvirkt bókhald + „Oft keypt“ án skönnun
 (3) vöruupplýsingar: myndir, verð, vörumerki, næring → vörumyndir og útgáfur, (4) uppskriftir tengdar vörum og verði.
 Athuga: skilmálar fyrir þriðja aðila app, öryggi lykla (dulkóðað á netþjóni, aldrei í vafra, aftenging), eignarhald á myndum/gögnum.
 Næst: póstur til Krónunnar (kynning + skilmálar + samstarf); Sverrir býr til lykil og vistar sjálfur sem Supabase-leyndarmál til könnunar.
+
+## Krónan — næstu hugmyndir (18. nóv nótt)
+1. Vikumatseðill Krónunnar (meal-plans: autofill → ingredients → listi/karfa) + matarsóunarvinkill okkar.
+2. Gönguröð búðar: shopping-notes/store-product-order raðar lista eftir Skannað og skundað-verslun.
+3. Strikamerki → Krónuvara (products/barcode) í skannanum: rétt heiti, mynd og verð fyrir íslenskar vörur.
+4. „Oft keypt“ + tilboð: tilkynning „Góðosturinn sem þú kaupir alltaf er −20% í Krónunni“.
+5. Rödd → uppskrift: „taco fyrir sex“ leitar fyrst í uppskriftum Krónunnar (raunverulegar vörur) áður en AI býr til lista.
+6. Uppáhaldsuppskriftir samstilltar (recipes/{slug}/favorite) — „Mínar Krónuuppskriftir“.
+7. Kynning fyrir Krónuna: Tossalisti sem „rödd og heimilislisti“ ofan á Snjallverslun; samstarf um OAuth og kaupsögu úr búðum.
