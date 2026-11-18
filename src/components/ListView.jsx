@@ -168,7 +168,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       const spons = adsEnabled ? sponsoredForAI() : []
       const res = await parseVoice({ ...input, products: rewardProducts, existing: openItems.map(i => i.name), sponsored: spons })
       const have = new Set(openItems.map(i => normMatch(i.name)))
-      setVoiceRes({
+      const parsed = {
         transcript: res.transcript,
         items: res.items.map((it, k) => {
           const dup = have.has(normMatch(it.name))
@@ -176,7 +176,19 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           const sp = it.sponsored ? spons.find(s => s.name === it.sponsored.name) : null
           return { ...it, key: k, dup, sel: !dup, sponsored: sp || null, useSpon: !!sp }
         }),
-      })
+      }
+      // Beint á listann (engin yfirferð — enginn aukasmellur). „Afturkalla“ birtist ef appið heyrði vitlaust.
+      // Stjórnandi (Krónuprufa) fær áfram yfirferðina til að velja Krónuvörur.
+      if (!kronanEnabled) {
+        if (!parsed.items.some(i => i.sel)) {
+          setVoiceErr(parsed.items.length ? 'Allt sem þú nefndir er þegar á listanum.' : 'Ég heyrði engar vörur — reyndu aftur.')
+          setVoiceState('error'); return
+        }
+        landingEvent('voice_auto')
+        await commitVoice(parsed)
+        return
+      }
+      setVoiceRes(parsed)
       setVoiceState('review')
       // Prufa (stjórnandi): finna Krónuvöru fyrir hverja raddvöru — sjálfgefið efsta niðurstaða, má fletta eða velja „almennt“
       if (kronanEnabled && isShopping) {
@@ -239,8 +251,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const toggleVoiceItem = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, sel: !i.sel } : i) }))
   const voiceReward = (it) => (it.reward_product_id && (rewardProducts || []).find(p => p.id === it.reward_product_id)) || rewardFor(it.name)
   const toggleVoiceSpon = (key) => setVoiceRes(r => r && ({ ...r, items: r.items.map(i => i.key === key ? { ...i, useSpon: !i.useSpon } : i) }))
-  const commitVoice = async () => {
-    const picks = (voiceRes ? voiceRes.items : []).filter(i => i.sel)
+  const commitVoice = async (src) => {
+    const from = src && src.items ? src : voiceRes
+    const picks = (from ? from.items : []).filter(i => i.sel)
+    const added = []
     setVoiceState(null)
     for (const p of picks) {
       // Valin Krónuvara: heiti, mynd, SKU og verð Krónunnar; magn úr röddinni ef það er heil tala án einingar (eða stk)
@@ -249,6 +263,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         const n = Number(String(p.qty || '').replace(',', '.'))
         const q = (!p.unit || /^stk/i.test(p.unit)) && Number.isInteger(n) && n > 1 ? n : 1
         await onAdd(h.name, undefined, undefined, undefined, h.image, undefined, { sku: h.sku, price: h.price, source: 'kronan', qty: q })
+        added.push(h.name)
         continue
       }
       const useSp = p.sponsored && p.useSpon
@@ -257,8 +272,20 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       const rp = voiceReward(useSp ? { name: base } : p)
       const img = (useSp && p.sponsored.image) || (rp && rp.image_url) || undefined
       await onAdd(full, undefined, undefined, undefined, img)
+      added.push(full)
     }
     setVoiceRes(null)
+    if (added.length) setVoiceUndo({ names: added.map(n => String(n).toLowerCase().trim()), t: Date.now() })
+  }
+  // „Afturkalla“ eftir að tal/texti fór beint á listann (hverfur eftir 10 sek.)
+  const [voiceUndo, setVoiceUndo] = useState(null)
+  useEffect(() => { if (!voiceUndo) return; const t = setTimeout(() => setVoiceUndo(null), 10000); return () => clearTimeout(t) }, [voiceUndo])
+  const undoVoice = async () => {
+    const u = voiceUndo; setVoiceUndo(null)
+    if (!u) return
+    landingEvent('voice_undo')
+    const set = new Set(u.names)
+    for (const it of items.filter(i => set.has(String(i.name).toLowerCase().trim()))) await onRemove(it)
   }
   const fmtSecs = (s) => `0:${String(Math.min(s, VOICE_MAX)).padStart(2, '0')}`
   const voiceModal = voiceState && (
@@ -1044,6 +1071,12 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         </div>
       )}
       {!showQuick && addBar}
+      {voiceUndo && (
+        <div className="vundo">
+          <span><IconCheck size={16} stroke={2.6} /> {voiceUndo.names.length} {voiceUndo.names.length === 1 ? 'vara sett' : 'vörur settar'} á listann</span>
+          <button onClick={undoVoice}>Afturkalla</button>
+        </div>
+      )}
       {voicePrompt && isShopping && (
         <button className="voice-cta" onClick={() => { setVoicePrompt(false); landingEvent('voice_start'); startVoice() }}>
           <span className="voice-cta-ic"><IconMicrophone size={30} stroke={1.8} /></span>

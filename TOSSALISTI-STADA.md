@@ -2,6 +2,13 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## ★★★ GRUNNREGLA (18. nóv 2026): BEINT Í AÐ PRÓFA — ENGIN TRUFLUN
+Nýr gestur á að geta prófað strax: engir aukasmellir, engir sprettigluggar, engin skráning, ekkert sem truflar.
+Ef honum líkar það sem hann sér kemur hann aftur eða stofnar aðgang sjálfur.
+- Lendingarsíða (WelcomeGuest): 3 valkostir — Skanna kvittun (+ „Fáðu lánaða“ kvittun), Segðu hvað vantar (upptaka hefst strax), Búa til lista.
+- Hver nýr eiginleiki fyrir gesti: telja smellina að fyrstu niðurstöðu og fækka þeim. Ekki bæta við skrefum, borðum eða spurningum fyrir framan.
+- Skráningarhvatning aðeins EFTIR að gestur hefur fengið eitthvað út úr appinu.
+
 ## Verkefnið
 - **Tossalisti** — íslenskt innkaupa- og heimilisapp. Í loftinu á **tossalisti.is**.
 - Mappa: `C:\Users\sigur\Documents\korfan` (Vite + React + Supabase + Netlify).

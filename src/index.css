@@ -2135,3 +2135,7 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .qs-skip { display: block; margin: 12px auto 0; border: 0; background: none; color: rgba(255,255,255,.7); font-size: 13px; text-decoration: underline; }
 .wg-scan{cursor:pointer;}
 .wg-demo{display:block;margin-top:8px;background:rgba(255,255,255,.6);border:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:#5a4413;cursor:pointer;text-align:left;}
+.vundo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--navy);color:#fff;border-radius:14px;padding:10px 14px;margin:8px 0 10px;font-size:14.5px;animation:vundoIn .2s ease-out;}
+.vundo span{display:flex;align-items:center;gap:6px;}
+.vundo button{background:rgba(255,255,255,.16);border:none;color:#fff;font-weight:700;border-radius:999px;padding:6px 12px;cursor:pointer;}
+@keyframes vundoIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
