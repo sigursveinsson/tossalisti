@@ -1226,7 +1226,7 @@ const cloud = {
   async logPageview(ctx = {}) {
     try {
       await supabase.from('pageviews').insert({
-        path: ctx.path || null, source: ctx.source || null, utm_campaign: ctx.utm_campaign || null,
+        path: ctx.path || null, source: ctx.source || null, utm_campaign: ctx.utm_campaign || null, utm_content: ctx.utm_content || null,
         referrer: ctx.referrer || null, visitor: ctx.visitor || null,
       })
     } catch {}

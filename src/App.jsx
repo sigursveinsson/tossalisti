@@ -154,6 +154,8 @@ export default function App() {
   }, [])
   useEffect(() => { if (session && !session.user?.is_anonymous) { try { localStorage.setItem('tossa.known', '1') } catch {} } }, [session])
   const [welcomeDone, setWelcomeDone] = useState(() => { try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } })
+  // Gestir úr auglýsingu (sjálfvirkur prufuaðgangur): enginn velkomuskjár — beint inn á innkaupalista með „Hvað vantar?“
+  const [quickStart, setQuickStart] = useState(false)
   const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
   // Biðja gest um að vista aðganginn rétt eftir að eitthvað gott gerist (einu sinni fyrir hvert tilefni).
   const nudgeSave = (reason) => {
@@ -777,6 +779,18 @@ export default function App() {
       : 'Öll hráefni voru þegar á listanum')
   }
   // Opnar alltaf glugga þar sem hægt er að af-haka hráefni og velja lista.
+  useEffect(() => {
+    if (!isAnon || welcomeDone || loading || quickStart) return
+    if (!session?.user?.user_metadata?.auto) return
+    if (purchases.length || lists.some(l => (l.items || []).length > 0)) return
+    (async () => {
+      let l = lists.find(x => x.type === 'shopping')
+      if (!l) { l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id) }
+      switchList(l.id)
+      try { localStorage.setItem('tossa.welcomed', '1') } catch {}
+      setWelcomeDone(true); setQuickStart(true)
+    })().catch(() => {})
+  }, [isAnon, welcomeDone, loading, lists.length])
   const addRecipe = (recipe, servings) => setPendingRecipe({ recipe, servings })
   // Krónuuppskrift → innkaupalisti: hver vara með mynd, vörunúmeri, verði og magni (sleppir því sem er þegar á listanum)
   const addKronanToList = async (listId, products) => {
@@ -971,7 +985,7 @@ export default function App() {
   return (
     <div className="app">
       {showOnboarding && brandBar}
-      {isAnon && !welcomeDone && !loading && purchases.length === 0 && !lists.some(l => (l.items || []).length > 0) && (
+      {isAnon && !welcomeDone && !loading && !session?.user?.user_metadata?.auto && purchases.length === 0 && !lists.some(l => (l.items || []).length > 0) && (
         <WelcomeGuest
           onScan={() => { setWelcomeDone(true); setReceiptListId(null); setShowReceipt(true) }}
           onDemo={() => { setWelcomeDone(true); setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }}
@@ -980,7 +994,7 @@ export default function App() {
             let l = lists.find(x => x.type === 'shopping')
             if (!l) { l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id) }
             switchList(l.id)
-            setVoiceSignal(Date.now())
+            setQuickStart(true) // „Hvað vantar?“-spjaldið: Tala-hnappurinn byrjar upptöku strax
           }}
           onList={async () => {
             // Sameiginlegur listi: búa til (eða nota fyrirliggjandi) og opna deilingargluggann strax
@@ -1067,7 +1081,7 @@ export default function App() {
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
-              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} quickStart={quickStart} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
       {showLists && (

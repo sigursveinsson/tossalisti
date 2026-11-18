@@ -64,7 +64,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, kronanEnabled = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -145,9 +145,28 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     try {
       const { base64, seconds, mime } = await rec.stop()
       if (seconds < 0.6) { setVoiceState(null); return }
+      await parseAndReview({ audio: base64, mime })
+    } catch (e) {
+      setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota raddstýringu.' : 'Náði ekki að hlusta núna — reyndu aftur.')
+      setVoiceState('error')
+    }
+  }
+  // Sama vinnsla fyrir tal og texta: parse-voice skilur bæði („mjólk, tvö kíló af kartöflum og brauð“)
+  const parseText = async (txt) => {
+    const t = String(txt || '').trim()
+    if (!t) return
+    setVoiceErr(''); setVoiceRes(null); setVoiceState('think')
+    try { await parseAndReview({ text: t }) }
+    catch (e) {
+      setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota þetta.' : 'Náði ekki að lesa þetta núna — reyndu aftur.')
+      setVoiceState('error')
+    }
+  }
+  const parseAndReview = async (input) => {
+    {
       const openItems = items.filter(i => !i.checked)
       const spons = adsEnabled ? sponsoredForAI() : []
-      const res = await parseVoice({ audio: base64, mime, products: rewardProducts, existing: openItems.map(i => i.name), sponsored: spons })
+      const res = await parseVoice({ ...input, products: rewardProducts, existing: openItems.map(i => i.name), sponsored: spons })
       const have = new Set(openItems.map(i => normMatch(i.name)))
       setVoiceRes({
         transcript: res.transcript,
@@ -170,9 +189,6 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         }))
         setVoiceRes(r => r && ({ ...r, items: r.items.map((it, k) => found[k] && found[k].length ? { ...it, kr: found[k], krIdx: 0 } : it) }))
       }
-    } catch (e) {
-      setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota raddstýringu.' : 'Náði ekki að hlusta núna — reyndu aftur.')
-      setVoiceState('error')
     }
   }
   const startVoice = async () => {
@@ -193,6 +209,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       setVoiceState('error')
     }
   }
+  // Beint í verkið (gestir úr auglýsingu): stórt spjald efst á tómum lista — skrifa eða tala náttúrulega
+  const [qsText, setQsText] = useState('')
+  const [qsHidden, setQsHidden] = useState(false)
+  const showQuick = quickStart && isShopping && !qsHidden && items.length === 0
+  useEffect(() => { if (showQuick) landingEvent('qs_shown') }, [showQuick])
   // Úr velkomuskjá („Segðu hvað vantar“): sýna stórt raddspjald. Upptakan hefst þegar ýtt er á það
   // (vafrar, sérstaklega á iPhone, leyfa hljóðnema/hljóð aðeins eftir snertingu notanda).
   const [voicePrompt, setVoicePrompt] = useState(false)
@@ -1001,7 +1022,26 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   }
   return (
     <div>
-      {addBar}
+      {showQuick && (
+        <div className="qs">
+          <div className="qs-h">Hvað vantar?</div>
+          <div className="qs-sub">Skrifaðu það eins og þú myndir segja það — appið býr til listann, raðar eftir búðinni og setur magnið.</div>
+          <textarea className="qs-in" rows={2} value={qsText} onChange={e => setQsText(e.target.value)}
+            placeholder="t.d. mjólk, tvö kíló af kartöflum, brauð og bananar"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (qsText.trim()) { landingEvent('qs_text'); parseText(qsText); setQsText('') } } }} />
+          <div className="qs-actions">
+            <button className="qs-go" disabled={!qsText.trim()} onClick={() => { landingEvent('qs_text'); parseText(qsText); setQsText('') }}>Búa til listann</button>
+            {micAvailable && <button className="qs-mic" onClick={() => { landingEvent('qs_voice'); startVoice() }} aria-label="Tala"><IconMicrophone size={22} stroke={2} /> Tala</button>}
+          </div>
+          <div className="qs-chips">
+            {['mjólk, brauð og egg', 'taco fyrir fjóra', 'pönnukökur'].map(t => (
+              <button key={t} onClick={() => { landingEvent('qs_example'); parseText(t) }}>{t}</button>
+            ))}
+          </div>
+          <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true) }}>Skoða appið fyrst</button>
+        </div>
+      )}
+      {!showQuick && addBar}
       {voicePrompt && isShopping && (
         <button className="voice-cta" onClick={() => { setVoicePrompt(false); landingEvent('voice_start'); startVoice() }}>
           <span className="voice-cta-ic"><IconMicrophone size={30} stroke={1.8} /></span>

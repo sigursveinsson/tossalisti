@@ -228,6 +228,11 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
                       <b>Út úr Facebook-vafra</b>: Android {landing.esc_android || 0} · iPhone {landing.esc_ios || 0} → komust í Chrome/Safari {landing.escaped || 0} · ýttu á hnapp {landing.esc_click || 0} · héldu áfram þar {landing.esc_stay || 0}{landing.esc_fail ? ` · Chrome vantaði ${landing.esc_fail}` : ''}
                     </div>
                   )}
+                  {landing.qs_shown > 0 && (
+                    <div className="adm-sub" style={{ marginTop: 8 }}>
+                      <b>„Hvað vantar?“</b> ({landing.qs_shown} sáu): skrifuðu/dæmi {landing.qs_text || 0} · töluðu {landing.qs_voice || 0} · slepptu {landing.qs_skip || 0}
+                    </div>
+                  )}
                   {landing.app_view > 0 && (
                     <div className="adm-sub" style={{ marginTop: 8 }}>
                       <b>Velkomuskjár</b> ({landing.app_view} beint inn): Skanna {landing.welcome_scan || 0} · Dæmi {landing.welcome_demo || 0} · Listi {landing.welcome_list || 0} · Rödd {landing.welcome_voice || 0} · Skoða fyrst {landing.welcome_skip || 0}

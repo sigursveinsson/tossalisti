@@ -835,3 +835,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Tilboðsmerki á innkaupalista: vörur með ext_sku sem eru á tilboði fá „Tilboð −20%“ og tilboðsverð (líka í „Áætlað í Krónunni“).
 - Prófað: gagnasnið allra endapunkta, parse + import + óskilgreind heiti. EKKI prófað í vafra (ekkert byggt hér) — þarf deploy og prufu.
 - 18.11: Raddmyndband lokaútgáfa: markadsefni/tossalisti-rodd-med-rodd.mp4 (ný upptaka Sverris 18.11, 1,2× með atempo, 14,2 sek; smíðað með video_rodd_rodd3.py). Tilbúið í auglýsingu, utm_content=rodd.
+- 18.11 kvöld: „Beint í verkið“ — auto-gestir úr auglýsingum fá engan velkomuskjá; lenda á innkaupalista með „Hvað vantar?“ (skrifa náttúrulega → parse-voice textahamur → sama yfirferð og rödd), Tala-hnappur ef hljóðnemi, dæmi-hnappar, „Skoða appið fyrst“. Atburðir qs_*. pageviews.utm_content vistað. Ástæða: 0 af 23 raddauglýsingagestum prófuðu rödd (hljóðnemi ekki í FB-vafra).
