@@ -11,8 +11,8 @@ const norm = s => (s || '').toLowerCase().trim()
 
 // Vöruhilla: flettu/leitaðu, veldu margar vörur, þær flytjast á listann.
 // Kostaðar vörur (Ölgerðin) fá heiðurssæti efst — sterkt fyrir product placement.
-export default function ShelfView({ onCommit, onClose, existing = [], catalog = {}, adsEnabled, kronan = false }) {
-  const [q, setQ] = useState('')
+export default function ShelfView({ onCommit, onClose, existing = [], catalog = {}, adsEnabled, kronan = false, initialQuery = '' }) {
+  const [q, setQ] = useState(initialQuery || '')
   // Krónan-hilla (prufa, aðeins stjórnandi): vöruflokkar Krónunnar → vörur með mynd og verði
   const [mode, setMode] = useState(kronan ? 'kronan' : 'tossa')
   const [krCats, setKrCats] = useState(null)
@@ -47,7 +47,7 @@ export default function ShelfView({ onCommit, onClose, existing = [], catalog = 
       try {
         let list = []
         if (qq.length >= 2) {
-          const d = await krCall({ action: 'search', q: qq, pageSize: 20 })
+          const d = await krCall({ action: 'search', q: qq, pageSize: 48 })
           list = ((d && d.hits) || []).map(h => ({ sku: h.sku, name: h.name, price: h.price, image: h.image, info: h.priceInfo }))
         } else if (krTop === '__sale') {
           const d = await krCall({ action: 'on_sale', limit: 60 })

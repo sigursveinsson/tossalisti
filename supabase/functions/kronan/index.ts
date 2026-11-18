@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     if (a === 'summary') return json(await kr(`/orders/line-summary/?from_year=${+b.from_year || new Date().getUTCFullYear() - 1}&from_month=${+b.from_month || 1}`))
     if (a === 'note') return json(await kr('/shopping-notes/'))
     if (a === 'search') {
-      const r = await kr('/products/search/', { method: 'POST', body: JSON.stringify({ query: String(b.q || '').slice(0, 64), pageSize: Math.min(20, +b.pageSize || 8) }) })
+      const r = await kr('/products/search/', { method: 'POST', body: JSON.stringify({ query: String(b.q || '').slice(0, 64), pageSize: Math.min(48, +b.pageSize || 8) }) })
       const hits = (((r.data as any)?.hits) || []).map((h: any) => ({ sku: h.sku, name: h.name, price: h.price, image: h.thumbnail, priceInfo: h.priceInfo, shortage: !!h.temporaryShortage }))
       return json({ status: r.status, hits, count: (r.data as any)?.count ?? hits.length })
     }

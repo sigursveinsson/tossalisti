@@ -2120,3 +2120,4 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .krr-text { white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.55; color: #2b3445; background: #fff; border-radius: 12px; padding: 12px; margin: 0; }
 .krr-src { font-size: 11px; color: #8a93a6; text-align: center; margin: 16px 0; }
 .item-sale { margin-left: 6px; font-size: 11px; font-weight: 800; color: #fff; background: #c8102e; border-radius: 6px; padding: 1px 6px; }
+.suggest-kr-more { padding: 10px 12px; font-size: 13px; font-weight: 700; color: #c8102e; cursor: pointer; border-bottom: 1px solid #eef1f6; }

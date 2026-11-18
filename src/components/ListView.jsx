@@ -359,6 +359,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   }
   // Krónuvörur í tillögum (prufa, aðeins stjórnandi): leit eftir 350 ms hlé á innslætti
   const [kronanHits, setKronanHits] = useState([])
+  const [kronanCount, setKronanCount] = useState(0)
+  const [shelfQuery, setShelfQuery] = useState('')
   useEffect(() => {
     if (!kronanEnabled || !isShopping) return
     const q = text.trim()
@@ -366,8 +368,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     let alive = true
     const t = setTimeout(async () => {
       try {
-        const { data } = await supabase.functions.invoke('kronan', { body: { action: 'search', q, pageSize: 6 } })
-        if (alive) setKronanHits((data && data.hits) || [])
+        const { data } = await supabase.functions.invoke('kronan', { body: { action: 'search', q, pageSize: 8 } })
+        if (alive) { setKronanHits((data && data.hits) || []); setKronanCount((data && data.count) || 0) }
       } catch { if (alive) setKronanHits([]) }
     }, 350)
     return () => { alive = false; clearTimeout(t) }
@@ -563,6 +565,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
               <span className="kr-price">{krr(h.price)}</span>
             </div>
           ))}
+          {kronanHits.length > 0 && kronanCount > kronanHits.length && (
+            <div className="suggest-kr-more" onClick={() => { setShelfQuery(text.trim()); setShelf(true); setText(''); setKronanHits([]) }}>
+              Sjá allar {kronanCount} vörur í Krónunni →
+            </div>
+          )}
           {showTyped && (
             <div key="typed" className="suggest-off suggest-typed" onClick={() => add(typed, imageFor(typed, catalog, genericImgs) || undefined)}>
               {imageFor(typed, catalog, genericImgs) ? <img src={imageFor(typed, catalog, genericImgs)} alt="" /> : <CatIcon name={typed} dept={departmentFor(typed)} size={34} />}
@@ -1061,7 +1068,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {scanner}
       {voiceModal}
       {showKronan && <KronanCart items={items} onClose={() => setShowKronan(false)} />}
-      {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} kronan={kronanEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
+      {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} kronan={kronanEnabled} initialQuery={shelfQuery} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => { setShelf(false); setShelfQuery('') }} />}
       {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
   )

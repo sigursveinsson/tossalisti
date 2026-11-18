@@ -834,3 +834,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Uppskriftir: flipar „Frá Krónunni“ | „Tossalisti“. KronanRecipes.jsx: leit + flýtiflokkar, 458 uppskriftir, síðuskipting; uppskrift: mynd, tími, skammtar (± kvarðar magn), hráefni tengd Krónuvörum (afhaka það sem er til), „kostar um X kr.“, „Á innkaupalistann“ (velur lista) og „Í Krónukörfuna“ (KronanCart). Texti uppskriftar og aðferð.
 - Tilboðsmerki á innkaupalista: vörur með ext_sku sem eru á tilboði fá „Tilboð −20%“ og tilboðsverð (líka í „Áætlað í Krónunni“).
 - Prófað: gagnasnið allra endapunkta, parse + import + óskilgreind heiti. EKKI prófað í vafra (ekkert byggt hér) — þarf deploy og prufu.
+- 18.11: Raddmyndband lokaútgáfa: markadsefni/tossalisti-rodd-med-rodd.mp4 (ný upptaka Sverris 18.11, 1,2× með atempo, 14,2 sek; smíðað með video_rodd_rodd3.py). Tilbúið í auglýsingu, utm_content=rodd.
