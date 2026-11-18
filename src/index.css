@@ -2133,3 +2133,5 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 .qs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .qs-chips button { border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
 .qs-skip { display: block; margin: 12px auto 0; border: 0; background: none; color: rgba(255,255,255,.7); font-size: 13px; text-decoration: underline; }
+.wg-scan{cursor:pointer;}
+.wg-demo{display:block;margin-top:8px;background:rgba(255,255,255,.6);border:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:#5a4413;cursor:pointer;text-align:left;}

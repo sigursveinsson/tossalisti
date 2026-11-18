@@ -64,7 +64,7 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -218,6 +218,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   // (vafrar, sérstaklega á iPhone, leyfa hljóðnema/hljóð aðeins eftir snertingu notanda).
   const [voicePrompt, setVoicePrompt] = useState(false)
   useEffect(() => { if (voiceSignal && Date.now() - voiceSignal < 8000 && canRecord()) { setLvTab('list'); setVoicePrompt(true) } }, [voiceSignal])
+  // Lendingarskjár → „Segðu hvað vantar“: upptaka hefst strax (vafri spyr um leyfi fyrir hljóðnema)
+  useEffect(() => { if (voiceNow && Date.now() - voiceNow < 8000 && micAvailable) { setLvTab('list'); landingEvent('voice_start'); startVoice() } }, [voiceNow])
   // Prufa (aðeins stjórnandi): senda óhakaðar vörur á innkaupamiða Krónunnar (Krónan Public API, edge-fallið kronan)
   const [kronanBusy, setKronanBusy] = useState(false)
   const [showKronan, setShowKronan] = useState(false)
