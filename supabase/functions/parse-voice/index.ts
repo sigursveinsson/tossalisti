@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       '- Ef notandi nefnir RÉTT eða TILEFNI (t.d. "taco fyrir sex", "pönnukökur", "grillveisla fyrir tíu"): búðu til hæfilegan hráefnalista með sanngjörnu magni miðað við fjölda. Hámark 12 vörur fyrir einn rétt.',
       '- Hunsaðu hik, uppfyllingarorð og hluti sem eru ekki vörur ("já", "og svo", "ég held").',
       '- Ef ekkert vörutengt heyrist/sést: items = [].',
-      ...(have.length ? ['- Þetta er þegar á listanum (ekki tvítaka sömu vöru nema notandi biðji um meira): ' + have.join(', ')] : []),
+      ...(have.length ? ['- Til upplýsingar — þetta er þegar á listanum: ' + have.join(', ') + '. Skilaðu SAMT öllum vörum sem notandinn nefnir; appið merkir sjálft það sem er þegar á listanum og notandinn velur.'] : []),
       ...(prods.length ? [
         '',
         'TILBOÐSVÖRUR — pörun:',

@@ -45,6 +45,25 @@ Deno.serve(async (req) => {
       const hits = (((r.data as any)?.hits) || []).map((h: any) => ({ sku: h.sku, name: h.name, price: h.price, image: h.thumbnail, priceInfo: h.priceInfo, shortage: !!h.temporaryShortage }))
       return json({ status: r.status, hits, count: (r.data as any)?.count ?? hits.length })
     }
+    // Karfa í Snjallverslun. ALDREI er gengið frá pöntun (checkout/complete er ekki notað) — notandinn greiðir sjálfur hjá Krónunni.
+    const skuLines = () => (Array.isArray(b.lines) ? b.lines : []).slice(0, 80)
+      .filter((l: any) => l && l.sku)
+      .map((l: any) => ({ sku: String(l.sku).slice(0, 40), quantity: Math.max(1, Math.min(500, Math.round(+l.quantity || 1))) }))
+    if (a === 'cart_preview') {
+      const lines = skuLines()
+      if (!lines.length) return json({ error: 'engar línur' }, 400)
+      return json(await kr('/checkout/preview-lines/', { method: 'POST', body: JSON.stringify({ lines }) }))
+    }
+    if (a === 'cart_get') return json(await kr('/checkout/'))
+    if (a === 'cart_add') {
+      if (readOnly) return json({ error: 'read only' }, 403)
+      const lines = skuLines()
+      if (!lines.length) return json({ error: 'engar línur' }, 400)
+      // replace:false — bætir við körfuna sem fyrir er, eyðir engu (sjálfgefið hjá Krónunni er að skipta öllu út!)
+      const r = await kr('/checkout/lines/', { method: 'POST', body: JSON.stringify({ lines, replace: false }) })
+      const cart = await kr('/checkout/')
+      return json({ status: r.status, result: r.data, cart: cart.data })
+    }
     if (a === 'note_add') {
       if (readOnly) return json({ error: 'read only' }, 403)
       // Lína: { sku } ef ákveðin Krónuvara var valin, annars frjáls texti

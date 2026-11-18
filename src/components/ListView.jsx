@@ -21,6 +21,7 @@ import { imageFor } from '../lib/generic.js'
 import { landingEvent } from '../lib/landing.js'
 import ZoomImg from './ZoomImg.jsx'
 import MyListView from './MyListView.jsx'
+import KronanCart from './KronanCart.jsx'
 import { supabase, isCloud } from '../lib/supabaseClient.js'
 import { lookupBarcode } from '../lib/barcode.js'
 import { rewardForName, normMatch } from '../lib/store.js'
@@ -198,6 +199,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   useEffect(() => { if (voiceSignal && Date.now() - voiceSignal < 8000 && canRecord()) { setLvTab('list'); setVoicePrompt(true) } }, [voiceSignal])
   // Prufa (aðeins stjórnandi): senda óhakaðar vörur á innkaupamiða Krónunnar (Krónan Public API, edge-fallið kronan)
   const [kronanBusy, setKronanBusy] = useState(false)
+  const [showKronan, setShowKronan] = useState(false)
   const [kronanMsg, setKronanMsg] = useState('')
   const sendToKronan = async () => {
     const lines = items.filter(i => !i.checked).map(i => i.ext_sku ? { sku: i.ext_sku, quantity: Math.max(1, i.qty || 1) } : { text: i.name, quantity: Math.max(1, i.qty || 1) })
@@ -991,8 +993,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
         {kronanEnabled && isShopping && (
-          <button className="shelf-open kronan-btn" disabled={kronanBusy} onClick={sendToKronan} title="Senda óhakaðar vörur á innkaupamiðann í Krónuappinu">
-            <IconSend size={18} stroke={1.75} />{kronanBusy ? 'Sendi…' : 'Krónan'}
+          <button className="shelf-open kronan-btn" onClick={() => setShowKronan(true)} title="Setja listann í körfu hjá Krónunni">
+            <IconSend size={18} stroke={1.75} />Krónan
           </button>
         )}
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
@@ -1045,6 +1047,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {deptModal}
       {scanner}
       {voiceModal}
+      {showKronan && <KronanCart items={items} onClose={() => setShowKronan(false)} />}
       {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => setShelf(false)} />}
       {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
     </div>
