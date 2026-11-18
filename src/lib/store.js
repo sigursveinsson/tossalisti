@@ -559,9 +559,10 @@ const cloud = {
   },
   async deleteList(id) { await supabase.from('lists').delete().eq('id', id) },
   async addItem(listId, name, opts = {}) {
-    const { points, dept, weekday, time, assignee, image } = opts
+    const { points, dept, weekday, time, assignee, image, sku, price, source } = opts
     const { data: { user } } = await supabase.auth.getUser()
     const row = { list_id: listId, name: name.toLowerCase().trim(), dept: dept || departmentFor(name), checked: false, created_by: user?.id }
+    if (sku) { row.ext_sku = String(sku); row.ext_price = Number.isFinite(+price) ? Math.round(+price) : null; row.ext_source = source || 'kronan' }
     if (points != null) row.points = points
     if (weekday) { row.weekday = weekday; row.recurrence = weekday === 'daily' ? 'daily' : 'weekly' }
     if (time) row.time = time

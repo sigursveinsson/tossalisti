@@ -189,13 +189,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [kronanBusy, setKronanBusy] = useState(false)
   const [kronanMsg, setKronanMsg] = useState('')
   const sendToKronan = async () => {
-    const lines = items.filter(i => !i.checked).map(i => ({ text: i.name, quantity: Math.max(1, i.qty || 1) }))
+    const lines = items.filter(i => !i.checked).map(i => i.ext_sku ? { sku: i.ext_sku, quantity: Math.max(1, i.qty || 1) } : { text: i.name, quantity: Math.max(1, i.qty || 1) })
     if (!lines.length) { setKronanMsg('Ekkert óhakað á listanum'); return }
     setKronanBusy(true); setKronanMsg('')
     try {
       const { data, error } = await supabase.functions.invoke('kronan', { body: { action: 'note_add', lines } })
       if (error || !data || data.status >= 300) throw new Error((data && JSON.stringify(data.data || data.error)) || (error && error.message) || 'villa')
-      setKronanMsg(lines.length + (lines.length === 1 ? ' vara send' : ' vörur sendar') + ' á innkaupamiðann í Krónuappinu ✓')
+      const n = data.added ?? lines.length
+      setKronanMsg(n ? n + (n === 1 ? ' vara send' : ' vörur sendar') + ' á innkaupamiðann í Krónuappinu ✓' + (data.skipped ? ` (${data.skipped} voru þegar þar)` : '') : 'Allt er þegar á innkaupamiðanum í Krónuappinu ✓')
     } catch (e) { setKronanMsg('Tókst ekki: ' + String(e.message || e).slice(0, 160)) }
     setKronanBusy(false)
   }
@@ -318,13 +319,29 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return <span className={cls} style={style}>{initialsOf(p)}</span>
   }
 
-  const add = (name, image) => {
+  const add = (name, image, ext) => {
     const v = (name ?? text).trim()
     if (!v) return
-    if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`, undefined, undefined, undefined, image)
-    else onAdd(v, undefined, undefined, undefined, image)
-    setText(''); setQty('')
+    if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`, undefined, undefined, undefined, image, undefined, ext)
+    else onAdd(v, undefined, undefined, undefined, image, undefined, ext)
+    setText(''); setQty(''); setKronanHits([])
   }
+  // Krónuvörur í tillögum (prufa, aðeins stjórnandi): leit eftir 350 ms hlé á innslætti
+  const [kronanHits, setKronanHits] = useState([])
+  useEffect(() => {
+    if (!kronanEnabled || !isShopping) return
+    const q = text.trim()
+    if (q.length < 2) { setKronanHits([]); return }
+    let alive = true
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await supabase.functions.invoke('kronan', { body: { action: 'search', q, pageSize: 6 } })
+        if (alive) setKronanHits((data && data.hits) || [])
+      } catch { if (alive) setKronanHits([]) }
+    }, 350)
+    return () => { alive = false; clearTimeout(t) }
+  }, [text, kronanEnabled, isShopping])
+  const krr = (n) => Math.round(n).toLocaleString('is-IS') + ' kr.'
 
   const onScan = async (code) => {
     const now = Date.now()
@@ -443,6 +460,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
+          {!chore && kronanEnabled && it.ext_price != null && <span className="item-price">{krr(it.ext_price * Math.max(1, it.qty || 1))}</span>}
           {!chore && (() => {
             const rp = rewardFor(it.name)
             const sp = adsEnabled ? sponsorFor(it.name) : null
@@ -491,8 +509,16 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {micAvailable && !text.trim()
         ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann"><IconMicrophone size={21} stroke={2} /></button>
         : <button className="add" onClick={() => add()} aria-label="Bæta við"><IconPlus size={22} stroke={2.25} /></button>}
-      {(showTyped || rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0) && (
+      {(showTyped || rewardSugg.length > 0 || suggFiltered.length > 0 || sponSugg.length > 0 || catSugg.length > 0 || kronanHits.length > 0) && (
         <div className="suggest">
+          {kronanHits.length > 0 && <div className="sugg-kr-head">Í Krónunni</div>}
+          {kronanHits.map(h => (
+            <div key={'kr_' + h.sku} className="suggest-off suggest-kr" onClick={() => add(h.name, h.image, { sku: h.sku, price: h.price, source: 'kronan' })}>
+              {h.image ? <img src={h.image} alt="" /> : <CatIcon name={h.name} dept={departmentFor(h.name)} size={34} />}
+              <span className="kr-name">{h.name}<small>{h.priceInfo || ''}{h.shortage ? ' · tímabundinn skortur' : ''}</small></span>
+              <span className="kr-price">{krr(h.price)}</span>
+            </div>
+          ))}
           {showTyped && (
             <div key="typed" className="suggest-off suggest-typed" onClick={() => add(typed, imageFor(typed, catalog, genericImgs) || undefined)}>
               {imageFor(typed, catalog, genericImgs) ? <img src={imageFor(typed, catalog, genericImgs)} alt="" /> : <CatIcon name={typed} dept={departmentFor(typed)} size={34} />}
@@ -974,6 +1000,18 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </div>
         )
       })}
+      {kronanEnabled && isShopping && (() => {
+        const open = items.filter(i => !i.checked)
+        const priced = open.filter(i => i.ext_price != null)
+        if (!priced.length) return null
+        const sum = priced.reduce((a, i) => a + i.ext_price * Math.max(1, i.qty || 1), 0)
+        return (
+          <div className="kr-total">
+            <span>Áætlað í Krónunni</span><b>{krr(sum)}</b>
+            {open.length > priced.length && <small>{open.length - priced.length} {open.length - priced.length === 1 ? 'vara' : 'vörur'} án verðs</small>}
+          </div>
+        )
+      })()}
       {assignModal}
       {deptModal}
       {scanner}

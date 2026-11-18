@@ -2025,3 +2025,14 @@ div.guest-bar .ios-hint button { text-decoration: none; background: none; border
 @keyframes voicePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,201,76,.0); } 50% { box-shadow: 0 0 0 6px rgba(242,201,76,.35); } }
 .kronan-btn { color: #c8102e; }
 .kronan-msg { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #eaf7f0; color: #1d5c3d; font-size: 14px; cursor: pointer; }
+/* Krónan-prufa */
+.sugg-kr-head { font-size: 11px; font-weight: 700; color: #c8102e; padding: 6px 12px 2px; text-transform: none; }
+.suggest-kr { display: flex; align-items: center; gap: 10px; }
+.suggest-kr .kr-name { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+.suggest-kr .kr-name small { font-size: 11px; color: #6b7a93; }
+.suggest-kr .kr-price { font-weight: 700; color: var(--navy); white-space: nowrap; }
+.item-price { margin-left: 8px; font-size: 12px; font-weight: 700; color: #5b6475; background: #eef1f6; border-radius: 6px; padding: 1px 6px; }
+.kr-total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; padding: 12px 14px; border-radius: 14px; background: #fff; border: 1px solid #eef1f6; color: var(--navy); }
+.kr-total span { flex: 1; font-size: 14px; }
+.kr-total b { font-size: 18px; }
+.kr-total small { flex-basis: 100%; font-size: 12px; color: #6b7a93; }

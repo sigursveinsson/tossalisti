@@ -35,19 +35,34 @@ Deno.serve(async (req) => {
   const a = String(b.action || '')
   try {
     if (a === 'me') return json(await kr('/me/'))
-    if (a === 'stats') return json(await kr(`/product-purchase-stats/?sort=${encodeURIComponent(b.sort || 'frequency')}&limit=${Math.min(100, +b.limit || 50)}&offset=${+b.offset || 0}`))
+    if (a === 'stats') return json(await kr(`/product-purchase-stats/?sort=${encodeURIComponent(b.sort || 'most_frequent')}&limit=${Math.min(100, +b.limit || 50)}&offset=${+b.offset || 0}`))
     if (a === 'orders') return json(await kr(`/orders/?limit=${Math.min(50, +b.limit || 10)}`))
     if (a === 'order') return json(await kr(`/orders/${encodeURIComponent(b.token)}/`))
     if (a === 'summary') return json(await kr(`/orders/line-summary/?from_year=${+b.from_year || new Date().getUTCFullYear() - 1}&from_month=${+b.from_month || 1}`))
     if (a === 'note') return json(await kr('/shopping-notes/'))
-    if (a === 'search') return json(await kr('/products/search/', { method: 'POST', body: JSON.stringify({ query: String(b.q || '').slice(0, 64), pageSize: Math.min(20, +b.pageSize || 8) }) }))
+    if (a === 'search') {
+      const r = await kr('/products/search/', { method: 'POST', body: JSON.stringify({ query: String(b.q || '').slice(0, 64), pageSize: Math.min(20, +b.pageSize || 8) }) })
+      const hits = (((r.data as any)?.hits) || []).map((h: any) => ({ sku: h.sku, name: h.name, price: h.price, image: h.thumbnail, priceInfo: h.priceInfo, shortage: !!h.temporaryShortage }))
+      return json({ status: r.status, hits, count: (r.data as any)?.count ?? hits.length })
+    }
     if (a === 'note_add') {
       if (readOnly) return json({ error: 'read only' }, 403)
-      const lines = (Array.isArray(b.lines) ? b.lines : []).slice(0, 60)
-        .map((l: any) => typeof l === 'string' ? { text: l.slice(0, 255) } : { text: String(l.text || '').slice(0, 255), quantity: Math.max(0, Math.min(10000, +l.quantity || 0)) })
-        .filter((l: any) => l.text)
+      // Lína: { sku } ef ákveðin Krónuvara var valin, annars frjáls texti
+      const lines = (Array.isArray(b.lines) ? b.lines : []).slice(0, 60).map((l: any) => {
+        if (typeof l === 'string') return { text: l.slice(0, 255) }
+        const q = Math.max(0, Math.min(10000, +l.quantity || 0))
+        return l.sku ? { sku: String(l.sku).slice(0, 32), quantity: q } : { text: String(l.text || '').slice(0, 255), quantity: q }
+      }).filter((l: any) => l.text || l.sku)
       if (!lines.length) return json({ error: 'engar línur' }, 400)
-      return json(await kr('/shopping-notes/add-lines/', { method: 'POST', body: JSON.stringify({ lines }) }))
+      // Ekki tvítaka: sleppa vörum sem eru þegar óhakaðar á miðanum (sama SKU eða sami texti)
+      const cur = await kr('/shopping-notes/')
+      const open = ((cur.data as any)?.lines || []).filter((l: any) => !l.isCompleted)
+      const haveTxt = new Set(open.map((l: any) => String(l.text || '').toLowerCase().trim()).filter(Boolean))
+      const haveSku = new Set(open.map((l: any) => String(l.product?.sku || '')).filter(Boolean))
+      const fresh = lines.filter((l: any) => l.sku ? !haveSku.has(l.sku) : !haveTxt.has(l.text.toLowerCase().trim()))
+      if (!fresh.length) return json({ status: 200, added: 0, skipped: lines.length })
+      const r = await kr('/shopping-notes/add-lines/', { method: 'POST', body: JSON.stringify({ lines: fresh }) })
+      return json({ ...r, added: fresh.length, skipped: lines.length - fresh.length })
     }
     return json({ error: 'unknown action' }, 400)
   } catch (e) { return json({ error: String((e as Error).message || e) }, 500) }

@@ -823,3 +823,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Vöruleit virkar vel: heiti, verð, verð/ltr, myndir (media.kronan.is), sku. Innkaupamiði (shopping note) tekur frjálsan texta + magn → „Senda í Krónuna“ krefst engrar vörupörunar.
 - Smíðað: hnappurinn „Krónan“ á innkaupalista (aðeins stjórnandi) sendir óhakaðar vörur á innkaupamiðann í Krónuappinu.
 - Spyrja Krónuna: kaupsaga úr búðum (kortakaup / Krónukort?), OAuth, myndanotkun.
+- 18.11: Krónuvörur í tillögum á innkaupalista (stjórnandi): leit 350 ms eftir innslátt → mynd, verð, verð/kg; val vistar ext_sku/ext_price/ext_source á list_items; verð á línu og „Áætlað í Krónunni“ neðst; „Krónan“-hnappur sendir SKU (tengd vara) eða texta, án tvítekninga.

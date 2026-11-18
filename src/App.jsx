@@ -582,7 +582,7 @@ export default function App() {
     })()
   }, [loading, lists.length])
 
-  const addItem = async (name, weekday, time, assignee, image, scannedDept) => {
+  const addItem = async (name, weekday, time, assignee, image, scannedDept, ext) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
     const isChore = list.type === 'task' || list.type === 'schedule'
     const pts = isChore ? suggestChorePoints(name) : undefined
@@ -590,7 +590,7 @@ export default function App() {
     // Stinga upp á tákni fyrir verk (fyrir þá sem ekki lesa) ef ekkert var valið
     let img = image
     if (isChore && !img) { const e = suggestChoreEmoji(name); if (e) img = makeEmojiImage(e) }
-    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image: img }); await reload(list.id)
+    await store.addItem(list.id, name, { points: pts, dept, weekday, time, assignee, image: img, ...(ext || {}) }); await reload(list.id)
     if (isAnon && list.items.length + 1 >= 3) nudgeSave('items')
   }
   // Skema sem áþreifanleg vika: býr til sjálfstæð verk (daglega = 7 línur, eitt per dag).
