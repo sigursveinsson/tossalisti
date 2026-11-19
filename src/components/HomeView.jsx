@@ -3,7 +3,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { walletAlerts } from './WalletView.jsx'
-import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet } from '@tabler/icons-react'
+import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet, IconMicrophone, IconPlus, IconChartBar } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -41,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -82,15 +82,27 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </div>
       </div>
 
-      {firstTime && onCreateList && (
-        <button className="home-first" onClick={() => onCreateList()}>
-          <span className="home-first-ic"><IconShoppingCart size={26} stroke={1.75} /></span>
-          <span className="home-first-txt">
-            <b>Búa til lista</b>
-            <small>Skrifaðu það sem vantar — vörurnar flokkast sjálfkrafa eftir búðardeildum</small>
-          </span>
-          <Go />
-        </button>
+      <div className="home-quick">
+        {onScanReceipt && <button onClick={() => onScanReceipt()}><span className="hq-ic"><IconReceipt size={24} stroke={1.75} /></span><b>Skanna kvittun</b></button>}
+        {onVoice && <button onClick={() => onVoice()}><span className="hq-ic"><IconMicrophone size={24} stroke={1.75} /></span><b>Tala inn á lista</b></button>}
+        {firstTime && onCreateList
+          ? <button onClick={() => onCreateList()}><span className="hq-ic"><IconShoppingCart size={24} stroke={1.75} /></span><b>Búa til lista</b></button>
+          : onNewList && <button onClick={() => onNewList()}><span className="hq-ic"><IconPlus size={24} stroke={1.75} /></span><b>Nýr listi</b></button>}
+        <button onClick={() => onOpenSpending && onOpenSpending()}><span className="hq-ic"><IconChartBar size={24} stroke={1.75} /></span><b>Bókhaldið</b><small>{kr(monthSpend)} í {MONTHS[new Date().getMonth()].slice(0, 3)}.</small></button>
+      </div>
+
+      {waiting.length > 0 && (
+        <div className="home-sec">
+          <div className="home-sec-h">Listarnir þínir</div>
+          {waiting.map(({ l, n }) => (
+            <button className="home-row" key={l.id} onClick={() => onOpenList(l.id)}>
+              <span className="home-row-ic">{typeIcon(l.type)}</span>
+              <span className="home-row-name">{l.name}</span>
+              <span className="home-row-sub">{n} {l.type === 'shopping' ? (n === 1 ? 'vara eftir' : 'vörur eftir') : 'verk'}{l.type === 'schedule' ? ' í dag' : ''}</span>
+              <Go />
+            </button>
+          ))}
+        </div>
       )}
 
       {/* Boðskóðaborði sýndur engum: þátttakendur eru skráðir inn með netfangi (pilot_emails). */}
@@ -130,16 +142,6 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </button>
       )}
 
-      {onScanReceipt && (
-        <button className="home-invite home-scan" onClick={() => onScanReceipt()}>
-          <span className="home-invite-ic"><IconReceipt size={22} stroke={1.75} /></span>
-          <span className="home-invite-txt">
-            <b>{purchases.length ? 'Skannaðu kvittun' : 'Prófaðu að skanna kvittun'}</b>
-            <small>Taktu mynd — gervigreindin les vörurnar, flokkar útgjöldin{rewardsEnabled ? ' og finnur Gríptu stig' : ''}</small>
-          </span>
-          <Go />
-        </button>
-      )}
       {onOpenMyList && staples && (staples.items?.length > 0 || purchases.length > 0) && (() => {
         const items = staples.items || []
         const due = items.filter(i => i.due)
@@ -192,30 +194,6 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         <button className="home-install" onClick={() => onInstall && onInstall()}>
           <span className="home-install-ic"><IconDeviceMobile size={22} stroke={1.75} /></span>
           <span className="home-install-txt"><b>Settu Tossalista á heimaskjáinn</b><small>Opnast eins og app — og þú getur fengið áminningar</small></span>
-          <Go />
-        </button>
-      )}
-
-      {waiting.length > 0 && (
-        <div className="home-sec">
-          <div className="home-sec-h">Bíður þín</div>
-          {waiting.map(({ l, n }) => (
-            <button className="home-row" key={l.id} onClick={() => onOpenList(l.id)}>
-              <span className="home-row-ic">{typeIcon(l.type)}</span>
-              <span className="home-row-name">{l.name}</span>
-              <span className="home-row-sub">{n} {l.type === 'shopping' ? (n === 1 ? 'vara eftir' : 'vörur eftir') : (n === 1 ? 'verk' : 'verk')}{l.type === 'schedule' ? ' í dag' : ''}</span>
-              <Go />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {hasShopping && (
-        <button className="home-spend" onClick={() => onOpenSpending && onOpenSpending()}>
-          <div>
-            <div className="home-spend-label">Útgjöld í {MONTHS[new Date().getMonth()]}</div>
-            <div className="home-spend-val">{kr(monthSpend)}</div>
-          </div>
           <Go />
         </button>
       )}

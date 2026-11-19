@@ -9,10 +9,10 @@ const TYPE = {
   budget: { Icon: IconNotebook },
 }
 
-export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, onOpenWallet, userEmail, onSignOut, onDeleteAccount, onClose }) {
+export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], startCreating = false, onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, onOpenWallet, userEmail, onSignOut, onDeleteAccount, onClose }) {
   const [name, setName] = useState('')
   const [newType, setNewType] = useState('shopping')
-  const [creating, setCreating] = useState(false)
+  const [creating, setCreating] = useState(!!startCreating)
   const [actionList, setActionList] = useState(null)
   const [showTemplates, setShowTemplates] = useState(false)
 

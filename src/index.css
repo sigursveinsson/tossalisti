@@ -2165,3 +2165,11 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .shot figcaption span{display:block;color:var(--muted);font-size:13px;margin-top:2px;}
 .shots-hint{text-align:center;color:var(--faint);font-size:12px;margin:2px 0 0;}
 @media(min-width:700px){.shots-hint{display:none}}
+.home-quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(min-width:620px){.home-quick{grid-template-columns:repeat(4,1fr);}}
+.home-quick button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;color:var(--navy);text-align:left;min-height:92px;}
+.home-quick button:first-child{background:var(--cta);border-color:var(--cta);}
+.home-quick button:first-child .hq-ic{background:rgba(255,255,255,.55);}
+.home-quick .hq-ic{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;}
+.home-quick b{font-size:15px;}
+.home-quick small{font-size:12.5px;color:var(--muted);}

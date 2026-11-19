@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
-import { primeAudio } from './lib/voice.js'
+import { primeAudio, canRecord } from './lib/voice.js'
 import { IconList, IconChevronDown, IconHome, IconBell, IconChartBar, IconShare } from '@tabler/icons-react'
 import ListView from './components/ListView.jsx'
 import HomeView from './components/HomeView.jsx'
@@ -315,6 +315,8 @@ export default function App() {
   const [showWallet, setShowWallet] = useState(false) // Veskið: gjafakort, inneignarnótur, kóðar
   // Minn listi: vörur sem notandinn kaupir oft (úr kvittunum) — spjald á heimaskjá + sérskjár
   const [oftenSignal, setOftenSignal] = useState(0) // opnar „Oft keypt“-flipann á innkaupalistanum
+  const [listsNew, setListsNew] = useState(false) // Heim → „Nýr listi“: listavalmyndin opnast beint í stofnun
+  useEffect(() => { if (!showLists) setListsNew(false) }, [showLists])
   const [voiceNow, setVoiceNow] = useState(0) // lendingarskjár → hefja upptöku strax
   const [voiceSignal, setVoiceSignal] = useState(0) // velkomuskjár → raddspjald á innkaupalista
   const [staples, setStaples] = useState(null)
@@ -815,12 +817,12 @@ export default function App() {
 
   const createList = async (name, type = 'shopping') => {
     const l = await store.createList(name, type)
-    await reload(l.id); setShowLists(false); flash('Listinn „' + name + '“ búinn til')
+    await reload(l.id); setShowLists(false); setView('list'); setCurrentId(l.id); setTab('list'); flash('Listinn „' + name + '“ búinn til')
   }
   const createFromTemplate = async (tpl) => {
     const l = await store.createList(tpl.name, tpl.type)
     if (tpl.items && tpl.items.length) await store.addManyItems(l.id, tpl.items)
-    await reload(l.id); setShowLists(false); setTab('list'); flash('Listinn „' + tpl.name + '“ búinn til')
+    await reload(l.id); setShowLists(false); setView('list'); setCurrentId(l.id); setTab('list'); flash('Listinn „' + tpl.name + '“ búinn til')
   }
   const switchList = async (id) => { setView('list'); setCurrentId(id); setShowLists(false); setTab('list') }
   const goHome = () => { setView('home') }
@@ -1061,7 +1063,7 @@ export default function App() {
         )}
         {!showHome && !showBudget && (
           <div className="header-title">
-            <button className="curtitle" onClick={() => setShowLists(true)} title="Skipta um lista">{list.name}</button>
+            <button className="curtitle" onClick={() => /^Nýr listi/.test(list.name) ? renameList(list) : setShowLists(true)} title={/^Nýr listi/.test(list.name) ? 'Gefa listanum nafn' : 'Skipta um lista'}>{list.name}{/^Nýr listi/.test(list.name) ? ' ✎' : ''}</button>
             {!isBudget && <span className="count">{open} eftir</span>}
             <button className="switch-btn" onClick={() => setShowLists(true)} title="Skipta um lista eða búa til nýjan" aria-label="Skipta um lista"><IconList size={18} stroke={1.9} /><IconChevronDown size={14} stroke={2} /></button>
             {!isBudget && <button className="share-btn" onClick={() => openShare(list)} title="Deila lista" aria-label="Deila lista"><IconShare size={19} stroke={1.75} /></button>}
@@ -1077,7 +1079,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onNewList={async () => { const names = new Set(lists.map(l => l.name)); let nm = 'Nýr listi', k = 2; while (names.has(nm)) nm = 'Nýr listi ' + (k++); const l = await store.createList(nm, 'shopping'); await reload(l.id); setQuickStart(true); switchList(l.id) }} onVoice={canRecord() ? async () => { primeAudio(); let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setVoiceNow(Date.now()) } : null} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -1095,6 +1097,7 @@ export default function App() {
 
       {showLists && (
         <ListsPanel
+          startCreating={listsNew}
           lists={lists}
           currentId={currentId}
           onSwitch={switchList}
