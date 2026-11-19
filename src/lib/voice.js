@@ -47,12 +47,28 @@ function wavBase64(f32, rate) {
 
 // Byrjar upptöku. Skilar { stop(): Promise<{base64,mime,seconds}>, cancel() }.
 // onLevel(0..1) gefur hljóðstyrk fyrir lifandi hreyfimynd.
+// iPhone (Safari og Facebook/Instagram-vafrinn) leyfir hljóðvinnslu aðeins ef AudioContext er ræst
+// INNAN snertingar notanda. Annars er hann „suspended“, ekkert hljóð næst og upptakan er tóm.
+// primeAudio() er kallað samstundis í smellinum (t.d. á velkomuskjá) áður en nokkuð er beðið eftir.
+let primed = null
+export function primeAudio() {
+  try {
+    if (primed && primed.state !== 'closed') { if (primed.state === 'suspended') primed.resume().catch(() => {}); return }
+    const AC = window.AudioContext || window.webkitAudioContext
+    if (!AC) return
+    primed = new AC()
+    if (primed.state === 'suspended') primed.resume().catch(() => {})
+  } catch (e) {}
+}
+
 export async function startRecording({ onLevel } = {}) {
+  // AudioContext búinn til ÁÐUR en beðið er um hljóðnemann — þá erum við enn innan smellsins
+  primeAudio()
+  const ctx = primed
+  primed = null // hver upptaka á sinn context; lokast í cleanup
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
   })
-  const AC = window.AudioContext || window.webkitAudioContext
-  const ctx = new AC()
   if (ctx.state === 'suspended') { try { await ctx.resume() } catch (e) {} }
   const src = ctx.createMediaStreamSource(stream)
   const proc = ctx.createScriptProcessor(4096, 1, 1)
@@ -75,6 +91,7 @@ export async function startRecording({ onLevel } = {}) {
     try { ctx.close() } catch (e) {}
   }
   return {
+    get suspended() { return ctx.state !== 'running' },
     async stop() {
       cleanup()
       const all = new Float32Array(len)

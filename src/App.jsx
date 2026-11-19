@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
+import { primeAudio } from './lib/voice.js'
 import { IconList, IconChevronDown, IconHome, IconBell, IconChartBar, IconShare } from '@tabler/icons-react'
 import ListView from './components/ListView.jsx'
 import HomeView from './components/HomeView.jsx'
@@ -992,6 +993,7 @@ export default function App() {
           onScan={() => { setWelcomeDone(true); setReceiptListId(null); setShowReceipt(true) }}
           onDemo={() => { setWelcomeDone(true); setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }}
           onVoice={async () => {
+            primeAudio() // iPhone: ræsa hljóðvinnslu innan smellsins, áður en beðið er eftir nokkru
             setWelcomeDone(true)
             let l = lists.find(x => x.type === 'shopping')
             if (!l) { l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id) }

@@ -194,3 +194,13 @@ Næst: póstur til Krónunnar (kynning + skilmálar + samstarf); Sverrir býr ti
 5. Rödd → uppskrift: „taco fyrir sex“ leitar fyrst í uppskriftum Krónunnar (raunverulegar vörur) áður en AI býr til lista.
 6. Uppáhaldsuppskriftir samstilltar (recipes/{slug}/favorite) — „Mínar Krónuuppskriftir“.
 7. Kynning fyrir Krónuna: Tossalisti sem „rödd og heimilislisti“ ofan á Snjallverslun; samstarf um OAuth og kaupsögu úr búðum.
+
+## Heimilisverkefni / „Home improvement“-listi (19. nóv 2026) — samstarf við JYSK, Húsasmiðjuna, Byko, Rúmfó, Elko
+Sverrir: „Home improvement listi sem JYSK og Húsasmiðjan gætu tengst.“
+- Ný listategund „Verkefni heimilisins“: t.d. „Mála barnaherbergið“, „Nýtt svefnherbergi“, „Pallurinn í vor“.
+- Sniðmát með efnislista (málning, rúllur, límband / dýna, sængurver, gardínur) — rödd: „ég ætla að mála 12 fermetra herbergi“ → efnislisti með magni.
+- Verslun tengist vörum á listanum (eins og Krónan): vörunúmer, verð, tilboð, „frátekið/sótt“ (Smellt og sótt hjá JYSK).
+- Kvittanir tengjast verkefninu → kostnaður verkefnisins + ábyrgð/skilafrestur sjálfkrafa (dýna, sófi, verkfæri).
+- Fyrirmynd: Jula + Kivra í Svíþjóð (heimilis-/verkfæraverslun sendir kvittanir í sameiginlegt app).
+- Gildi fyrir verslunina: kemst á listann ÁÐUR en fólk velur búð; fyrir okkur: dýrari vörur, ábyrgðir, sterkari ástæða til að koma aftur.
+- Fyrsta skref (ódýrt): sniðmát fyrir 3–5 verkefni + kvittun tengd verkefni. Svo kynning fyrir JYSK/Húsasmiðjunni með notkunartölum.

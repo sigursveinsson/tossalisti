@@ -126,10 +126,12 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [voiceErr, setVoiceErr] = useState('')
   const recRef = useRef(null)
   const voiceTimer = useRef(null)
+  const voiceT0 = useRef(0)
   const VOICE_MAX = 30
   const micAvailable = isShopping && canRecord()
   const stopVoiceTimer = () => { if (voiceTimer.current) { clearInterval(voiceTimer.current); voiceTimer.current = null } }
   const cancelVoice = () => {
+    if (voiceState === 'rec') landingEvent('voice_cancel')
     stopVoiceTimer()
     if (recRef.current) { recRef.current.cancel(); recRef.current = null }
     setVoiceState(null); setVoiceRes(null); setVoiceLevel(0)
@@ -141,12 +143,23 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const rec = recRef.current
     recRef.current = null
     if (!rec) return
+    const elapsed = (Date.now() - (voiceT0.current || Date.now())) / 1000
+    const wasSuspended = rec.suspended
     setVoiceState('think'); setVoiceLevel(0)
     try {
       const { base64, seconds, mime } = await rec.stop()
-      if (seconds < 0.6) { setVoiceState(null); return }
+      if (seconds < 0.6) {
+        if (elapsed > 1.5) {
+          // Upptakan var í gangi en ekkert hljóð barst (oftast iPhone: hljóðvinnsla ekki ræst) — segja frá í stað þess að loka þegjandi
+          landingEvent(wasSuspended ? 'voice_silent_suspended' : 'voice_silent')
+          setVoiceErr('Hljóðneminn náði engu. Ýttu á „Reyna aftur“ og talaðu svo.')
+          setVoiceState('error')
+        } else { landingEvent('voice_short'); setVoiceState(null) }
+        return
+      }
       await parseAndReview({ audio: base64, mime })
     } catch (e) {
+      landingEvent(e && e.message === 'login' ? 'voice_err_login' : 'voice_err_parse')
       setVoiceErr(e && e.message === 'login' ? 'Skráðu þig inn til að nota raddstýringu.' : 'Náði ekki að hlusta núna — reyndu aftur.')
       setVoiceState('error')
     }
@@ -181,6 +194,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       // Stjórnandi (Krónuprufa) fær áfram yfirferðina til að velja Krónuvörur.
       if (!kronanEnabled) {
         if (!parsed.items.some(i => i.sel)) {
+          landingEvent(parsed.items.length ? 'voice_dup' : 'voice_empty')
           setVoiceErr(parsed.items.length ? 'Allt sem þú nefndir er þegar á listanum.' : 'Ég heyrði engar vörur — reyndu aftur.')
           setVoiceState('error'); return
         }
@@ -209,12 +223,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       recRef.current = await startRecording({ onLevel: setVoiceLevel })
       setVoiceState('rec')
       const t0 = Date.now()
+      voiceT0.current = t0
       voiceTimer.current = setInterval(() => {
         const s = Math.floor((Date.now() - t0) / 1000)
         setVoiceSecs(s)
         if (s >= VOICE_MAX) finishVoice()
       }, 250)
     } catch (e) {
+      landingEvent(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'voice_err_denied' : 'voice_err_mic_' + String((e && e.name) || 'x').slice(0, 24))
       setVoiceErr(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')
         ? 'Leyfðu aðgang að hljóðnemanum í vafranum til að tala inn á listann.'
         : 'Gat ekki opnað hljóðnemann.')
