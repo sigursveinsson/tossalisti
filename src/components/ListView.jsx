@@ -232,6 +232,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       }, 250)
     } catch (e) {
       landingEvent(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'voice_err_denied' : 'voice_err_mic_' + String((e && e.name) || 'x').slice(0, 24))
+      if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) { setVoiceState(null); setQsHidden(false); setMicDenied(true); return }
       setVoiceErr(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')
         ? 'Leyfðu aðgang að hljóðnemanum í vafranum til að tala inn á listann.'
         : 'Gat ekki opnað hljóðnemann.')
@@ -241,7 +242,9 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   // Beint í verkið (gestir úr auglýsingu): stórt spjald efst á tómum lista — skrifa eða tala náttúrulega
   const [qsText, setQsText] = useState('')
   const [qsHidden, setQsHidden] = useState(false)
-  const showQuick = quickStart && isShopping && !qsHidden && items.length === 0
+  // micDenied: vafrinn (oft Facebook/Instagram) lokaði á hljóðnemann → bjóða strax að skrifa í staðinn
+  const [micDenied, setMicDenied] = useState(false)
+  const showQuick = isShopping && !qsHidden && ((quickStart && items.length === 0) || micDenied)
   useEffect(() => { if (showQuick) landingEvent('qs_shown') }, [showQuick])
   // Úr velkomuskjá („Segðu hvað vantar“): sýna stórt raddspjald. Upptakan hefst þegar ýtt er á það
   // (vafrar, sérstaklega á iPhone, leyfa hljóðnema/hljóð aðeins eftir snertingu notanda).
@@ -1071,15 +1074,15 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {showQuick && (
         <div className="qs">
           <div className="qs-h">Hvað vantar?</div>
-          <div className="qs-sub">Skrifaðu það eins og þú myndir segja það — appið býr til listann, raðar eftir búðinni og setur magnið.</div>
+          <div className="qs-sub">{micDenied ? 'Þessi vafri hleypir appinu ekki að hljóðnemanum. Skrifaðu það í staðinn, eins og þú myndir segja það — appið býr til listann.' : 'Skrifaðu það eins og þú myndir segja það — appið býr til listann, raðar eftir búðinni og setur magnið.'}</div>
           <textarea className="qs-in" rows={2} value={qsText} onChange={e => setQsText(e.target.value)}
             placeholder="Prófaðu að skrifa eða segja „Taco fyrir fjóra“"
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (qsText.trim()) { landingEvent('qs_text'); parseText(qsText); setQsText('') } } }} />
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (qsText.trim()) { landingEvent('qs_text'); parseText(qsText); setQsText(''); setMicDenied(false) } } }} />
           <div className="qs-actions">
-            <button className="qs-go" disabled={!qsText.trim()} onClick={() => { landingEvent('qs_text'); parseText(qsText); setQsText('') }}>Búa til listann</button>
-            {micAvailable && <button className="qs-mic" onClick={() => { landingEvent('qs_voice'); startVoice() }} aria-label="Tala"><IconMicrophone size={22} stroke={2} /> Tala</button>}
+            <button className="qs-go" disabled={!qsText.trim()} onClick={() => { landingEvent('qs_text'); parseText(qsText); setQsText(''); setMicDenied(false) }}>Búa til listann</button>
+            {micAvailable && !micDenied && <button className="qs-mic" onClick={() => { landingEvent('qs_voice'); startVoice() }} aria-label="Tala"><IconMicrophone size={22} stroke={2} /> Tala</button>}
           </div>
-          <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true) }}>Skoða appið fyrst</button>
+          <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true); setMicDenied(false) }}>{micDenied || items.length > 0 ? 'Loka' : 'Skoða appið fyrst'}</button>
         </div>
       )}
       {!showQuick && addBar}

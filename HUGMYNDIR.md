@@ -204,3 +204,9 @@ Sverrir: „Home improvement listi sem JYSK og Húsasmiðjan gætu tengst.“
 - Fyrirmynd: Jula + Kivra í Svíþjóð (heimilis-/verkfæraverslun sendir kvittanir í sameiginlegt app).
 - Gildi fyrir verslunina: kemst á listann ÁÐUR en fólk velur búð; fyrir okkur: dýrari vörur, ábyrgðir, sterkari ástæða til að koma aftur.
 - Fyrsta skref (ódýrt): sniðmát fyrir 3–5 verkefni + kvittun tengd verkefni. Svo kynning fyrir JYSK/Húsasmiðjunni með notkunartölum.
+
+## Rekstraraðili / félag (19. nóv 2026) — ÓÁKVEÐIÐ
+- Wonder ehf. (Sverrir 49%, meðeigandi í Kína 51%) stendur í persónuverndarstefnu og á forsíðu, en félagið er tómt: hefur ekkert greitt, enga samninga gert, ekkert skriflegt um Tossalista. Allir aðgangar (lén, Netlify, Supabase, GitHub, Resend, Meta) eru á nafni Sverris.
+- Ákvörðun núna: Wonder stendur áfram í textunum.
+- Áður en app-umsóknir (Apple/Google, D-U-N-S) og fyrsti samningur fara inn: ákveða félag (nýtt ehf. í 100% eigu / kaupa meðeiganda út / kaupréttur), fá skriflega yfirlýsingu frá meðeiganda, stuttur fundur með lögmanni.
+- Þegar nýtt félag er komið: skipta um nafn+kt. í personuvernd.html, Auth.jsx (landing-legal), tölvupóstum; tilkynna notendum.
