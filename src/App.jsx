@@ -163,8 +163,9 @@ export default function App() {
     if (!isAnon) return
     const k = 'tossa.nudge.' + reason
     try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1') } catch {}
-    setTimeout(() => setShowSaveAcct(reason), 1200)
+    setSaveHint(reason) // lína í gestastikunni — enginn gluggi ofan á niðurstöðunni
   }
+  const [saveHint, setSaveHint] = useState(null)
   // Gestur samþykkti persónuverndarstefnu með því að ýta á „Prófa án skráningar“ (texti á lendingu) → skrá það.
   useEffect(() => {
     if (!isAnon || !profileLoaded || (profile && profile.consent_at)) return
@@ -217,7 +218,7 @@ export default function App() {
   // Bókhald: sýna kynningu í fyrsta sinn.
   useEffect(() => {
     if (view !== 'budget') return
-    try { if (!localStorage.getItem('korfan.budgetintro')) setShowBudgetIntro(true) } catch (e) {}
+    try { if (!localStorage.getItem('korfan.budgetintro') && purchases.length === 0) setShowBudgetIntro(true) } catch (e) {}
   }, [view])
   useEffect(() => {
     if (view !== 'home' || !homeSum) return
@@ -679,7 +680,9 @@ export default function App() {
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
     await loadPurchases(); loadMyRewards(); flashAwards(r)
     setShowReceipt(false); setReceiptListId(null)
+    try { localStorage.setItem('korfan.budgetintro', '1') } catch (e) {} // kynningargluggi bókhalds óþarfur: niðurstaðan sést strax
     if (demoReceipt) { setDemoReceipt(false); goBudget(); flash('Svona lítur bókhaldið út — prófaðu næst með þinni eigin kvittun'); nudgeSave('receipt'); return }
+    goBudget() // beint í niðurstöðuna: útgjöldin flokkuð
     nudgeSave('receipt')
     if (r && r.earned > 0) flash(`+${Math.round(r.earned)} Gríptu stig!${r.rewardNote === 'outside_campaign' ? ' Varan á kvittuninni er utan herferðartímabils, svo aðeins kvittanastig.' : r.rewardNote === 'unverified' ? ' Aðeins kvittanastig — línurnar stemmdu ekki við samtöluna. Skannaðu nær fyrir vörustig.' : ''}`, ['outside_campaign', 'unverified'].includes(r.rewardNote) ? { warn: true } : {})
     else if (r && REWARD_NOTE[r.rewardNote] && r.rewardNote !== 'already' && r.rewardNote !== 'disabled') flash(REWARD_NOTE[r.rewardNote], { warn: true })
@@ -985,6 +988,8 @@ export default function App() {
   }
   const firstTabLabel = list?.type === 'schedule' ? 'Skema' : list?.type === 'task' ? 'Verkefni' : list?.type === 'budget' ? 'Bókhald' : 'Innkaupalisti'
 
+  // „Opna í Chrome“ / „Opna í ytri vafra“ birtist fyrst þegar gestur hefur gert eitthvað sem er þess virði að geyma
+  const guestActed = purchases.length > 0 || lists.some(l => (l.items || []).length > 0)
   return (
     <div className="app">
       {showOnboarding && brandBar}
@@ -1014,24 +1019,23 @@ export default function App() {
       )}
       {isAnon && (
         <div className="guest-bar">
-          <span>Þú ert að prófa Tossalista</span>
-          <button onClick={() => setShowSaveAcct(true)}><b>Vista aðgang</b></button>
+          <span>{saveHint === 'receipt' ? 'Kvittunin er bara geymd í þessum vafra' : saveHint === 'items' ? 'Listinn er bara geymdur í þessum vafra' : 'Þú ert að prófa Tossalista'}</span>
+          <button className={saveHint ? 'hl' : ''} onClick={() => setShowSaveAcct(saveHint || true)}><b>Vista aðgang</b></button>
           <button onClick={guestSignIn}>Skrá inn</button>
-          {escHint === 'ios' && (
+          {guestActed && escHint === 'ios' && (
             <div className="ios-hint">
               <span>Svo listarnir geymist: ýttu á <b>•••</b> → <b>Opna í ytri vafra</b></span>
               <button onClick={escCopy}>{escCopied ? 'Afritað ✓' : 'Afrita hlekk'}</button>
               <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setEscHint(null) }}>×</button>
             </div>
           )}
-          {escHint === 'android' && (
+          {guestActed && escHint === 'android' && (
             <div className="ios-hint">
               <span>Svo listarnir geymist og þú getur sett appið á heimaskjá</span>
               <button onClick={escOpenChrome}>Opna í Chrome</button>
               <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setEscHint(null) }}>×</button>
             </div>
           )}
-          {session?.user?.user_metadata?.auto && <div className="guest-bar-legal">Ókeypis, engin skráning. Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</div>}
         </div>
       )}
       {showSaveAcct && <SaveAccount reason={showSaveAcct} onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}
@@ -1073,7 +1077,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping

@@ -199,7 +199,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           setVoiceState('error'); return
         }
         landingEvent('voice_auto')
-        await commitVoice(parsed)
+        // Engin yfirferð → engin sjálfvirk skipti í kostaða vöru (notandinn sæi þau ekki fyrr en á listanum)
+        await commitVoice({ ...parsed, items: parsed.items.map(i => ({ ...i, useSpon: false })) })
         return
       }
       setVoiceRes(parsed)
@@ -1099,8 +1100,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           <span className="voice-cta-txt"><b>Ýttu og segðu hvað vantar</b><small>t.d. „mjólk, tvö kíló af kartöflum og brauð“</small></span>
         </button>
       )}
-      {tabs}
-      <div className="list-actions">
+      {!showQuick && tabs}
+      {!showQuick && <div className="list-actions">
         <button className="shop-go" onClick={() => { setShopMode(true); if (isCloud && listId && members.length > 1) supabase.rpc('notify_shopping', { p_list: listId }).then(() => {}, () => {}) }}><IconShoppingCart size={18} stroke={1.9} />Versla</button>
         <button className="shelf-open" onClick={() => setShelf(true)}><IconBuildingStore size={18} stroke={1.75} />Vöruhilla</button>
         {kronanEnabled && isShopping && (
@@ -1109,11 +1110,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </button>
         )}
         <button className="shelf-open" onClick={toggleImages} title={showImages ? 'Fela myndir' : 'Sýna myndir'}>{showImages ? <IconPhotoOff size={18} stroke={1.75} /> : <IconPhoto size={18} stroke={1.75} />}Myndir</button>
-      </div>
+      </div>}
       {kronanMsg && <div className="kronan-msg" onClick={() => setKronanMsg('')}>{kronanMsg}</div>}
-      {isShopping && <RestockCard refreshKey={listId + ':' + items.length} rewardFor={rewardFor} onAdd={(name) => onAdd(name)} />}
-      {bannerEnabled && <AdBanner />}
-      {isShopping && items.length < 6 && (() => {
+      {isShopping && !showQuick && <RestockCard refreshKey={listId + ':' + items.length} rewardFor={rewardFor} onAdd={(name) => onAdd(name)} />}
+      {bannerEnabled && !showQuick && <AdBanner />}
+      {isShopping && !showQuick && items.length < 6 && (() => {
         const have = new Set(items.map(i => (i.name || '').toLowerCase().trim()))
         const left = STARTER.filter(s => !have.has(s))
         if (!left.length) return null

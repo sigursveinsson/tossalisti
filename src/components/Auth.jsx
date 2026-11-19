@@ -54,6 +54,15 @@ export function ResetPassword({ onDone }) {
   )
 }
 
+// Myndrænt yfirlit á forsíðunni: hvað appið gerir, í þeirri röð sem fólk notar það
+const SHOTS = [
+  { src: '/postur/rodd.png', title: 'Segðu hvað vantar', text: 'Listinn verður til sjálfur' },
+  { src: '/postur/listi.png', title: 'Einn listi fyrir heimilið', text: 'Allir sjá hann og haka við í búðinni' },
+  { src: '/postur/kvittun.png', title: 'Taktu mynd af kvittuninni', text: 'Appið les vörurnar og flokkar útgjöldin' },
+  { src: '/postur/abyrgd.png', title: 'Kvittanir og ábyrgðir', text: 'Áminning áður en skilafrestur rennur út' },
+  { src: '/postur/uppskrift.png', title: 'Uppskrift beint á listann', text: 'Hráefnin með einum smelli' },
+]
+
 export default function Auth() {
   // Nýir gestir (t.d. úr auglýsingu) sjá nýskráningu fyrst; tæki sem hefur áður skráð sig inn sér innskráningu.
   const [mode, setMode] = useState(() => { try { return localStorage.getItem('tossa.known') ? 'signin' : 'signup' } catch { return 'signup' } }) // 'signin' | 'signup' | 'forgot'
@@ -131,12 +140,27 @@ export default function Auth() {
         <p className="lead">Skannaðu kvittunina og sjáðu hvert peningarnir fara. Innkaupalisti sem öll fjölskyldan deilir. Íslenskt og alveg ókeypis.</p>
       </div>
 
+      {mode === 'signup' && (
+        <div className="try-now">
+          <button className="try-btn" onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
+          <p className="signin-help guest-help">Ókeypis. Þú getur vistað aðganginn hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
+        </div>
+      )}
+
+      <div className="shots" aria-label="Svona virkar Tossalisti">
+        {SHOTS.map((sh, i) => (
+          <figure className="shot" key={i}>
+            <img src={sh.src} alt={sh.title} width="600" height="900" loading={i < 2 ? 'eager' : 'lazy'} />
+            <figcaption><b>{sh.title}</b><span>{sh.text}</span></figcaption>
+          </figure>
+        ))}
+      </div>
+      <p className="shots-hint">Strjúktu til hliðar →</p>
+
       <div className="signin-card">
-        <p className="signin-title">{mode === 'signup' ? 'Alveg ókeypis — byrjaðu strax' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
+        <p className="signin-title">{mode === 'signup' ? 'Stofna aðgang' : mode === 'forgot' ? 'Gleymt lykilorð' : 'Skráðu þig inn'}</p>
         {mode === 'signup' && (
           <>
-            <button onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
-            <p className="signin-help guest-help">Engin skráning. Þú getur vistað aðganginn með netfangi hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
             {showGoogle && <GoogleButton onClick={google} disabled={busy} />}
             <div className="signin-or"><span>eða skráðu þig með netfangi</span></div>
           </>

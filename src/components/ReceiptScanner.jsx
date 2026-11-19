@@ -11,6 +11,7 @@ const matchLabel = (p) => {
   return `${p.brand ? p.brand + ' · ' : ''}${p.name} · ${val}`
 }
 import { useBackClose } from '../lib/backstack.js'
+import { landingEvent } from '../lib/landing.js'
 import CameraCapture from './CameraCapture.jsx'
 import { hasDocumentScanner, scanDocuments } from '../lib/native.js'
 import { IconAlertTriangle, IconArchive, IconCamera, IconGift, IconShieldCheck, IconX } from '@tabler/icons-react'
@@ -72,6 +73,24 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const [scannedOnce, setScannedOnce] = useState(() => { try { return localStorage.getItem('korfan.scannedOnce') === '1' } catch { return false } })
 
   useBackClose(true, onClose)
+  // Yfirferð: fyrst stutt samantekt (verslun, samtala, línur) með „Vista“ — ritillinn opnast með „Breyta“.
+  const [edit, setEdit] = useState(false)
+  useEffect(() => { landingEvent(demo ? 'scan_open_demo' : 'scan_open') }, [])
+  useEffect(() => { if (phase === 'review') landingEvent(items.length ? 'scan_read_ok' : 'scan_read_fail') }, [phase])
+  // Beint í myndavélina (enginn leiðbeiningaskjár á milli). Ef vafrinn leyfir það ekki stendur skjárinn eftir sem varaleið.
+  const autoOpened = useRef(false)
+  useEffect(() => {
+    if (demo || autoOpened.current) return
+    autoOpened.current = true
+    const t = setTimeout(() => { try { openCamera() } catch {} }, 60)
+    // Ef vafrinn hleypti myndavélinni ekki af stað (síðan fór aldrei í bakgrunn): hreinsa „skönnun í gangi“-merkið
+    // svo það sé ekki túlkað sem að síminn hafi drepið vafrann.
+    let hid = document.visibilityState !== 'visible'
+    const onVis = () => { if (document.visibilityState !== 'visible') hid = true }
+    document.addEventListener('visibilitychange', onVis)
+    const t2 = setTimeout(() => { document.removeEventListener('visibilitychange', onVis); if (!hid && !gotFileRef.current) clearPending() }, 1800)
+    return () => { clearTimeout(t); clearTimeout(t2); document.removeEventListener('visibilitychange', onVis) }
+  }, [])
 
   // Dæmi: „les“ kvittunina á ~1,5 sek og fyllir inn tilbúnar línur.
   useEffect(() => {
@@ -130,7 +149,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
     setMulti(true); setParts([]); setFailed(null); setPhase('capture'); openCamera()
   }
 
-  const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) { gotFileRef.current = true; onShot(file) } else clearPending() }
+  const onFile = (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ''; if (file) { gotFileRef.current = true; landingEvent('scan_photo'); onShot(file) } else clearPending() }
   const onShot = (file) => {
     setCamera(false)
     if (multi) { setParts(p => [...p, file].slice(0, 4)); setPhase('parts'); clearPending() }
@@ -187,6 +206,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
         if (existing) { setDup(existing); setSaving(false); return }
       }
       await onSave(payload)
+      landingEvent(demo ? 'scan_saved_demo' : 'scan_saved')
       onClose()
     } catch (e) {
       setSaving(false)
@@ -198,7 +218,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   }
 
   return (
-    <div className="sheet-bg center" onClick={onClose}>
+    <div className="sheet-bg center" onClick={phase === 'capture' ? onClose : undefined}>
       <div className="modal receipt-modal" onClick={e => e.stopPropagation()}>
         <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
@@ -209,9 +229,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
 
         {phase === 'capture' && (
           <>
-            <p className="muted-p">Taktu mynd af kassakvittuninni. Appið les vörur og verð — þú getur lagað áður en þú vistar.</p>
-            <div className="receipt-tip"><b>Kvittunin á að fylla breidd myndarinnar.</b> Flöt, í góðri birtu og án skugga. Ef hún er of löng til að komast öll fyrir þannig, taktu hana í hlutum.</div>
             <button className="add-recipe-btn" onClick={() => { setMulti(false); openCamera() }}><IconCamera size={19} stroke={1.9} /> Taka mynd af kvittun</button>
+            <div className="receipt-tip"><b>Kvittunin á að fylla breidd myndarinnar.</b> Flöt, í góðri birtu og án skugga.</div>
             <button className="ghost-btn receipt-alt" onClick={startMulti}>Löng kvittun? Taka í hlutum</button>
             <button className="ghost-btn receipt-alt" onClick={() => { setMulti(false); galleryRef.current && galleryRef.current.click() }}>Velja mynd úr myndasafni</button>
             {canCamera && (
@@ -234,22 +253,36 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
 
         {phase === 'reading' && (
           <div className="receipt-reading">
-            <p>Les kvittun… {Math.round(progress * 100)}%</p>
-            <div className="progress-bar"><div style={{ width: Math.round(progress * 100) + '%' }} /></div>
-            {!scannedOnce && <p className="muted-p">Fyrsta skipti tekur lengri tíma (sækir íslenskt málgagn).</p>}
+            <p>{progress > 0 && progress < 1 ? `Les kvittun… ${Math.round(progress * 100)}%` : 'Les kvittunina…'}</p>
+            <div className={'progress-bar' + (progress > 0 ? '' : ' indet')}><div style={progress > 0 ? { width: Math.round(progress * 100) + '%' } : undefined} /></div>
+            <p className="muted-p">Finn verslun, vörur og verð — tekur nokkrar sekúndur.</p>
           </div>
         )}
 
         {phase === 'review' && (
           <>
             {demo && <img className="receipt-demo-img" src={DEMO_IMG} alt="Kvittun úr Bónus" onError={(e) => { e.currentTarget.style.display = 'none' }} />}
-            {demo && <div className="receipt-demo-note"><b>Raunveruleg kvittun úr Bónus.</b> Svona las appið hana: verslun, dagsetningu og hverja vöru. Ýttu á <b>Vista</b> til að sjá hvernig bókhaldið flokkar útgjöldin. Þú getur eytt dæminu hvenær sem er.</div>}
+            {demo && <div className="receipt-demo-note"><b>Raunveruleg kvittun úr Bónus.</b> Svona las appið hana. Ýttu á <b>Vista</b> til að sjá bókhaldið. Þú getur eytt dæminu hvenær sem er.</div>}
+            {!edit && items.length > 0 && (
+              <div className="rc-sum">
+                <div className="rc-sum-top">
+                  <div><b>{store || 'Verslun óþekkt'}</b><small>{fmtDate(date)} · {items.length} {items.length === 1 ? 'vara' : 'vörur'}</small></div>
+                  <div className="rc-sum-total">{(total === '' ? sum(items) : Number(total) || 0).toLocaleString('is-IS')} kr</div>
+                </div>
+                <div className="rc-sum-items">
+                  {items.map(it => <div key={it.id}><span>{Number(it.qty) > 1 ? it.qty + ' × ' : ''}{it.name}</span><span>{it.price === '' || it.price == null ? '' : Number(it.price).toLocaleString('is-IS')}</span></div>)}
+                </div>
+                <button className="rc-sum-edit" onClick={() => { landingEvent('scan_edit'); setEdit(true) }}>Breyta línum, dagsetningu, ábyrgð eða skilafresti</button>
+              </div>
+            )}
+            {(edit || items.length === 0) && <>
             <div className="receipt-meta">
               <input className="dialog-input" value={store} onChange={e => setStore(e.target.value)} placeholder="Verslun (t.d. Bónus)" />
               <input className="dialog-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
             </div>
+            </>}
             {dateLooksOff(date) && (
-              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu hér að ofan ef þarf.</span></div>
+              <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Dagsetningin les sem <b>{fmtDate(date)}</b> — meira en mánuður frá í dag. Er ártalið örugglega rétt? Skönnun les ártal oft vitlaust. Leiðréttu með „Breyta“ ef þarf.</span></div>
             )}
             {items.length === 0 && failed === 'ai_down' && <div className="receipt-fail"><b>Kvittanalesturinn liggur niðri í augnablikinu.</b> Þetta er ekki myndin þín. Við höfum fengið tilkynningu og erum að laga þetta. Reyndu aftur eftir smá stund með sömu mynd, eða skráðu kvittunina síðar.</div>}
             {items.length === 0 && (failed === 'ai_down' || failed === 'network') && lastInputRef.current && (
@@ -262,6 +295,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
             {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
             {(failed === 'blurry' || (scanCheck && scanCheck.ok === false)) && <button className="ghost-btn receipt-rescan" onClick={startMulti}>Taka kvittunina í hlutum (betra fyrir langar kvittanir)</button>}
+            {(edit || items.length === 0) && <>
             <div className="receipt-items">
               {items.map(it => {
                 const mp = prodById(it.reward_product_id)
@@ -300,6 +334,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
               <input value={total} onChange={e => setTotal(e.target.value)} placeholder={String(sum(items.map(i => ({ price: i.price }))))} inputMode="decimal" />
               <span>kr</span>
             </div>
+            </>}
             {(() => {
               const t = Number(String(total).replace(/\./g, '').replace(',', '.'))
               const sm = items.reduce((a, it) => a + (Number(it.price) || 0), 0)
@@ -323,7 +358,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             {dup && (
               <div className="receipt-datewarn"><IconAlertTriangle size={16} stroke={2} /> <span>Þessi kvittun virðist þegar skráð{dup.purchased_at ? ' (' + dup.store + ', ' + fmtDate(dup.purchased_at) + ')' : ''}. Ef hún er ný, ýttu aftur á „Vista samt".</span></div>
             )}
-            <button className="add-recipe-btn" onClick={save} disabled={saving}>{saving ? 'Vista…' : (dup ? 'Vista samt' : 'Vista kvittun')}</button>
+            <button className="add-recipe-btn rc-save" onClick={save} disabled={saving}>{saving ? 'Vista…' : (dup ? 'Vista samt' : 'Vista kvittun')}</button>
           </>
         )}
       </div>

@@ -78,7 +78,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         <div className="home-ach">
           {s.week_done > 0
             ? <>Þú hefur klárað <b>{s.week_done}</b> {s.week_done === 1 ? 'verk' : 'verk'} í vikunni{s.week_points > 0 ? ` — ${s.week_points} stig` : ''}</>
-            : <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
+            : (firstTime && purchases.length === 0) ? <>Byrjaðu á einu: búðu til lista eða skannaðu kvittun.</> : <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           </div>
         )
       })()}
-      {onOpenWallet && (
+      {onOpenWallet && (!(firstTime && purchases.length === 0) || wActive.length > 0) && (
         <button className={'home-invite' + (wSoon.length ? ' home-alert' : ' home-wallet')} onClick={() => onOpenWallet()}>
           <span className="home-invite-ic"><IconWallet size={22} stroke={1.75} /></span>
           <span className="home-invite-txt">
@@ -180,7 +180,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </button>
       )}
 
-      {!hasSharedList && onInvite && (
+      {!hasSharedList && onInvite && !(firstTime && purchases.length === 0) && (
         <button className="home-invite" onClick={() => onInvite()}>
           <span className="home-invite-ic"><IconUsers size={22} stroke={1.75} /></span>
           <span className="home-invite-txt"><b>Bjóddu heimilisfólki á listann</b><small>Tossalisti er bestur þegar fjölskyldan deilir — sjáið innkaup og verk uppfærast í rauntíma</small></span>

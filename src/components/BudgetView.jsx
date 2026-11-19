@@ -118,8 +118,10 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
 }
 
 export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt, onOpenReceipts }) {
-  const [period, setPeriod] = useState('all')
-  const [mode, setMode] = useState('cat') // 'cat' | 'store'
+  // Sjálfgefið: þessi mánuður (eins og spjaldið á Heim) ef eitthvað er skráð í honum, annars allt
+  const [period, setPeriod] = useState(() => { const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0); return purchases.some(p => p.purchased_at && new Date(p.purchased_at) >= m0) ? 'month' : 'all' })
+  const [mode, setModeRaw] = useState(() => { try { return localStorage.getItem('tossa.budgetMode') === 'store' ? 'store' : 'cat' } catch { return 'cat' } }) // 'cat' | 'store'
+  const setMode = (m) => { setModeRaw(m); try { localStorage.setItem('tossa.budgetMode', m) } catch {} }
   const [filterCat, setFilterCat] = useState(null)
   const [filterStore, setFilterStore] = useState(null)
   const [form, setForm] = useState(null)

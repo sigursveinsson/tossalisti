@@ -9,6 +9,15 @@ Ef honum líkar það sem hann sér kemur hann aftur eða stofnar aðgang sjálf
 - Hver nýr eiginleiki fyrir gesti: telja smellina að fyrstu niðurstöðu og fækka þeim. Ekki bæta við skrefum, borðum eða spurningum fyrir framan.
 - Skráningarhvatning aðeins EFTIR að gestur hefur fengið eitthvað út úr appinu.
 
+## NOTENDAGREINING – PAKKI 1 (19. nóv 2026) — KÓÐI Í SKRÁNUM, BÍÐUR DEPLOY-S
+Greining: https://claude.ai/artifact/NgA8zG6VoZZbMr3w7Mnrfj (pakkar 2 og 3 ógerðir: opna á síðasta lista, optimistic updates, lok innkaupaferðar, föst leiðsögn neðst).
+Gert: kvittun → beint í bókhald (engin BudgetIntro ef útgjöld til); skráningarhvatning er lína í gestastiku (enginn gluggi);
+skanni opnar myndavél strax (leiðbeiningaskjár = varaleið); yfirferð = samantekt + „Breyta“; smellur utan glugga lokar ekki í lestri/yfirferð;
+biðstika hreyfist; gestastika ein lína (persónuvernd bara á velkomuskjá; „Opna í Chrome“ fyrst eftir að gestur gerir eitthvað);
+fyrsti listi hreinn á meðan „Hvað vantar?“ sést; „Búa til lista“ af Heim opnar „Hvað vantar?“; Veski/boð falin hjá nýjum;
+rödd án yfirferðar skiptir EKKI í kostaða vöru; bókhald opnast á „Mánuður“ ef eitthvað er í mánuðinum.
+Ný atvik: scan_open, scan_open_demo, scan_photo, scan_read_ok/fail, scan_edit, scan_saved, scan_saved_demo, voice_* (villugreining).
+
 ## Verkefnið
 - **Tossalisti** — íslenskt innkaupa- og heimilisapp. Í loftinu á **tossalisti.is**.
 - Mappa: `C:\Users\sigur\Documents\korfan` (Vite + React + Supabase + Netlify).
