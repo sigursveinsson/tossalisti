@@ -81,6 +81,9 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   const autoOpened = useRef(false)
   useEffect(() => {
     if (demo || autoOpened.current) return
+    // Aðeins í síma/spjaldtölvu: þar opnast myndavélin. Í tölvu opnaðist skráaval, sem enginn bað um.
+    const isPhone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 1 && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+    if (!isPhone && !hasDocumentScanner()) return
     autoOpened.current = true
     const t = setTimeout(() => { try { openCamera() } catch {} }, 60)
     // Ef vafrinn hleypti myndavélinni ekki af stað (síðan fór aldrei í bakgrunn): hreinsa „skönnun í gangi“-merkið

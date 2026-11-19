@@ -1073,16 +1073,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           <div className="qs-h">Hvað vantar?</div>
           <div className="qs-sub">Skrifaðu það eins og þú myndir segja það — appið býr til listann, raðar eftir búðinni og setur magnið.</div>
           <textarea className="qs-in" rows={2} value={qsText} onChange={e => setQsText(e.target.value)}
-            placeholder="t.d. mjólk, tvö kíló af kartöflum, brauð og bananar"
+            placeholder="Prófaðu að skrifa eða segja „Taco fyrir fjóra“"
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (qsText.trim()) { landingEvent('qs_text'); parseText(qsText); setQsText('') } } }} />
           <div className="qs-actions">
             <button className="qs-go" disabled={!qsText.trim()} onClick={() => { landingEvent('qs_text'); parseText(qsText); setQsText('') }}>Búa til listann</button>
             {micAvailable && <button className="qs-mic" onClick={() => { landingEvent('qs_voice'); startVoice() }} aria-label="Tala"><IconMicrophone size={22} stroke={2} /> Tala</button>}
-          </div>
-          <div className="qs-chips">
-            {['mjólk, brauð og egg', 'taco fyrir fjóra', 'pönnukökur'].map(t => (
-              <button key={t} onClick={() => { landingEvent('qs_example'); parseText(t) }}>{t}</button>
-            ))}
           </div>
           <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true) }}>Skoða appið fyrst</button>
         </div>

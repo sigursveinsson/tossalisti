@@ -41,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '' }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -84,7 +84,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
 
       <div className="home-quick">
         {onScanReceipt && <button onClick={() => onScanReceipt()}><span className="hq-ic"><IconReceipt size={24} stroke={1.75} /></span><b>Skanna kvittun</b></button>}
-        {onVoice && <button onClick={() => onVoice()}><span className="hq-ic"><IconMicrophone size={24} stroke={1.75} /></span><b>Tala inn á lista</b></button>}
+        {onVoice && <button onClick={() => onVoice()}><span className="hq-ic"><IconMicrophone size={24} stroke={1.75} /></span><b>Tala inn á lista</b>{voiceListName ? <small>{voiceListName}</small> : null}</button>}
         {firstTime && onCreateList
           ? <button onClick={() => onCreateList()}><span className="hq-ic"><IconShoppingCart size={24} stroke={1.75} /></span><b>Búa til lista</b></button>
           : onNewList && <button onClick={() => onNewList()}><span className="hq-ic"><IconPlus size={24} stroke={1.75} /></span><b>Nýr listi</b></button>}
