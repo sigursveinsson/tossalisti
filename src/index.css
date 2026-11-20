@@ -2256,3 +2256,9 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .bbulk span{flex:1;min-width:0;}
 .bbulk .ghost-btn{color:#fff;border-color:rgba(255,255,255,.4);background:transparent;height:36px;padding:0 12px;}
 .bbulk .primary-btn{background:var(--cta);color:var(--cta-ink);height:36px;padding:0 14px;}
+.demo-head{padding-bottom:12px;}
+.demo-head .header-top{display:flex;align-items:center;gap:10px;color:#fff;font-size:17px;}
+.demo-tag{background:var(--cta);color:var(--cta-ink);font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;}
+.demo-try{margin-left:auto;color:#fff;font-size:13.5px;font-weight:600;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:5px 12px;text-decoration:none;}
+.demo-note{background:#fdf0d5;border-radius:12px;padding:11px 14px;font-size:13.5px;color:var(--navy);margin-bottom:12px;line-height:1.4;}
+.demo-cta{display:block;text-align:center;background:var(--cta);color:var(--cta-ink);font-weight:700;border-radius:14px;padding:14px;margin-top:16px;text-decoration:none;}

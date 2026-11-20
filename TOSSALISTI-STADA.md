@@ -25,6 +25,12 @@ kleinuhringur eftir flokki/verslun (smellur = sía); leit að vöru/verslun; sí
 Prófað: þáttun + keyrt í Node (react-dom/server) með sýnigögnum, tölur stemma. EKKI prófað: útlit í vafra og smellir.
 Líka 20. nóv: sýnikvittun vistast ekki (sýnir flokkun + „Skanna mína kvittun“); hljóðnema hafnað → skrifa í staðinn.
 
+## SÝNING: tossalisti.is/siggaogjon (líka /syning) (20. nóv 2026) — KÓÐI Í SKRÁNUM, BÍÐUR DEPLOY-S
+Bókhald með tilbúnu heimili og heilu ári af kvittunum (um 460 kvittanir, 2.100 vörulínur, ~2,5 m.kr.). Enginn aðgangur, ekkert úr gagnagrunni, ekkert vistast.
+Skrár: src/data/demoBudget.js (gagnasmiður með föstu sæði, miðast við daginn í dag), src/components/DemoBudget.jsx, main.jsx (slóð /syning eða #syning).
+Líka nýtt í bókhaldi: „Vörur“-sýn með hökum og fjöldabreytingu á flokkum (setItemsCat í App.jsx).
+Prófað í Node (react-dom/server): gögn og birting án villna. EKKI prófað í vafra.
+
 ## Verkefnið
 - **Tossalisti** — íslenskt innkaupa- og heimilisapp. Í loftinu á **tossalisti.is**.
 - Mappa: `C:\Users\sigur\Documents\korfan` (Vite + React + Supabase + Netlify).

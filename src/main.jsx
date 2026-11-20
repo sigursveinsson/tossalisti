@@ -1,10 +1,13 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import DemoBudget from './components/DemoBudget.jsx'
 import './index.css'
 import { isNative, hideSplash, setStatusBar, onAppUrlOpen, onBackButton } from './lib/native.js'
 
-createRoot(document.getElementById('root')).render(<App />)
+// /siggaogjon (líka /syning): bókhald með tilbúnum gögnum — sjálfstæð síða án innskráningar og án gagnagrunns
+const isDemo = /^\/(sig+aogjon|syning)\/?$/i.test(window.location.pathname) || /^#(sig+aogjon|syning)$/i.test(window.location.hash)
+createRoot(document.getElementById('root')).render(isDemo ? <DemoBudget /> : <App />)
 
 if (isNative()) {
   // iOS/Android app (Capacitor): engin service worker — appið ber sjálft vefskrárnar. Ræsiskjár burt þegar React er komið upp.
