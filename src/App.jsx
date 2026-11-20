@@ -709,6 +709,19 @@ export default function App() {
     }
     await loadPurchases()
   }
+  // Margar vörulínur í einu (bókhald → Vörur → haka við → breyta flokki): ein endurhleðsla í lokin
+  const setItemsCat = async (items, cat) => {
+    const ids = (items || []).filter(x => x && x.id != null)
+    for (let i = 0; i < ids.length; i += 8) await Promise.all(ids.slice(i, i + 8).map(x => store.setItemCategory(x.id, cat)))
+    if (cat) {
+      const names = [...new Set(ids.map(x => (x.name || '').trim()).filter(Boolean))]
+      for (const n of names) await store.learnCategory(n, cat)
+      const map = await store.getLearnedCategories().catch(() => null)
+      if (map) setLearnedCategories(map)
+    }
+    await loadPurchases()
+    flash(ids.length + (ids.length === 1 ? ' vara færð' : ' vörur færðar') + ' í nýjan flokk')
+  }
   const setQty = async (it, qty) => { await store.setQty(list.id, it.id, qty); await reload(list.id) }
   const setDue = async (it, due) => { await store.setDue(list.id, it.id, due); await reload(list.id) }
   const setWeekday = async (it, wd) => { await store.setWeekday(list.id, it.id, wd); await reload(list.id) }
@@ -1088,7 +1101,7 @@ export default function App() {
         {showHome
           ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onNewList={async () => { const names = new Set(lists.map(l => l.name)); let nm = 'Nýr listi', k = 2; while (names.has(nm)) nm = 'Nýr listi ' + (k++); const l = await store.createList(nm, 'shopping'); await reload(l.id); setQuickStart(true); switchList(l.id) }} voiceListName={voiceList ? voiceList.name : ''} onVoice={canRecord() ? async () => { primeAudio(); let t = voiceList; if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setVoiceNow(Date.now()) } : null} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
-          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+          ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''}
                 kronan={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'}
@@ -1098,7 +1111,7 @@ export default function App() {
             : tab === 'griptu' && showGriptuTab
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
-              ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
+              ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
               : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} voiceNow={voiceNow} quickStart={quickStart} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 

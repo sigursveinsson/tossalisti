@@ -162,7 +162,7 @@ function periodInfo(type, offset, firstKey) {
   return { type, start: '0000-00-00', end: '9999-99-99', buckets: buckets.slice(-24), unit: 'month', title: 'Frá upphafi', prevName: '' }
 }
 
-export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt, onOpenReceipts }) {
+export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onSetItemsCategory, onScanReceipt, onOpenReceipts }) {
   const dkey = (p) => String(p.purchased_at || '').slice(0, 10)
   const firstKey = purchases.reduce((a, p) => { const k = dkey(p); return k && (!a || k < a) ? k : a }, '')
   const hasIn = (t) => { const i = periodInfo(t, 0, firstKey); return purchases.some(p => { const k = dkey(p); return k >= i.start && k < i.end }) }
@@ -188,6 +188,12 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
   const [catForItem, setCatForItem] = useState(null)
   const [openIds, setOpenIds] = useState({})
   const [manageCats, setManageCats] = useState(false)
+  // Neðri hluti: kvittanir eða allar vörulínur (hægt að haka við margar og breyta flokki í einu)
+  const [listMode, setListMode] = useState('receipts') // 'receipts' | 'items'
+  const [picked, setPicked] = useState({})
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [itemLimit, setItemLimit] = useState(150)
 
   // Sameinaðir flokkar: innbyggðir + eigin flokkar notanda.
   const allCats = [...EXPENSE_CATEGORIES, ...customCats.map(c => ({ key: c.id, name: c.name, icon: c.icon, color: c.color, custom: true }))]
@@ -269,6 +275,26 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
     e.amt += Number(it.price) || 0; e.n += 1
   }
   const topProducts = Object.values(prodMap).sort((a, b) => b.amt - a.amt).slice(0, 5)
+
+  // Allar vörulínur sem passa við síurnar (fyrir „Vörur“-sýnina)
+  const lineItems = []
+  for (const p of shown) for (const it of (p.items || [])) {
+    if (filterCat && effectiveItemCat(it) !== filterCat) continue
+    if (ql && !storeHit(p) && !itemHit(it)) continue
+    if (it.id != null) lineItems.push({ it, p })
+  }
+  const pickedItems = lineItems.filter(x => picked[x.it.id])
+  const allPicked = lineItems.length > 0 && pickedItems.length === lineItems.length
+  const applyBulk = async (key) => {
+    if (!pickedItems.length) return
+    setBulkBusy(true)
+    try {
+      const list = pickedItems.map(x => ({ id: x.it.id, name: x.it.name }))
+      if (onSetItemsCategory) await onSetItemsCategory(list, key)
+      else for (const x of list) await onSetItemCategory(x.id, key, x.name)
+      setPicked({}); setBulkOpen(false)
+    } finally { setBulkBusy(false) }
+  }
 
   // Hvati: vikur í röð með a.m.k. eina kvittun (núverandi vika má vera tóm enn)
   const weekKey = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return dk(x) }
@@ -410,7 +436,46 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
 
       {shown.length === 0 && <p className="empty">{purchases.length === 0 ? 'Engar færslur enn — skannaðu kvittun eða bættu við með „+ Ný færsla“.' : chips.length ? 'Ekkert passar við síurnar á þessu tímabili.' : 'Ekkert skráð á þessu tímabili.'}</p>}
 
-      <div className="btx-list">
+      {purchases.length > 0 && (
+        <div className="bmode blist-mode">
+          <button className={listMode === 'receipts' ? 'on' : ''} onClick={() => setListMode('receipts')}>Kvittanir ({shown.length})</button>
+          <button className={listMode === 'items' ? 'on' : ''} onClick={() => setListMode('items')}>Vörur ({lineItems.length})</button>
+        </div>
+      )}
+
+      {listMode === 'items' && (
+        <div className="bitems-all">
+          {lineItems.length > 0 && (
+            <div className="bitems-head">
+              <label><input type="checkbox" checked={allPicked} onChange={() => setPicked(allPicked ? {} : Object.fromEntries(lineItems.map(x => [x.it.id, true])))} /> Velja allar {lineItems.length}</label>
+              <small>Leitaðu eða síaðu að ofan, hakaðu við og breyttu flokki</small>
+            </div>
+          )}
+          {lineItems.length === 0 && purchases.length > 0 && <p className="empty">Engar vörulínur passa við síurnar.</p>}
+          {lineItems.slice(0, itemLimit).map(({ it, p }) => {
+            const c = catOf(effectiveItemCat(it))
+            const on = !!picked[it.id]
+            return (
+              <label className={'bline' + (on ? ' on' : '')} key={it.id}>
+                <input type="checkbox" checked={on} onChange={() => setPicked(m => { const n = { ...m }; if (n[it.id]) delete n[it.id]; else n[it.id] = true; return n })} />
+                <span className="bline-main"><b>{it.name}</b><small>{p.store || 'Færsla'} · {fmtDate(dkey(p))}</small></span>
+                <span className="bline-cat"><ExpIcon cat={c} size={13} /> {c.name}</span>
+                <span className="bline-amt">{kr(it.price)}</span>
+              </label>
+            )
+          })}
+          {lineItems.length > itemLimit && <button className="bmanage-cats" onClick={() => setItemLimit(n => n + 300)}>Sýna fleiri ({lineItems.length - itemLimit} eftir)</button>}
+          {pickedItems.length > 0 && (
+            <div className="bbulk">
+              <span><b>{pickedItems.length}</b> {pickedItems.length === 1 ? 'vara valin' : 'vörur valdar'} · {kr(pickedItems.reduce((a, x) => a + (Number(x.it.price) || 0), 0))}</span>
+              <button className="ghost-btn" onClick={() => setPicked({})}>Hætta við</button>
+              <button className="primary-btn" onClick={() => setBulkOpen(true)}>Breyta flokki</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {listMode === 'receipts' && <div className="btx-list">
         {shown.map(p => {
           const items = p.items || []
           const open = !!openIds[p.id]
@@ -441,7 +506,17 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
             </div>
           )
         })}
-      </div>
+      </div>}
+
+      {bulkOpen && (
+        <div className="sheet-bg center" onClick={bulkBusy ? undefined : () => setBulkOpen(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Flokkur á {pickedItems.length} {pickedItems.length === 1 ? 'vöru' : 'vörur'} <button className="x" onClick={() => setBulkOpen(false)} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
+            <div className="bcat-learn">{bulkBusy ? 'Breyti…' : 'Kerfið man flokkinn fyrir þessar vörur næst þegar þær eru skannaðar.'}</div>
+            {!bulkBusy && <CatGrid cats={allCats} onAddCategory={onAddCategory} onPick={applyBulk} />}
+          </div>
+        </div>
+      )}
 
       {form && <TxForm initial={form} catMap={catMap} cats={allCats} onAddCategory={onAddCategory} onSave={saveForm} onClose={() => setForm(null)} />}
 
