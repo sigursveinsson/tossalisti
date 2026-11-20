@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { parseReceipt } from '../lib/receipt.js'
 import { store as db } from '../lib/store.js'
+import { CAT_BY_KEY } from '../data/categories.js'
 
 // Texti á pörunar-merki: „Nathan · Nutella · +50 stig" (gjafatákn birt í JSX)
 const matchLabel = (p) => {
@@ -38,11 +39,18 @@ const DEMO_STORE = 'Bónus Fiskislóð (dæmi)'
 const DEMO_DATE = '2026-11-02'
 const DEMO_IMG = '/postur/demo-kvittun.jpg'
 const DEMO_ITEMS = [
-  ['Starbucks 10 stk', 1, 769], ['EF hamborgarasósa 400 ml', 1, 487], ['OS Rjómaostur 400 g', 1, 998], ['Lambhaga salat box', 1, 525],
-  ['HP kleinur 7 stk', 1, 559], ['OS Góðostur 26% biti', 1, 1313], ['SFG agúrka', 1, 275], ['ES frosin bláber', 1, 459],
-  ['DJ döðlur', 1, 369], ['MCV Hob Nobs 262 g', 1, 314], ['Bónus poki', 1, 53],
+  ['Starbucks 10 stk', 1, 769, 'drykkir'], ['EF hamborgarasósa 400 ml', 1, 487, 'matur'], ['OS Rjómaostur 400 g', 1, 998, 'matur'], ['Lambhaga salat box', 1, 525, 'matur'],
+  ['HP kleinur 7 stk', 1, 559, 'matur'], ['OS Góðostur 26% biti', 1, 1313, 'matur'], ['SFG agúrka', 1, 275, 'matur'], ['ES frosin bláber', 1, 459, 'matur'],
+  ['DJ döðlur', 1, 369, 'matur'], ['MCV Hob Nobs 262 g', 1, 314, 'snakk'], ['Bónus poki', 1, 53, 'heimili'],
 ]
-export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requireImage = false, demo = false }) {
+// Sýnidæmið er ALDREI vistað (þetta er ekki kvittun gestsins): það sýnir bara lesturinn og flokkunina.
+const DEMO_TOTAL = DEMO_ITEMS.reduce((a, [, , pr]) => a + pr, 0)
+const DEMO_CATS = (() => {
+  const m = {}
+  for (const [, , pr, c] of DEMO_ITEMS) m[c] = (m[c] || 0) + pr
+  return Object.entries(m).map(([key, amount]) => ({ key, amount, ...(CAT_BY_KEY[key] || { name: 'Annað', color: '#6b7a93', icon: '•' }) })).sort((a, b) => b.amount - a.amount)
+})()
+export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRealScan, requireImage = false, demo = false }) {
   const fileRef = useRef(null)
   const [phase, setPhase] = useState('capture') // capture | reading | review
   const [progress, setProgress] = useState(0)
@@ -104,10 +112,8 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
       p = Math.min(1, p + 0.12); setProgress(p)
       if (p >= 1) {
         clearInterval(t)
-        setStore(DEMO_STORE); setDate(DEMO_DATE)
-        setItems(DEMO_ITEMS.map(([name, qty, price], i) => ({ id: 'd' + i, name, qty, price, reward_product_id: null, w: 0 })))
-        setTotal(String(DEMO_ITEMS.reduce((s, [, , pr]) => s + pr, 0)))
-        setPhase('review')
+        landingEvent('scan_demo_result')
+        setPhase('demo')
       }
     }, 140)
     return () => clearInterval(t)
@@ -221,7 +227,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
   }
 
   return (
-    <div className="sheet-bg center" onClick={phase === 'capture' ? onClose : undefined}>
+    <div className="sheet-bg center" onClick={phase === 'capture' || phase === 'demo' ? onClose : undefined}>
       <div className="modal receipt-modal" onClick={e => e.stopPropagation()}>
         <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
@@ -259,6 +265,39 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, requ
             <p>{progress > 0 && progress < 1 ? `Les kvittun… ${Math.round(progress * 100)}%` : 'Les kvittunina…'}</p>
             <div className={'progress-bar' + (progress > 0 ? '' : ' indet')}><div style={progress > 0 ? { width: Math.round(progress * 100) + '%' } : undefined} /></div>
             <p className="muted-p">Finn verslun, vörur og verð — tekur nokkrar sekúndur.</p>
+          </div>
+        )}
+
+        {phase === 'demo' && (
+          <div className="rc-demo">
+            <div className="rc-demo-head">
+              <img src={DEMO_IMG} alt="Kvittun úr Bónus" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+              <div>
+                <b>Bónus Fiskislóð</b>
+                <small>{fmtDate(DEMO_DATE)} · {DEMO_ITEMS.length} vörur</small>
+                <div className="rc-sum-total">{DEMO_TOTAL.toLocaleString('is-IS')} kr</div>
+              </div>
+            </div>
+            <div className="rc-demo-h">Svona flokkar appið kvittunina</div>
+            <div className="rc-demo-cats">
+              {DEMO_CATS.map(c => (
+                <div key={c.key} className="rc-demo-cat">
+                  <span className="rc-demo-ic">{c.icon}</span>
+                  <span className="rc-demo-name">{c.name}<i><em style={{ width: Math.max(6, Math.round(c.amount / DEMO_CATS[0].amount * 100)) + '%', background: c.color }} /></i></span>
+                  <b>{c.amount.toLocaleString('is-IS')} kr</b>
+                </div>
+              ))}
+            </div>
+            <details className="rc-demo-lines">
+              <summary>Sjá allar {DEMO_ITEMS.length} línurnar sem appið las</summary>
+              <div className="rc-sum-items">
+                {DEMO_ITEMS.map(([name, , price], i) => <div key={i}><span>{name}</span><span>{price.toLocaleString('is-IS')}</span></div>)}
+              </div>
+            </details>
+            <div className="rc-demo-cta"><b>Ertu með kvittun í vasanum eða veskinu?</b> Prófaðu með henni — það tekur hálfa mínútu.</div>
+            <button className="add-recipe-btn" onClick={() => { landingEvent('scan_demo_to_real'); onRealScan && onRealScan(); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={19} stroke={1.9} /> Skanna mína kvittun</button>
+            <button className="ghost-btn receipt-alt" onClick={onClose}>Loka</button>
+            <p className="muted-p rc-demo-foot">Sýnidæmið vistast ekki.</p>
           </div>
         )}
 

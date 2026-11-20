@@ -1158,7 +1158,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner demo={demoReceipt} requireImage={!demoReceipt && !!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={demoReceipt ? null : (p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null); setDemoReceipt(false) }} /></ErrorBoundary>}
+      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner demo={demoReceipt} onRealScan={() => setDemoReceipt(false)} requireImage={!demoReceipt && !!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={demoReceipt ? null : (p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null); setDemoReceipt(false) }} /></ErrorBoundary>}
 
       {showBudgetIntro && (
         <BudgetIntro

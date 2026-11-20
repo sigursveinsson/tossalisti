@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 import { ExpIcon, StoreIcon } from '../data/icons.jsx'
-import { IconChevronDown, IconChevronRight, IconPhoto, IconPlus, IconReceipt, IconSettings, IconShieldCheck, IconX } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconPhoto, IconPlus, IconReceipt, IconSearch, IconSettings, IconShieldCheck, IconX } from '@tabler/icons-react'
+import { TimeBars, CumLine, Donut } from './BudgetCharts.jsx'
 
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
 const today = () => new Date().toISOString().slice(0, 10)
@@ -117,13 +118,72 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
   )
 }
 
+const pad2 = (n) => String(n).padStart(2, '0')
+const dk = (d) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
+const MON = ['jan', 'feb', 'mar', 'apr', 'maí', 'jún', 'júl', 'ágú', 'sep', 'okt', 'nóv', 'des']
+const MONL = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember']
+const WD = ['mán', 'þri', 'mið', 'fim', 'fös', 'lau', 'sun']
+const PALETTE = ['#15315e', '#f5a623', '#14a37a', '#1f8ac0', '#a83b66', '#7a52cc', '#e8615a', '#5a9e5a']
+const PERIODS = [['week', 'Vika'], ['month', 'Mánuður'], ['year', 'Ár'], ['all', 'Allt']]
+
+// Tímabil bókhaldsins: upphaf/lok (dagslyklar YYYY-MM-DD, lok ekki með), súlur og heiti.
+// offset: 0 = núverandi, -1 = fyrra o.s.frv. firstKey: elsta færsla (fyrir „Allt“).
+function periodInfo(type, offset, firstKey) {
+  const now = new Date(); now.setHours(0, 0, 0, 0)
+  const todayK = dk(now)
+  if (type === 'week') {
+    const s = new Date(now); s.setDate(s.getDate() - ((s.getDay() + 6) % 7) + offset * 7)
+    const e = new Date(s); e.setDate(e.getDate() + 7)
+    const last = new Date(e); last.setDate(last.getDate() - 1)
+    const buckets = WD.map((label, i) => { const d = new Date(s); d.setDate(d.getDate() + i); const key = dk(d); return { key, label, future: key > todayK } })
+    return { type, start: dk(s), end: dk(e), buckets, unit: 'day', title: `${s.getDate()}. ${MON[s.getMonth()]} – ${last.getDate()}. ${MON[last.getMonth()]}`, prevName: 'Vikan á undan' }
+  }
+  if (type === 'month') {
+    const s = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+    const e = new Date(s.getFullYear(), s.getMonth() + 1, 1)
+    const n = new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate()
+    const buckets = Array.from({ length: n }, (_, i) => { const key = s.getFullYear() + '-' + pad2(s.getMonth() + 1) + '-' + pad2(i + 1); return { key, label: String(i + 1), future: key > todayK } })
+    return { type, start: dk(s), end: dk(e), buckets, unit: 'day', title: MONL[s.getMonth()] + ' ' + s.getFullYear(), prevName: 'Mánuðurinn á undan' }
+  }
+  if (type === 'year') {
+    const y = now.getFullYear() + offset
+    const buckets = MON.map((label, i) => { const key = y + '-' + pad2(i + 1); return { key, label: label.slice(0, 1).toUpperCase(), future: key > todayK.slice(0, 7) } })
+    return { type, start: y + '-01-01', end: (y + 1) + '-01-01', buckets, unit: 'month', title: String(y), prevName: 'Árið á undan' }
+  }
+  // Allt: mánuðir frá elstu færslu til dagsins í dag (mest 24 síðustu á myndritinu)
+  const fk = firstKey && /^\d{4}-\d{2}/.test(firstKey) ? firstKey : todayK
+  let y = Number(fk.slice(0, 4)), m = Number(fk.slice(5, 7)) - 1
+  const buckets = []
+  while (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth())) {
+    buckets.push({ key: y + '-' + pad2(m + 1), label: MON[m] })
+    m++; if (m > 11) { m = 0; y++ }
+    if (buckets.length > 240) break
+  }
+  return { type, start: '0000-00-00', end: '9999-99-99', buckets: buckets.slice(-24), unit: 'month', title: 'Frá upphafi', prevName: '' }
+}
+
 export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onScanReceipt, onOpenReceipts }) {
-  // Sjálfgefið: þessi mánuður (eins og spjaldið á Heim) ef eitthvað er skráð í honum, annars allt
-  const [period, setPeriod] = useState(() => { const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0); return purchases.some(p => p.purchased_at && new Date(p.purchased_at) >= m0) ? 'month' : 'all' })
+  const dkey = (p) => String(p.purchased_at || '').slice(0, 10)
+  const firstKey = purchases.reduce((a, p) => { const k = dkey(p); return k && (!a || k < a) ? k : a }, '')
+  const hasIn = (t) => { const i = periodInfo(t, 0, firstKey); return purchases.some(p => { const k = dkey(p); return k >= i.start && k < i.end }) }
+  // Sjálfgefið tímabil: síðasta val notanda ef eitthvað er skráð í því, annars mánuðurinn, annars allt
+  const [ptype, setPtypeRaw] = useState(() => {
+    let saved = null
+    try { saved = localStorage.getItem('tossa.budgetPeriod') } catch {}
+    for (const t of [saved, 'month']) if (t && PERIODS.some(([k]) => k === t) && hasIn(t)) return t
+    return 'all'
+  })
+  const [offset, setOffset] = useState(0)
+  const [bucketSel, setBucketSel] = useState(null)
+  const setPtype = (t) => { setPtypeRaw(t); setOffset(0); setBucketSel(null); try { localStorage.setItem('tossa.budgetPeriod', t) } catch {} }
+  const step = (d) => { setOffset(o => Math.min(0, o + d)); setBucketSel(null) }
   const [mode, setModeRaw] = useState(() => { try { return localStorage.getItem('tossa.budgetMode') === 'store' ? 'store' : 'cat' } catch { return 'cat' } }) // 'cat' | 'store'
   const setMode = (m) => { setModeRaw(m); try { localStorage.setItem('tossa.budgetMode', m) } catch {} }
+  const [chart, setChart] = useState('bars') // 'bars' | 'line'
   const [filterCat, setFilterCat] = useState(null)
   const [filterStore, setFilterStore] = useState(null)
+  const [filterPayer, setFilterPayer] = useState(null)
+  const [q, setQ] = useState('')
   const [form, setForm] = useState(null)
   const [catForItem, setCatForItem] = useState(null)
   const [openIds, setOpenIds] = useState({})
@@ -134,56 +194,121 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
   const catMap = Object.fromEntries(allCats.map(c => [c.key, c]))
   const catOf = (k) => catMap[k] || { key: 'annad', name: 'Annað' }
 
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-  const all = purchases
-    .filter(p => period === 'all' || (p.purchased_at && new Date(p.purchased_at) >= monthStart))
-    .sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
-  const grand = all.reduce((s, p) => s + (Number(p.total) || 0), 0)
+  const info = periodInfo(ptype, offset, firstKey)
+  const bkey = (p) => info.unit === 'day' ? dkey(p) : dkey(p).slice(0, 7)
+  const ql = q.trim().toLowerCase()
+  const storeHit = (p) => !!ql && (p.store || '').toLowerCase().includes(ql)
+  const itemHit = (it) => (it.name || '').toLowerCase().includes(ql)
+  // Upphæð færslu miðað við síur: flokkur og leit telja aðeins þá liði sem passa (annars heildarupphæð kvittunar).
+  const amt = (p, skipCat) => {
+    const fc = skipCat ? null : filterCat
+    const needQ = !!ql && !storeHit(p)
+    if (!fc && !needQ) return Number(p.total) || 0
+    const its = p.items || []
+    if (!its.length) return (!needQ && (!fc || (p.category || 'annad') === fc)) ? (Number(p.total) || 0) : 0
+    return its.reduce((a, it) => a + (((!fc || effectiveItemCat(it) === fc) && (!needQ || itemHit(it))) ? (Number(it.price) || 0) : 0), 0)
+  }
+  const pass = (p, skip) =>
+    (skip === 'store' || !filterStore || storeChain(p.store) === filterStore) &&
+    (!filterPayer || p.user_id === filterPayer) &&
+    (skip === 'bucket' || !bucketSel || bkey(p) === bucketSel)
+  const narrowed = !!(filterCat || ql)
+  const inRange = (p, i) => { const k = dkey(p); return k >= i.start && k < i.end }
 
-  // Flokka-samtölur úr undirliðum (eða heildarfærslu ef engir liðir).
+  const inPeriod = purchases.filter(p => inRange(p, info)).sort((a, b) => (b.purchased_at || '').localeCompare(a.purchased_at || ''))
+  const shown = inPeriod.filter(p => pass(p) && (!narrowed || amt(p) > 0))
+  const grand = shown.reduce((s, p) => s + amt(p), 0)
+  const storeCount = new Set(shown.map(p => storeChain(p.store))).size
+
+  // Súlur yfir tíma (virða allar síur nema valda súlu)
+  const byBucket = {}
+  for (const p of inPeriod) if (pass(p, 'bucket')) { const a = amt(p); if (a) byBucket[bkey(p)] = (byBucket[bkey(p)] || 0) + a }
+  const buckets = info.buckets.map(b => ({ ...b, amt: byBucket[b.key] || 0 }))
+
+  // Fyrra tímabil til samanburðar (sömu síur)
+  const prevInfo = ptype === 'all' ? null : periodInfo(ptype, offset - 1, firstKey)
+  const prevBy = {}
+  let prevTotal = 0
+  if (prevInfo) for (const p of purchases) if (inRange(p, prevInfo) && pass(p, 'bucket')) {
+    const a = amt(p); if (!a) continue
+    const k = prevInfo.unit === 'day' ? dkey(p) : dkey(p).slice(0, 7)
+    prevBy[k] = (prevBy[k] || 0) + a; prevTotal += a
+  }
+  const prevSeries = prevInfo ? prevInfo.buckets.map(b => prevBy[b.key] || 0) : []
+
+  // Skipting eftir flokkum (hunsar flokkasíu) og verslunum (hunsar verslunarsíu) — svo hægt sé að smella á milli
   const catTotals = {}
-  for (const p of all) {
-    const items = p.items || []
-    if (items.length) for (const it of items) { const c = effectiveItemCat(it); catTotals[c] = (catTotals[c] || 0) + (Number(it.price) || 0) }
-    else { const c = p.category || 'annad'; catTotals[c] = (catTotals[c] || 0) + (Number(p.total) || 0) }
+  for (const p of inPeriod) {
+    if (!pass(p)) continue
+    const needQ = !!ql && !storeHit(p)
+    const its = p.items || []
+    if (its.length) { for (const it of its) if (!needQ || itemHit(it)) { const c = effectiveItemCat(it); catTotals[c] = (catTotals[c] || 0) + (Number(it.price) || 0) } }
+    else if (!needQ) { const c = p.category || 'annad'; catTotals[c] = (catTotals[c] || 0) + (Number(p.total) || 0) }
   }
   const storeTotals = {}
-  for (const p of all) { const s = storeChain(p.store); storeTotals[s] = (storeTotals[s] || 0) + (Number(p.total) || 0) }
+  for (const p of inPeriod) if (pass(p, 'store')) { const a = amt(p); if (a) { const s = storeChain(p.store); storeTotals[s] = (storeTotals[s] || 0) + a } }
 
-  const rows = mode === 'cat'
-    ? Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]).map(k => { const c = catOf(k); return { key: k, label: c.name, cat: c, amt: catTotals[k] } })
+  const rows = (mode === 'cat'
+    ? Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]).map(k => { const c = catOf(k); return { key: k, label: c.name, cat: c, amt: catTotals[k], color: c.color } })
     : Object.keys(storeTotals).sort((a, b) => storeTotals[b] - storeTotals[a]).map(k => ({ key: k, label: k, cat: null, amt: storeTotals[k] }))
+  ).filter(r => r.amt > 0).map((r, i) => ({ ...r, color: (mode === 'cat' && r.color && r.color !== CAT_COLOR) ? r.color : PALETTE[i % PALETTE.length] }))
+  const rowsTotal = rows.reduce((a, r) => a + r.amt, 0)
   const maxAmt = Math.max(1, ...rows.map(r => r.amt))
+  const slices = rows.length > 7
+    ? [...rows.slice(0, 6), { key: '__other', label: 'Annað', amt: rows.slice(6).reduce((a, r) => a + r.amt, 0), color: '#b6bfcc', other: true }]
+    : rows
+  const selKey = mode === 'store' ? filterStore : filterCat
 
-  let shown = all
-  if (filterStore) shown = all.filter(p => storeChain(p.store) === filterStore)
-  else if (filterCat) shown = all.filter(p => {
-    const items = p.items || []
-    return items.length ? items.some(it => effectiveItemCat(it) === filterCat) : (p.category || 'annad') === filterCat
-  })
+  // Mest keypt: vörur sem passa við síurnar, eftir upphæð
+  const prodMap = {}
+  for (const p of shown) for (const it of (p.items || [])) {
+    if (filterCat && effectiveItemCat(it) !== filterCat) continue
+    if (ql && !storeHit(p) && !itemHit(it)) continue
+    const k = (it.name || '').trim().toLowerCase(); if (!k) continue
+    const e = prodMap[k] || (prodMap[k] = { name: (it.name || '').trim(), amt: 0, n: 0 })
+    e.amt += Number(it.price) || 0; e.n += 1
+  }
+  const topProducts = Object.values(prodMap).sort((a, b) => b.amt - a.amt).slice(0, 5)
+
+  // Hvati: vikur í röð með a.m.k. eina kvittun (núverandi vika má vera tóm enn)
+  const weekKey = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return dk(x) }
+  const weeks = new Set(purchases.map(p => { const k = dkey(p); return /^\d{4}-\d{2}-\d{2}$/.test(k) ? weekKey(new Date(k + 'T00:00:00')) : null }).filter(Boolean))
+  let streak = 0
+  { const w = new Date(); if (!weeks.has(weekKey(w))) w.setDate(w.getDate() - 7); while (weeks.has(weekKey(w)) && streak < 520) { streak++; w.setDate(w.getDate() - 7) } }
 
   const payerName = (p) => {
     if (p.user_id === currentUserId) return 'Þú'
     const m = members.find(x => x.kind === 'user' && x.id === p.user_id)
     return displayName(m) || ''
   }
-  const clickRow = (r) => {
-    if (mode === 'store') { setFilterStore(filterStore === r.key ? null : r.key); setFilterCat(null) }
-    else { setFilterCat(filterCat === r.key ? null : r.key); setFilterStore(null) }
-  }
+  const payers = [...new Set(purchases.map(p => p.user_id).filter(Boolean))].map(id => ({ id, name: payerName({ user_id: id }) })).filter(x => x.name)
+  const clickRow = (key) => { if (mode === 'store') setFilterStore(filterStore === key ? null : key); else setFilterCat(filterCat === key ? null : key) }
   const saveForm = async (data) => { if (form?.id) await onUpdate(form.id, data); else await onSave(data); setForm(null) }
-  const activeFilter = filterStore || (filterCat && catOf(filterCat).name)
+  const bucketName = (k) => { if (!k) return ''; if (k.length === 7) return MONL[Number(k.slice(5, 7)) - 1] + ' ' + k.slice(0, 4); const d = new Date(k + 'T00:00:00'); return WD[(d.getDay() + 6) % 7] + '. ' + d.getDate() + '. ' + MON[d.getMonth()] }
+  const chips = [
+    bucketSel && { k: 'b', label: bucketName(bucketSel), clear: () => setBucketSel(null) },
+    filterCat && { k: 'c', label: catOf(filterCat).name, clear: () => setFilterCat(null) },
+    filterStore && { k: 's', label: filterStore, clear: () => setFilterStore(null) },
+    filterPayer && { k: 'p', label: payerName({ user_id: filterPayer }), clear: () => setFilterPayer(null) },
+    ql && { k: 'q', label: '„' + q.trim() + '“', clear: () => setQ('') },
+  ].filter(Boolean)
+  const clearAll = () => { setBucketSel(null); setFilterCat(null); setFilterStore(null); setFilterPayer(null); setQ('') }
 
   return (
     <div className="budget">
-      <div className="bsum">
-        <div>
-          <div className="bsum-label">Útgjöld {period === 'month' ? 'í mánuðinum' : 'alls'}</div>
-          <div className="bsum-val">{kr(grand)}</div>
+      <div className="bsum bsum2">
+        <div className="bper-tabs">
+          {PERIODS.map(([k, label]) => <button key={k} className={ptype === k ? 'on' : ''} onClick={() => setPtype(k)}>{label}</button>)}
         </div>
-        <div className="bperiod">
-          <button className={period === 'month' ? 'on' : ''} onClick={() => setPeriod('month')}>Mánuður</button>
-          <button className={period === 'all' ? 'on' : ''} onClick={() => setPeriod('all')}>Allt</button>
+        <div className="bper-nav">
+          {ptype !== 'all' && <button onClick={() => step(-1)} aria-label="Fyrra tímabil"><IconChevronLeft size={18} stroke={2} /></button>}
+          <span>{info.title}</span>
+          {ptype !== 'all' && <button onClick={() => step(1)} disabled={offset >= 0} aria-label="Næsta tímabil"><IconChevronRight size={18} stroke={2} /></button>}
+        </div>
+        <div className="bsum-val">{kr(grand)}</div>
+        <div className="bsum-sub">
+          {shown.length} {shown.length === 1 ? 'kvittun' : 'kvittanir'} · {storeCount} {storeCount === 1 ? 'verslun' : 'verslanir'}
+          {prevInfo && prevTotal > 0 ? <> · {prevInfo.prevName.toLowerCase()}: {kr(prevTotal)}</> : null}
         </div>
       </div>
 
@@ -193,36 +318,97 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
         {onOpenReceipts && <button className="bscan" onClick={onOpenReceipts} title="Kvittanir & ábyrgðir" aria-label="Kvittanir og ábyrgðir"><IconShieldCheck size={18} stroke={1.75} /></button>}
       </div>
 
-      <div className="bmode">
-        <button className={mode === 'cat' ? 'on' : ''} onClick={() => { setMode('cat'); setFilterStore(null) }}>Eftir flokki</button>
-        <button className={mode === 'store' ? 'on' : ''} onClick={() => { setMode('store'); setFilterCat(null) }}>Eftir verslun</button>
-      </div>
+      {purchases.length > 0 && (
+        <>
+          <div className="bsearch">
+            <IconSearch size={17} stroke={1.75} />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Leita að vöru eða verslun, t.d. mjólk" autoComplete="off" />
+            {q && <button onClick={() => setQ('')} aria-label="Hreinsa leit"><IconX size={16} stroke={2} /></button>}
+          </div>
+          {payers.length > 1 && (
+            <div className="bchips">
+              {payers.map(x => <button key={x.id} className={filterPayer === x.id ? 'on' : ''} onClick={() => setFilterPayer(filterPayer === x.id ? null : x.id)}>{x.name}</button>)}
+            </div>
+          )}
 
-      {rows.length > 0 && (
-        <div className="bbreak">
-          {rows.map(r => {
-            const on = (mode === 'store' ? filterStore : filterCat) === r.key
-            return (
-              <button className="bbreak-row" key={r.key} onClick={() => clickRow(r)}>
-                <span className="bbreak-ic">{r.cat ? <ExpIcon cat={r.cat} size={18} /> : <StoreIcon size={18} />}</span>
-                <span className="bbreak-name" style={on ? { color: 'var(--navy)', fontWeight: 700 } : null}>{r.label}</span>
-                <span className="bbreak-bar"><i className={on ? 'on' : ''} style={{ width: Math.round(r.amt / maxAmt * 100) + '%' }} /></span>
-                <span className="bbreak-amt">{kr(r.amt)}</span>
-              </button>
-            )
-          })}
-        </div>
+          <div className="bcard">
+            <div className="bcard-h">
+              <b>{chart === 'line' ? 'Uppsafnað' : (info.unit === 'day' ? 'Útgjöld á dag' : 'Útgjöld á mánuði')}</b>
+              {ptype !== 'all' && (
+                <div className="bseg">
+                  <button className={chart === 'bars' ? 'on' : ''} onClick={() => setChart('bars')}>Súlur</button>
+                  <button className={chart === 'line' ? 'on' : ''} onClick={() => { setChart('line'); setBucketSel(null) }}>Lína</button>
+                </div>
+              )}
+            </div>
+            {chart === 'line' && ptype !== 'all'
+              ? <CumLine buckets={buckets} prev={prevSeries} />
+              : <TimeBars buckets={buckets} selected={bucketSel} onSelect={setBucketSel} />}
+            <div className="bcard-foot">
+              {chart === 'line' && ptype !== 'all'
+                ? <><i className="bleg cur" /> {info.title} {prevTotal > 0 && <><i className="bleg prev" /> {prevInfo.prevName.toLowerCase()}</>}</>
+                : bucketSel ? <><b>{bucketName(bucketSel)}:</b> {kr(byBucket[bucketSel] || 0)}</> : 'Ýttu á súlu til að skoða þann ' + (info.unit === 'day' ? 'dag' : 'mánuð')}
+            </div>
+          </div>
+
+          <div className="bmode">
+            <button className={mode === 'cat' ? 'on' : ''} onClick={() => setMode('cat')}>Eftir flokki</button>
+            <button className={mode === 'store' ? 'on' : ''} onClick={() => setMode('store')}>Eftir verslun</button>
+          </div>
+
+          {rows.length > 0 && (
+            <div className="bcard bsplit">
+              <Donut slices={slices} total={rowsTotal} selected={selKey} onSelect={clickRow} centerLabel={mode === 'cat' ? 'Flokkar' : 'Verslanir'} />
+              <div className="bbreak">
+                {rows.map(r => {
+                  const on = selKey === r.key
+                  return (
+                    <button className={'bbreak-row' + (selKey && !on ? ' dim' : '')} key={r.key} onClick={() => clickRow(r.key)}>
+                      <span className="bbreak-ic" style={{ color: r.color }}>{r.cat ? <ExpIcon cat={r.cat} size={18} /> : <StoreIcon size={18} />}</span>
+                      <span className="bbreak-name" style={on ? { color: 'var(--navy)', fontWeight: 700 } : null}>{r.label}<small>{Math.round(r.amt / Math.max(1, rowsTotal) * 100)}%</small></span>
+                      <span className="bbreak-bar"><i style={{ width: Math.round(r.amt / maxAmt * 100) + '%', background: r.color }} /></span>
+                      <span className="bbreak-amt">{kr(r.amt)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {mode === 'cat' && onAddCategory && (
         <button className="bmanage-cats" onClick={() => setManageCats(true)}><IconSettings size={16} stroke={1.75} /> Flokkar</button>
       )}
 
-      {activeFilter && (
-        <button className="bfilter-clear" onClick={() => { setFilterCat(null); setFilterStore(null) }}>Sýni: {activeFilter} — sýna allt <IconX size={14} stroke={2} /></button>
+      {chips.length > 0 && (
+        <div className="bchips sel">
+          {chips.map(c => <button key={c.k} className="on" onClick={c.clear}>{c.label} <IconX size={13} stroke={2.2} /></button>)}
+          {chips.length > 1 && <button onClick={clearAll}>Hreinsa allt</button>}
+        </div>
       )}
 
-      {shown.length === 0 && <p className="empty">Engar færslur enn — skannaðu kvittun eða bættu við með „+ Ný færsla“.</p>}
+      {topProducts.length > 1 && (
+        <div className="bcard">
+          <div className="bcard-h"><b>Mest keypt</b><small>ýttu á vöru til að sjá öll kaupin</small></div>
+          {topProducts.map(tp => (
+            <button className="btop" key={tp.name} onClick={() => setQ(tp.name)}>
+              <span className="btop-name">{tp.name}</span>
+              <span className="btop-n">{tp.n}×</span>
+              <span className="btop-amt">{kr(tp.amt)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {purchases.length > 0 && onScanReceipt && (
+        <button className="bmot" onClick={onScanReceipt}>
+          <IconReceipt size={18} stroke={1.75} />
+          <span>{streak >= 2 ? <><b>{streak} vikur í röð</b> með kvittanir. </> : null}{purchases.length < 10 ? 'Því fleiri kvittanir, því skýrari mynd — skannaðu næstu.' : 'Haltu áfram — skannaðu næstu kvittun.'}</span>
+        </button>
+      )}
+
+      {shown.length === 0 && <p className="empty">{purchases.length === 0 ? 'Engar færslur enn — skannaðu kvittun eða bættu við með „+ Ný færsla“.' : chips.length ? 'Ekkert passar við síurnar á þessu tímabili.' : 'Ekkert skráð á þessu tímabili.'}</p>}
 
       <div className="btx-list">
         {shown.map(p => {

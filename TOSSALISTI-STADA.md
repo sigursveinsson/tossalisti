@@ -18,6 +18,13 @@ fyrsti listi hreinn á meðan „Hvað vantar?“ sést; „Búa til lista“ af
 rödd án yfirferðar skiptir EKKI í kostaða vöru; bókhald opnast á „Mánuður“ ef eitthvað er í mánuðinum.
 Ný atvik: scan_open, scan_open_demo, scan_photo, scan_read_ok/fail, scan_edit, scan_saved, scan_saved_demo, voice_* (villugreining).
 
+## BÓKHALDSYFIRSÝN MEÐ MYNDRITUM (20. nóv 2026) — KÓÐI Í SKRÁNUM, BÍÐUR DEPLOY-S
+BudgetView.jsx endurskrifað að ofan + nýtt BudgetCharts.jsx (hrein SVG, engin söfn).
+Tímabil Vika/Mánuður/Ár/Allt með ‹ › flettingu; súlurit yfir tíma (smellur = sía á dag/mánuð); línurit uppsafnað m. fyrra tímabil;
+kleinuhringur eftir flokki/verslun (smellur = sía); leit að vöru/verslun; sía á greiðanda; síuflögur; „Mest keypt“; hvati (vikur í röð).
+Prófað: þáttun + keyrt í Node (react-dom/server) með sýnigögnum, tölur stemma. EKKI prófað: útlit í vafra og smellir.
+Líka 20. nóv: sýnikvittun vistast ekki (sýnir flokkun + „Skanna mína kvittun“); hljóðnema hafnað → skrifa í staðinn.
+
 ## Verkefnið
 - **Tossalisti** — íslenskt innkaupa- og heimilisapp. Í loftinu á **tossalisti.is**.
 - Mappa: `C:\Users\sigur\Documents\korfan` (Vite + React + Supabase + Netlify).

@@ -210,3 +210,15 @@ Sverrir: „Home improvement listi sem JYSK og Húsasmiðjan gætu tengst.“
 - Ákvörðun núna: Wonder stendur áfram í textunum.
 - Áður en app-umsóknir (Apple/Google, D-U-N-S) og fyrsti samningur fara inn: ákveða félag (nýtt ehf. í 100% eigu / kaupa meðeiganda út / kaupréttur), fá skriflega yfirlýsingu frá meðeiganda, stuttur fundur með lögmanni.
 - Þegar nýtt félag er komið: skipta um nafn+kt. í personuvernd.html, Auth.jsx (landing-legal), tölvupóstum; tilkynna notendum.
+
+## Staðsetning: „Kvittanir beint í heimilisbókhaldið“ (20. nóv 2026)
+Sverrir: markaðssetja eins og Landsbankinn gerir fyrir fyrirtæki („Kvittanir beint í bókhaldið“, viðhengi við kortafærslur), nema fyrir einstaklinga/heimili.
+- Landsbankinn (fyrirtæki): mynd af kvittun hengd við kortafærslu, skýring, færslulykill, tenging við Business Central; „hnipp“ við greiðslu; gögn geymd í 3 ár. Les EKKI vörurnar af kvittuninni.
+- Tossalisti: les hverja línu, flokkar sjálft, ábyrgð/skilafrestur, virkar með öllum kortum og bönkum, fyrir heimili.
+- Gögn 19.–20. nóv styðja þetta: nýir notendur skanna margar kvittanir á dag úr alls konar búðum (hljóðfæri, bókabúð, kaffihús), nota listana lítið.
+- Hugmyndir: auglýsing „Kvittanir beint í heimilisbókhaldið“; „hnipp“ = áminning að kvöldi/eftir búðarferð; síðar tenging við bankafærslur (developers.landsbankinn.is / PSD2) til að para kvittun við færslu; hópar: heimili, einyrkjar/verktakar (útgjöld), húsfélög.
+
+## Bankasamstarf (20. nóv 2026) — SAMÞYKKT STEFNA, EKKI BYRJAÐ
+- Banki sem markaðs-/dreifingaraðili fyrir „kvittanir beint í heimilisbókhaldið“. Enginn einkaréttur (virkar með öllum kortum), engin persónugögn til bankans (aðeins samanteknar tölur).
+- Röð: (1) kvittanaáhersla í 3–4 vikur, safna tölum (fjöldi sem skannar, tíðni, fjöldi verslana); (2) einnar síðu kynning; (3) tala við 2–3 samtímis (Landsbankinn, minni áskorendur/greiðsluöpp, kortafyrirtæki/færsluhirðar).
+- Tengja við „Árið þitt í tölum“ (des/jan). Endurmeta um miðjan desember.
