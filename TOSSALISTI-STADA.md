@@ -31,6 +31,21 @@ Skrár: src/data/demoBudget.js (gagnasmiður með föstu sæði, miðast við da
 Líka nýtt í bókhaldi: „Vörur“-sýn með hökum og fjöldabreytingu á flokkum (setItemsCat í App.jsx).
 Prófað í Node (react-dom/server): gögn og birting án villna. EKKI prófað í vafra.
 
+## KRÓNAN SVARAÐI (20. nóv 2026) — Hörður Már Jónsson, forstöðumaður stafrænnar þróunar
+1. Notendum er heimilt að afrita sína eigin lykla og nota þá „þar sem við á“ → hver notandi má tengja SINN Krónulykil við Tossalista.
+2. OAuth er EKKI á teikniborðinu.
+3. Kaupgögn ná aðeins til Snjallverslunar, Skannað og skundað, og kvittana sem skráðar eru í Snjallverslun úr nýju sjálfsafgreiðslukössunum.
+4. Fyrirtækjaaðgangur að API (myndir, verð, vöruupplýsingar) er í undirbúningi; þau halda tengiliðaupplýsingum og láta vita.
+Ályktun: Krónuvörur/verð fyrir ALLA notendur bíða fyrirtækjaaðgangsins (lykill Sverris er persónulegur → áfram aðeins stjórnandi).
+Mögulegt strax: „Tengdu Krónuna“ þar sem notandi límir inn eigin lykil (geymdur dulkóðaður á netþjóni, aldrei í vafra) → karfa, innkaupamiði, kaupsaga hans. Ekki byrjað; ákvörðun Sverris.
+Ósvarað: skilmálar um notkun/myndarétt (kemur líklega með fyrirtækjaaðgangi).
+SVAR SENT 20. nóv (kvöld): þakkir + hrós fyrir API, lýsing á rödd→körfu/uppskriftum/verði (aðeins opið hjá Sverri, „fer ekki lengra án ykkar samþykkis“), beðið um að vera á lista fyrir fyrirtækjaaðgang, Fetch-hugmyndin (Gríptu) nefnd án þess að nafngreina heildsala, boðið upp á hálftíma sýningu. BÍÐUM SVARS.
+ATH: loforðið „fer ekki lengra án ykkar samþykkis“ → ekki opna Krónuvirkni fyrir aðra notendur (né „tengdu eigin lykil“) fyrr en rætt við Hörð.
+
+## STJÓRNBORÐ „Í BEINNI“ (20. nóv 2026) — bakendi Í LOFTINU, framendi BÍÐUR DEPLOY-S
+RPC admin_live() (am_admin) → _admin_live_data() (aðeins postgres). Nýr sjálfgefinn flipi í AdminView: AdminLive.jsx.
+Flísar m. samanburði við gærdaginn á sama tíma, gestir eftir klst., trekt dagsins, kvittanir/gestir í 14 daga, skráðir notendur í dag, einn gestur = ein lína með atvikum. Uppfærist á 20 sek.
+
 ## Verkefnið
 - **Tossalisti** — íslenskt innkaupa- og heimilisapp. Í loftinu á **tossalisti.is**.
 - Mappa: `C:\Users\sigur\Documents\korfan` (Vite + React + Supabase + Netlify).

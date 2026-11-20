@@ -3,6 +3,7 @@ import GenericImagesAdmin from './GenericImagesAdmin.jsx'
 import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import RewardsAdmin from './RewardsAdmin.jsx'
+import AdminLive from './AdminLive.jsx'
 import BrandDashboard from './BrandDashboard.jsx'
 import { IconCamera, IconChartBar, IconGift, IconTrendingUp, IconX } from '@tabler/icons-react'
 
@@ -65,7 +66,7 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
   const [showRewards, setShowRewards] = useState(false)
   const [showBrand, setShowBrand] = useState(false)
   const [showGeneric, setShowGeneric] = useState(false)
-  const [tab, setTab] = useState('stats') // stats | brands
+  const [tab, setTab] = useState('live') // live | stats | brands
   const [scan, setScan] = useState(null) // mæling á kvittanaskönnun (scan_stats)
   const [scanDays, setScanDays] = useState(7)
   useEffect(() => { store.scanStats(scanDays).then(setScan).catch(() => setScan(null)) }, [scanDays])
@@ -110,9 +111,12 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
         <h2><span className="h2-ico"><IconChartBar size={20} stroke={1.75} /></span>Stjórnborð <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         <div className="adm-tabs">
+          <button className={tab === 'live' ? 'on' : ''} onClick={() => setTab('live')}>Í beinni</button>
           <button className={tab === 'stats' ? 'on' : ''} onClick={() => setTab('stats')}>Tölfræði</button>
           <button className={tab === 'brands' ? 'on' : ''} onClick={() => setTab('brands')}>Vörumerki</button>
         </div>
+
+        {tab === 'live' && <AdminLive />}
 
         {tab === 'brands' && (
           <>

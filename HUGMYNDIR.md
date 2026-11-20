@@ -222,3 +222,14 @@ Sverrir: markaðssetja eins og Landsbankinn gerir fyrir fyrirtæki („Kvittanir
 - Banki sem markaðs-/dreifingaraðili fyrir „kvittanir beint í heimilisbókhaldið“. Enginn einkaréttur (virkar með öllum kortum), engin persónugögn til bankans (aðeins samanteknar tölur).
 - Röð: (1) kvittanaáhersla í 3–4 vikur, safna tölum (fjöldi sem skannar, tíðni, fjöldi verslana); (2) einnar síðu kynning; (3) tala við 2–3 samtímis (Landsbankinn, minni áskorendur/greiðsluöpp, kortafyrirtæki/færsluhirðar).
 - Tengja við „Árið þitt í tölum“ (des/jan). Endurmeta um miðjan desember.
+
+## Keppinautur: Memor (memor.my) — skoðað 20. nóv 2026
+Íslenskt fjölskylduapp (PWA, ekki í App Store), „heimilið á einum rólegum stað“. Greidd áskrift: 14 dagar frítt, svo 1.790 kr/mán, 8.900 kr/6 mán, 14.900 kr/12 mán (endurnýjast ekki sjálfkrafa, greitt um Teya). Gjafakort.
+Hefur: sameiginlegt dagatal (Google/Apple/Outlook + mynd af mánaðarplani leikskóla), matseðil vikunnar → innkaupalisti, uppskriftir (skjáskot/mynd/hlekkur), heimilisverk, sjónrænt skipulag fyrir börn (stjörnur/verðlaun), veggskjá fyrir spjaldtölvu, fjármál (fastir reikningar, tekjur, sparnaðarmarkmið, handskráð, ekki tengt banka), áminningar.
+Hefur EKKI (skv. síðunni): kvittanaskönnun, sjálfvirka flokkun vörulína, ábyrgðir/skilafrest, rödd, vöruleit/verð, tengingu við verslanir.
+Lærdómur: (1) fólk borgar fyrir heimilisapp á Íslandi (verðpunktur 1.242–1.790 kr/mán); (2) okkar sérstaða = kvittanir → bókhald án innsláttar, frítt; (3) hugmyndir þaðan: matseðill vikunnar (þegar á lista), mynd af plani → dagatal, gjafakort, „endurnýjast ekki sjálfkrafa“, veggskjár.
+
+## Markaðsdagatal (20. nóv 2026)
+Skjal: https://claude.ai/artifact/P6pGkEXF7oHzT85oQB9Xwd — allir dagar nóv 2026–nóv 2027 með hugmynd, eiginleika og vægi.
+- [ ] NÆST: Black Friday-færsla (fös. 27. nóv), tilbúin fim. 26. nóv. „Keyptirðu eitthvað á Black Friday? Taktu mynd af kvittuninni.“ Ábyrgð + skilafrestur. „Ókeypis. Alla daga, ekki bara á föstudaginn.“ Mynd í sama stíl og Sigga og Jón (markadsefni/bokhald_myndir.py).
+- Svo: 1. des (mánaðamót, Sigga og Jón), jólainnkaup með rödd, skil á jólagjöfum + gjafakort í Veskið (27. des–6. jan), „Árið þitt í tölum“.
