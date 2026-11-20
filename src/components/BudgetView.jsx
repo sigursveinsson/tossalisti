@@ -444,7 +444,7 @@ export default function BudgetView({ purchases = [], members = [], currentUserId
       )}
 
       {listMode === 'items' && (
-        <div className="bitems-all">
+        <div className={'bitems-all' + (pickedItems.length ? ' has-bulk' : '')}>
           {lineItems.length > 0 && (
             <div className="bitems-head">
               <label><input type="checkbox" checked={allPicked} onChange={() => setPicked(allPicked ? {} : Object.fromEntries(lineItems.map(x => [x.it.id, true])))} /> Velja allar {lineItems.length}</label>
