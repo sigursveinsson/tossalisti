@@ -257,3 +257,11 @@ Sverrir: flyerar sem hvetja fólk til að skanna kvittun. Styrkur: hittir fólk 
 - Þarf: hönnun (A6/A7, stíll Siggu og Jóns, QR), slóð t.d. tossalisti.is/k?m=<staður> sem hleypir gestum beint inn og opnar skannann (í dag aðeins fyrir FB/IG), mæling eftir stað.
 - Prufa: 200–300 miðar á 2–3 stöðum í 1–2 vikur; mæla hlutfall sem skannar.
 - Forgangsröð (21. nóv): (1) færsla í 1–2 Facebook-hópum um sparnað/mat (athuga reglur hópsins um kynningar), (2) miðar í 2–3 sjálfstæðum búðum/bakaríum þar sem Sverrir þekkir til, (3) jólamarkaður í desember (standa sjálfur með símann). Líka: blómabúðir, markaðir, stéttarfélög/Neytendasamtökin (fréttabréf).
+
+## Kvittanalestur — næstu umbætur (21. nóv 2026)
+- [ ] Afsláttur dreginn af réttri vöru: breyta prompti í parse-receipt svo afsláttarlína BEINT undir vöru (t.d. „Eldgrill+Coke -449“ undir Coca Cola) lækki verð þeirrar vöru; aðeins heildarafslættir fari í discount_total. Í dag: sér lína „Afsláttur −X“ (heild rétt, flokkar skekkjast). PRÓFA á mörgum kvittunum áður en sett í loftið (ekki á annadegi).
+- [ ] Afrit af kvittunum sem lesast illa, til yfirferðar (Sverrir + Claude): 
+      (a) stjórnandi: sjálfvirkt afrit þegar lestur mistekst eða línur stemma ekki við samtölu;
+      (b) aðrir notendur: AÐEINS með samþykki — hnappur „Senda okkur myndina svo við getum lagað lesturinn“ á villuskjá; bæta við persónuverndarstefnu; einkageymsla, eytt eftir t.d. 30 daga; aðeins stjórnandi sér.
+      Yfirferð: listi í stjórnborði (mynd + það sem gervigreindin las + check).
+- Sverrir ætlar að skanna meira sjálfur (prófunargögn).

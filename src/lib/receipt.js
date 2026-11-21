@@ -156,6 +156,15 @@ async function visionInvoke(images, products) {
         warranty_years: [2, 5].includes(Number(i.warranty_years)) ? Number(i.warranty_years) : 0,
       })).filter(i => i.name)
     : []
+  // Afsláttur/tilboð (t.d. „Eldgrill+Coke -449“): gervigreindin sleppir afsláttarlínum og skilar summu þeirra í
+  // discount_total. Bætt við sem ein neikvæð lína svo línurnar stemmi við samtölu kvittunarinnar — en aðeins ef
+  // það færir summuna NÆR samtölunni (ef afslátturinn var þegar dreginn frá vöruverði er engu bætt við).
+  const disc = Number(data.discount_total) > 0 ? Math.round(Number(data.discount_total)) : 0
+  const tot = data.total == null ? null : Number(data.total)
+  if (disc && items.length && tot != null) {
+    const sum = items.reduce((a, i) => a + (Number(i.price) || 0), 0)
+    if (Math.abs(sum - disc - tot) < Math.abs(sum - tot)) items.push({ name: 'Afsláttur', qty: 1, price: -disc, reward_product_id: null, warranty_years: 0 })
+  }
   return {
     store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null,
     // Auðkenni kvittunar (svikavörn): vistast með kaupunum og flaggað á netþjóni.
