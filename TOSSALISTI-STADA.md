@@ -2,6 +2,14 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## LOK INNKAUPAFERÐAR (21. nóv 2026) — KÓÐI Í SKRÁNUM, BÍÐUR DEPLOY-S
+Hugsun: listinn er varanlegur („Vikuinnkaup“), ekki einnota. Keypt hverfur, ókeypt stendur eftir fyrir næstu ferð.
+- Þegar eitthvað er hakað: hnappur „Hreinsa N keyptar vörur af listanum“ (clearChecked í App.jsx, ein endurhleðsla).
+- Þegar ALLT er hakað: grænt spjald „Allt komið í körfuna!“ + „Skanna kvittun“ (aðalhnappur) + „Hreinsa…“. Sama í verslunarham.
+- Kvittun skönnuð úr lista (receiptListId) → hakaðar vörur þess lista hreinsast sjálfkrafa eftir vistun; notandi lendir í bókhaldinu.
+- Atvik: list_done_scan, list_clear_checked.
+ÓGERT (hugmyndir): hakaðar vörur hreinsist sjálfar daginn eftir; kvittunin haki við samsvarandi vörur (savePurchase/matchListItems er til en ótengt); „Síðasta búðarferð“ til að setja aftur á lista.
+
 ## BOÐSFLÆÐI LAGAÐ (21. nóv 2026) — RPC invite_preview Í LOFTINU, framendi BÍÐUR DEPLOY-S
 Tilefni: havardur… skráði sig 21. nóv í gegnum boð frá helgrun… (fyrsta heimilið úr auglýsingalotunni sem dró annan með sér). ~10 boðstenglar búnir til í lotunni, aðeins 1 þeginn.
 Gallar sem fundust: (1) boðsgestur á nýju tæki lenti á almennri skráningarsíðu sem nefndi boðið ekki; (2) ?invite týndist við Google-innskráningu og staðfestingarpóst; (3) eftir að boð var þegið endaði fólk á heimaskjá, ekki á listanum; (4) gestur gat fengið velkomuskjáinn ofan á.

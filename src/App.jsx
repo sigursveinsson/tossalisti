@@ -699,7 +699,19 @@ export default function App() {
   }
   // Skrá kvittun beint úr listavalmynd (engin tenging við ákveðinn lista)
   const scanReceiptMenu = async (purchase) => {
+    const tripList = !demoReceipt && receiptListId ? lists.find(l => l.id === receiptListId) : null
     const r = await store.addPurchase({ ...purchase, list_id: receiptListId || null })
+    // Kvittun skönnuð úr innkaupalista (lok búðarferðar): hakaðar vörur hreinsast af listanum — ferðin er búin.
+    // Óhakaðar vörur standa eftir fyrir næstu ferð.
+    if (tripList && tripList.type === 'shopping') {
+      const done = (tripList.items || []).filter(i => i.checked)
+      if (done.length) {
+        try {
+          for (let k = 0; k < done.length; k += 8) await Promise.all(done.slice(k, k + 8).map(i => store.removeItem(tripList.id, i.id)))
+          await reload(currentId)
+        } catch (e) { /* hreinsun má ekki stöðva vistun kvittunar */ }
+      }
+    }
     await loadPurchases(); loadMyRewards(); flashAwards(r)
     setShowReceipt(false); setReceiptListId(null)
     try { localStorage.setItem('korfan.budgetintro', '1') } catch (e) {} // kynningargluggi bókhalds óþarfur: niðurstaðan sést strax
@@ -785,6 +797,14 @@ export default function App() {
     }
   }
   const removeItem = async (it) => { await store.removeItem(list.id, it.id); await reload(list.id) }
+  // Lok innkaupaferðar: hreinsa allar hakaðar vörur af listanum í einu (ein endurhleðsla)
+  const clearChecked = async () => {
+    const done = (list.items || []).filter(i => i.checked)
+    if (!done.length) return
+    for (let k = 0; k < done.length; k += 8) await Promise.all(done.slice(k, k + 8).map(i => store.removeItem(list.id, i.id)))
+    await reload(list.id)
+    flash(done.length + (done.length === 1 ? ' keypt vara hreinsuð' : ' keyptar vörur hreinsaðar') + ' af listanum')
+  }
   const assignItem = async (it, person) => { await store.assignItem(list.id, it.id, person); await reload(list.id) }
   const setPoints = async (it, pts) => { await store.setPoints(list.id, it.id, pts); await reload(list.id) }
   const setRecurrence = async (it, rec) => { await store.setRecurrence(list.id, it.id, rec); await reload(list.id) }
@@ -1131,7 +1151,7 @@ export default function App() {
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
-              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} voiceNow={voiceNow} quickStart={quickStart} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
+              : <ListView items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} voiceNow={voiceNow} quickStart={quickStart} onClearChecked={clearChecked} onScanReceipt={() => { setReceiptListId(list.id); setShowReceipt(true) }} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
       {showLists && (

@@ -7,7 +7,7 @@ import { IconBarcode, IconCheck, IconX } from '@tabler/icons-react'
 
 // Verslunarhamur: einfaldað heilskjás-útlit fyrir notkun inni í búð.
 // Stórir reitir, raðað eftir leið um búð, afgreitt færist neðst, skjár helst kveiktur.
-export default function ShoppingMode({ items, onToggle, onClose, onScanCode, catalog = {} }) {
+export default function ShoppingMode({ items, onToggle, onClose, onScanCode, onScanReceipt, catalog = {} }) {
   useBackClose(true, onClose)
   const [scanning, setScanning] = useState(false)
   const [scanMsg, setScanMsg] = useState(null)
@@ -51,7 +51,15 @@ export default function ShoppingMode({ items, onToggle, onClose, onScanCode, cat
       </div>
 
       <div className="shopmode-body">
-        {openItems.length === 0 && <p className="shopmode-empty">Allt komið í körfuna!</p>}
+        {openItems.length === 0 && (
+          <div className="shopmode-empty">
+            <p>Allt komið í körfuna!</p>
+            {onScanReceipt && doneItems.length > 0 && <>
+              <span>Taktu mynd af kvittuninni þegar þú ert búin(n) að borga.</span>
+              <button className="trip-scan" onClick={onScanReceipt}>Skanna kvittun</button>
+            </>}
+          </div>
+        )}
 
         {groups.map(g => (
           <div className="shopmode-group" key={g.key}>

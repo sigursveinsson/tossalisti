@@ -77,7 +77,7 @@ export function looksLikePhrase(v) {
   return words.length >= 6
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, onClearChecked, onScanReceipt, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -257,6 +257,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [qsHidden, setQsHidden] = useState(false)
   // micDenied: vafrinn (oft Facebook/Instagram) lokaði á hljóðnemann → bjóða strax að skrifa í staðinn
   const [micDenied, setMicDenied] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const showQuick = isShopping && !qsHidden && ((quickStart && items.length === 0) || micDenied)
   useEffect(() => { if (showQuick) landingEvent('qs_shown') }, [showQuick])
   // Úr velkomuskjá („Segðu hvað vantar“): sýna stórt raddspjald. Upptakan hefst þegar ýtt er á það
@@ -1162,6 +1163,22 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </div>
         )
       })}
+      {isShopping && (() => {
+        // Lok innkaupaferðar: þegar vörur eru hakaðar býðst að skanna kvittunina og hreinsa keypt af listanum
+        const done = items.filter(i => i.checked).length
+        const left = items.length - done
+        if (!done) return null
+        const clear = async () => { if (clearing) return; setClearing(true); landingEvent('list_clear_checked', { once: false }); try { await onClearChecked() } finally { setClearing(false) } }
+        if (left === 0) return (
+          <div className="trip-done">
+            <b>Allt komið í körfuna!</b>
+            <span>Taktu mynd af kvittuninni þegar þú ert búin(n) að borga, þá fer búðarferðin beint í bókhaldið.</span>
+            {onScanReceipt && <button className="trip-scan" onClick={() => { landingEvent('list_done_scan', { once: false }); onScanReceipt() }}><IconCamera size={19} stroke={1.9} /> Skanna kvittun</button>}
+            {onClearChecked && <button className="trip-clear" onClick={clear} disabled={clearing}>{clearing ? 'Hreinsa…' : `Hreinsa ${done} ${done === 1 ? 'keypta vöru' : 'keyptar vörur'} af listanum`}</button>}
+          </div>
+        )
+        return onClearChecked ? <button className="trip-clear small" onClick={clear} disabled={clearing}>{clearing ? 'Hreinsa…' : `Hreinsa ${done} ${done === 1 ? 'keypta vöru' : 'keyptar vörur'} af listanum`}</button> : null
+      })()}
       {kronanEnabled && isShopping && (() => {
         const open = items.filter(i => !i.checked)
         const priced = open.filter(i => i.ext_price != null)
@@ -1180,7 +1197,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
       {voiceModal}
       {showKronan && <KronanCart items={items} onClose={() => setShowKronan(false)} />}
       {shelf && <ShelfView catalog={catalog} adsEnabled={adsEnabled} kronan={kronanEnabled} initialQuery={shelfQuery} onCommit={commitShelf} existing={items.map(i => i.name)} onClose={() => { setShelf(false); setShelfQuery('') }} />}
-      {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} />}
+      {shopMode && <ShoppingMode items={items} catalog={catalog} onToggle={onToggle} onScanCode={scanInStore} onClose={() => setShopMode(false)} onScanReceipt={onScanReceipt ? () => { setShopMode(false); landingEvent('list_done_scan', { once: false }); onScanReceipt() } : null} />}
     </div>
   )
 }
