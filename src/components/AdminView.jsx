@@ -4,6 +4,7 @@ import { store } from '../lib/store.js'
 import { useBackClose } from '../lib/backstack.js'
 import RewardsAdmin from './RewardsAdmin.jsx'
 import AdminLive from './AdminLive.jsx'
+import ScanReview from './ScanReview.jsx'
 import BrandDashboard from './BrandDashboard.jsx'
 import { IconCamera, IconChartBar, IconGift, IconTrendingUp, IconX } from '@tabler/icons-react'
 
@@ -113,10 +114,12 @@ export default function AdminView({ onClose, adsEnabled, onToggleAds, bannerEnab
         <div className="adm-tabs">
           <button className={tab === 'live' ? 'on' : ''} onClick={() => setTab('live')}>Í beinni</button>
           <button className={tab === 'stats' ? 'on' : ''} onClick={() => setTab('stats')}>Tölfræði</button>
+          <button className={tab === 'review' ? 'on' : ''} onClick={() => setTab('review')}>Yfirferð</button>
           <button className={tab === 'brands' ? 'on' : ''} onClick={() => setTab('brands')}>Vörumerki</button>
         </div>
 
         {tab === 'live' && <AdminLive />}
+        {tab === 'review' && <ScanReview />}
 
         {tab === 'brands' && (
           <>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { landingEvent, startLandingTracking, isInAppBrowser } from '../lib/landing.js'
 import GoogleButton from './GoogleButton.jsx'
 import { supabase } from '../lib/supabaseClient.js'
+import { pendingInvite } from '../lib/invite.js'
 import { IconShoppingCart, IconReceipt, IconUsers, IconChefHat, IconChecklist } from '@tabler/icons-react'
 
 const FEATURES = [
@@ -74,6 +75,13 @@ export default function Auth() {
   const [offers, setOffers] = useState(false) // tilboðspóstur — aldrei sjálfgefið á
 
   useEffect(() => startLandingTracking(), [])
+  // Boð sem bíður: sýna hver bauð og á hvaða lista, og bjóða að opna hann strax án skráningar
+  const [invite, setInvite] = useState(null)
+  useEffect(() => {
+    const t = pendingInvite()
+    if (!t || !supabase) return
+    supabase.rpc('invite_preview', { p_token: t }).then(({ data }) => { if (data) setInvite(data) }, () => {})
+  }, [])
 
   // Prófa án skráningar: nafnlaus Supabase-notandi. Getur vistað aðganginn síðar (SaveAccount) og heldur öllu.
   const tryGuest = async () => {
@@ -140,7 +148,16 @@ export default function Auth() {
         <p className="lead">Skannaðu kvittunina og sjáðu hvert peningarnir fara. Innkaupalisti sem öll fjölskyldan deilir. Íslenskt og alveg ókeypis.</p>
       </div>
 
-      {mode === 'signup' && (
+      {invite && (
+        <div className="invite-card">
+          <b>{invite.by ? invite.by + ' bauð þér' : 'Þér var boðið'} á listann „{invite.list}“</b>
+          <span>{invite.open_items > 0 ? invite.open_items + (invite.open_items === 1 ? ' vara bíður' : ' vörur bíða') + ' á listanum. ' : ''}Þú getur opnað hann strax, eða skráð þig inn hér fyrir neðan ef þú átt aðgang.</span>
+          <button className="try-btn" onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Opna listann — án skráningar'}</button>
+          <p className="signin-help guest-help">Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
+        </div>
+      )}
+
+      {mode === 'signup' && !invite && (
         <div className="try-now">
           <button className="try-btn" onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
           <p className="signin-help guest-help">Ókeypis. Þú getur vistað aðganginn hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>

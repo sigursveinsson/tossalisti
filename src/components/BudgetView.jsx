@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain } from '../data/categories.js'
+import React, { useState, useEffect, useMemo } from 'react'
+import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain, withStoreCategory } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 import { ExpIcon, StoreIcon } from '../data/icons.jsx'
 import { IconChevronDown, IconChevronLeft, IconChevronRight, IconPhoto, IconPlus, IconReceipt, IconSearch, IconSettings, IconShieldCheck, IconX } from '@tabler/icons-react'
@@ -162,7 +162,8 @@ function periodInfo(type, offset, firstKey) {
   return { type, start: '0000-00-00', end: '9999-99-99', buckets: buckets.slice(-24), unit: 'month', title: 'Frá upphafi', prevName: '' }
 }
 
-export default function BudgetView({ purchases = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onSetItemsCategory, onScanReceipt, onOpenReceipts }) {
+export default function BudgetView({ purchases: purchasesIn = [], members = [], currentUserId, customCats = [], onAddCategory, onDeleteCategory, onSave, onUpdate, onDelete, onSetCategory, onSetItemCategory, onSetItemsCategory, onScanReceipt, onOpenReceipts }) {
+  const purchases = useMemo(() => purchasesIn.map(withStoreCategory), [purchasesIn])
   const dkey = (p) => String(p.purchased_at || '').slice(0, 10)
   const firstKey = purchases.reduce((a, p) => { const k = dkey(p); return k && (!a || k < a) ? k : a }, '')
   const hasIn = (t) => { const i = periodInfo(t, 0, firstKey); return purchases.some(p => { const k = dkey(p); return k >= i.start && k < i.end }) }

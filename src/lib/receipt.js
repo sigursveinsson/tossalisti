@@ -239,6 +239,36 @@ async function logScan(ev) {
   } catch (e) { /* mæling má aldrei stöðva skönnun */ }
 }
 
+// Yfirferð: afrit af kvittunum sem lesast illa — AÐEINS þegar stjórnandinn skannar sjálfur (am_admin).
+// Aðrir notendur: ekkert er vistað (kvittanir eru persónuupplýsingar; þarf samþykki). Má aldrei stöðva skönnun.
+let _amAdmin = null
+async function saveScanReview(res, files) {
+  try {
+    if (!supabase || !res) return
+    const items = res.items || []
+    const sum = items.reduce((a, i) => a + (Number(i.price) || 0), 0)
+    const tot = res.total == null ? null : Number(res.total)
+    const mismatch = items.length > 0 && tot > 0 && Math.abs(sum - tot) > Math.max(5, tot * 0.002)
+    const reason = res.failed || (res.check && res.check.ok === false ? 'unverified' : mismatch ? 'mismatch' : null)
+    if (!reason) return
+    if (_amAdmin == null) { const { data } = await supabase.rpc('am_admin'); _amAdmin = data === true }
+    if (!_amAdmin) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const blob = res.archive || files[0]
+    let path = null
+    if (blob && blob.size && blob.size <= 8 * 1024 * 1024) {
+      path = user.id + '/' + Date.now() + '.jpg'
+      const { error } = await supabase.storage.from('scan-review').upload(path, blob, { contentType: blob.type || 'image/jpeg' })
+      if (error) path = null
+    }
+    await supabase.from('scan_reviews').insert({
+      path, reason, store: res.store || null, purchased_at: res.date || null, total: tot,
+      items: items.map(i => ({ name: i.name, qty: i.qty, price: i.price })), check: res.check || null,
+    })
+  } catch (e) { /* yfirferð má aldrei stöðva skönnun */ }
+}
+
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.
 // Skilar líka `archive` (Blob) — mynd af kvittuninni til að geyma í kvittanasafni.
 // input: ein skrá, eða listi af skrám (löng kvittun tekin í hlutum, ofan frá og niður).
@@ -256,6 +286,7 @@ export async function parseReceipt(input, onProgress, products) {
     const res = files.length > 1 ? await parseReceiptMulti(files, onProgress, products) : await parseReceiptInner(file, onProgress, products)
     const outcome = res.failed ? res.failed : res.stage === 'ocr' ? 'ocr_fallback' : (res.items && res.items.length ? 'ok' : 'empty')
     logScan({ ...base, outcome, stage: res.stage || (outcome === 'ok' ? 'done' : null), ms: Date.now() - t0, decoded: !!res.decoded, items: (res.items || []).length, error: visionInvoke.lastError })
+    saveScanReview(res, files)
     return res
   } catch (e) {
     logScan({ ...base, outcome: 'crash', ms: Date.now() - t0, error: e && (e.message || e) })

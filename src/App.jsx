@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { store, isCloud } from './lib/store.js'
 import { supabase } from './lib/supabaseClient.js'
 import { primeAudio, canRecord } from './lib/voice.js'
+import { pendingInvite, clearInvite } from './lib/invite.js'
 import { IconList, IconChevronDown, IconHome, IconBell, IconChartBar, IconShare } from '@tabler/icons-react'
 import ListView from './components/ListView.jsx'
 import HomeView from './components/HomeView.jsx'
@@ -33,7 +34,7 @@ import { useBackClose } from './lib/backstack.js'
 import { captureAttribution, getAttribution, pageContext, isBot } from './lib/attribution.js'
 
 captureAttribution()
-const INVITE_TOKEN = new URLSearchParams(window.location.search).get('invite')
+const INVITE_TOKEN = pendingInvite() // úr slóð eða geymt (lifir af Google-innskráningu og staðfestingarpóst)
 const readHash = () => {
   const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const list = h.get('list') || null
@@ -154,7 +155,8 @@ export default function App() {
     try { window.history.replaceState({}, '', window.location.pathname) } catch {}
   }, [])
   useEffect(() => { if (session && !session.user?.is_anonymous) { try { localStorage.setItem('tossa.known', '1') } catch {} } }, [session])
-  const [welcomeDone, setWelcomeDone] = useState(() => { try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } })
+  const [welcomeDone, setWelcomeDone] = useState(() => { if (INVITE_TOKEN) return true; try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } }) // boðsgestur fer beint á listann
+  const [inviteJoined, setInviteJoined] = useState(null) // { list, by } — borði eftir að boð var þegið
   // Gestir úr auglýsingu (sjálfvirkur prufuaðgangur): enginn velkomuskjár — beint inn á innkaupalista með „Hvað vantar?“
   const [quickStart, setQuickStart] = useState(false)
   const [showSaveAcct, setShowSaveAcct] = useState(false) // false | true | 'receipt' | 'items'
@@ -470,12 +472,23 @@ export default function App() {
   useEffect(() => {
     if (!isCloud || !session || !INVITE_TOKEN || inviteDone) return
     setInviteDone(true)
+    landingEvent('invite_open')
+    // Heiti lista og hver bauð (fyrir borðann) — sótt áður en boðið er þegið; má mistakast
+    const preview = supabase.rpc('invite_preview', { p_token: INVITE_TOKEN }).then(r => r.data || null, () => null)
     store.acceptInvite(INVITE_TOKEN)
-      .then((listId) => {
+      .then(async (listId) => {
+        clearInvite()
         window.history.replaceState({}, '', window.location.pathname)
-        return reload(listId).then(() => { setCurrentId(listId); setTab('list'); flash('Þú gekkst í listann!') })
+        const pv = await preview
+        await reload(listId)
+        // Beint inn á listann sem boðið var á (áður: endaði á heimaskjá og þurfti að leita að listanum)
+        setCurrentId(listId); setTab('list'); setView('list'); setShowLists(false)
+        try { localStorage.setItem('tossa.welcomed', '1') } catch {}
+        setWelcomeDone(true)
+        setInviteJoined({ list: (pv && pv.list) || '', by: (pv && pv.by) || '' })
+        landingEvent('invite_joined')
       })
-      .catch((e) => flash('Boð ógilt: ' + (e.message || '')))
+      .catch((e) => { clearInvite(); landingEvent('invite_fail'); flash('Boðið gildir ekki lengur: ' + (e.message || ''), { warn: true }) })
   }, [session])
 
   // Skrá hvaðan notandinn kom (fyrsta-snerting) — aðeins fyrsta skipti per notanda
@@ -1058,6 +1071,12 @@ export default function App() {
               <button aria-label="Loka" onClick={() => { landingEvent('escape_stay'); setEscHint(null) }}>×</button>
             </div>
           )}
+        </div>
+      )}
+      {inviteJoined && (
+        <div className="invite-joined">
+          <span><b>Þú ert á listanum{inviteJoined.list ? ' „' + inviteJoined.list + '“' : ''}</b>{inviteJoined.by ? ' sem ' + inviteJoined.by + ' deildi með þér' : ''}. Allt sem þið bætið við eða hakið við sést hjá ykkur báðum.{isAnon ? <> Með því að nota appið samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</> : null}</span>
+          <button aria-label="Loka" onClick={() => setInviteJoined(null)}>×</button>
         </div>
       )}
       {showSaveAcct && <SaveAccount reason={showSaveAcct} onClose={() => setShowSaveAcct(false)} onSaved={() => { setShowSaveAcct(false); flash('Aðgangurinn er vistaður') }} />}

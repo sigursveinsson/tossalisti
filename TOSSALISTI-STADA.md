@@ -2,6 +2,13 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## BOÐSFLÆÐI LAGAÐ (21. nóv 2026) — RPC invite_preview Í LOFTINU, framendi BÍÐUR DEPLOY-S
+Tilefni: havardur… skráði sig 21. nóv í gegnum boð frá helgrun… (fyrsta heimilið úr auglýsingalotunni sem dró annan með sér). ~10 boðstenglar búnir til í lotunni, aðeins 1 þeginn.
+Gallar sem fundust: (1) boðsgestur á nýju tæki lenti á almennri skráningarsíðu sem nefndi boðið ekki; (2) ?invite týndist við Google-innskráningu og staðfestingarpóst; (3) eftir að boð var þegið endaði fólk á heimaskjá, ekki á listanum; (4) gestur gat fengið velkomuskjáinn ofan á.
+Lagað: lib/invite.js geymir táknið (14 dagar) og hreinsar eftir notkun; nýtt tæki + boðshlekkur → beint inn sem gestur (shouldAutoGuest) og beint á listann með grænum borða („Þú ert á listanum „X“ sem Y deildi með þér“ + persónuvernd fyrir gesti); þekkt tæki → spjald efst á skráningarsíðu („Y bauð þér á listann „X“ · Opna listann án skráningar“).
+Ný atvik: invite_open, invite_joined, invite_fail. EKKI prófað í vafra.
+Ógert: tilkynning til þess sem bauð þegar einhver gengur í listann.
+
 ## KVITTANALESTUR: „ÓLÆSILEGT“ GREINT (21. nóv 2026) — gagnagrunnur Í LOFTINU, framendi BÍÐUR DEPLOY-S
 Síðustu 24 klst: 19 lestrar tókust, 5 „unreadable“ (21%). Tvær tegundir:
 (a) legible=false, engin samtala (2 gestir): myndin sýndi ekki læsilega kvittun → nú „Taka nýja mynd“ sem aðalhnappur + skýrari texti.
@@ -9,6 +16,8 @@ Síðustu 24 klst: 19 lestrar tókust, 5 „unreadable“ (21%). Tvær tegundir:
     Lagað: failed='nolines' → skilaboð „Engar vörulínur á þessari kvittun“, verslun/dagsetning/upphæð forskráð, „Vista kvittun“.
 Villa í mælingu: scan_events CHECK leyfði ekki 'blurry'/'ai_down'/'ocr_fallback' → misheppnaðar skannanir fengu 400 og sáust ALDREI í Stjórnborð → Skönnun. Constraint víkkað (+ 'nolines').
 Ný atvik: scan_read_nolines.
+Líka: afsláttur (discount_total) birtist nú sem lína „Afsláttur −X“ svo línur stemmi (Hagkaup „Eldgrill+Coke −449“, prófað á tölum).
+YFIRFERÐ: tafla scan_reviews + einkageymsla scan-review (RLS: aðeins am_admin). Þegar STJÓRNANDI skannar og lestur mistekst/stemmir ekki vistast mynd + lestur → Stjórnborð → flipinn „Yfirferð“ (ScanReview.jsx). Aðrir notendur: ekkert vistað (samþykkishnappur er á hugmyndalista).
 
 ## ★★★ NIÐURSTAÐA (21. nóv 2026): KVITTANIRNAR ERU KRÓKURINN
 Gögn 19.–20. nóv: notendur sem festast skanna kvittanir (margar á dag, úr alls konar búðum) og koma aftur ótilkvaddir; listinn og röddin eru lítið notuð (1 vara á lista 20. nóv, 19 kvittanir frá 8 notendum, 142 þús. kr.).

@@ -65,8 +65,10 @@ export function shouldAutoGuest() {
   try {
     if (localStorage.getItem('tossa.known') || localStorage.getItem('tossa.noAuto')) return false
     const p = new URLSearchParams(window.location.search)
-    if (p.has('reset') || p.has('invite') || p.has('griptu')) return false
+    if (p.has('reset') || p.has('griptu')) return false
     if (/^\/(afskra|postlisti)/.test(window.location.pathname)) return false
+    // Boðshlekkur á tæki sem hefur aldrei skráð sig inn: beint inn á listann sem gestur (hægt að vista aðgang síðar)
+    if (p.has('invite')) return true
     const c = pageContext()
     return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
   } catch { return false }

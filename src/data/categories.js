@@ -49,7 +49,7 @@ export function itemCategory(name) {
 
 // Virkur flokkur línuliðs: handvirk yfirskrift annars sjálfvirk.
 export function effectiveItemCat(item) {
-  return item.category || itemCategory(item.name)
+  return item.category || item._cat || itemCategory(item.name)
 }
 
 // Sjálfvirk flokkatillaga á heilli færslu út frá verslun/heiti (fyrir handvirkar færslur).
@@ -59,13 +59,31 @@ const STORE_HINTS = [
   [['apótek', 'apotek', 'læknir', 'laeknir', 'heilsu', 'sjúkra', 'tannlæknir'], 'heilsa'],
   [['rafmagn', 'hiti', 'veitur', 'sími', 'simi', 'internet', 'tryggingar', 'áskrift', 'askrift', 'netflix', 'spotify'], 'reikningar'],
   [['bíó', 'bio', 'leikhús', 'tónleikar', 'sundlaug'], 'afthreying'],
-  [['vínbúð', 'vinbud', 'áfengi'], 'afengi'],
+  [['vínbúð', 'vinbud', 'vínbuð', 'áfengi'], 'afengi'],
+  [['húsasmiðj', 'husasmidj', 'byko', 'bauhaus', 'múrbúð', 'murbud', 'flügger', 'slippfélag', 'jysk', 'ikea', 'rúmfatalager', 'ilva', 'blómaval'], 'heimili'],
   [['bónus', 'bonus', 'krónan', 'kronan', 'nettó', 'netto', 'hagkaup', 'iceland', 'kjörbúð', 'fjarðarkaup'], 'matur'],
 ]
 export function suggestCategory(text) {
   const t = ' ' + (text || '').toLowerCase() + ' '
   for (const [keys, cat] of STORE_HINTS) if (keys.some(k => t.includes(k))) return cat
   return null
+}
+
+// Vörulínur sem reglurnar þekkja ekki („Annað“) erfa flokk verslunarinnar: klaufhamar úr Húsasmiðjunni → Heimili,
+// bensín á N1 → Samgöngur, rauðvín úr Vínbúðinni → Áfengi. Matvöruverslanir eru undanskildar (þar selst allt mögulegt).
+// Handvirk flokkun notanda og lærðir flokkar hafa alltaf forgang. Skilar færslunni með _cat á viðeigandi línum.
+export function withStoreCategory(p) {
+  const items = (p && p.items) || []
+  if (!items.length) return p
+  const sc = suggestCategory(p.store)
+  if (!sc || sc === 'matur') return p
+  let changed = false
+  const out = items.map(it => {
+    if (it.category || /^afsláttur$/i.test(it.name || '') || itemCategory(it.name) !== 'annad') return it
+    changed = true
+    return { ...it, _cat: sc }
+  })
+  return changed ? { ...p, items: out } : p
 }
 
 // Verslunarkeðjur — sameina mismunandi útibú („Krónan Skeifunni", „Krónan Granda" → „Krónan").
