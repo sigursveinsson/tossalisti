@@ -64,6 +64,19 @@ function dueTag(it) {
 // Flýtihnappar á nýjum/stuttum innkaupalista: smella frekar en skrifa fyrstu vörurnar.
 const STARTER = ['mjólk', 'brauð', 'egg', 'bananar', 'kaffi', 'smjör', 'ostur', 'epli', 'kjúklingur', 'pasta', 'tómatar', 'klósettpappír']
 
+// Er innslátturinn setning frekar en vöruheiti? (þá er hann sendur í sömu greiningu og röddin)
+export function looksLikePhrase(v) {
+  const t = String(v || '').trim().toLowerCase()
+  if (!t) return false
+  const words = t.split(/\s+/)
+  if (t.includes(',') && words.length >= 2) return true
+  if (/\s(og|eða)\s/.test(t) && words.length >= 3) return true
+  if (/^(allt|það|þetta|mig|okkur|ég|við)\s/.test(t) && words.length >= 3) return true
+  if (/\bfyrir\s+(\d+|einn|eina|tvo|tvær|tvö|þrjá|þrjár|þrjú|fjóra|fjórar|fjögur|fimm|sex|sjö|átta|níu|tíu|tólf|okkur|alla|fjölskylduna)\b/.test(t)) return true
+  if (/\b(hráefni|uppskrift|vantar|þarf|kvöldmat|kvöldmatinn|matinn)\b/.test(t) && words.length >= 2) return true
+  return words.length >= 6
+}
+
 export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
@@ -423,6 +436,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const add = (name, image, ext) => {
     const v = (name ?? text).trim()
     if (!v) return
+    // Skrifað eins og talað („allt sem þarf í rjómasveppasósu“, „mjólk, brauð og egg“, „taco fyrir fjóra“):
+    // sama vinnsla og röddin — verður að mörgum vörum í stað einnar línu. Stök vöruheiti fara beint á listann.
+    if (name == null && isShopping && !qty.trim() && looksLikePhrase(v)) {
+      landingEvent('add_phrase', { once: false })
+      setText(''); setKronanHits([])
+      parseText(v)
+      return
+    }
     if (!isTask && qty.trim()) onAdd(`${v} ${qty.trim()}${unit.trim() ? ' ' + unit.trim() : ''}`, undefined, undefined, undefined, image, undefined, ext)
     else onAdd(v, undefined, undefined, undefined, image, undefined, ext)
     setText(''); setQty(''); setKronanHits([])

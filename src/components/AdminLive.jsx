@@ -5,7 +5,9 @@ import { store } from '../lib/store.js'
 // Gögn: RPC admin_live() (aðeins stjórnandi). Einn gestur = ein lína (ekki ein lína á hverja síðuflettingu).
 const num = (n) => (n == null ? '—' : Number(n).toLocaleString('is-IS'))
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
-const hm = (iso) => { try { return new Date(iso).toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } }
+const p2 = (n) => String(n).padStart(2, '0')
+// 24 stunda klukka, óháð tungumálastillingu vafrans (sumir vafrar sýna annars „12:06 AM“)
+const hm = (iso) => { try { const d = new Date(iso); return p2(d.getHours()) + ':' + p2(d.getMinutes()) } catch { return '' } }
 const ago = (iso) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
   if (m < 1) return 'rétt í þessu'
@@ -121,7 +123,7 @@ export default function AdminLive() {
       <div className="live-head">
         <span className="live-dot" /> <b>Í beinni</b>
         <span className="live-now">{num(data.active_30m)} {data.active_30m === 1 ? 'gestur' : 'gestir'} síðustu 30 mín.</span>
-        <button className="live-refresh" onClick={load}>↻ {at ? at.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}</button>
+        <button className="live-refresh" onClick={load}>↻ {at ? hm(at) + ':' + p2(at.getSeconds()) : ''}</button>
       </div>
 
       <div className="live-tiles">

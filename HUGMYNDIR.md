@@ -233,3 +233,16 @@ Lærdómur: (1) fólk borgar fyrir heimilisapp á Íslandi (verðpunktur 1.242�
 Skjal: https://claude.ai/artifact/P6pGkEXF7oHzT85oQB9Xwd — allir dagar nóv 2026–nóv 2027 með hugmynd, eiginleika og vægi.
 - [ ] NÆST: Black Friday-færsla (fös. 27. nóv), tilbúin fim. 26. nóv. „Keyptirðu eitthvað á Black Friday? Taktu mynd af kvittuninni.“ Ábyrgð + skilafrestur. „Ókeypis. Alla daga, ekki bara á föstudaginn.“ Mynd í sama stíl og Sigga og Jón (markadsefni/bokhald_myndir.py).
 - Svo: 1. des (mánaðamót, Sigga og Jón), jólainnkaup með rödd, skil á jólagjöfum + gjafakort í Veskið (27. des–6. jan), „Árið þitt í tölum“.
+
+## Samkaup / Drangar (20. nóv 2026) — hugmynd, ekki byrjað
+- Samkaup er hluti af Dröngum (með Orkunni, Lyfjavali; Heimkaup runnið inn); samið um kaup á rekstri Fjarðarkaupa (nóv 2026, bíður SE); stefnt á Kauphöll fyrir lok 2027.
+- Sverrir: Nettó-appið sýnir bara tilboð og tengir Nettó-kortið við veski símans. Enginn listi, engin rödd, ekkert bókhald.
+- EKKI hrein white label (hlutleysi milli verslana er kjarninn; lokar á Krónuna, banka, vörumerki). Frekar: (a) tenging eins og við Krónuna (tilboð/verð Nettó í Tossalista), (b) leyfi á vélinni (kvittanalestur, flokkun, rödd, listi) inn í þeirra app undir þeirra merki, (c) sjálfvirkar kvittanir úr kassakerfi.
+- Áður: félagamálið (Wonder) á hreint; bíða svars Harðar hjá Krónunni; hafa tölur.
+
+## „Mætt í búð“ — hraðlisti úr neysluhegðun (21. nóv 2026) — SEINNA
+Sverrir: margir skipuleggja ekki innkaupin, fara bara í búðina. Hnappur „Mætt í búð“ → appið býr til hraðlista á staðnum, byggðan á kvittunum heimilisins.
+- Grunnurinn er til: my_staples() / „Oft keypt“ (tíðni, „vantar líklega“).
+- Viðbætur: velja búð (eða giska út frá staðsetningu/síðustu kvittun) → listi raðaður eftir deildum; „síðast X kr. í <búð>“ úr eigin kvittunum (ekkert API); haka af/bæta við með einum smelli; kvittun eftir á lokar hringnum (hakar við og uppfærir neysluna).
+- Seinna: verðsamanburður milli búða úr kvittunum allra notenda (þarf fjölda, k≥5).
+- Tengist: lok innkaupaferðar (pakki 2), kvittanaáhersla, „listinn kemur til notandans“.

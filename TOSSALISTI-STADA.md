@@ -2,6 +2,10 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## ★★★ NIÐURSTAÐA (21. nóv 2026): KVITTANIRNAR ERU KRÓKURINN
+Gögn 19.–20. nóv: notendur sem festast skanna kvittanir (margar á dag, úr alls konar búðum) og koma aftur ótilkvaddir; listinn og röddin eru lítið notuð (1 vara á lista 20. nóv, 19 kvittanir frá 8 notendum, 142 þús. kr.).
+Afleiðingar: (1) auglýsingar og færslur snúast um kvittanir/bókhald („Kvittanir beint í heimilisbókhaldið“, Sigga og Jón); (2) „Skanna kvittun“ er áfram aðalhnappurinn á velkomuskjá — röddin EKKI færð efst; (3) listinn á að verða til úr kvittunum („Oft keypt“, „Mætt í búð“) frekar en að fólk skipuleggi; (4) sama saga sögð bönkum, Samkaupum og Krónunni.
+
 ## ★★★ GRUNNREGLA (18. nóv 2026): BEINT Í AÐ PRÓFA — ENGIN TRUFLUN
 Nýr gestur á að geta prófað strax: engir aukasmellir, engir sprettigluggar, engin skráning, ekkert sem truflar.
 Ef honum líkar það sem hann sér kemur hann aftur eða stofnar aðgang sjálfur.
