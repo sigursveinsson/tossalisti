@@ -246,3 +246,14 @@ Sverrir: margir skipuleggja ekki innkaupin, fara bara í búðina. Hnappur „M�
 - Viðbætur: velja búð (eða giska út frá staðsetningu/síðustu kvittun) → listi raðaður eftir deildum; „síðast X kr. í <búð>“ úr eigin kvittunum (ekkert API); haka af/bæta við með einum smelli; kvittun eftir á lokar hringnum (hakar við og uppfærir neysluna).
 - Seinna: verðsamanburður milli búða úr kvittunum allra notenda (þarf fjölda, k≥5).
 - Tengist: lok innkaupaferðar (pakki 2), kvittanaáhersla, „listinn kemur til notandans“.
+
+## Dreifimiðar með QR → beint í kvittanaskannann (21. nóv 2026) — HUGMYND
+Sverrir: flyerar sem hvetja fólk til að skanna kvittun. Styrkur: hittir fólk með kvittun í hendi (ólíkt Instagram).
+- EKKI dreifa í Krónunni/Bónus/Nettó án leyfis (skemmir fyrir samstarfi). Í keðjum aðeins sem hluti af samstarfi (Samkaup/Drangar: standur við kassa; Nathan/Ölgerðin: hilla/vara).
+- Staðir án keðjuleyfis: sjálfstæðar búðir og sérverslanir (Melabúðin, fiskbúðir, kjötbúðir), bakarí og kaffihús, vinnustaðir (kaffistofur), stúdentagarðar/HÍ/HR, húsfélög (anddyri), sundlaugar og líkamsrækt (auglýsingatöflur), bókasöfn, markaðir (Kolaportið, jólamarkaðir), bókarar/endurskoðendur til viðskiptavina.
+- Samtök sem dreifa fyrir okkur: stéttarfélög (fréttabréf, félagsmenn og fjármál), Neytendasamtökin, foreldrafélög.
+- Stafrænt jafngildi (ókeypis): Facebook-hópar um sparnað og mat (færsla frá Sverri sem einstaklingi, með Siggu og Jóni).
+- Heima: ísskápssegull/límmiði „Kvittun? Taktu mynd“ — kvittanir enda heima.
+- Þarf: hönnun (A6/A7, stíll Siggu og Jóns, QR), slóð t.d. tossalisti.is/k?m=<staður> sem hleypir gestum beint inn og opnar skannann (í dag aðeins fyrir FB/IG), mæling eftir stað.
+- Prufa: 200–300 miðar á 2–3 stöðum í 1–2 vikur; mæla hlutfall sem skannar.
+- Forgangsröð (21. nóv): (1) færsla í 1–2 Facebook-hópum um sparnað/mat (athuga reglur hópsins um kynningar), (2) miðar í 2–3 sjálfstæðum búðum/bakaríum þar sem Sverrir þekkir til, (3) jólamarkaður í desember (standa sjálfur með símann). Líka: blómabúðir, markaðir, stéttarfélög/Neytendasamtökin (fréttabréf).

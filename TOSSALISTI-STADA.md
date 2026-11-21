@@ -2,6 +2,14 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## KVITTANALESTUR: „ÓLÆSILEGT“ GREINT (21. nóv 2026) — gagnagrunnur Í LOFTINU, framendi BÍÐUR DEPLOY-S
+Síðustu 24 klst: 19 lestrar tókust, 5 „unreadable“ (21%). Tvær tegundir:
+(a) legible=false, engin samtala (2 gestir): myndin sýndi ekki læsilega kvittun → nú „Taka nýja mynd“ sem aðalhnappur + skýrari texti.
+(b) legible=true, samtala lesin en 0 vörulínur (posakvittun; bjarticr reyndi Útgerðina 3×) → appið sagði ranglega „myndin er ekki nógu skýr“.
+    Lagað: failed='nolines' → skilaboð „Engar vörulínur á þessari kvittun“, verslun/dagsetning/upphæð forskráð, „Vista kvittun“.
+Villa í mælingu: scan_events CHECK leyfði ekki 'blurry'/'ai_down'/'ocr_fallback' → misheppnaðar skannanir fengu 400 og sáust ALDREI í Stjórnborð → Skönnun. Constraint víkkað (+ 'nolines').
+Ný atvik: scan_read_nolines.
+
 ## ★★★ NIÐURSTAÐA (21. nóv 2026): KVITTANIRNAR ERU KRÓKURINN
 Gögn 19.–20. nóv: notendur sem festast skanna kvittanir (margar á dag, úr alls konar búðum) og koma aftur ótilkvaddir; listinn og röddin eru lítið notuð (1 vara á lista 20. nóv, 19 kvittanir frá 8 notendum, 142 þús. kr.).
 Afleiðingar: (1) auglýsingar og færslur snúast um kvittanir/bókhald („Kvittanir beint í heimilisbókhaldið“, Sigga og Jón); (2) „Skanna kvittun“ er áfram aðalhnappurinn á velkomuskjá — röddin EKKI færð efst; (3) listinn á að verða til úr kvittunum („Oft keypt“, „Mætt í búð“) frekar en að fólk skipuleggi; (4) sama saga sögð bönkum, Samkaupum og Krónunni.

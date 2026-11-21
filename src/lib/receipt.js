@@ -208,6 +208,12 @@ function canvasToBlob(canvas, quality = 0.72) {
 }
 const ARCHIVE_RAW_MAX = 9 * 1024 * 1024
 
+// Netþjónninn las samtölu (myndin er læsileg) en fann engar vörulínur: t.d. posakvittun sem sýnir bara upphæð.
+// Það er ekki „óskýr mynd“ — verslun, dagsetning og upphæð eru skráð og notandinn getur vistað.
+function noLines(ai) {
+  return !!(ai && Number(ai.total) > 0 && (!ai.check || ai.check.legible !== false))
+}
+
 // Mæling: hver skönnunartilraun skráð (líka þær sem deyja í símanum) — Stjórnborð → Skönnun.
 async function logScan(ev) {
   try {
@@ -315,7 +321,7 @@ async function parseReceiptMulti(files, onProgress, products) {
     const ai = await visionInvoke(images, products)
     if (ai) {
       if (ai.ai_down) return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'ai_down' }
-      if (ai.unreadable) return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: 'blurry' }
+      if (ai.unreadable) return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: noLines(ai) ? 'nolines' : 'blurry' }
       if (ai.items && ai.items.length) return { ...ai, archive, decoded: true, stage: 'ai' }
       return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'empty' }
     }
@@ -365,7 +371,7 @@ async function parseReceiptInner(file, onProgress, products) {
       if (ai) {
         aiReached = true
         if (ai.ai_down) return { store: '', items: [], total: null, date: null, archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'ai_down' }
-        if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas || fromCam, stage: 'ai', failed: 'blurry' }
+        if (ai.unreadable) return { ...ai, items: [], archive, decoded: !!canvas || fromCam, stage: 'ai', failed: noLines(ai) ? 'nolines' : 'blurry' }
         if (ai.items && ai.items.length) return { ...ai, archive, decoded: !!canvas || fromCam, stage: 'ai' }
       }
     } catch (e) { /* fall back */ }

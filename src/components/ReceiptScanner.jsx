@@ -84,7 +84,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
   // Yfirferð: fyrst stutt samantekt (verslun, samtala, línur) með „Vista“ — ritillinn opnast með „Breyta“.
   const [edit, setEdit] = useState(false)
   useEffect(() => { landingEvent(demo ? 'scan_open_demo' : 'scan_open') }, [])
-  useEffect(() => { if (phase === 'review') landingEvent(items.length ? 'scan_read_ok' : 'scan_read_fail') }, [phase])
+  useEffect(() => { if (phase === 'review') landingEvent(items.length ? 'scan_read_ok' : failed === 'nolines' ? 'scan_read_nolines' : 'scan_read_fail') }, [phase])
   // Beint í myndavélina (enginn leiðbeiningaskjár á milli). Ef vafrinn leyfir það ekki stendur skjárinn eftir sem varaleið.
   const autoOpened = useRef(false)
   useEffect(() => {
@@ -332,11 +332,13 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
             )}
             {items.length === 0 && failed === 'network' && <div className="receipt-fail"><b>Náði ekki sambandi við kvittanalesarann.</b> Athugaðu netið og reyndu aftur með „Skanna aftur“, eða skráðu línurnar handvirkt.</div>}
             {items.length === 0 && failed === 'decode' && <div className="receipt-fail"><b>Náði ekki að opna myndina.</b> Prófaðu að taka myndina beint með myndavélinni í stað þess að velja úr myndasafni.</div>}
-            {items.length === 0 && failed === 'blurry' && <div className="receipt-fail"><b>Myndin er ekki nógu skýr til að lesa línurnar.</b> Komdu nær svo kvittunin fylli breidd myndarinnar, í góðri birtu og án skugga. Ef hún er löng, taktu hana í hlutum.</div>}
+            {items.length === 0 && failed === 'blurry' && <div className="receipt-fail"><b>Appið gat ekki lesið kvittunina af þessari mynd.</b> Leggðu kvittunina á borð, komdu nær svo hún fylli breidd myndarinnar, í góðri birtu og án skugga. Ef hún er löng, taktu hana í hlutum.</div>}
             {items.length === 0 && failed === 'empty' && <div className="receipt-fail"><b>Kvittanalesarinn fann engar vörur á myndinni.</b> Er myndin skýr og kvittunin öll í ramma? Reyndu aftur eða skráðu handvirkt.</div>}
+            {items.length === 0 && failed === 'nolines' && <div className="receipt-demo-note"><b>Engar vörulínur eru á þessari kvittun</b>, bara upphæðin (t.d. posakvittun). Verslun, dagsetning og upphæð eru skráð hér að ofan — lagaðu ef þarf og ýttu á <b>Vista kvittun</b>.</div>}
             {items.length === 0 && !failed && <p className="muted-p">Engar línur lásust — bættu þeim við handvirkt.</p>}
-            {items.length === 0 && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> Skanna aftur</button>}
-            {(failed === 'blurry' || (scanCheck && scanCheck.ok === false)) && <button className="ghost-btn receipt-rescan" onClick={startMulti}>Taka kvittunina í hlutum (betra fyrir langar kvittanir)</button>}
+            {items.length === 0 && failed !== 'nolines' && <button className={['blurry', 'empty', 'decode'].includes(failed) ? 'add-recipe-btn' : 'ghost-btn receipt-rescan'} onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> {['blurry', 'empty', 'decode'].includes(failed) ? 'Taka nýja mynd' : 'Skanna aftur'}</button>}
+            {items.length === 0 && failed === 'nolines' && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> Taka aðra mynd (ef vörulínur eiga að sjást)</button>}
+            {failed !== 'nolines' && (failed === 'blurry' || (scanCheck && scanCheck.ok === false)) && <button className="ghost-btn receipt-rescan" onClick={startMulti}>Taka kvittunina í hlutum (betra fyrir langar kvittanir)</button>}
             {(edit || items.length === 0) && <>
             <div className="receipt-items">
               {items.map(it => {
