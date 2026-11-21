@@ -434,9 +434,43 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return <span className={cls} style={style}>{initialsOf(p)}</span>
   }
 
+  // Verðvakt
+  const [urlBusy, setUrlBusy] = useState(false)
+  const [urlMsg, setUrlMsg] = useState('')
+  useEffect(() => { if (!urlMsg) return; const t = setTimeout(() => setUrlMsg(''), 9000); return () => clearTimeout(t) }, [urlMsg])
+  const addFromUrl = async (url) => {
+    if (urlBusy) return
+    if (!isCloud) { setUrlMsg('Skráðu þig inn til að vista vörur af vefnum.'); return }
+    setText(''); setKronanHits([]); setUrlMsg(''); setUrlBusy(true)
+    landingEvent('watch_add', { once: false })
+    const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, '') } catch { return 'vefnum' } }
+    try {
+      const { data, error } = await supabase.functions.invoke('price-watch', { body: { action: 'add', url } })
+      if (error || !data) throw new Error('price-watch')
+      if (data.ok) {
+        await onAdd(data.title || ('Vara af ' + (data.host || hostOf(url))), undefined, undefined, undefined, data.image || undefined, undefined, { url: data.url, price: data.price, watchId: data.watch_id, cur: data.currency })
+        setUrlMsg(data.watching ? 'Verðvakt virk. Við látum þig vita ef verðið lækkar.'
+          : data.limit ? 'Varan er vistuð. Þú ert með 30 vörur á Verðvakt; taktu einhverja af listanum til að vakta fleiri.'
+          : 'Varan er vistuð með hlekk. Verðvakt er ekki í boði fyrir þessa verslun.')
+        landingEvent(data.watching ? 'watch_ok' : 'watch_noprice', { once: false })
+      } else if (data.reason === 'badurl') {
+        setUrlMsg('Þetta lítur ekki út eins og slóð á vöru.')
+      } else {
+        await onAdd('Vara af ' + (data.host || hostOf(url)), undefined, undefined, undefined, undefined, undefined, { url: data.url || url })
+        setUrlMsg('Náði ekki að lesa síðuna, en hlekkurinn er vistaður.')
+        landingEvent('watch_fail', { once: false })
+      }
+    } catch { setUrlMsg('Tókst ekki að sækja vöruna. Reyndu aftur.') }
+    setUrlBusy(false)
+  }
+  const webPrice = (n, cur) => Math.round(n).toLocaleString('is-IS') + (!cur || cur === 'ISK' ? ' kr.' : ' ' + cur)
+  const webHost = (u) => { try { return new URL(u).hostname.replace(/^www\./, '') } catch { return 'vefur' } }
   const add = (name, image, ext) => {
     const v = (name ?? text).trim()
     if (!v) return
+    // Verðvakt: límd slóð á vöru í vefverslun → heiti, mynd og verð sótt af síðunni
+    const um = name == null && !isTask && !isSchedule ? v.match(/https?:\/\/[^\s]+/i) : null
+    if (um) { addFromUrl(um[0]); return }
     // Skrifað eins og talað („allt sem þarf í rjómasveppasósu“, „mjólk, brauð og egg“, „taco fyrir fjóra“):
     // sama vinnsla og röddin — verður að mörgum vörum í stað einnar línu. Stök vöruheiti fara beint á listann.
     if (name == null && isShopping && !qty.trim() && looksLikePhrase(v)) {
@@ -597,7 +631,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
         <span className="label" onClick={() => onToggle(it, done)}>
           {chore && it.time && <span className="time-tag">{it.time}</span>}
           {it.name}
-          {!chore && kronanEnabled && it.ext_price != null && <span className="item-price">{krr((krSale[it.ext_sku] ? krSale[it.ext_sku].price : it.ext_price) * Math.max(1, it.qty || 1))}</span>}
+          {!chore && it.url && it.ext_price != null && <span className="item-price">{webPrice(it.ext_price * Math.max(1, it.qty || 1), it.ext_cur)}</span>}
+          {!chore && it.url && it.ext_price != null && it.price_first > it.ext_price && <span className="item-sale">Lækkaði um {webPrice(it.price_first - it.ext_price, it.ext_cur)}</span>}
+          {!chore && it.url && <a className="item-link" href={it.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>{webHost(it.url)} ↗</a>}
+          {!chore && it.watch_id && <span className="item-watch" title="Við látum þig vita ef verðið lækkar">Verðvakt</span>}
+          {!chore && kronanEnabled && !it.url && it.ext_price != null && <span className="item-price">{krr((krSale[it.ext_sku] ? krSale[it.ext_sku].price : it.ext_price) * Math.max(1, it.qty || 1))}</span>}
           {!chore && kronanEnabled && it.ext_sku && krSale[it.ext_sku] && <span className="item-sale">Tilboð −{krSale[it.ext_sku].pct}%</span>}
           {!chore && (() => {
             const rp = rewardFor(it.name)
@@ -638,7 +676,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     <div className="addbar">
       <div className={'add-input' + (isShopping ? ' with-icon' : '')}>
         {isShopping && <IconSearch className="add-input-ico" size={18} stroke={1.75} />}
-        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : 'Bættu við vöru…'} autoComplete="off" />
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : urlBusy ? 'Sæki vöruna…' : 'Bættu við vöru eða límdu slóð…'} disabled={urlBusy} autoComplete="off" />
       </div>
       {/* Magn/eining aðeins utan innkaupalista — á innkaupalista er magn stillt með +/− á línunni. */}
       {!isTask && !isShopping && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
@@ -1056,6 +1094,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return (
       <div>
         {addBar}
+        {(urlBusy || urlMsg) && <div className="url-msg" role="status">{urlBusy ? 'Sæki heiti, mynd og verð af síðunni…' : urlMsg}</div>}
         <div className="sched-top"><span className="badge">{open} eftir</span>{kidsBtn}</div>
         {gamePanel}
         {items.length === 0 && <p className="empty">Listinn er tómur — bættu við verki að ofan.</p>}

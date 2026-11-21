@@ -916,3 +916,12 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Prófað: gagnasnið allra endapunkta, parse + import + óskilgreind heiti. EKKI prófað í vafra (ekkert byggt hér) — þarf deploy og prufu.
 - 18.11: Raddmyndband lokaútgáfa: markadsefni/tossalisti-rodd-med-rodd.mp4 (ný upptaka Sverris 18.11, 1,2× með atempo, 14,2 sek; smíðað með video_rodd_rodd3.py). Tilbúið í auglýsingu, utm_content=rodd.
 - 18.11 kvöld: „Beint í verkið“ — auto-gestir úr auglýsingum fá engan velkomuskjá; lenda á innkaupalista með „Hvað vantar?“ (skrifa náttúrulega → parse-voice textahamur → sama yfirferð og rödd), Tala-hnappur ef hljóðnemi, dæmi-hnappar, „Skoða appið fyrst“. Atburðir qs_*. pageviews.utm_content vistað. Ástæða: 0 af 23 raddauglýsingagestum prófuðu rödd (hljóðnemi ekki í FB-vafra).
+
+## Verðvakt og innhólf — 21. nóv. 2026
+- **Verðvakt:** líma slóð á vöru í „Bættu við vöru eða límdu slóð…“ → edge-fall `price-watch` (action add) sækir heiti, mynd og verð (JSON-LD → lýsigögn → Gemini). Línan fær verð, hlekk og merkið „Verðvakt“. Dálkar á list_items: url, watch_id, price_first, ext_cur (ext_source='web').
+- Tafla `price_watches` (ein röð á slóð, aðeins netþjónn). pg_cron `price-watch-hourly` (mín. 23) kallar action run með lykli úr private.app_secrets; hver vara athuguð á ~20 klst fresti, mest 40 í keyrslu. Lækkun ≥1% → skilaboð í innhólf þess sem vistaði.
+- Þak: 30 vaktaðar vörur á notanda; vakt hættir 90 dögum eftir vistun eða þegar hakað er við. Gervigreind aðeins ef verð er ekki í gögnum síðunnar, og ekki aftur ef tölurnar í kringum verðið eru óbreyttar.
+- Prófað á netþjóni 21.11.: rétt verð hjá IKEA, JYSK, ELKO, Epal, Hagkaup, A4, Heimkaup, Nexus (JSON-LD), Boozt (lýsigögn), Lyfju (gervigreind). BYKO virkar ekki (verð hlaðið í vafra). Icewear-slóðin í prófinu var ógild.
+- **Innhólf:** bjalla á Heim (`Inbox.jsx`), töflur inbox_messages (user_id null = til allra) og inbox_state (seen_at). Stjórnandi getur sent öllum úr innhólfinu.
+- Atvik: watch_add, watch_ok, watch_noprice, watch_fail, inbox_open.
+- Óprófað: viðmótið í vafra (bygging og birting), „Lækkaði um“ á línu, innhólfið sjálft. Fyrra verð (was) er ekki lesið úr JSON-LD.

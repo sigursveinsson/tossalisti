@@ -2351,3 +2351,27 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .trip-clear{height:42px;border:1.5px solid rgba(15,81,50,.35);border-radius:12px;background:transparent;color:#0f5132;font-size:14px;font-weight:600;cursor:pointer;}
 .trip-clear.small{display:block;width:100%;margin:14px 0 4px;border-color:var(--line);color:var(--muted);}
 .shopmode-empty span{display:block;font-size:14.5px;margin:6px 0 14px;}
+
+/* Verðvakt */
+.item-link { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
+.item-link:hover { text-decoration: underline; }
+.item-watch { margin-left: 6px; font-size: 11px; font-weight: 700; color: #1f7a4d; background: #e6f4ec; border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.url-msg { margin: 8px 2px 0; padding: 9px 12px; border-radius: 10px; background: #eef1f6; color: var(--ink2, #3b4352); font-size: 13px; line-height: 1.35; }
+
+/* Innhólf */
+.home-hi { position: relative; }
+.home-bell { position: absolute; top: 0; right: 0; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--navy); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.home-bell i { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #c8102e; color: #fff; font-size: 11px; font-weight: 800; font-style: normal; line-height: 18px; text-align: center; }
+.home-greet, .home-ach { padding-right: 50px; }
+.inbox-msg { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.inbox-msg.new b::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #c8102e; vertical-align: middle; }
+.inbox-img, .inbox-ic { flex: none; width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: #eef1f6; }
+.inbox-ic { display: flex; align-items: center; justify-content: center; color: var(--navy); }
+.inbox-txt { min-width: 0; flex: 1; }
+.inbox-txt b { font-size: 14px; color: var(--navy); }
+.inbox-txt p { margin: 3px 0 0; font-size: 13px; line-height: 1.4; color: var(--ink2, #3b4352); white-space: pre-wrap; }
+.inbox-act { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.inbox-act a, .inbox-act button { font-size: 12px; font-weight: 700; color: var(--navy); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+.inbox-act .inbox-del { color: var(--muted); font-weight: 600; }
+.inbox-compose { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.inbox-compose input, .inbox-compose textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: 14px; background: var(--surface); color: inherit; }

@@ -265,3 +265,30 @@ Sverrir: flyerar sem hvetja fólk til að skanna kvittun. Styrkur: hittir fólk 
       (b) aðrir notendur: AÐEINS með samþykki — hnappur „Senda okkur myndina svo við getum lagað lesturinn“ á villuskjá; bæta við persónuverndarstefnu; einkageymsla, eytt eftir t.d. 30 daga; aðeins stjórnandi sér.
       Yfirferð: listi í stjórnborði (mynd + það sem gervigreindin las + check).
 - Sverrir ætlar að skanna meira sjálfur (prófunargögn).
+
+## Óskalisti úr vefverslunum („Vista á Tossalista“) — 21. nóv. 2026
+Hugmynd Sverris: fólk safnar vörum í körfur á mörgum vefverslunum án þess að kaupa. Taka þær saman á einn lista.
+- Skref 1 (lítið verk): líma slóð í listann → netþjónn sækir titil, mynd og verð (og:-merki / JSON-LD) → vara með mynd, verði og hlekk.
+- Skref 2: „Deila“ í síma. Android: Web Share Target í PWA (Tossalisti birtist í deilivalmyndinni). iPhone: styður það ekki fyrir vefforrit; þar þarf líma-slóð eða Shortcut.
+- Skref 3: vafraviðbót (Chrome/Edge, tölva) með hnappinum „Vista á Tossalista“. Bookmarklet sem millileið.
+- Síðar: verðvakt („lækkaði um 20%“), tengist Black Friday og ábyrgðum/kvittunum. Affiliate-tekjur mögulegar.
+- Óvissa: sumar verslanir loka á sjálfvirka sókn; verð ekki alltaf í lýsigögnum.
+
+## Innhólf í appinu — 21. nóv. 2026
+Skilaboð frá Tossalista inni í appinu (bjalla með rauðum punkti) í stað tölvupósts. Tafla announcements + lesið-merki á notanda.
+Nýjungar, ráð („vissirðu að…“), og persónuleg skilaboð síðar (ábyrgð að renna út, X gekk í listann). Ekki sprettigluggi — grunnreglan gildir.
+
+## Verðvakt — prófun á verðlestri 21. nóv. 2026
+Heiti eiginleikans: **Verðvakt** („Límdu slóð á vöru. Við látum þig vita ef verðið lækkar.“). Ein vara prófuð í hverri verslun, sótt án JavaScript.
+- Virkar með lýsigögnum einum (9 af 16): IKEA, JYSK/Rúmfatalagerinn, ILVA, Boozt, A4, Kubbabúðin, Nexus, Epal, Dimm.
+- Verð í síðutexta en ekki lýsigögnum (6 af 16): ELKO, Icewear, Hagkaup, Lyfja, Heimkaup, Vistvera. Þarf JSON-LD eða gervigreindarlestur.
+- Verð hlaðið með JavaScript: BYKO (og líklega Húsasmiðjan, ekki náðist á vörusíðu).
+- Óprófað (prófunartólið komst ekki að): Lindex, H&M, 66°Norður, ASOS, Amazon.
+- Gildrur: JYSK/ILVA hafa upphaflegt verð í og:price og tilboðsverð í product:sale_price; Epal skrifar „4.600“; röð tilboðs- og fulls verðs í texta er misjöfn.
+- Ekki staðfest: JSON-LD (sást ekki í prófunartólinu); hegðun tilboðsverðs hjá A4, Kubbabúðinni, Nexus og Dimm.
+
+## Óskalisti (sbr. oskar.gift) — 21. nóv. 2026
+Næsta skref ofan á Verðvakt: listategundin „Óskalisti“, skoðunarhlekkur (amma opnar án þess að verða meðeigandi), frátekt sem eigandinn sér ekki. Forskot okkar: verðvakt á óskunum, kvittun/skilafrestur fylgir gjöfinni. Óskar (Aranja, 2022) er rótgróinn með verslunarsamstarf; ekki stilla okkur upp sem keppinaut heldur sem listategund.
+
+## Takk (Hagar) tengir greiðslukort — 19. nóv. 2026
+Hagkaup/Bónus: kort tengt Takk-appinu, Takk krónur safnast sjálfkrafa á Takk-vörur. Sama hugmynd og Gríptu (umbun fyrir tilteknar vörur) en án kvittunar og bundið við Haga. Rök fyrir Gríptu: virkar í öllum verslunum. Kortatenging er leið sem við ættum að skoða með banka (sjá bankahugmynd).

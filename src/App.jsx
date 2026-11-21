@@ -57,6 +57,7 @@ import GriptuHome from './components/GriptuHome.jsx'
 import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
 import WalletView from './components/WalletView.jsx'
+import Inbox from './components/Inbox.jsx'
 import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped, escapeTarget, androidIntentUrl } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -333,6 +334,30 @@ export default function App() {
   const [wallet, setWallet] = useState([])
   const loadWallet = () => { if (isCloud && session) store.walletList().then(setWallet).catch(() => {}) }
   useEffect(() => { loadWallet() }, [session?.user?.id])
+  // Innhólf: nýjungar (til allra) og Verðvakt (til notandans). Ólesið = nýrra en inbox_state.seen_at.
+  const [inbox, setInbox] = useState({ msgs: [], seen: null })
+  const [showInbox, setShowInbox] = useState(false)
+  const loadInbox = async () => {
+    if (!isCloud || !session) return
+    try {
+      const [m, st] = await Promise.all([
+        supabase.from('inbox_messages').select('*').order('created_at', { ascending: false }).limit(40),
+        supabase.from('inbox_state').select('seen_at').eq('user_id', session.user.id).maybeSingle(),
+      ])
+      const born = new Date(session.user.created_at || 0).getTime()
+      // Skilaboð til allra sem voru send áður en notandinn kom eru ekki sýnd
+      setInbox({ msgs: (m.data || []).filter(x => x.user_id || new Date(x.created_at).getTime() >= born), seen: st.data ? st.data.seen_at : null })
+    } catch (e) {}
+  }
+  useEffect(() => { loadInbox() }, [session?.user?.id])
+  const inboxUnread = inbox.msgs.filter(x => !inbox.seen || new Date(x.created_at).getTime() > new Date(inbox.seen).getTime()).length
+  const closeInbox = () => {
+    setShowInbox(false)
+    if (!inboxUnread || !session) return
+    const now = new Date().toISOString()
+    setInbox(v => ({ ...v, seen: now }))
+    supabase.from('inbox_state').upsert({ user_id: session.user.id, seen_at: now }).then(() => {}, () => {})
+  }
   // Vörumerkja-gátt: netfang skráð hjá vörumerki (brand_members) → sér aðeins sitt mælaborð í stað appsins.
   const [brandUser, setBrandUser] = useState(undefined) // undefined = ekki athugað, null = venjulegur notandi
   const [brandView, setBrandView] = useState(() => { try { return localStorage.getItem('korfan.brandview') || 'dash' } catch { return 'dash' } }) // 'dash' | 'app'
@@ -1138,7 +1163,7 @@ export default function App() {
       </div>
       <div className="body">
         {showHome
-          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onNewList={async () => { const names = new Set(lists.map(l => l.name)); let nm = 'Nýr listi', k = 2; while (names.has(nm)) nm = 'Nýr listi ' + (k++); const l = await store.createList(nm, 'shopping'); await reload(l.id); setQuickStart(true); switchList(l.id) }} voiceListName={voiceList ? voiceList.name : ''} onVoice={canRecord() ? async () => { primeAudio(); let t = voiceList; if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setVoiceNow(Date.now()) } : null} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
+          ? <HomeView name={profile?.name || (session?.user?.email || '').split('@')[0]} summary={homeSum} lists={lists} purchases={purchases} onOpenList={switchList} onOpenSpending={goBudget} canInstall={!!installPrompt} onInstall={doInstall} onOpenReminders={() => setShowNotif(true)} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} hasSharedList={hasShared} onInvite={inviteHousehold} cashback={myRewards?.balance || 0} onOpenRewards={isAnon ? null : () => setShowRewards(true)} onOpenGriptu={inGriptu ? () => setShowGriptuHome(true) : null} onOpenRestock={() => { const t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (t) switchList(t.id) }} rewardsEnabled={rewardsEnabled} inPilot={inPilot} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} onOpenReceipts={() => setShowReceipts(true)} wallet={wallet} onOpenWallet={isCloud ? () => setShowWallet(true) : null} staples={staples} onOpenMyList={isCloud ? async () => { let t = lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping'); if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setOftenSignal(Date.now()) } : null} onAddStaples={async (names) => { let t = null; for (const n of names) t = await addToShopping(n); flash(names.length + (names.length === 1 ? ' vara sett' : ' vörur settar') + ' á „' + ((t && t.name) || 'innkaupalistann') + '“') }} onDemoReceipt={() => { setReceiptListId(null); setDemoReceipt(true); setShowReceipt(true) }} onNewList={async () => { const names = new Set(lists.map(l => l.name)); let nm = 'Nýr listi', k = 2; while (names.has(nm)) nm = 'Nýr listi ' + (k++); const l = await store.createList(nm, 'shopping'); await reload(l.id); setQuickStart(true); switchList(l.id) }} voiceListName={voiceList ? voiceList.name : ''} inboxUnread={inboxUnread} onOpenInbox={isCloud && session ? () => { landingEvent('inbox_open', { once: false }); setShowInbox(true) } : null} onVoice={canRecord() ? async () => { primeAudio(); let t = voiceList; if (!t) { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } switchList(t.id); setVoiceNow(Date.now()) } : null} onCreateList={async () => { setQuickStart(true); const ex = lists.find(l => l.type === 'shopping'); if (ex) { switchList(ex.id); return } const l = await store.createList('Innkaupalisti', 'shopping'); await reload(l.id); switchList(l.id) }} />
           : showBudget
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
@@ -1232,6 +1257,7 @@ export default function App() {
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
+      {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onChanged={loadInbox} />}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
