@@ -2,6 +2,13 @@
 
 _Uppfært: 10. júní 2026. Þetta skjal er til að opna nýja Cowork-lotu með fullt samhengi — límdu efstu hlutana inn eða vísaðu í skrána._
 
+## GREINING: „KOMA OG FARA STRAX“ (21. nóv 2026, 365 auglýsingagestir á 3 dögum)
+Tími á síðu: <3 sek 37% · 3–10 sek 18% · 10–30 sek 28% · 30+ sek 17%. Nær allir sem prófa eitthvað eru í 30+ hópnum.
+iPhone (Facebook-vafri): ~53% fara innan 3 sek ÓHÁÐ auglýsingu (Android: 8% á kvittanaauglýsingu, 31% á raddauglýsingu). Tilgáta: forhleðsla/óvart-smellir á iPhone — ÓSTAÐFEST.
+Mæling bætt við (bíður deploy): load_hidden, became_visible, first_touch → sýnir hvort síðan var nokkurn tíma sýnileg og hvort gesturinn snerti hana.
+Auglýsingar (Android, hreinasti samanburðurinn): Kvittun (14. nóv) 62 gestir: 23% fara <10 sek, 19% prófa, 4 nýskráðir. Rödd: 99 gestir: 55% fara <10 sek, 5% prófa, 0 nýskráðir.
+→ Kvittanaauglýsingin skilar mun betri gestum. Tillaga til Sverris: færa fjárhæð af raddauglýsingu yfir á kvittanaauglýsingu (hans ákvörðun).
+
 ## LOK INNKAUPAFERÐAR (21. nóv 2026) — KÓÐI Í SKRÁNUM, BÍÐUR DEPLOY-S
 Hugsun: listinn er varanlegur („Vikuinnkaup“), ekki einnota. Keypt hverfur, ókeypt stendur eftir fyrir næstu ferð.
 - Þegar eitthvað er hakað: hnappur „Hreinsa N keyptar vörur af listanum“ (clearChecked í App.jsx, ein endurhleðsla).

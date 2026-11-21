@@ -51,6 +51,19 @@ export function startLandingTracking() {
 export function startAppTracking() {
   if (off()) return () => {}
   landingEvent('app_view')
+  // Mæling á „komu og fóru strax“: var síðan nokkurn tíma sýnileg? Forhleðsla í Facebook/Instagram-vafranum
+  // (síðan hlaðin í bakgrunni áður en/án þess að notandi sjái hana) lítur annars út eins og gestur sem fór á 2 sek.
+  try {
+    if (document.visibilityState !== 'visible') {
+      landingEvent('load_hidden')
+      const onFirst = () => { if (document.visibilityState === 'visible') { landingEvent('became_visible'); document.removeEventListener('visibilitychange', onFirst) } }
+      document.addEventListener('visibilitychange', onFirst)
+    }
+    // Fyrsta snerting eða skrun = raunveruleg manneskja að skoða
+    const onTouch = () => { landingEvent('first_touch'); window.removeEventListener('pointerdown', onTouch, true); window.removeEventListener('scroll', onTouch, true) }
+    window.addEventListener('pointerdown', onTouch, true)
+    window.addEventListener('scroll', onTouch, true)
+  } catch {}
   const onHide = () => { if (document.visibilityState === 'hidden') landingEvent('app_leave') }
   const onPageHide = () => landingEvent('app_leave')
   document.addEventListener('visibilitychange', onHide)
