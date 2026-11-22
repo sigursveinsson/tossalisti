@@ -3,7 +3,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { walletAlerts } from './WalletView.jsx'
-import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet, IconMicrophone, IconPlus, IconChartBar, IconMail } from '@tabler/icons-react'
+import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet, IconMicrophone, IconPlus, IconChartBar, IconMail, IconTrendingDown } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -41,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '', inboxUnread = 0, onOpenInbox, onWish, hasWish = false }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '', inboxUnread = 0, onOpenInbox, onWish, hasWish = false, onWatch, watchCount = 0 }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -68,7 +68,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
   const wTotal = wActive.reduce((s, w) => s + (w.balance != null ? Number(w.balance) : Number(w.amount || 0)), 0)
   const krr = (n) => Math.round(n).toLocaleString('is-IS').replace(/,/g, '.') + ' kr'
 
-  const typeIcon = (t) => { const I = t === 'schedule' ? IconCalendar : t === 'task' ? IconChecklist : t === 'wish' ? IconGift : IconShoppingCart; return <I size={20} stroke={1.75} /> }
+  const typeIcon = (t) => { const I = t === 'schedule' ? IconCalendar : t === 'task' ? IconChecklist : t === 'wish' ? IconGift : t === 'watch' ? IconTrendingDown : IconShoppingCart; return <I size={20} stroke={1.75} /> }
   const Go = () => <span className="home-row-go"><IconChevronRight size={18} stroke={1.75} /></span>
 
   return (
@@ -90,6 +90,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           ? <button onClick={() => onCreateList()}><span className="hq-ic"><IconShoppingCart size={24} stroke={1.75} /></span><b>Búa til lista</b></button>
           : onNewList && <button onClick={() => onNewList()}><span className="hq-ic"><IconPlus size={24} stroke={1.75} /></span><b>Nýr listi</b></button>}
         <button onClick={() => onOpenSpending && onOpenSpending()}><span className="hq-ic"><IconChartBar size={24} stroke={1.75} /></span><b>Bókhaldið</b><small>{kr(monthSpend)} í {MONTHS[new Date().getMonth()].slice(0, 3)}.</small></button>
+        {onWatch && <button className="hq-wide" onClick={() => onWatch()}><span className="hq-ic"><IconTrendingDown size={24} stroke={1.75} /></span><span><b>Verðvakt</b><small>{watchCount > 0 ? watchCount + (watchCount === 1 ? ' vara vöktuð. ' : ' vörur vaktaðar. ') : ''}Límdu slóð á vöru og við látum þig vita ef verðið lækkar.</small></span></button>}
         {onWish && <button className="hq-wide" onClick={() => onWish()}><span className="hq-ic"><IconGift size={24} stroke={1.75} /></span><span><b>{hasWish ? 'Óskalistinn minn' : 'Búa til óskalista'}</b><small>Límdu slóð á vöru, deildu listanum og enginn gefur það sama.</small></span></button>}
       </div>
 

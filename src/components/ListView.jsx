@@ -104,7 +104,8 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [scanFeed, setScanFeed] = useState([])
   const scanLock = useRef({})
   const [linkScan, setLinkScan] = useState(null)
-  const isWish = listType === 'wish' // óskalisti: deilt með hlekk, gestir taka frá (eigandinn sér það ekki)
+  const isWatch = listType === 'watch' // Verðvakt: vörur af vefslóðum, látið vita þegar verð lækkar
+  const isWish = listType === 'wish' || isWatch // óskalisti (deilt með hlekk, gestir taka frá) og Verðvakt nota sama einfalda útlitið
   const sugg = (isTask || isSchedule || isWish) ? [] : suggest(text)
   const isShopping = !isTask && !isSchedule && !isWish
   const sponSugg = (isTask || isSchedule || isWish || !adsEnabled) ? [] : sponsoredSuggest(text)
@@ -691,7 +692,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     <div className="addbar">
       <div className={'add-input' + (isShopping ? ' with-icon' : '')}>
         {isShopping && <IconSearch className="add-input-ico" size={18} stroke={1.75} />}
-        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : urlBusy ? 'Sæki vöruna…' : isWish ? 'Skrifaðu ósk eða límdu slóð á vöru…' : 'Bættu við vöru eða límdu slóð…'} disabled={urlBusy} autoComplete="off" />
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : urlBusy ? 'Sæki vöruna…' : isWatch ? 'Límdu slóð á vöru úr vefverslun…' : isWish ? 'Skrifaðu ósk eða límdu slóð á vöru…' : 'Bættu við vöru eða límdu slóð…'} disabled={urlBusy} autoComplete="off" />
       </div>
       {/* Magn/eining aðeins utan innkaupalista — á innkaupalista er magn stillt með +/− á línunni. */}
       {!isTask && !isShopping && !isWish && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
@@ -1108,15 +1109,17 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     const wishes = items.filter(i => !i.checked), got = items.filter(i => i.checked)
     return (
       <div>
-        <div className="wish-share">
-          <div><b>Deildu óskalistanum</b><span>Fjölskylda og vinir opna hlekkinn og taka frá gjafir. Þú sérð aldrei hvað hefur verið tekið frá.</span></div>
-          <button onClick={shareWish}>{wishMsg || 'Deila hlekk'}</button>
-        </div>
+        {isWatch
+          ? <div className="wish-share"><div><b>Verðvakt</b><span>Opnaðu vöruna í vefverslun, afritaðu slóðina og límdu hana hér. Við sækjum mynd og verð og látum þig vita ef verðið lækkar.</span></div></div>
+          : <div className="wish-share">
+              <div><b>Deildu óskalistanum</b><span>Fjölskylda og vinir opna hlekkinn og taka frá gjafir. Þú sérð aldrei hvað hefur verið tekið frá.</span></div>
+              <button onClick={shareWish}>{wishMsg || 'Deila hlekk'}</button>
+            </div>}
         {addBar}
         {(urlBusy || urlMsg) && <div className="url-msg" role="status">{urlBusy ? 'Sæki heiti, mynd og verð af síðunni…' : urlMsg}</div>}
-        {items.length === 0 && <p className="empty">Skrifaðu ósk eða límdu slóð á vöru í vefverslun. Þá fylgja mynd, verð og hlekkur með.</p>}
+        {items.length === 0 && <p className="empty">{isWatch ? 'Engar vörur á Verðvakt enn. Virkar hjá flestum íslenskum vefverslunum, t.d. ELKO, IKEA, JYSK og Hagkaup.' : 'Skrifaðu ósk eða límdu slóð á vöru í vefverslun. Þá fylgja mynd, verð og hlekkur með.'}</p>}
         {wishes.length > 0 && <div className="group">{wishes.map(it => itemRow(it, 'var(--accent)', false))}</div>}
-        {got.length > 0 && <div className="group"><div className="group-head"><span className="name">Komið</span></div>{got.map(it => itemRow(it, 'var(--accent)', false))}</div>}
+        {got.length > 0 && <div className="group"><div className="group-head"><span className="name">{isWatch ? 'Keypt' : 'Komið'}</span></div>{got.map(it => itemRow(it, 'var(--accent)', false))}</div>}
         {assignModal}
       </div>
     )
