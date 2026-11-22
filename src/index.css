@@ -2411,3 +2411,15 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .inbox-opt.done{background:#e6f4ec;color:#1f7a4d;cursor:default;}
 .inbox-foot{margin:12px 0 0;font-size:12px;color:var(--muted);}
 .inbox-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink2,#3b4352);}
+
+/* Tilkynningar: ein bjalla í hausnum með teljara; ný tilkynning sést líka sem spjald efst á Heim */
+.head-bell{position:relative;}
+.head-bell i{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#c8102e;color:#fff;font-size:10.5px;font-weight:800;font-style:normal;line-height:17px;text-align:center;}
+.home-greet,.home-ach{padding-right:0;}
+.home-news{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:14px;border:1.5px solid #f3c9d0;background:#fff5f6;cursor:pointer;text-align:left;color:var(--navy);font:inherit;}
+.home-news-ic{flex:none;width:38px;height:38px;border-radius:12px;background:#c8102e;color:#fff;display:flex;align-items:center;justify-content:center;}
+.home-news-txt{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.home-news-txt b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.home-news-txt small{font-size:12.5px;color:var(--muted);}
+.inbox-head-btns{display:inline-flex;gap:6px;margin-left:auto;align-items:center;}
+.inbox-head-btns .x{margin-left:0;background:none;border:0;color:var(--muted);cursor:pointer;padding:2px;}

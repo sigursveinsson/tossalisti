@@ -3,7 +3,7 @@ import AdBanner from './AdBanner.jsx'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { walletAlerts } from './WalletView.jsx'
-import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet, IconMicrophone, IconPlus, IconChartBar, IconMail, IconTrendingDown } from '@tabler/icons-react'
+import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChevronRight, IconDeviceMobile, IconGift, IconReceipt, IconShieldCheck, IconShoppingCart, IconUsers, IconWallet, IconMicrophone, IconPlus, IconChartBar, IconBell, IconTrendingDown } from '@tabler/icons-react'
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
@@ -41,7 +41,7 @@ function feedText(g) {
   return `kláraði „${g.item || 'verk'}“${g.n > 1 ? ` (${g.n}×)` : ''}`
 }
 
-export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '', inboxUnread = 0, onOpenInbox, onWish, hasWish = false, onWatch, watchCount = 0 }) {
+export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '', inboxUnread = 0, inboxLatest = '', onOpenInbox, onWish, hasWish = false, onWatch, watchCount = 0 }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
   const tk = todayKey()
 
@@ -74,7 +74,6 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
   return (
     <div className="home">
       <div className="home-hi">
-        {onOpenInbox && <button className={'home-bell' + (inboxUnread ? ' on' : '')} onClick={onOpenInbox} aria-label={inboxUnread ? 'Innhólf, ' + inboxUnread + ' ný skilaboð' : 'Innhólf'} title="Innhólf"><IconMail size={22} stroke={1.75} />{inboxUnread > 0 && <i>{inboxUnread > 9 ? '9+' : inboxUnread}</i>}</button>}
         <div className="home-greet">Góðan dag{name ? ', ' + name : ''}</div>
         <div className="home-ach">
           {s.week_done > 0
@@ -83,6 +82,12 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         </div>
       </div>
 
+      {onOpenInbox && inboxUnread > 0 && (
+        <button className="home-news" onClick={onOpenInbox}>
+          <span className="home-news-ic"><IconBell size={20} stroke={1.75} /></span>
+          <span className="home-news-txt"><b>{inboxLatest || 'Ný tilkynning'}</b><small>{inboxUnread > 1 ? inboxUnread + ' nýjar tilkynningar' : 'Ný tilkynning'} · Skoða</small></span>
+        </button>
+      )}
       <div className="home-quick">
         {onScanReceipt && <button onClick={() => onScanReceipt()}><span className="hq-ic"><IconReceipt size={24} stroke={1.75} /></span><b>Skanna kvittun</b></button>}
         {onVoice && <button onClick={() => onVoice()}><span className="hq-ic"><IconMicrophone size={24} stroke={1.75} /></span><b>Tala inn á lista</b>{voiceListName ? <small>{voiceListName}</small> : null}</button>}

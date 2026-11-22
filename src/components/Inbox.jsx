@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { IconX, IconMail, IconTrendingDown } from '@tabler/icons-react'
+import { IconX, IconBell, IconSettings, IconTrendingDown } from '@tabler/icons-react'
 import { supabase } from '../lib/supabaseClient.js'
 import { useBackClose } from '../lib/backstack.js'
 import { store } from '../lib/store.js'
@@ -20,7 +20,7 @@ function when(iso) {
   return dt.getDate() + '.' + (dt.getMonth() + 1) + '.'
 }
 
-export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onClose, onOpenList, onChanged }) {
+export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onSettings, onClose, onOpenList, onChanged }) {
   useBackClose(true, onClose)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -39,7 +39,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onClose, onO
 
   const send = async () => {
     if (!title.trim() || busy) return
-    if (!window.confirm('Senda þessi skilaboð í innhólf ALLRA notenda?')) return
+    if (!window.confirm('Senda þessa tilkynningu til ALLRA notenda?')) return
     setBusy(true); setErr('')
     const { error } = await supabase.from('inbox_messages').insert({ kind: 'news', title: title.trim().slice(0, 120), body: body.trim().slice(0, 600) || null, action: offer ? 'news_email' : null })
     setBusy(false)
@@ -55,13 +55,13 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onClose, onO
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal rc-modal inbox" onClick={e => e.stopPropagation()}>
-        <h2>Innhólf <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
-        {msgs.length === 0 && <p className="empty">Engin skilaboð enn. Hér birtast nýjungar í Tossalista og tilkynningar frá Verðvaktinni.</p>}
+        <h2>Tilkynningar <span className="inbox-head-btns">{onSettings && <button className="x" onClick={onSettings} aria-label="Stillingar: áminningar og tölvupóstur" title="Stillingar: áminningar og tölvupóstur"><IconSettings size={20} stroke={1.75} /></button>}<button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></span></h2>
+        {msgs.length === 0 && <p className="empty">Engar tilkynningar enn. Hér birtast nýjungar í Tossalista og verðlækkanir frá Verðvaktinni.</p>}
         {msgs.map(m => (
           <div className={'inbox-msg' + (isNew(m) ? ' new' : '')} key={m.id}>
             {m.image_url
               ? <img className="inbox-img" src={m.image_url} alt="" loading="lazy" />
-              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : <IconMail size={20} stroke={1.75} />}</span>}
+              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : <IconBell size={20} stroke={1.75} />}</span>}
             <div className="inbox-txt">
               <b>{m.title}</b>
               {m.body && <p>{m.body}</p>}
@@ -80,7 +80,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onClose, onO
             </div>
           </div>
         ))}
-        {hasEmail && ns && ns.price_email && msgs.some(m => m.kind === 'price') && <p className="inbox-foot">Verðlækkanir koma líka í tölvupósti. Þú breytir því undir Áminningum.</p>}
+        {hasEmail && ns && ns.price_email && msgs.some(m => m.kind === 'price') && <p className="inbox-foot">Verðlækkanir koma líka í tölvupósti. Þú breytir því undir tannhjólinu hér efst.</p>}
         {isAdmin && (
           <div className="inbox-compose">
             <div className="modal-label">Senda öllum (aðeins stjórnandi)</div>
@@ -88,7 +88,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onClose, onO
             <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Texti (valfrjálst)" rows={3} maxLength={600} />
             <label className="inbox-chk"><input type="checkbox" checked={offer} onChange={e => setOffer(e.target.checked)} /> Hnappur í skilaboðunum: „Já, sendu mér fréttir í tölvupósti“</label>
             {err && <p className="ns-err">{err}</p>}
-            <button className="primary-btn" disabled={!title.trim() || busy} onClick={send}>{busy ? 'Sendi…' : 'Senda í innhólf allra'}</button>
+            <button className="primary-btn" disabled={!title.trim() || busy} onClick={send}>{busy ? 'Sendi…' : 'Senda öllum'}</button>
           </div>
         )}
       </div>

@@ -944,3 +944,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Atvik: optin_news, optin_price.
 - Verðvakt hefur nú eigin inngang: hnappur á Heim opnar lista af gerðinni 'watch' (sama einfalda útlit og óskalisti, án deilingar). Slóð má áfram líma í hvaða innkaupalista sem er.
 - Heiti: listinn/hnappurinn heitir „Kaupa seinna“ (ákvörðun Sverris 22.11.); „Verðvakt“ er heiti á tilkynningunni/merkinu á vörunni.
+- Innhólf heitir nú „Tilkynningar“: ein bjalla í hausnum með teljara opnar þær; tannhjól í glugganum opnar stillingar (áminningar og tölvupóstur). Ólesin tilkynning sést líka sem spjald efst á Heim. Umslagið á Heim fjarlægt.
