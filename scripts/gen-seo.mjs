@@ -11,7 +11,7 @@ import { RECIPES } from '../src/data/recipes.js'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUB = path.join(ROOT, 'public')
 const SITE = 'https://tossalisti.is'
-const FACEBOOK = 'https://www.facebook.com/profile.php?id=61590431443377' // sjá src/lib/social.js
+const FACEBOOK = 'https://www.facebook.com/tossalisti' // sjá src/lib/social.js
 const INSTAGRAM = 'https://www.instagram.com/tossalisti.is/'
 const TODAY = new Date().toISOString().slice(0, 10)
 
