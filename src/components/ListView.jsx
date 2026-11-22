@@ -1110,14 +1110,14 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     return (
       <div>
         {isWatch
-          ? <div className="wish-share"><div><b>Verðvakt</b><span>Opnaðu vöruna í vefverslun, afritaðu slóðina og límdu hana hér. Við sækjum mynd og verð og látum þig vita ef verðið lækkar.</span></div></div>
+          ? <div className="wish-share"><div><b>Kaupa seinna</b><span>Safnaðu hér því sem þú ert að skoða í vefverslunum: afritaðu slóðina á vöruna og límdu hana hér. Við sækjum mynd og verð, og Verðvaktin lætur þig vita ef verðið lækkar.</span></div></div>
           : <div className="wish-share">
               <div><b>Deildu óskalistanum</b><span>Fjölskylda og vinir opna hlekkinn og taka frá gjafir. Þú sérð aldrei hvað hefur verið tekið frá.</span></div>
               <button onClick={shareWish}>{wishMsg || 'Deila hlekk'}</button>
             </div>}
         {addBar}
         {(urlBusy || urlMsg) && <div className="url-msg" role="status">{urlBusy ? 'Sæki heiti, mynd og verð af síðunni…' : urlMsg}</div>}
-        {items.length === 0 && <p className="empty">{isWatch ? 'Engar vörur á Verðvakt enn. Virkar hjá flestum íslenskum vefverslunum, t.d. ELKO, IKEA, JYSK og Hagkaup.' : 'Skrifaðu ósk eða límdu slóð á vöru í vefverslun. Þá fylgja mynd, verð og hlekkur með.'}</p>}
+        {items.length === 0 && <p className="empty">{isWatch ? 'Ekkert vistað enn. Virkar hjá flestum íslenskum vefverslunum, t.d. ELKO, IKEA, JYSK og Hagkaup.' : 'Skrifaðu ósk eða límdu slóð á vöru í vefverslun. Þá fylgja mynd, verð og hlekkur með.'}</p>}
         {wishes.length > 0 && <div className="group">{wishes.map(it => itemRow(it, 'var(--accent)', false))}</div>}
         {got.length > 0 && <div className="group"><div className="group-head"><span className="name">{isWatch ? 'Keypt' : 'Komið'}</span></div>{got.map(it => itemRow(it, 'var(--accent)', false))}</div>}
         {assignModal}

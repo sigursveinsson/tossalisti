@@ -39,7 +39,7 @@ function normUrl(raw: string): URL | null {
   u.protocol = 'https:'
   if (u.port || u.username || u.password || !hostOk(u.hostname)) return null
   u.hash = ''
-  for (const k of [...u.searchParams.keys()]) if (/^(utm_|fbclid$|gclid$|gad_|mc_|igshid$|srsltid$|msclkid$|_gl$)/i.test(k)) u.searchParams.delete(k)
+  for (const k of [...u.searchParams.keys()]) if (/^(utm_|fbclid$|gclid$|gbraid$|wbraid$|gad_|mc_|igshid$|srsltid$|msclkid$|_gl$)/i.test(k)) u.searchParams.delete(k)
   if (u.href.length > 600) return null
   return u
 }
@@ -217,8 +217,16 @@ async function aiRead(text: string, url: string, title: string): Promise<Found |
 
 type Read = { ok: true; title: string; image: string | null; price: number | null; was: number | null; currency: string; method: string; sig: string | null; host: string; ai: boolean } | { ok: false; reason: string }
 async function readProduct(u: URL, prev?: { method?: string | null; sig?: string | null; price?: number | null; price_was?: number | null }): Promise<Read> {
-  const page = await fetchPage(u)
+  let page = await fetchPage(u)
   if ('error' in page) return { ok: false, reason: page.error }
+  // Shopify-verslanir (t.d. 66°Norður) velja land og gjaldmiðil eftir IP-tölu; netþjónninn okkar er erlendis og fær þá EUR.
+  // Biðjum sérstaklega um íslenska markaðinn.
+  const shopCountry = (page.html.match(/Shopify\.country\s*=\s*"([A-Z]{2})"/) || [])[1]
+  if (shopCountry && shopCountry !== 'IS' && !u.searchParams.has('country')) {
+    const u2 = new URL(u.href); u2.searchParams.set('country', 'IS')
+    const p2 = await fetchPage(u2)
+    if (!('error' in p2) && /Shopify\.country\s*=\s*"IS"/.test(p2.html)) page = p2
+  }
   const { html, final } = page
   const mm = metaMap(html)
   const ld = fromJsonLd(html)
@@ -275,7 +283,12 @@ async function runDue(limit: number) {
       const old = w.price as number | null
       const upd: Record<string, unknown> = { checked_at: now, fails: 0, method: r.method, sig: r.sig, price_was: r.was }
       if (!w.image_url && r.image) upd.image_url = r.image
-      if (old && r.price !== old) {
+      const cur = r.currency || 'ISK'
+      if (cur !== (w.currency || 'ISK')) {
+        // Gjaldmiðill breyttist (t.d. EUR → ISK eftir leiðréttingu): byrja upp á nýtt, engin tilkynning
+        upd.price = r.price; upd.currency = cur; upd.first_price = r.price; upd.title = r.title
+        await db.from('list_items').update({ ext_price: r.price, price_first: r.price, ext_cur: cur }).eq('watch_id', w.id)
+      } else if (old && r.price !== old) {
         stats.changed++
         upd.price = r.price; upd.changed_at = now
         const { data: items } = await db.from('list_items').update({ ext_price: r.price }).eq('watch_id', w.id).eq('checked', false).select('created_by,list_id')

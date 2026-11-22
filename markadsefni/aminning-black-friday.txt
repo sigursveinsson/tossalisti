@@ -1,0 +1,19 @@
+Þú ert að minna Sverri (eiganda Tossalista, tossalisti.is) á ákvörðun sem hann bað um að fá áminningu um þriðjudaginn 24. nóvember 2026. Svaraðu á íslensku, stutt og beint. Þetta er eingöngu áminning: ekki birta neitt, ekki breyta neinu í Ads Manager, ekki senda tölvupóst og ekki breyta skrám.
+
+Skrifaðu áminningu með þessu efni:
+
+1. Kvittanaauglýsingin á Facebook (2.400 kr. á dag) rennur út miðvikudaginn 25. nóvember kl. 16:34. Raddauglýsingin „Með rödd nóv“ (3.200 kr. á dag) keyrir áfram.
+
+2. Planið var að skipta yfir í Black Friday auglýsingu þegar hún rennur út. Black Friday er föstudaginn 27. nóvember.
+
+3. Þrjár myndir (1080×1350) og textar eru tilbúin í möppunni korfan\markadsefni:
+   - tossalisti-blackfriday-1.png: grínið, „100% afsláttur af áskrift að Tossalista* (*eins og alla aðra daga)“. Tillaga: nota sem auglýsingu frá miðvikudegi.
+   - tossalisti-blackfriday-2.png: „Keyptirðu eitthvað á Black Friday? Taktu mynd af kvittuninni.“ Tillaga: færsla á föstudeginum og um helgina.
+   - tossalisti-blackfriday-3.png: „Kaupa seinna“ með Verðvakt. Tillaga: bíða þar til „Kaupa seinna“ er komið út og prófað.
+   - Textarnir eru í blackfriday-faerslur.md.
+
+4. Það sem Sverrir þarf að ákveða: hvaða mynd fer í auglýsingu, hvaða fjárhæð á dag og hve lengi, og hvort Claude eigi að setja hana upp í Ads Manager (Claude biður um staðfestingu á fjárhæð áður en nokkuð er birt).
+
+5. Annað sem beið: senda skilaboð í innhólfið til allra notenda um „Kaupa seinna“ og óskalistann (eftir að hafa prófað hvort tveggja sjálfur), og birta Sigga og Jón færsluna.
+
+Endaðu á: „Viltu að ég setji Black Friday auglýsinguna upp?“

@@ -90,7 +90,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
           ? <button onClick={() => onCreateList()}><span className="hq-ic"><IconShoppingCart size={24} stroke={1.75} /></span><b>Búa til lista</b></button>
           : onNewList && <button onClick={() => onNewList()}><span className="hq-ic"><IconPlus size={24} stroke={1.75} /></span><b>Nýr listi</b></button>}
         <button onClick={() => onOpenSpending && onOpenSpending()}><span className="hq-ic"><IconChartBar size={24} stroke={1.75} /></span><b>Bókhaldið</b><small>{kr(monthSpend)} í {MONTHS[new Date().getMonth()].slice(0, 3)}.</small></button>
-        {onWatch && <button className="hq-wide" onClick={() => onWatch()}><span className="hq-ic"><IconTrendingDown size={24} stroke={1.75} /></span><span><b>Verðvakt</b><small>{watchCount > 0 ? watchCount + (watchCount === 1 ? ' vara vöktuð. ' : ' vörur vaktaðar. ') : ''}Límdu slóð á vöru og við látum þig vita ef verðið lækkar.</small></span></button>}
+        {onWatch && <button className="hq-wide" onClick={() => onWatch()}><span className="hq-ic"><IconTrendingDown size={24} stroke={1.75} /></span><span><b>Kaupa seinna</b><small>{watchCount > 0 ? watchCount + (watchCount === 1 ? ' vara á Verðvakt. ' : ' vörur á Verðvakt. ') : ''}Vistaðu vörur úr vefverslunum á einn stað. Verðvaktin lætur þig vita ef verðið lækkar.</small></span></button>}
         {onWish && <button className="hq-wide" onClick={() => onWish()}><span className="hq-ic"><IconGift size={24} stroke={1.75} /></span><span><b>{hasWish ? 'Óskalistinn minn' : 'Búa til óskalista'}</b><small>Límdu slóð á vöru, deildu listanum og enginn gefur það sama.</small></span></button>}
       </div>
 
