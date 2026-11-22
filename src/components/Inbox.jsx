@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { IconX, IconBell, IconTrendingDown } from '@tabler/icons-react'
+import { IconX, IconMail, IconTrendingDown } from '@tabler/icons-react'
 import { supabase } from '../lib/supabaseClient.js'
 import { useBackClose } from '../lib/backstack.js'
 
 // Innhólf: skilaboð frá Tossalista inni í appinu (nýjungar til allra, Verðvakt til eins notanda).
-// Kemur í stað tölvupósts fyrir kynningar: enginn sprettigluggi, aðeins bjalla með punkti á Heim.
+// Kemur í stað tölvupósts fyrir kynningar: enginn sprettigluggi, aðeins umslag með punkti á Heim.
 function when(iso) {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
   if (mins < 1) return 'rétt í þessu'
@@ -50,7 +50,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, onClose, onOpenList, o
           <div className={'inbox-msg' + (isNew(m) ? ' new' : '')} key={m.id}>
             {m.image_url
               ? <img className="inbox-img" src={m.image_url} alt="" loading="lazy" />
-              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : <IconBell size={20} stroke={1.75} />}</span>}
+              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : <IconMail size={20} stroke={1.75} />}</span>}
             <div className="inbox-txt">
               <b>{m.title}</b>
               {m.body && <p>{m.body}</p>}

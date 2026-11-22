@@ -104,9 +104,10 @@ export default function ListView({ items, listType = 'shopping', members = [], k
   const [scanFeed, setScanFeed] = useState([])
   const scanLock = useRef({})
   const [linkScan, setLinkScan] = useState(null)
-  const sugg = (isTask || isSchedule) ? [] : suggest(text)
-  const isShopping = !isTask && !isSchedule
-  const sponSugg = (isTask || isSchedule || !adsEnabled) ? [] : sponsoredSuggest(text)
+  const isWish = listType === 'wish' // óskalisti: deilt með hlekk, gestir taka frá (eigandinn sér það ekki)
+  const sugg = (isTask || isSchedule || isWish) ? [] : suggest(text)
+  const isShopping = !isTask && !isSchedule && !isWish
+  const sponSugg = (isTask || isSchedule || isWish || !adsEnabled) ? [] : sponsoredSuggest(text)
   const rewardFor = (name) => (rewardProducts && rewardProducts.length) ? rewardForName(name, rewardProducts) : null
   // Cashback-merki: gjafatákn + upphæð (hönnunarkerfi: grænt útlínumerki, engin emoji).
   const rewardLabel = (p) => <><IconGift size={12} stroke={2} />{p.reward_type === 'percent' ? `${p.reward_value}%` : `+${p.reward_value} stig`}</>
@@ -463,6 +464,20 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     } catch { setUrlMsg('Tókst ekki að sækja vöruna. Reyndu aftur.') }
     setUrlBusy(false)
   }
+  // Óskalisti: hlekkur sem gestir opna án skráningar (tossalisti.is/osk/<tákn>)
+  const [wishMsg, setWishMsg] = useState('')
+  const shareWish = async () => {
+    const say = (m) => { setWishMsg(m); setTimeout(() => setWishMsg(''), 4000) }
+    if (!isCloud) { say('Skráðu þig inn fyrst'); return }
+    const { data: tok } = await supabase.rpc('wish_share', { p_list: listId })
+    if (!tok) { say('Tókst ekki, reyndu aftur'); return }
+    const link = 'https://tossalisti.is/osk/' + tok
+    landingEvent('wish_share', { once: false })
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Óskalistinn minn', text: 'Hér er óskalistinn minn á Tossalista', url: link }); return }
+    } catch (e) { if (e && e.name === 'AbortError') return }
+    try { await navigator.clipboard.writeText(link); say('Hlekkur afritaður') } catch { window.prompt('Afritaðu hlekkinn:', link) }
+  }
   const webPrice = (n, cur) => Math.round(n).toLocaleString('is-IS') + (!cur || cur === 'ISK' ? ' kr.' : ' ' + cur)
   const webHost = (u) => { try { return new URL(u).hostname.replace(/^www\./, '') } catch { return 'vefur' } }
   const add = (name, image, ext) => {
@@ -652,7 +667,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           {isSchedule && it.weekday === 'daily' && <span className="rec-tag"><IconRepeat size={12} stroke={2} />daglega</span>}
           {dueTag(it)}
         </span>
-        {!chore && onSetQty && (
+        {!chore && !isWish && onSetQty && (
           <span className="qty-step" onClick={e => e.stopPropagation()}>
             <button onClick={() => onSetQty(it, (it.qty ?? 1) - 1)} disabled={(it.qty ?? 1) <= 1} aria-label="Fækka"><IconMinus size={14} stroke={2} /></button>
             <span className="qty-n">{it.qty ?? 1}</span>
@@ -665,7 +680,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             {it.reminder_enabled ? <><IconBell size={17} stroke={1.75} />{it.time ? <span className="rem-time">{it.time}</span> : null}</> : <IconBellOff size={17} stroke={1.75} />}
           </button>
         )}
-        {!chore && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru"><IconTag size={17} stroke={1.75} /></button>}
+        {!chore && !isWish && it.dept === 'other' && onRecategorize && <button className="recat-btn" onClick={() => setDeptItem(it)} title="Flokka vöru"><IconTag size={17} stroke={1.75} /></button>}
         {assignBtn(it)}
         <button className="del" onClick={() => onRemove(it)} aria-label="Eyða"><IconX size={17} stroke={1.75} /></button>
       </div>
@@ -676,11 +691,11 @@ export default function ListView({ items, listType = 'shopping', members = [], k
     <div className="addbar">
       <div className={'add-input' + (isShopping ? ' with-icon' : '')}>
         {isShopping && <IconSearch className="add-input-ico" size={18} stroke={1.75} />}
-        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : urlBusy ? 'Sæki vöruna…' : 'Bættu við vöru eða límdu slóð…'} disabled={urlBusy} autoComplete="off" />
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={(isTask || isSchedule) ? 'Bættu við verki…' : urlBusy ? 'Sæki vöruna…' : isWish ? 'Skrifaðu ósk eða límdu slóð á vöru…' : 'Bættu við vöru eða límdu slóð…'} disabled={urlBusy} autoComplete="off" />
       </div>
       {/* Magn/eining aðeins utan innkaupalista — á innkaupalista er magn stillt með +/− á línunni. */}
-      {!isTask && !isShopping && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
-      {!isTask && !isShopping && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
+      {!isTask && !isShopping && !isWish && <input className="qty-in" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="magn" inputMode="decimal" />}
+      {!isTask && !isShopping && !isWish && <input className="unit-in" value={unit} onChange={e => setUnit(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="g/stk" />}
       {isShopping && <button className="scan-btn" onClick={() => setScanning(true)} aria-label="Skanna strikamerki" title="Skanna strikamerki"><IconBarcode size={21} stroke={1.75} /></button>}
       {micAvailable && !text.trim()
         ? <button className="add mic" onClick={startVoice} aria-label="Tala inn á listann" title="Tala inn á listann"><IconMicrophone size={21} stroke={2} /></button>
@@ -1085,6 +1100,24 @@ export default function ListView({ items, listType = 'shopping', members = [], k
           </div>
         )}
         {schedModals}
+      </div>
+    )
+  }
+
+  if (isWish) {
+    const wishes = items.filter(i => !i.checked), got = items.filter(i => i.checked)
+    return (
+      <div>
+        <div className="wish-share">
+          <div><b>Deildu óskalistanum</b><span>Fjölskylda og vinir opna hlekkinn og taka frá gjafir. Þú sérð aldrei hvað hefur verið tekið frá.</span></div>
+          <button onClick={shareWish}>{wishMsg || 'Deila hlekk'}</button>
+        </div>
+        {addBar}
+        {(urlBusy || urlMsg) && <div className="url-msg" role="status">{urlBusy ? 'Sæki heiti, mynd og verð af síðunni…' : urlMsg}</div>}
+        {items.length === 0 && <p className="empty">Skrifaðu ósk eða límdu slóð á vöru í vefverslun. Þá fylgja mynd, verð og hlekkur með.</p>}
+        {wishes.length > 0 && <div className="group">{wishes.map(it => itemRow(it, 'var(--accent)', false))}</div>}
+        {got.length > 0 && <div className="group"><div className="group-head"><span className="name">Komið</span></div>{got.map(it => itemRow(it, 'var(--accent)', false))}</div>}
+        {assignModal}
       </div>
     )
   }

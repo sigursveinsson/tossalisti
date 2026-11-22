@@ -925,3 +925,13 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - **Innhólf:** bjalla á Heim (`Inbox.jsx`), töflur inbox_messages (user_id null = til allra) og inbox_state (seen_at). Stjórnandi getur sent öllum úr innhólfinu.
 - Atvik: watch_add, watch_ok, watch_noprice, watch_fail, inbox_open.
 - Óprófað: viðmótið í vafra (bygging og birting), „Lækkaði um“ á línu, innhólfið sjálft. Fyrra verð (was) er ekki lesið úr JSON-LD.
+
+## Óskalisti með frátekt — 22. nóv. 2026
+- Ný listategund `wish`. Heim: hnappurinn „Búa til óskalista“ / „Óskalistinn minn“. Óskir skrifaðar eða límdar sem slóð (Verðvakt fylgir).
+- „Deila hlekk“ → `wish_share()` býr til tákn → `tossalisti.is/osk/<tákn>` (`WishView.jsx`, sjálfstæð síða í main.jsx, sjálfvirkur gestaaðgangur).
+- Gestir: „Taka frá“ / „Hætta við“; aðrir sjá bara „Frátekið“ (nafnlaust). Eigandi (og meðlimir listans) fá aldrei frátektir: `wish_view()` felur þær á netþjóni. Töflurnar wish_shares og wish_claims hafa engar RLS-reglur (aðeins föll).
+- Frátekt lifir þótt gestaaðgangi sé eytt; cleanup_idle_guests eyðir ekki gestum með frátekt.
+- Ákvarðanir Sverris: nafnlaus frátekt, hlekkur án skráningar, einn listi á mann.
+- Prófað í SQL (rúllað til baka): ókunnugur getur ekki búið til hlekk, eigandi getur ekki tekið frá né séð frátekt, annar gestur fær „taken“ og getur ekki afturkallað frátekt annarra, list_id lekur ekki. Óprófað: viðmótið í vafra.
+- Atvik: wish_open, wish_share, wish_view, wish_claim, wish_unclaim.
+- ATH (eldra): RLS-reglan members_insert leyfir hverjum sem er að bæta SJÁLFUM sér á lista ef hann veit list_id. Þess vegna skilar wish_view aldrei list_id. Þarf að skoða með boðsflæðinu.
