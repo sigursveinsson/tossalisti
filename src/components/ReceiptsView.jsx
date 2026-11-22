@@ -1,3 +1,4 @@
+import { storeLabel } from '../data/categories.js'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { store } from '../lib/store.js'
 import { makeArchiveImage } from '../lib/receipt.js'
@@ -83,7 +84,7 @@ function Detail({ p, canEdit, onBack, onChanged }) {
     <div className="rc-detail">
       <button className="back" onClick={onBack}><IconArrowLeft size={18} stroke={1.9} /> Kvittanir</button>
       <div className="rc-d-head">
-        <div><div className="rc-d-store">{p.store || 'Kvittun'}</div><div className="rc-d-meta">{fmt(p.purchased_at)}</div></div>
+        <div><div className="rc-d-store">{storeLabel(p.store) || 'Kvittun'}</div><div className="rc-d-meta">{fmt(p.purchased_at)}</div></div>
         <div className="rc-d-total">{kr(p.total)}</div>
       </div>
 
@@ -162,7 +163,7 @@ export default function ReceiptsView({ purchases = [], currentUserId, onClose, o
               return (
                 <button className="rc-row" key={it.id} onClick={() => setOpenId(p.id)}>
                   <span className="rc-ico"><IconShieldCheck size={19} stroke={1.75} /></span>
-                  <span className="rc-main"><b>{it.name}</b><small>{p.store} · {fmt(p.purchased_at)}</small></span>
+                  <span className="rc-main"><b>{it.name}</b><small>{storeLabel(p.store)} · {fmt(p.purchased_at)}</small></span>
                   <span className={'rc-left' + (n <= 60 ? ' soon' : '')}>{leftLabel(n)}</span>
                 </button>
               )
@@ -176,7 +177,7 @@ export default function ReceiptsView({ purchases = [], currentUserId, onClose, o
               return (
                 <button className="rc-row" key={'r' + p.id} onClick={() => setOpenId(p.id)}>
                   <span className="rc-ico"><IconArrowBackUp size={19} stroke={1.75} /></span>
-                  <span className="rc-main"><b>{p.store || 'Kvittun'}</b><small>skila fyrir {fmt(p.return_until)}</small></span>
+                  <span className="rc-main"><b>{storeLabel(p.store) || 'Kvittun'}</b><small>skila fyrir {fmt(p.return_until)}</small></span>
                   <span className={'rc-left' + (n <= 7 ? ' soon' : '')}>{leftLabel(n)}</span>
                 </button>
               )
@@ -188,7 +189,7 @@ export default function ReceiptsView({ purchases = [], currentUserId, onClose, o
           {shown.slice(0, 200).map(p => (
             <button className="rc-row" key={p.id} onClick={() => setOpenId(p.id)}>
               <span className="rc-ico">{p.receipt_path ? <IconPhoto size={19} stroke={1.75} /> : <IconReceipt size={19} stroke={1.75} />}</span>
-              <span className="rc-main"><b>{p.store || 'Kvittun'}</b><small>{fmt(p.purchased_at)}{(p.items || []).length ? ` · ${(p.items || []).length} vörur` : ''}</small></span>
+              <span className="rc-main"><b>{storeLabel(p.store) || 'Kvittun'}</b><small>{fmt(p.purchased_at)}{(p.items || []).length ? ` · ${(p.items || []).length} vörur` : ''}</small></span>
               <span className="rc-amt">{kr(p.total)}</span>
               <IconChevronRight size={16} stroke={1.75} className="rc-go" />
             </button>

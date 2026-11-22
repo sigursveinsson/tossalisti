@@ -964,3 +964,9 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - **Afsláttur á vöru:** parse-receipt v32 (samstillt við v30 sem var nýrri en staðbundna skráin: VSK-tafla o.fl.) skilar `discount` á línu; framendi dregur frá vörunni, afgangur verður „Afsláttur“. Prófað með tilbúnum kvittunum: tveir vöruafslættir paraðir rétt; félagsafsláttur af samtölu helst sem sér lína.
 - **„Skoða appið fyrst“** sýnist aðeins gestum; skráðir notendur sjá „Loka“.
 - Bíður deploy (framendi): hreinsunartexti, samþykkishnappur, afsláttur í framenda, Loka-hnappur, tilkynningar til notanda virka þegar framendi les archived_at.
+
+## Samræmd verslunarheiti — 22. nóv. 2026
+- Bókhaldið flokkaði þegar eftir keðju (storeChain). Nú: fleiri keðjur (Prís, Húsasmiðjan, BYKO, JYSK, Vínbúðin, Lyf og heilsa, SPAR, Te & kaffi o.fl.), íslenskir stafir einfaldaðir við samanburð, „ehf.“ burt og HÁSTAFIR lagaðir.
+- Nýtt `storeLabel()`: birting „Bónus · Spöng“, „ELKO · Lindir“ í bókhaldi og kvittanasafni. Upprunalega heitið helst óbreytt í `purchases.store` (fingrafar/tvítekningarvörn óbreytt).
+- DB: `purchases.store_chain` (trigger, fall `store_chain_name()`), fyllt fyrir allar kvittanir: 70 Bónus-kvittanir úr 18 afbrigðum, 61 Krónu úr 16. Fyrir greiningar og bankasamtal.
+- ATH: eldra fallið `store_chain(s)` (notað af brand_dashboard, skilar „Aðrar verslanir“ utan matvörukeðja) var látið óbreytt.

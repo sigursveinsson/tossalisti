@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain, withStoreCategory } from '../data/categories.js'
+import { EXPENSE_CATEGORIES, suggestCategory, effectiveItemCat, itemCategory, storeChain, storeLabel, withStoreCategory } from '../data/categories.js'
 import { useBackClose } from '../lib/backstack.js'
 import { ExpIcon, StoreIcon } from '../data/icons.jsx'
 import { IconChevronDown, IconChevronLeft, IconChevronRight, IconPhoto, IconPlus, IconReceipt, IconSearch, IconSettings, IconShieldCheck, IconX } from '@tabler/icons-react'
@@ -459,7 +459,7 @@ export default function BudgetView({ purchases: purchasesIn = [], members = [], 
             return (
               <label className={'bline' + (on ? ' on' : '')} key={it.id}>
                 <input type="checkbox" checked={on} onChange={() => setPicked(m => { const n = { ...m }; if (n[it.id]) delete n[it.id]; else n[it.id] = true; return n })} />
-                <span className="bline-main"><b>{it.name}</b><small>{p.store || 'Færsla'} · {fmtDate(dkey(p))}</small></span>
+                <span className="bline-main"><b>{it.name}</b><small>{storeLabel(p.store) || 'Færsla'} · {fmtDate(dkey(p))}</small></span>
                 <span className="bline-cat"><ExpIcon cat={c} size={13} /> {c.name}</span>
                 <span className="bline-amt">{kr(it.price)}</span>
               </label>
@@ -485,7 +485,7 @@ export default function BudgetView({ purchases: purchasesIn = [], members = [], 
               <div className="btx">
                 <button className="btx-exp" onClick={() => items.length && setOpenIds(o => ({ ...o, [p.id]: !o[p.id] }))} aria-label="Sýna liði">{items.length ? (open ? <IconChevronDown size={16} stroke={1.75} /> : <IconChevronRight size={16} stroke={1.75} />) : '·'}</button>
                 <button className="btx-main" onClick={() => setForm(p)}>
-                  <span className="btx-store">{p.store || 'Færsla'}{p.receipt_path ? <IconPhoto size={13} stroke={1.9} className="btx-has-img" /> : null}</span>
+                  <span className="btx-store">{storeLabel(p.store) || 'Færsla'}{p.receipt_path ? <IconPhoto size={13} stroke={1.9} className="btx-has-img" /> : null}</span>
                   <span className="btx-meta">{fmtDate(p.purchased_at)}{items.length ? ` · ${items.length} liðir` : ''}{payerName(p) ? ' · ' + payerName(p) : ''}</span>
                 </button>
                 <span className="btx-amt">{kr(p.total)}</span>

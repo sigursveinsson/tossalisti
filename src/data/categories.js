@@ -94,27 +94,76 @@ const STORE_CHAINS = [
   ['Hagkaup', ['hagkaup']],
   ['Costco', ['costco']],
   ['Iceland', ['iceland']],
+  ['Prís', [' prís ', ' pris ']],
   ['Fjarðarkaup', ['fjarðarkaup', 'fjardarkaup']],
   ['Kjörbúðin', ['kjörbúð', 'kjorbud']],
   ['Krambúð', ['krambúð', 'krambud']],
   ['10-11', ['10-11', '10/11', 'tíu ellefu']],
   ['Extra', ['extra ']],
-  ['Vínbúðin', ['vínbúð', 'vinbud']],
+  ['SPAR', [' spar ']],
+  ['Kostur', [' kostur ']],
+  ['Melabúðin', ['melabúð', 'melabud']],
+  ['Heimkaup', ['heimkaup']],
+  ['Vínbúðin', ['vínbúð', 'vinbud', 'vínbuð', 'vinbuð']],
   ['Lyfja', ['lyfja']],
+  ['Lyf og heilsa', ['lyf og heilsa']],
   ['Apótekið', ['apótek', 'apotek']],
-  ['N1', ['n1']],
-  ['Olís', ['olís', 'olis']],
+  ['N1', [' n1 ']],
+  ['Olís', ['olís', 'olis ']],
   ['Orkan', ['orkan']],
-  ['ÓB', ['ób ']],
+  ['ÓB', [' ób ']],
+  ['Húsasmiðjan', ['húsasmiðj', 'husasmidj']],
+  ['BYKO', ['byko']],
   ['IKEA', ['ikea']],
   ['ELKO', ['elko']],
+  ['JYSK', ['jysk']],
+  ['Rúmfatalagerinn', ['rúmfatalager', 'rumfatalager']],
+  ['Garðheimar', ['garðheimar', 'gardheimar']],
+  ['Penninn Eymundsson', ['penninn', 'eymundsson']],
+  ['Te & kaffi', ['te & kaffi', 'te og kaffi', 'te&kaffi']],
+  ['Bakarameistarinn', ['bakarameistarinn', 'bakameistarinn']],
+  ['KFC', [' kfc ']],
 ]
 
-// Skilar nafni keðju ef þekkt, annars upprunalega söluaðila-heitið.
+const LEGAL = /\s*\b(ehf|hf|slf|sf)\b\.?/gi
+const lettersUpper = (t) => /[a-záðéíóúýþæö]/i.test(t) && t === t.toUpperCase()
+// Hreinsar heiti: „ehf.“ burt, HÁSTAFIR → venjulegt („TÓNASTÖÐIN“ → „Tónastöðin“)
+function tidy(t) {
+  let x = String(t || '').replace(LEGAL, ' ').replace(/\s+/g, ' ').replace(/^[\s\-–,.:]+|[\s\-–,:]+$/g, '').trim()
+  if (lettersUpper(x) && x.length > 3) x = x.charAt(0) + x.slice(1).toLowerCase()
+  return x
+}
+// Íslenskir stafir einfaldaðir svo „Vinbúðin“, „Vínbuðin“ og „VÍNBÚÐIN“ þekkist öll
+const fold = (t) => String(t || '').toLowerCase().replace(/[áà]/g, 'a').replace(/[éè]/g, 'e').replace(/í/g, 'i').replace(/[óö]/g, 'o')
+  .replace(/ú/g, 'u').replace(/ý/g, 'y').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/æ/g, 'ae')
+function chainOf(raw) {
+  const t = ' ' + fold(raw).replace(/[.,]/g, ' ') + ' '
+  for (const [chain, keys] of STORE_CHAINS) {
+    const fk = keys.map(fold)
+    if (fk.some(k => t.includes(k))) return [chain, fk.map(k => k.trim())]
+  }
+  return null
+}
+
 export function storeChain(name) {
   const raw = (name || '').trim()
   if (!raw) return 'Annað'
-  const t = ' ' + raw.toLowerCase() + ' '
-  for (const [chain, keys] of STORE_CHAINS) if (keys.some(k => t.includes(k))) return chain
-  return raw
+  const c = chainOf(raw)
+  return c ? c[0] : (tidy(raw) || raw)
 }
+
+// Heiti til birtingar: „Bónus · Spöng“, „ELKO · Lindir“, „Tónastöðin“ (keðja + útibú, samræmt)
+export function storeLabel(name) {
+  const raw = (name || '').trim()
+  if (!raw) return ''
+  const c = chainOf(raw)
+  if (!c) return tidy(raw) || raw
+  // Útibú = orðin sem eftir standa þegar orð keðjunnar (og „wholesale“, „iceland“, „verslun“) eru tekin burt
+  const drop = [...c[1], 'wholesale', 'iceland', 'verslun', 'verslanir', '&', 'og']
+  const multi = c[1].filter(k => k.includes(' '))
+  let txt = ' ' + raw + ' '
+  for (const k of multi) { const i = fold(txt).indexOf(k); if (i >= 0) txt = txt.slice(0, i) + ' ' + txt.slice(i + k.length) }
+  const rest = tidy(txt.split(/\s+/).filter(w => w && !drop.some(k => !k.includes(' ') && fold(w).replace(/[^a-z0-9&/-]/g, '').includes(k.replace(/[^a-z0-9&/-]/g, '')))).join(' '))
+  return rest && rest.length > 1 ? c[0] + ' · ' + rest : c[0]
+}
+
