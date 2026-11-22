@@ -1,6 +1,7 @@
 // Kvittanalestur með sjónlíkani (Gemini). Kallað úr src/lib/receipt.js → parseReceiptVision().
 // ATH: þetta fall er deployað BEINT í Supabase (ekki gegnum Netlify/git).
 // Þessi skrá er heimildin — haltu henni í samræmi við það sem er í loftinu.
+// (Samstillt við útgáfu 30 í loftinu 22.11.2026 + afsláttur á vörulínu „d“.)
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -8,18 +9,22 @@ const cors = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// Hraðasta líkanið fyrst. Kvittanalestur er beinn útdráttur — engin rökhugsun þarf.
-// gemini-2.5-flash-lite var lagt niður (okt 2026) — 3.5-flash-lite fyrst, 2.5-flash til vara.
-const MODELS = ['gemini-2.5-flash', 'gemini-3.5-flash'] // 2.5-flash-lite lagt niður; 2.5-flash les íslensku vel
+// 1. lestur: hraðasta líkanið, engin rökhugsun. 3.5-flash aðeins til vara ef 2.5 svarar ekki.
+// (gemini-2.5-flash-lite var lagt niður okt 2026.)
+const MODELS = ['gemini-2.5-flash', 'gemini-3.5-flash']
+// Endurlestur (sannprófun féll): sterkara líkan MEÐ rökhugsun. Sama líkan án hugsunar endurtekur
+// sömu villuna — les nöfn og verð sem tvo strauma, ein lína dettur út og verð hliðrast þar til
+// næsta magnlína festir röðina aftur (dæmi: Bónus 08.11.26, „os góðostur" datt út í 4 lestrum í röð).
+const RETRY_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash']
 
-// Gemini 3.x notar thinkingLevel (minimal); 2.5 notar thinkingBudget:0. Röng stilling → 400.
+// Gemini 3.x notar thinkingLevel; 2.5 notar thinkingBudget. Röng stilling → 400.
 // Lágt hitastig er sent til allra líkana: sjálfgefið (1,0) á Gemini 3 gaf brenglaða íslensku.
-function genConfig(model: string, base: Record<string, unknown>, temperature?: number) {
+function genConfig(model: string, base: Record<string, unknown>, temperature?: number, think = false) {
   const g3 = /^gemini-3/.test(model)
   return {
     ...base,
     ...(temperature === undefined ? {} : { temperature }),
-    thinkingConfig: g3 ? { thinkingLevel: 'minimal' } : { thinkingBudget: 0 },
+    thinkingConfig: g3 ? { thinkingLevel: think ? 'low' : 'minimal' } : { thinkingBudget: think ? 2048 : 0 },
   }
 }
 
@@ -87,7 +92,7 @@ Deno.serve(async (req) => {
     const today = new Date()
     const todayStr = iso(today)
 
-    const itemShape = prods.length ? '{"name":"","qty":1,"price":0,"w":0,"pid":null}' : '{"name":"","qty":1,"price":0,"w":0}'
+    const itemShape = prods.length ? '{"name":"","qty":1,"price":0,"d":0,"vat":"","w":0,"pid":null}' : '{"name":"","qty":1,"price":0,"d":0,"vat":"","w":0}'
     const prompt = [
       imgs.length > 1 ? 'Þú lest íslenska kassakvittun af ' + imgs.length + ' myndum.' : 'Þú lest íslenska kassakvittun af mynd.',
       ...(imgs.length > 1 ? [
@@ -98,7 +103,7 @@ Deno.serve(async (req) => {
         '- Sama vara sem er keypt tvisvar stendur í tveimur línum Á SÖMU MYND. Ef eins lína sést neðst á mynd N og efst á mynd N+1 er það skörun, ekki tvö kaup.',
         '- Skilaðu einni sameinaðri kvittun: allar vörulínur í réttri röð, haus (verslun, dagsetning, númer) og samtala/VSK þaðan sem þær sjást.',
       ] : []),
-      'Skilaðu AÐEINS gildu JSON: {"legible":true,"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"discount_total":0,"items":[' + itemShape + '],"total":0}',
+      'Skilaðu AÐEINS gildu JSON: {"legible":true,"store":"","date":"YYYY-MM-DD","date_raw":"","time":"HH:MM","receipt_no":"","register":"","vat_total":0,"vat_table":[{"code":"","rate":0,"amount":0}],"discount_total":0,"items":[' + itemShape + '],"total":0}',
       '',
       'HEIÐARLEIKI — MIKILVÆGAST AF ÖLLU:',
       '- Skrifaðu AÐEINS vörulínur sem þú SÉRÐ greinilega á myndinni. ALDREI giska, fylla í eyður eða búa til línur sem „líklega" eru á kvittuninni.',
@@ -110,6 +115,7 @@ Deno.serve(async (req) => {
       '- "receipt_no": KVITTANANÚMERIÐ, merkt "Kvitt", "Kvittun", "Nóta", "Reikn." eða "Nr". Ef bæði kvittananúmer og "Færsla"/"Afgr" standa á kvittuninni: notaðu ALLTAF kvittananúmerið, ekki færslunúmerið. Afritaðu tölustafina nákvæmlega, staf fyrir staf (líka núllin). Annars null.',
       '- "register": kassa- eða afgreiðslunúmer ("Kassi", "Pos", "Afgreiðsla", "Till"), annars null.',
       '- "vat_total": samanlagður virðisaukaskattur í krónum (allar VSK-línur lagðar saman, t.d. "VSK 11%" + "VSK 24%"), annars null.',
+      '- "vat_table": VSK-taflan neðst á kvittuninni, ein færsla per kóða: "code" = bókstafurinn (t.d. "D"), "rate" = prósentan, "amount" = UPPHÆÐ MEÐ VSK fyrir þann kóða (dálkurinn lengst til hægri, t.d. "Upphæð"). Ef engin tafla: [].',
       '',
       'DAGSETNING — MIKILVÆGT:',
       '- Íslenskar kvittanir rita dagsetningu ALLTAF með DAGINN FYRST: DD.MM.YYYY, DD.MM.YY eða DD/MM/YYYY.',
@@ -121,14 +127,17 @@ Deno.serve(async (req) => {
       '- Settu ALLTAF nákvæmlega þann textastreng sem þú last af kvittuninni í "date_raw" (t.d. "05.07.2026 14:32").',
       '',
       'VÖRUR:',
+      '- LESTU HVERJA VÖRULÍNU SEM EINA HEILD, frá vinstri til hægri: nafn → verð → VSK-kóði. Lestu ALDREI nafnadálkinn og verðdálkinn sitt í hvoru lagi og paraðu þá svo saman — þá dettur lína út og verðin hliðrast.',
       '- Verð eru heiltölur í íslenskum krónum. "price" = SAMTALS fyrir línuna (magn × einingarverð), þ.e. talan lengst til hægri.',
-      '- Settu hverja keypta vöru í items með hreinu nafni. Slepptu einingarorðum aftast í nafni ("stk", "st", "kg").',
+      '- "vat": VSK-kóðinn sem stendur aftast í línunni, hægra megin við verðið (einn bókstafur, t.d. "D" eða "E"). Ef enginn kóði: null.',
+      '- Settu hverja keypta vöru í items með hreinu nafni. Slepptu einingarorðum aftast í nafni ("stk", "st", "kg") og VSK-kóðanum.',
       '- MAGN: Margar kvittanir (Krónan, Bónus, Nettó o.fl.) prenta magn í SÉRSTAKRI LÍNU undir vörunni, t.d. "2 stk@126   252" eða "2 x 126" eða "0,834 kg x 1.299".',
       '  Sú lína er EKKI ný vara: hún tilheyrir vörunni í línunni fyrir ofan. Settu "qty" = magnið (2, eða 0.834 fyrir vigtaða vöru) og "price" = samtalan á þeirri línu.',
       '- Magnlína tilheyrir ALLTAF vörunni BEINT fyrir ofan hana. Ef vöruheitið stendur eitt í línu (ekkert verð) og næsta lína er t.d. "2 stk@292   584", er það EIN vara: heitið úr efri línunni, qty=2 og price=584. Settu magnið ALDREI á vöruna þar á undan.',
       '- Tala INNI í vöruheiti þegar verð er á sömu línu (t.d. "FP hvítlauksbr 2stk stk   192", "Coke 6pk", "Egg 12stk") er pakkastærð, EKKI magn: qty=1, price=192.',
       '- "qty" er 1 ef ekkert magn er gefið.',
       '- Slepptu afsláttar-, samtals-, VSK- og greiðslulínum úr items. Settu samanlagða afslætti (jákvæð krónutala) í "discount_total", annars 0.',
+      '- AFSLÁTTUR Á VÖRU ("d"): ef afsláttarlína (t.d. "Afsláttur -449", "Tilboð -200", "2 fyrir 1 -350") stendur BEINT undir vörulínu og á augljóslega við þá vöru, settu afsláttinn sem jákvæða tölu í "d" hjá ÞEIRRI vöru ("price" helst óbreytt) og teldu hann LÍKA með í discount_total. Ef afslátturinn á við alla körfuna (t.d. félagsafsláttur af samtölu) eða þú ert óviss: "d": 0.',
       '- SANNPRÓFUN: verð allra lína mínus discount_total á að vera jafnt "total". Ef það stemmir ekki hefurðu misst af línu, tvítalið línu eða sett magn á ranga vöru — farðu yfir aftur áður en þú svarar.',
       '',
       'ÁBYRGÐ ("w") — fyrir hverja vöru:',
@@ -154,16 +163,18 @@ Deno.serve(async (req) => {
 
     // --- Lestur: eitt kall á líkanið (með varaleið yfir á næsta líkan) ---
     let lastErr = ''
-    async function readOnce(promptText: string): Promise<{ parsed: Record<string, any>, model: string } | null> {
-      for (const model of MODELS) {
+    async function readOnce(promptText: string, models: string[] = MODELS, think = false): Promise<{ parsed: Record<string, any>, model: string } | null> {
+      for (const model of models) {
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key
         const body = {
           contents: [{ parts: [{ text: promptText }, ...imgs.map((m) => ({ inlineData: { mimeType: m.mime || 'image/jpeg', data: m.image } }))] }],
-          generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: 8192 }, 0),
+          generationConfig: genConfig(model, { responseMimeType: 'application/json', maxOutputTokens: think ? 16384 : 8192 }, 0, think),
         }
         const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         const data = await r.json()
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        // Með rökhugsun geta fyrstu partarnir verið hugsanir — taka síðasta textapartinn.
+        const parts: any[] = data?.candidates?.[0]?.content?.parts || []
+        const text = [...parts].reverse().find((p) => typeof p?.text === 'string' && !p.thought)?.text
         if (r.status === 200 && text) {
           let parsed: Record<string, any> = {}
           try { parsed = JSON.parse(text) } catch {
@@ -173,7 +184,7 @@ Deno.serve(async (req) => {
           return { parsed, model }
         }
         lastErr = 'model=' + model + ' status=' + r.status
-        console.log('parse-receipt fail ' + lastErr + ' ms=' + (Date.now() - t0))
+        console.log('parse-receipt fail ' + lastErr + ' think=' + think + ' ms=' + (Date.now() - t0))
       }
       return null
     }
@@ -198,10 +209,20 @@ Deno.serve(async (req) => {
       } catch (e) { console.log('notifyAiDown error ' + String(e)) }
     }
 
+    const vatCode = (v: unknown) => {
+      const s = typeof v === 'string' ? v.trim().toUpperCase() : ''
+      return /^[A-Z]$/.test(s) ? s : null
+    }
+
     // --- Eftirvinnsla: dagsetning, magnlínur, pörun, auðkenni ---
     function post(parsed: Record<string, any>) {
       parsed.model_date = parsed.date
       parsed.date = fixDate(parsed.date, today)
+      parsed.vat_table = (Array.isArray(parsed.vat_table) ? parsed.vat_table : [])
+        .map((t: any) => ({ code: vatCode(t?.code), rate: Number(t?.rate) || null, amount: Math.round(Number(t?.amount)) || 0 }))
+        .filter((t: any) => t.code && t.amount > 0)
+      // Aðeins bókstafir sem standa í VSK-töflunni teljast VSK-kóðar (annars skemmist t.d. „Vítamín C“)
+      const codes = new Set<string>((parsed.vat_table as any[]).map((t) => t.code))
       if (Array.isArray(parsed.items)) {
         const QTY = /^\s*(\d+(?:[.,]\d+)?)\s*(?:stk|st|kg|x|×)?\s*(?:[@x×]|á)\s*([\d.,]+)\s*(?:kr)?\s*$/i
         const isNum = (t: string) => Number(t.replace(/\./g, '').replace(',', '.'))
@@ -215,9 +236,17 @@ Deno.serve(async (req) => {
             const q = isNum(m[1]) || 1, unit = isNum(m[2])
             prev.qty = q
             if (unit > 0) prev.price = Math.round(q * unit)
+            if (!vatCode(prev.vat) && vatCode(it.vat)) prev.vat = it.vat
             continue
           }
-          it.name = name.replace(/\s+(stk|st|kg)\.?\s*$/i, '').trim()
+          // VSK-kóði sem lenti aftast í nafni („kristall 330 ml D“) → færa í vat
+          let clean = name
+          const tail = name.match(/\s+([A-Z])\s*$/)
+          if (tail && codes.has(tail[1])) {
+            if (!vatCode(it.vat)) it.vat = tail[1]
+            clean = name.slice(0, tail.index)
+          }
+          it.name = clean.replace(/\s+(stk|st|kg)\.?\s*$/i, '').trim()
           const q = Number(it.qty)
           it.qty = Number.isFinite(q) && q > 0 ? q : 1
           merged.push(it)
@@ -226,13 +255,18 @@ Deno.serve(async (req) => {
       } else parsed.items = []
       let matched = 0, warranty = 0
       parsed.items = (parsed.items as any[]).map((it) => {
-        const { pid, w, ...rest } = it || {}
+        const { pid, w, vat, d, ...rest } = it || {}
         const id = typeof pid === 'string' ? codeToId.get(pid.trim().toUpperCase()) : undefined
         if (id) matched++
         const wy = Number(w) === 5 ? 5 : Number(w) === 2 ? 2 : 0
         if (wy) warranty++
         const out: any = { ...rest, warranty_years: wy }
+        const vc = vatCode(vat)
+        if (vc) out.vat = vc
         if (id) out.reward_product_id = id
+        // Afsláttur sem á við þessa línu (jákvæð tala, aldrei meiri en línuverðið). Appið dregur hann frá vörunni.
+        const dv = Math.round(Number(d)); const pv = Number(rest.price)
+        if (Number.isFinite(dv) && dv > 0 && Number.isFinite(pv) && dv <= pv) out.discount = dv
         return out
       })
       for (const k of ['time', 'receipt_no', 'register']) {
@@ -251,6 +285,18 @@ Deno.serve(async (req) => {
       return { matched, warranty }
     }
 
+    // --- Summa per VSK-kóða borin saman við VSK-töfluna: staðsetur hvar lína vantar ---
+    function byVat(p: Record<string, any>) {
+      const tab: any[] = Array.isArray(p.vat_table) ? p.vat_table : []
+      if (!tab.length) return null
+      const items: any[] = Array.isArray(p.items) ? p.items : []
+      const tagged = items.filter((i) => i.vat).length
+      if (tagged < items.length * 0.8) return null // of fáar línur merktar til að bera saman
+      const sums: Record<string, number> = {}
+      for (const i of items) if (i.vat) sums[i.vat] = (sums[i.vat] || 0) + (Number(i.price) || 0)
+      return tab.map((t) => ({ code: t.code, read: Math.round(sums[t.code] || 0), table: t.amount, diff: Math.round((sums[t.code] || 0) - t.amount) }))
+    }
+
     // --- Sannprófun: línur − afsláttur ≈ samtala, og VSK trúverðugur (matvara 11%, annað 24%) ---
     function check(p: Record<string, any>) {
       const items: any[] = Array.isArray(p.items) ? p.items : []
@@ -267,6 +313,7 @@ Deno.serve(async (req) => {
       return {
         sum: Math.round(sum), total: hasTotal ? total : null, diff, vat_ratio: vatRatio == null ? null : Math.round(vatRatio * 1000) / 1000,
         vat_ok: vatOk, sum_ok: sumOk, legible: p.legible !== false, lines: items.length,
+        by_vat: byVat(p),
         // Summan ræður: stemmi línurnar við samtöluna er lesturinn traustur, jafnvel þótt VSK sé mislesinn
         // (líkanið ruglar oft dálkum í VSK-töflunni). VSK skiptir aðeins máli þegar summan stemmir ekki.
         ok: sumOk && p.legible !== false && items.length > 0,
@@ -286,18 +333,28 @@ Deno.serve(async (req) => {
     let chk = check(parsed)
     let retried = false
 
-    // 2. endurlestur með endurgjöf ef summa/VSK stemmir ekki (en eitthvað var lesið)
+    // 2. endurlestur ef summa stemmir ekki: sterkara líkan MEÐ rökhugsun og nákvæm endurgjöf
     if (!chk.ok && chk.lines > 0) {
+      const hints: string[] = []
+      if (chk.diff != null && chk.diff < 0) {
+        hints.push('- Línurnar eru ' + (-chk.diff) + ' kr of LÁGAR. Líklegast vantar EINA vörulínu (verð um ' + (-chk.diff) + ' kr), eða nafn hefur verið parað við verð línunnar fyrir neðan svo verðin hliðrast. Berðu hvert nafn saman við verðið Á SÖMU LÍNU.')
+      } else if (chk.diff != null && chk.diff > 0) {
+        hints.push('- Línurnar eru ' + chk.diff + ' kr of HÁAR. Líklegast er lína tvítalin, afsláttur gleymdist eða magnlína var lesin sem sér vara.')
+      }
+      for (const b of chk.by_vat || []) {
+        if (Math.abs(b.diff) > 30) hints.push('- VSK-flokkur ' + b.code + ': línur merktar ' + b.code + ' summast í ' + b.read + ' kr en VSK-taflan segir ' + b.table + ' kr (munur ' + b.diff + ' kr, afslættir geta skýrt nokkrar krónur). Villan er í ÞESSUM flokki.')
+      }
       const fb = [
         prompt, '',
         'ENDURLESTUR — fyrri lestur stóðst ekki sannprófun:',
         '- Fyrri lestur: ' + chk.lines + ' línur sem summast í ' + chk.sum + ' kr (að frádregnum afslætti)' +
           (chk.total ? ', en samtala kvittunar er ' + chk.total + ' kr (munur ' + chk.diff + ' kr).' : ', og samtala sást ekki.'),
+        ...hints,
         ...(chk.vat_ok ? [] : ['- VSK ' + parsed.vat_total + ' kr passar ekki við samtöluna — lestu VSK-töfluna aftur.']),
-        '- Lestu ALLAR vörulínur aftur, eina í einu, ofan frá og niður. Leitaðu að línu sem vantar, línu sem er tvítalin og magnlínu sem er sett á ranga vöru.',
+        '- Lestu ALLAR vörulínur aftur, eina í einu, ofan frá og niður: nafn → verð → VSK-kóði á sömu línu. Teldu vörulínurnar og verðin og gakktu úr skugga um að fjöldinn sé sá sami.',
         '- Ef línurnar eru ólæsilegar: "legible": false og búðu EKKI til línur.',
       ].join('\n')
-      const second = await readOnce(fb)
+      const second = await readOnce(fb, RETRY_MODELS, true)
       if (second) {
         const p2 = second.parsed
         const s2 = post(p2)
@@ -334,10 +391,12 @@ Deno.serve(async (req) => {
           const row = {
             user_id: u.id, store: parsed.store || null, purchased_at: parsed.date || null,
             receipt_no: parsed.receipt_no || null, receipt_no_raw: parsed.receipt_no_raw || null, vat_total: parsed.vat_total ?? null,
-            total: chk.total, verified: chk.ok, check: chk,
+            total: chk.total, verified: chk.ok, check: { ...chk, model, retried },
             items: (parsed.items as any[]).map((i) => ({
               name: String(i.name || '').slice(0, 120), qty: Number(i.qty) > 0 ? Number(i.qty) : 1,
               price: Number.isFinite(Number(i.price)) ? Number(i.price) : null, reward_product_id: i.reward_product_id || null,
+              ...(i.vat ? { vat: i.vat } : {}),
+              ...(i.discount ? { discount: i.discount } : {}),
             })),
           }
           const ins = await fetch(SB + '/rest/v1/receipt_scans', {
@@ -352,9 +411,11 @@ Deno.serve(async (req) => {
     } catch (e) { console.log('parse-receipt scan save error ' + String(e)) }
 
     const qtyLines = (parsed.items as any[]).filter((i) => Number(i.qty) !== 1).length
+    const discLines = (parsed.items as any[]).filter((i) => i.discount).length
     console.log('parse-receipt ok model=' + model + ' imgs=' + imgs.length + ' ms=' + (Date.now() - t0) + ' retried=' + retried + ' verified=' + chk.ok +
-      ' diff=' + chk.diff + ' vat_ratio=' + chk.vat_ratio + ' legible=' + chk.legible +
+      ' diff=' + chk.diff + ' vat_ratio=' + chk.vat_ratio + ' by_vat=' + JSON.stringify(chk.by_vat) + ' legible=' + chk.legible +
       ' scan=' + (parsed.scan_id ? 'saved' : 'none') + ' prods=' + prods.length + ' matched=' + stats.matched + ' warranty=' + stats.warranty + ' qtylines=' + qtyLines +
+      ' disc_total=' + parsed.discount_total + ' disc_lines=' + discLines +
       ' no=' + JSON.stringify(parsed.receipt_no) + ' vat=' + JSON.stringify(parsed.vat_total) + ' date_raw=' + JSON.stringify(parsed.date_raw) + ' model_date=' + JSON.stringify(parsed.model_date) + ' final=' + JSON.stringify(parsed.date))
     return json(parsed)
   } catch (e) {

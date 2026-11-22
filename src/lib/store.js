@@ -539,7 +539,8 @@ const cloud = {
     if (error) throw error
     const ids = (lists || []).map(l => l.id)
     if (!ids.length) return []
-    const { data: items } = await supabase.from('list_items').select('*').in('list_id', ids)
+    // Keyptar vörur sem hafa verið hreinsaðar sjálfkrafa (archived_at) eru geymdar fyrir mælingar en ekki sýndar
+    const { data: items } = await supabase.from('list_items').select('*').in('list_id', ids).is('archived_at', null)
     const { data: members } = await supabase.from('list_members').select('list_id').in('list_id', ids)
     const counts = {}
     for (const m of members || []) counts[m.list_id] = (counts[m.list_id] || 0) + 1

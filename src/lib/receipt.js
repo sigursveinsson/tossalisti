@@ -154,6 +154,7 @@ async function visionInvoke(images, products) {
         price: i.price == null ? null : Number(i.price),
         reward_product_id: i.reward_product_id || null,
         warranty_years: [2, 5].includes(Number(i.warranty_years)) ? Number(i.warranty_years) : 0,
+        _d: Number(i.discount) > 0 ? Math.round(Number(i.discount)) : 0,
       })).filter(i => i.name)
     : []
   // Afsláttur/tilboð (t.d. „Eldgrill+Coke -449“): gervigreindin sleppir afsláttarlínum og skilar summu þeirra í
@@ -161,10 +162,21 @@ async function visionInvoke(images, products) {
   // það færir summuna NÆR samtölunni (ef afslátturinn var þegar dreginn frá vöruverði er engu bætt við).
   const disc = Number(data.discount_total) > 0 ? Math.round(Number(data.discount_total)) : 0
   const tot = data.total == null ? null : Number(data.total)
+  // Afslætti sem gervigreindin tengdi við ákveðna vöru („d“) er dregið beint frá verði þeirrar vöru; afgangurinn
+  // (t.d. afsláttur af allri körfunni) verður áfram ein lína „Afsláttur“.
   if (disc && items.length && tot != null) {
     const sum = items.reduce((a, i) => a + (Number(i.price) || 0), 0)
-    if (Math.abs(sum - disc - tot) < Math.abs(sum - tot)) items.push({ name: 'Afsláttur', qty: 1, price: -disc, reward_product_id: null, warranty_years: 0 })
+    if (Math.abs(sum - disc - tot) < Math.abs(sum - tot)) {
+      const perItem = items.reduce((a, i) => a + (i._d && i.price != null && i._d <= i.price ? i._d : 0), 0)
+      let rest = disc
+      if (perItem > 0 && perItem <= disc) {
+        for (const i of items) if (i._d && i.price != null && i._d <= i.price) i.price = i.price - i._d
+        rest = disc - perItem
+      }
+      if (rest > 0) items.push({ name: 'Afsláttur', qty: 1, price: -rest, reward_product_id: null, warranty_years: 0 })
+    }
   }
+  for (const i of items) delete i._d
   return {
     store: data.store || '', items, total: data.total == null ? null : Number(data.total), date: data.date || null,
     // Auðkenni kvittunar (svikavörn): vistast með kaupunum og flaggað á netþjóni.
@@ -239,22 +251,29 @@ async function logScan(ev) {
   } catch (e) { /* mæling má aldrei stöðva skönnun */ }
 }
 
-// Yfirferð: afrit af kvittunum sem lesast illa — AÐEINS þegar stjórnandinn skannar sjálfur (am_admin).
-// Aðrir notendur: ekkert er vistað (kvittanir eru persónuupplýsingar; þarf samþykki). Má aldrei stöðva skönnun.
+// Yfirferð: afrit af kvittunum sem lesast illa.
+//  - Stjórnandinn: vistað sjálfkrafa þegar hann skannar sjálfur (am_admin).
+//  - Aðrir notendur: AÐEINS ef þeir smella sjálfir á „Senda okkur kvittunina“ (shareScanForReview, consent=true).
+// Má aldrei stöðva skönnun.
 let _amAdmin = null
-async function saveScanReview(res, files) {
-  try {
-    if (!supabase || !res) return
+export async function amAdminCached() {
+  if (_amAdmin == null && supabase) { try { const { data } = await supabase.rpc('am_admin'); _amAdmin = data === true } catch { _amAdmin = false } }
+  return !!_amAdmin
+}
+// Af hverju lesturinn telst gallaður (eða null ef allt stemmir)
+export function reviewReason(res) {
+  if (!res) return null
+  const items = res.items || []
+  const sum = items.reduce((a, i) => a + (Number(i.price) || 0), 0)
+  const tot = res.total == null ? null : Number(res.total)
+  const mismatch = items.length > 0 && tot > 0 && Math.abs(sum - tot) > Math.max(5, tot * 0.002)
+  return res.failed || (res.check && res.check.ok === false ? 'unverified' : mismatch ? 'mismatch' : null)
+}
+async function storeReview(res, files, reason, consent) {
     const items = res.items || []
-    const sum = items.reduce((a, i) => a + (Number(i.price) || 0), 0)
     const tot = res.total == null ? null : Number(res.total)
-    const mismatch = items.length > 0 && tot > 0 && Math.abs(sum - tot) > Math.max(5, tot * 0.002)
-    const reason = res.failed || (res.check && res.check.ok === false ? 'unverified' : mismatch ? 'mismatch' : null)
-    if (!reason) return
-    if (_amAdmin == null) { const { data } = await supabase.rpc('am_admin'); _amAdmin = data === true }
-    if (!_amAdmin) return
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) return false
     const blob = res.archive || files[0]
     let path = null
     if (blob && blob.size && blob.size <= 8 * 1024 * 1024) {
@@ -262,11 +281,28 @@ async function saveScanReview(res, files) {
       const { error } = await supabase.storage.from('scan-review').upload(path, blob, { contentType: blob.type || 'image/jpeg' })
       if (error) path = null
     }
-    await supabase.from('scan_reviews').insert({
-      path, reason, store: res.store || null, purchased_at: res.date || null, total: tot,
+    const { error } = await supabase.from('scan_reviews').insert({
+      user_id: user.id, consent, path, reason, store: res.store || null, purchased_at: res.date || null, total: tot,
       items: items.map(i => ({ name: i.name, qty: i.qty, price: i.price })), check: res.check || null,
     })
+    return !error
+}
+async function saveScanReview(res, files) {
+  try {
+    if (!supabase || !res) return
+    const reason = reviewReason(res)
+    if (!reason) return
+    if (!(await amAdminCached())) return
+    await storeReview(res, files, reason, false)
   } catch (e) { /* yfirferð má aldrei stöðva skönnun */ }
+}
+// Notandinn velur sjálfur að senda kvittunina (samþykki). Skilar true ef tókst.
+export async function shareScanForReview(res, files) {
+  try {
+    if (!supabase || !res) return false
+    const reason = reviewReason(res) || 'user'
+    return await storeReview(res, (Array.isArray(files) ? files : [files]).filter(Boolean), reason, true)
+  } catch (e) { return false }
 }
 
 // Les kvittun: reynir sjónlíkan fyrst (nákvæmt), fellur á Tesseract annars.

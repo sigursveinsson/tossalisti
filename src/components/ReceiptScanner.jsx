@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { parseReceipt } from '../lib/receipt.js'
+import { parseReceipt, reviewReason, shareScanForReview, amAdminCached } from '../lib/receipt.js'
 import { store as db } from '../lib/store.js'
 import { CAT_BY_KEY } from '../data/categories.js'
 
@@ -165,6 +165,11 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
     else handleFile(file)
   }
   const lastInputRef = useRef(null) // síðasta mynd(ir) — til að reyna aftur án nýrrar myndatöku
+  // Senda illa lesna kvittun til yfirferðar — aðeins ef notandinn smellir sjálfur (samþykki)
+  const lastResRef = useRef(null)
+  const [shareState, setShareState] = useState(null) // null | 'busy' | 'sent' | 'err'
+  const [isAdminU, setIsAdminU] = useState(false)
+  useEffect(() => { amAdminCached().then(setIsAdminU).catch(() => {}) }, [])
   const handleFile = async (input) => {
     lastInputRef.current = input
     setCamera(false)
@@ -172,6 +177,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
     try {
       const prods = await matchRef.current
       const res = await parseReceipt(input, setProgress, prods)
+      lastResRef.current = res; setShareState(null)
       setStore(res.store || '')
       if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date)
       setItems((res.items || []).map((x, i) => ({ id: i + '_' + Date.now(), name: x.name, qty: x.qty && x.qty !== 1 ? x.qty : 1, price: x.price ?? '', reward_product_id: x.reward_product_id || null, w: x.warranty_years || 0 }))
@@ -184,6 +190,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
       try { localStorage.setItem('korfan.scannedOnce', '1') } catch {}
       setScannedOnce(true)
     } catch (err) {
+      lastResRef.current = null
       setItems([]); setFailed('network')
     }
     clearPending()
@@ -339,6 +346,16 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
             {items.length === 0 && failed !== 'nolines' && <button className={['blurry', 'empty', 'decode'].includes(failed) ? 'add-recipe-btn' : 'ghost-btn receipt-rescan'} onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> {['blurry', 'empty', 'decode'].includes(failed) ? 'Taka nýja mynd' : 'Skanna aftur'}</button>}
             {items.length === 0 && failed === 'nolines' && <button className="ghost-btn receipt-rescan" onClick={() => { setFailed(null); setMulti(false); setPhase('capture'); openCamera() }}><IconCamera size={16} stroke={1.9} /> Taka aðra mynd (ef vörulínur eiga að sjást)</button>}
             {failed !== 'nolines' && (failed === 'blurry' || (scanCheck && scanCheck.ok === false)) && <button className="ghost-btn receipt-rescan" onClick={startMulti}>Taka kvittunina í hlutum (betra fyrir langar kvittanir)</button>}
+            {!demo && !isAdminU && lastResRef.current && ['blurry', 'empty', 'unverified', 'mismatch'].includes(reviewReason(lastResRef.current)) && (
+              <div className="rc-share">
+                {shareState === 'sent'
+                  ? <span><b>Takk!</b> Við skoðum kvittunina og notum hana til að bæta lesturinn.</span>
+                  : <>
+                    <span>Las appið kvittunina vitlaust? Sendu okkur myndina og það sem appið las, þá getum við lagað lesturinn. Aðeins Tossalisti sér myndina og henni er eytt eftir yfirferð.</span>
+                    <button disabled={shareState === 'busy'} onClick={async () => { setShareState('busy'); const ok = await shareScanForReview(lastResRef.current, lastInputRef.current); setShareState(ok ? 'sent' : 'err'); landingEvent(ok ? 'scan_share' : 'scan_share_fail', { once: false }) }}>{shareState === 'busy' ? 'Sendi…' : shareState === 'err' ? 'Tókst ekki, reyna aftur' : 'Senda okkur kvittunina'}</button>
+                  </>}
+              </div>
+            )}
             {(edit || items.length === 0) && <>
             <div className="receipt-items">
               {items.map(it => {

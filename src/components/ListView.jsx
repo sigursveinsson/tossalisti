@@ -77,7 +77,7 @@ export function looksLikePhrase(v) {
   return words.length >= 6
 }
 
-export default function ListView({ items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, onClearChecked, onScanReceipt, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
+export default function ListView({ isGuest = false, items, listType = 'shopping', members = [], kids = [], completions = [], rewards = [], redemptions = [], currentUserId, catalog = {}, genericImgs = {}, oftenSignal = 0, voiceSignal = 0, voiceNow = 0, onClearChecked, onScanReceipt, kronanEnabled = false, quickStart = false, onCatalog, onCatalogLookup, onSetQty, onAdd, onToggle, onRemove, onAssign, onSetPoints, onSetRecurrence, onSetReminder, onSetReminderFull, adsEnabled, bannerEnabled, onSetItemImage, onCreateKid, onUpdateKid, onDeleteKid, onCreateReward, onUpdateReward, onDeleteReward, onRedeemReward, onDeleteRedemption, onAddSchedule, onNewWeek, onRecategorize, onSetDue, onSetWeekday, onSetTime, listId, rewardProducts = [] }) {
   const isTask = listType === 'task'
   const isSchedule = listType === 'schedule'
   const [text, setText] = useState('')
@@ -1179,7 +1179,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             <button className="qs-go" disabled={!qsText.trim()} onClick={() => { landingEvent('qs_text'); parseText(qsText); setQsText(''); setMicDenied(false) }}>Búa til listann</button>
             {micAvailable && !micDenied && <button className="qs-mic" onClick={() => { landingEvent('qs_voice'); startVoice() }} aria-label="Tala"><IconMicrophone size={22} stroke={2} /> Tala</button>}
           </div>
-          <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true); setMicDenied(false) }}>{micDenied || items.length > 0 ? 'Loka' : 'Skoða appið fyrst'}</button>
+          <button className="qs-skip" onClick={() => { landingEvent('qs_skip'); setQsHidden(true); setMicDenied(false) }}>{micDenied || items.length > 0 || !isGuest ? 'Loka' : 'Skoða appið fyrst'}</button>
         </div>
       )}
       {!showQuick && addBar}
@@ -1250,6 +1250,7 @@ export default function ListView({ items, listType = 'shopping', members = [], k
             <span>Taktu mynd af kvittuninni þegar þú ert búin(n) að borga, þá fer búðarferðin beint í bókhaldið.</span>
             {onScanReceipt && <button className="trip-scan" onClick={() => { landingEvent('list_done_scan', { once: false }); onScanReceipt() }}><IconCamera size={19} stroke={1.9} /> Skanna kvittun</button>}
             {onClearChecked && <button className="trip-clear" onClick={clear} disabled={clearing}>{clearing ? 'Hreinsa…' : `Hreinsa ${done} ${done === 1 ? 'keypta vöru' : 'keyptar vörur'} af listanum`}</button>}
+            {isCloud && <small className="trip-note">Annars hverfa keyptar vörur sjálfkrafa af listanum í nótt.</small>}
           </div>
         )
         return onClearChecked ? <button className="trip-clear small" onClick={clear} disabled={clearing}>{clearing ? 'Hreinsa…' : `Hreinsa ${done} ${done === 1 ? 'keypta vöru' : 'keyptar vörur'} af listanum`}</button> : null

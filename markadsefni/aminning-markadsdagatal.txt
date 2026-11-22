@@ -18,7 +18,6 @@ DAGATALIÐ (Dagur | Hvað | Hugmynd að færslu | Sýnir | Vægi)
 2026-12-15 | Jólainnkaupin | „Segðu ‚jólamatur fyrir átta‘“ og listinn verður til | Rödd og listi | ★★★
 2026-12-23 | Þorláksmessa | Síðustu innkaupin: deildu listanum svo enginn kaupi tvisvar | Sameiginlegur listi | ★★
 2026-12-27 | Skil á jólagjöfum og gjafakortin (27. des.–6. jan.) | „Fannstu kvittunina?“ Skilafrestur og ábyrgð á gjöfunum. Og: „Fékkstu gjafakort? Settu það í Veskið áður en það týnist.“ | Kvittanir og ábyrgðir, Veskið | ★★★
-2026-12-28 | Árið þitt í tölum (28.–31. des.) | Yfirlit ársins fyrir þá sem skönnuðu; Sigga og Jón sem dæmi fyrir hina. ATH: eiginleikinn þarf að vera smíðaður | Bókhaldið | ★★★
 2027-01-01 | Nýár og áramótaheit | „Í ár veit ég hvert peningarnir fara.“ Byrjaðu á einni kvittun | Bókhaldið | ★★★
 2027-01-04 | Janúarútsölur | Geymdu kvittanirnar fyrir útsöluvörunum, þær eru líka í ábyrgð | Kvittanir og ábyrgðir | ★★
 2027-01-22 | Bóndadagur, þorrinn byrjar | Þorramatarlisti, eða „hvað á að gefa bóndanum?“ | Innkaupalisti | ★★
@@ -50,6 +49,8 @@ DAGATALIÐ (Dagur | Hvað | Hugmynd að færslu | Sýnir | Vægi)
 2027-11-14 | Feðradagurinn | Létt færsla | Innkaupalisti | ★
 2027-11-16 | Dagur íslenskrar tungu | „App á íslensku sem skilur íslensku.“ Röddin | Rödd | ★★★
 2027-11-26 | Black Friday 2027 | Sama og 2026, með tölum frá árinu | Kvittanir og ábyrgðir | ★★★
+
+2027-12-28 | Árið þitt í tölum (28.–31. des.) | Yfirlit ársins fyrir þá sem skönnuðu; Sigga og Jón sem dæmi fyrir hina. ATH: eiginleikinn þarf að vera smíðaður (frestað frá 2026: of fáir með heilt ár af kvittunum) | Bókhaldið | ★★★
 
 SNIÐ Á ÁMINNINGU (þegar dagur passar)
 Stutt og beint, á íslensku, án óþarfa inngangs:

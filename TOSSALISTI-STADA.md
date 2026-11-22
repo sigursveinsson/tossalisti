@@ -955,3 +955,12 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Eftir deploy: senda sitemap aftur í Search Console og skoða eftir 3–4 vikur.
 - 22.11. eftir deploy: uppskriftasíður og djúptengill staðfestir í loftinu (glugginn opnast með hráefnunum). Sitemap sent aftur í Search Console.
 - Lagað (bíður deploy): canonical, og:url og sitemap nota nú slóðir án .html (Netlify ber síðurnar fram þannig og endurskrifar tengla). Magn í uppskriftum námundast ekki þegar skammtafjöldi er óbreyttur (125 g var 130 g). Vörulínur fá aðeins stóran fyrsta staf, ekki hvert orð („Smjör 225 g“, ekki „Smjör 225 G“).
+
+## Sex smíðaverk kláruð — 22. nóv. 2026
+- **Push:** `send-price-mail` (cron */10) sendir nú líka persónulegar tilkynningar (kind price/join) sem push til þeirra með push_enabled, utan næðistíma; inbox_messages.pushed_at. Prófað: 1 push sent (Dyngja-prófunin).
+- **„X gekk í listann“:** accept_invite skrifar tilkynningu (kind join) til þess sem bjó til boðið og eiganda listans; push fylgir.
+- **Sjálfvirk hreinsun:** list_items.checked_at (trigger) + archived_at; cron `archive-bought-items` kl. 04:30 geymir (archive) hakaðar vörur á innkaupalistum sem voru hakaðar fyrir >6 klst. Ekki eytt: brand_dashboard og mælingar halda gögnunum. store.js sýnir aðeins archived_at is null. Texti undir „Allt komið í körfuna“.
+- **Samþykki fyrir illa lesnum kvittunum:** hnappurinn „Senda okkur kvittunina“ í kvittanaskannanum (blurry/empty/unverified/mismatch, ekki fyrir stjórnanda). scan_reviews.consent; RLS: notandi má setja inn eigin línu með consent=true og hlaða upp í scan-review/<uid>/; aðeins stjórnandi les/eyðir. Lofað: „eytt eftir yfirferð“ → eyða í Yfirferð eftir skoðun.
+- **Afsláttur á vöru:** parse-receipt v32 (samstillt við v30 sem var nýrri en staðbundna skráin: VSK-tafla o.fl.) skilar `discount` á línu; framendi dregur frá vörunni, afgangur verður „Afsláttur“. Prófað með tilbúnum kvittunum: tveir vöruafslættir paraðir rétt; félagsafsláttur af samtölu helst sem sér lína.
+- **„Skoða appið fyrst“** sýnist aðeins gestum; skráðir notendur sjá „Loka“.
+- Bíður deploy (framendi): hreinsunartexti, samþykkishnappur, afsláttur í framenda, Loka-hnappur, tilkynningar til notanda virka þegar framendi les archived_at.

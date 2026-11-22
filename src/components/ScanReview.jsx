@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabaseClient.js'
 const kr = (n) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('is-IS') + ' kr')
 const REASON = {
   blurry: 'Ólæsileg mynd', nolines: 'Engar vörulínur', empty: 'Engar vörur fundust', decode: 'Mynd opnaðist ekki',
-  network: 'Náði ekki sambandi', ai_down: 'Lesari niðri', unverified: 'Stemmdi ekki við samtölu (netþjónn)', mismatch: 'Línur stemma ekki við samtölu',
+  network: 'Náði ekki sambandi', ai_down: 'Lesari niðri', user: 'Notandi sendi', unverified: 'Stemmdi ekki við samtölu (netþjónn)', mismatch: 'Línur stemma ekki við samtölu',
 }
 const when = (iso) => { const d = new Date(iso); const p = (n) => String(n).padStart(2, '0'); return d.getDate() + '.' + (d.getMonth() + 1) + '. kl. ' + p(d.getHours()) + ':' + p(d.getMinutes()) }
 
@@ -38,7 +38,7 @@ export default function ScanReview() {
   if (!rows) return <p className="empty">Sæki…</p>
   return (
     <div className="srv">
-      <p className="muted-p">Hér safnast kvittanir sem lásust illa þegar þú skannaðir sjálfur: myndin og það sem appið las. Kvittanir annarra notenda eru ekki vistaðar hér.</p>
+      <p className="muted-p">Hér safnast kvittanir sem lásust illa: þínar eigin sjálfkrafa, og annarra notenda aðeins ef þeir smelltu sjálfir á „Senda okkur kvittunina“. Eyddu þeim eftir yfirferð, eins og lofað er.</p>
       {err && <p className="ns-err">{err}</p>}
       {rows.length === 0 && !err && <p className="empty">Ekkert til yfirferðar enn. Skannaðu kvittanir — þær sem klikka birtast hér.</p>}
       {rows.map(r => {
@@ -48,7 +48,7 @@ export default function ScanReview() {
         return (
           <div className="srv-card" key={r.id}>
             <div className="srv-head">
-              <b>{REASON[r.reason] || r.reason}</b>
+              <b>{REASON[r.reason] || r.reason}{r.consent ? ' · sent af notanda' : ''}</b>
               <span>{when(r.created_at)}</span>
               <button onClick={() => remove(r)}>Eyða</button>
             </div>

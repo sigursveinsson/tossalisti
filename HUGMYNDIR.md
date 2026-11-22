@@ -292,3 +292,6 @@ Næsta skref ofan á Verðvakt: listategundin „Óskalisti“, skoðunarhlekkur
 
 ## Takk (Hagar) tengir greiðslukort — 19. nóv. 2026
 Hagkaup/Bónus: kort tengt Takk-appinu, Takk krónur safnast sjálfkrafa á Takk-vörur. Sama hugmynd og Gríptu (umbun fyrir tilteknar vörur) en án kvittunar og bundið við Haga. Rök fyrir Gríptu: virkar í öllum verslunum. Kortatenging er leið sem við ættum að skoða með banka (sjá bankahugmynd).
+
+## „Árið þitt í tölum“ — FRESTAÐ til desember 2027 (ákveðið 22. nóv. 2026)
+Flestir byrjuðu að skanna í nóvember 2026, svo yfirlit ársins segir of lítið. Smíða fyrir jólin 2027, þegar notendur eiga heilt ár af kvittunum. Fært í markaðsdagatalinu á 28.12.2027.

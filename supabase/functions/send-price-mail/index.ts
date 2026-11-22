@@ -1,12 +1,49 @@
-// Verðvakt í tölvupósti: sendir verðlækkanir (inbox_messages kind='price') til þeirra sem báðu um það (price_email).
-// Keyrt af pg_cron á klukkutíma fresti (x-cron-key), rétt á eftir price-watch. Afskráning með einum smelli (/afskra).
+// Tilkynningar út úr appinu, keyrt af pg_cron á 10 mín fresti (x-cron-key):
+//  1) Push í símann: persónulegar tilkynningar (inbox_messages kind 'price' = verðlækkun, 'join' = einhver gekk í listann)
+//     til þeirra sem hafa kveikt á tilkynningum (push_enabled), utan næðistíma. Merkt pushed_at.
+//  2) Tölvupóstur: verðlækkanir til þeirra sem báðu um það (price_email). Afskráning með einum smelli (/afskra).
 // ATH: deployað BEINT í Supabase (verify_jwt=false). Þessi skrá er heimildin.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import webpush from 'npm:web-push@3.6.7'
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } })
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
 const APP = 'https://tossalisti.is'
+const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC') ?? '', VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE') ?? ''
+const VAPID_OK = !!(VAPID_PUBLIC && VAPID_PRIVATE)
+if (VAPID_OK) webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') ?? 'mailto:tossalisti@tossalisti.is', VAPID_PUBLIC, VAPID_PRIVATE)
+const inQuiet = (h: number, s: number, e: number) => s === e ? false : s < e ? (h >= s && h < e) : (h >= s || h < e)
+
+// Push: persónulegar tilkynningar síðustu 2 daga sem hafa ekki verið afgreiddar
+async function pushInbox() {
+  if (!VAPID_OK) return { push: 'no-vapid' }
+  const since = new Date(Date.now() - 2 * 864e5).toISOString()
+  const { data: msgs } = await db.from('inbox_messages').select('id,user_id,kind,title,body,link,list_id')
+    .in('kind', ['price', 'join']).not('user_id', 'is', null).is('pushed_at', null).gte('created_at', since).order('created_at').limit(200)
+  if (!msgs?.length) return { pushed: 0 }
+  const ids = [...new Set(msgs.map((m: any) => m.user_id))]
+  const { data: st } = await db.from('notification_settings').select('user_id,push_enabled,quiet_start,quiet_end').in('user_id', ids)
+  const hour = new Date().getUTCHours() // Ísland = UTC
+  const done: string[] = []; let pushed = 0
+  for (const m of msgs) {
+    const s = (st || []).find((x: any) => x.user_id === m.user_id)
+    if (!s || !s.push_enabled) { done.push(m.id); continue }                     // engin push: afgreitt (sést í appinu)
+    if (inQuiet(hour, s.quiet_start ?? 21, s.quiet_end ?? 8)) continue            // næðistími: bíður til morguns
+    const { data: subs } = await db.from('push_subscriptions').select('*').eq('user_id', m.user_id)
+    const url = m.kind === 'join' && m.list_id ? '/#list=' + m.list_id : '/#view=home'
+    const body = JSON.stringify({ title: (m.kind === 'price' ? '📉 ' : '👋 ') + m.title, body: m.body || '', tag: m.kind + '-' + m.id, url })
+    for (const sub of subs || []) {
+      if (sub.subscription?.native || !/^https?:/.test(sub.endpoint || '')) continue
+      try { await webpush.sendNotification(sub.subscription, body); pushed++ }
+      catch (e: any) { if (e?.statusCode === 404 || e?.statusCode === 410) await db.from('push_subscriptions').delete().eq('endpoint', sub.endpoint) }
+    }
+    done.push(m.id)
+  }
+  if (done.length) await db.from('inbox_messages').update({ pushed_at: new Date().toISOString() }).in('id', done)
+  return { pushed, handled: done.length }
+}
+
 const https = (u: unknown) => (typeof u === 'string' && /^https:\/\//.test(u) ? u : '')
 
 function html(m: any) {
@@ -29,6 +66,7 @@ Deno.serve(async (req) => {
   const k = req.headers.get('x-cron-key') || ''
   const { data: ok } = k ? await db.rpc('cron_key_ok', { p_name: 'price_watch_cron', p_key: k }) : { data: false }
   if (!ok) return json({ error: 'unauthorized' }, 401)
+  const p = await pushInbox().catch((e) => ({ pushErr: String(e).slice(0, 120) }))
   const KEY = Deno.env.get('RESEND_API_KEY')
   const FROM = Deno.env.get('NOTIFY_FROM') || 'Tossalisti <noreply@tossalisti.is>'
   if (!KEY) return json({ error: 'config' }, 500)
@@ -48,5 +86,5 @@ Deno.serve(async (req) => {
   }
   if (done.length) await db.rpc('price_mail_mark', { p_ids: done })
   console.log('send-price-mail due=' + (out || []).length + ' sent=' + sent + ' failed=' + failed)
-  return json({ ok: true, sent, failed })
+  return json({ ok: true, sent, failed, ...p })
 })
