@@ -758,6 +758,61 @@ export const RECIPES = [
     ingredients: [{ name: 'linsubaunir', qty: 250, unit: 'g' }, { name: 'niðursoðnir tómatar', qty: 800, unit: 'g' }, { name: 'laukur', qty: 1, unit: 'stk' }, { name: 'gulrætur', qty: 2, unit: 'stk' }, { name: 'spaghetti', qty: 400, unit: 'g' }],
     steps: ['Steiktu saxaðan lauk og gulrætur.', 'Bættu linsubaunum og tómötum við og láttu malla þar til meyrt.', 'Berðu fram með soðnu spaghetti.'],
     authorType: 'web', authorName: 'Eldhúsperlur', sourceUrl: 'https://eldhusperlur.com/' },
+  // Jólabakstur (skrifað fyrir Tossalista)
+  { id: 'mommukokur', name: 'Mömmukökur', emoji: '🍪', time: '1 klst + kæling', serves: 40, tags: ['Bakstur', 'Íslenskt', 'Jól'],
+    ingredients: [
+      { name: 'síróp', qty: 250, unit: 'g' }, { name: 'sykur', qty: 125, unit: 'g' }, { name: 'smjör', qty: 225, unit: 'g' },
+      { name: 'egg', qty: 1, unit: 'stk' }, { name: 'hveiti', qty: 500, unit: 'g' }, { name: 'matarsódi', qty: 2, unit: 'tsk' },
+      { name: 'malað engifer', qty: 1, unit: 'tsk' }, { name: 'flórsykur', qty: 250, unit: 'g' }, { name: 'vanilludropar', qty: 1, unit: 'tsk' },
+    ],
+    steps: [
+      'Hitaðu síróp, sykur og 125 g af smjörinu í potti þar til sykurinn er bráðinn. Láttu kólna í nokkrar mínútur.',
+      'Hrærðu egginu saman við, svo hveiti, matarsóda og engifer. Hnoðaðu í slétt deig.',
+      'Pakkaðu deiginu í plast og geymdu í kæli í að minnsta kosti 2 klst, helst yfir nótt.',
+      'Flettu deigið þunnt út, stingdu út kringlóttar kökur og bakaðu við 180°C í 6–8 mínútur. Láttu kólna.',
+      'Krem: hrærðu afganginn af smjörinu (100 g) mjúkt með flórsykri og vanilludropum.',
+      'Settu krem á milli tveggja kaka. Kökurnar mýkjast og verða bestar eftir einn til tvo daga í boxi.',
+    ] },
+  { id: 'piparkokur', name: 'Piparkökur', emoji: '🎄', time: '1 klst + kæling', serves: 60, tags: ['Bakstur', 'Jól'],
+    ingredients: [
+      { name: 'hveiti', qty: 500, unit: 'g' }, { name: 'sykur', qty: 250, unit: 'g' }, { name: 'smjör', qty: 250, unit: 'g' },
+      { name: 'síróp', qty: 1, unit: 'dl' }, { name: 'egg', qty: 1, unit: 'stk' }, { name: 'matarsódi', qty: 2, unit: 'tsk' },
+      { name: 'kanill', qty: 2, unit: 'tsk' }, { name: 'malað engifer', qty: 2, unit: 'tsk' }, { name: 'negull', qty: 1, unit: 'tsk' },
+      { name: 'pipar', qty: null, unit: 'á hnífsoddi' }, { name: 'flórsykur', qty: 200, unit: 'g' },
+    ],
+    steps: [
+      'Hitaðu smjör, sykur og síróp í potti þar til allt er bráðið. Láttu kólna aðeins.',
+      'Hrærðu egginu saman við. Blandaðu hveiti, matarsóda og kryddum saman og hnoðaðu út í.',
+      'Geymdu deigið í kæli í nokkrar klukkustundir eða yfir nótt.',
+      'Flettu þunnt út, stingdu út hjörtu, stjörnur og karla og bakaðu við 180°C í 6–8 mínútur.',
+      'Hrærðu flórsykur með örfáum dropum af vatni og skreyttu kökurnar þegar þær hafa kólnað.',
+    ] },
+  { id: 'halfmanar', name: 'Hálfmánar', emoji: '🌙', time: '1 klst', serves: 40, tags: ['Bakstur', 'Íslenskt', 'Jól'],
+    ingredients: [
+      { name: 'hveiti', qty: 500, unit: 'g' }, { name: 'sykur', qty: 250, unit: 'g' }, { name: 'smjör', qty: 250, unit: 'g' },
+      { name: 'egg', qty: 2, unit: 'stk' }, { name: 'hjartarsalt', qty: 1, unit: 'tsk' }, { name: 'kardimommudropar', qty: 1, unit: 'tsk' },
+      { name: 'sveskjusulta', qty: 1, unit: 'krukka' },
+    ],
+    steps: [
+      'Myldu kalt smjörið saman við hveiti, sykur og hjartarsalt.',
+      'Bættu eggjum og kardimommudropum við og hnoðaðu í deig. Kældu í hálftíma.',
+      'Flettu deigið út og stingdu út hringi, um 7 cm.',
+      'Settu teskeið af sveskjusultu á hvern hring, brjóttu saman í hálfmána og þrýstu brúnunum saman með gaffli.',
+      'Bakaðu við 200°C í um 10 mínútur, þar til kökurnar eru ljósbrúnar.',
+    ] },
+  { id: 'mondlugrautur', name: 'Möndlugrautur (jólagrautur)', emoji: '🍚', time: '1 klst', serves: 6, tags: ['Íslenskt', 'Jól'],
+    ingredients: [
+      { name: 'grautargrjón', qty: 200, unit: 'g' }, { name: 'nýmjólk', qty: 1.2, unit: 'l' }, { name: 'sykur', qty: 2, unit: 'msk' },
+      { name: 'vanilludropar', qty: 1, unit: 'tsk' }, { name: 'rjómi', qty: 250, unit: 'ml' }, { name: 'möndlur', qty: 1, unit: 'pk' },
+      { name: 'kanill', qty: null, unit: 'eftir smekk' }, { name: 'rúsínur', qty: null, unit: 'eftir smekk' },
+    ],
+    steps: [
+      'Sjóddu grjónin í 2 dl af vatni í nokkrar mínútur, helltu svo mjólkinni út í.',
+      'Láttu malla við vægan hita í um 45 mínútur og hrærðu reglulega svo ekki brenni við.',
+      'Hrærðu sykri og vanilludropum saman við og kældu grautinn ef hann á að verða að ris à l\'amande.',
+      'Felldu eina heila möndlu í grautinn. Sá sem fær hana vinnur möndlugjöfina.',
+      'Berðu fram heitan með kanilsykri og rúsínum, eða kaldan með þeyttum rjóma og saxaðum möndlum.',
+    ] },
 ]
 
 // Flokkar fyrir eldri uppskriftir (nýrri eru með innbyggð tags).
@@ -779,7 +834,7 @@ const RECIPE_TAGS = {
 }
 RECIPES.forEach(r => { if (!r.tags) r.tags = RECIPE_TAGS[r.id] || [] })
 
-export const RECIPE_CATEGORIES = ['Íslenskt', 'Ítalskt', 'Mexíkóskt', 'Asískt', 'Grænmeti', 'Vegan', 'Súpur', 'Salöt', 'Bakstur']
+export const RECIPE_CATEGORIES = ['Jól', 'Íslenskt', 'Ítalskt', 'Mexíkóskt', 'Asískt', 'Grænmeti', 'Vegan', 'Súpur', 'Salöt', 'Bakstur']
 
 // Skalar og formaterar magn miðað við stuðul (t.d. 6/4 = 1.5).
 export function fmtQty(qty, unit, factor = 1) {

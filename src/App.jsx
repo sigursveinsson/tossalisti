@@ -35,6 +35,8 @@ import { captureAttribution, getAttribution, pageContext, isBot } from './lib/at
 
 captureAttribution()
 const INVITE_TOKEN = pendingInvite() // úr slóð eða geymt (lifir af Google-innskráningu og staðfestingarpóst)
+// ?uppskrift=<id> (af uppskriftasíðum tossalisti.is/uppskriftir/…): opnar „Setja á listann“ með hráefnunum
+const RECIPE_LINK = (() => { try { const v = new URLSearchParams(window.location.search).get('uppskrift'); return v && /^[a-z0-9-]{2,40}$/.test(v) ? v : null } catch { return null } })()
 const readHash = () => {
   const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const list = h.get('list') || null
@@ -45,7 +47,7 @@ const startOfTodayISO = () => { const d = new Date(); d.setHours(0, 0, 0, 0); re
 const startOfWeekISO = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - day); return d.toISOString() }
 // Kemur í veg fyrir tvöfaldan sjálfgefinn lista ef reload() keyrir tvisvar samtímis við innskráningu.
 let defaultListPromise = null
-import { ingredientLine } from './data/recipes.js'
+import { ingredientLine, RECIPES } from './data/recipes.js'
 import { TEMPLATES } from './data/templates.js'
 import { suggestChorePoints, suggestChoreEmoji } from './data/chores.js'
 import { makeEmojiImage } from './lib/img.js'
@@ -156,7 +158,7 @@ export default function App() {
     try { window.history.replaceState({}, '', window.location.pathname) } catch {}
   }, [])
   useEffect(() => { if (session && !session.user?.is_anonymous) { try { localStorage.setItem('tossa.known', '1') } catch {} } }, [session])
-  const [welcomeDone, setWelcomeDone] = useState(() => { if (INVITE_TOKEN) return true; try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } }) // boðsgestur fer beint á listann
+  const [welcomeDone, setWelcomeDone] = useState(() => { if (INVITE_TOKEN || RECIPE_LINK) return true; try { return !!localStorage.getItem('tossa.welcomed') } catch { return true } }) // boðsgestur fer beint á listann
   const [inviteJoined, setInviteJoined] = useState(null) // { list, by } — borði eftir að boð var þegið
   // Gestir úr auglýsingu (sjálfvirkur prufuaðgangur): enginn velkomuskjár — beint inn á innkaupalista með „Hvað vantar?“
   const [quickStart, setQuickStart] = useState(false)
@@ -634,6 +636,24 @@ export default function App() {
     })()
   }, [loading, lists.length])
 
+  // Uppskriftahlekkur: bíða eftir innskráningu/gestaaðgangi og listum, opna svo hráefnagluggann (val um lista og af-hökun)
+  const recipeLinkDone = useRef(false)
+  useEffect(() => {
+    if (!RECIPE_LINK || recipeLinkDone.current || loading) return
+    if (isCloud && !session) return
+    recipeLinkDone.current = true
+    const r = RECIPES.find(x => x.id === RECIPE_LINK)
+    try { window.history.replaceState({}, '', window.location.pathname) } catch (e) {}
+    if (!r) return
+    ;(async () => {
+      let t = (list && list.type === 'shopping') ? list : lists.find(l => l.type === 'shopping')
+      if (!t) { try { t = await store.createList('Innkaupalisti', 'shopping'); await reload(t.id) } catch (e) { return } }
+      setView('list'); setCurrentId(t.id); setTab('list')
+      landingEvent('recipe_link')
+      setPendingRecipe({ recipe: r, servings: r.serves })
+    })()
+  }, [loading, session?.user?.id, lists.length])
+
   const addItem = async (name, weekday, time, assignee, image, scannedDept, ext) => {
     if (list.items.some(i => i.name === name.toLowerCase().trim())) { flash(name + ' er nú þegar á listanum'); return }
     const isChore = list.type === 'task' || list.type === 'schedule'
@@ -856,6 +876,7 @@ export default function App() {
     if (toAdd.length) await store.addManyItems(listId, toAdd)
     try { await store.recordRecipeUse(recipe.id) } catch (e) { /* ekki bagalegt */ }
     setPendingRecipe(null)
+    setView('list')
     setCurrentId(listId)
     await reload(listId)
     setTab('list')

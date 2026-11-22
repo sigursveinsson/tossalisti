@@ -945,3 +945,11 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Verðvakt hefur nú eigin inngang: hnappur á Heim opnar lista af gerðinni 'watch' (sama einfalda útlit og óskalisti, án deilingar). Slóð má áfram líma í hvaða innkaupalista sem er.
 - Heiti: listinn/hnappurinn heitir „Kaupa seinna“ (ákvörðun Sverris 22.11.); „Verðvakt“ er heiti á tilkynningunni/merkinu á vörunni.
 - Innhólf heitir nú „Tilkynningar“: ein bjalla í hausnum með teljara opnar þær; tannhjól í glugganum opnar stillingar (áminningar og tölvupóstur). Ólesin tilkynning sést líka sem spjald efst á Heim. Umslagið á Heim fjarlægt.
+
+## SEO-efnissíður — 22. nóv. 2026
+- `scripts/gen-seo.mjs` býr til: /uppskriftir/ (yfirlit) + /uppskriftir/<id>/ fyrir allar 76 uppskriftir (schema.org Recipe, brauðmolar, „Fleiri uppskriftir“), /verdvakt.html, /oskalisti.html, /jolainnkaup.html, /vikumatsedill.html (FAQ-schema á verðvakt og óskalista), uppfærir „Fleiri leiðbeiningar“ á öllum síðum og sitemap.xml (89 slóðir). Keyra aftur ef uppskriftum er breytt.
+- Heimilisbókhald og sparnaður styrkt: Sigga og Jón (/siggaogjon), Excel vs. app, Kaupa seinna, vikumatseðill, FAQ-schema. index.html (seo-pre) tengir á nýju síðurnar.
+- Nýjar uppskriftir í appinu: mömmukökur, piparkökur, hálfmánar, möndlugrautur; nýr flokkur „Jól“.
+- Djúptengill `/?uppskrift=<id>`: sjálfvirkur gestaaðgangur, sleppir velkomuskjá, opnar „Setja á listann“-gluggann (býr til innkaupalista ef enginn er). Atvik: recipe_link.
+- ATH: 66 af uppskriftunum eru merktar innblæstri frá íslenskum uppskriftavefjum (authorName/sourceUrl); síðurnar sýna „Innblástur: <vefur>“ með hlekk.
+- Eftir deploy: senda sitemap aftur í Search Console og skoða eftir 3–4 vikur.

@@ -82,6 +82,8 @@ export function shouldAutoGuest() {
     if (/^\/(afskra|postlisti)/.test(window.location.pathname)) return false
     // Boðshlekkur á tæki sem hefur aldrei skráð sig inn: beint inn á listann sem gestur (hægt að vista aðgang síðar)
     if (p.has('invite')) return true
+    // Uppskriftahlekkur af efnissíðu: beint í „Setja hráefnin á listann“ án skráningar
+    if (p.has('uppskrift')) return true
     const c = pageContext()
     return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
   } catch { return false }
