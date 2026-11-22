@@ -80,7 +80,7 @@ const STYLE = `
 const LOGO = `<svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="14" fill="#fff"/><polyline points="20,33 29,42 45,24" fill="none" stroke="#f5a623" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 
 function page({ urlPath, title, description, ogTitle, body, jsonld = [], type = 'article' }) {
-  const url = SITE + urlPath
+  const url = SITE + urlPath.replace(/\.html$/, '') // Netlify ber síðurnar fram án .html
   const ld = jsonld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n')
   return `<!DOCTYPE html>
 <html lang="is">
@@ -339,7 +339,7 @@ const urls = [
 ]
 fs.writeFileSync(path.join(PUB, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(([u, p, c]) => `  <url><loc>${SITE}${u}</loc><lastmod>${TODAY}</lastmod><changefreq>${c}</changefreq><priority>${p}</priority></url>`).join('\n')}
+${urls.map(([u, p, c]) => `  <url><loc>${SITE}${u.replace(/\.html$/, '')}</loc><lastmod>${TODAY}</lastmod><changefreq>${c}</changefreq><priority>${p}</priority></url>`).join('\n')}
 </urlset>
 `)
 console.log(`uppskriftir: ${n} · sitemap: ${urls.length} slóðir`)

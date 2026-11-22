@@ -840,9 +840,12 @@ export const RECIPE_CATEGORIES = ['Jól', 'Íslenskt', 'Ítalskt', 'Mexíkóskt'
 export function fmtQty(qty, unit, factor = 1) {
   if (qty == null) return unit // "eftir smekk", "með"
   let v = qty * factor
-  if (unit === 'g' || unit === 'ml') v = v >= 100 ? Math.round(v / 10) * 10 : Math.round(v)
-  else v = Math.round(v * 2) / 2
-  const num = Number.isInteger(v) ? v : v.toFixed(1)
+  // Óbreyttur fjöldi skammta: magnið eins og það stendur í uppskriftinni (125 g verður ekki 130 g)
+  if (factor !== 1) {
+    if (unit === 'g' || unit === 'ml') v = v >= 100 ? Math.round(v / 10) * 10 : Math.round(v)
+    else v = Math.round(v * 2) / 2
+  }
+  const num = Number.isInteger(v) ? v : String(+v.toFixed(2)).replace('.', ',')
   return `${num} ${unit}`
 }
 

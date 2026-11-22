@@ -953,3 +953,5 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Djúptengill `/?uppskrift=<id>`: sjálfvirkur gestaaðgangur, sleppir velkomuskjá, opnar „Setja á listann“-gluggann (býr til innkaupalista ef enginn er). Atvik: recipe_link.
 - ATH: 66 af uppskriftunum eru merktar innblæstri frá íslenskum uppskriftavefjum (authorName/sourceUrl); síðurnar sýna „Innblástur: <vefur>“ með hlekk.
 - Eftir deploy: senda sitemap aftur í Search Console og skoða eftir 3–4 vikur.
+- 22.11. eftir deploy: uppskriftasíður og djúptengill staðfestir í loftinu (glugginn opnast með hráefnunum). Sitemap sent aftur í Search Console.
+- Lagað (bíður deploy): canonical, og:url og sitemap nota nú slóðir án .html (Netlify ber síðurnar fram þannig og endurskrifar tengla). Magn í uppskriftum námundast ekki þegar skammtafjöldi er óbreyttur (125 g var 130 g). Vörulínur fá aðeins stóran fyrsta staf, ekki hvert orð („Smjör 225 g“, ekki „Smjör 225 G“).
