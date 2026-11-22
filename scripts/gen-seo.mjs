@@ -11,6 +11,8 @@ import { RECIPES } from '../src/data/recipes.js'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUB = path.join(ROOT, 'public')
 const SITE = 'https://tossalisti.is'
+const FACEBOOK = 'https://www.facebook.com/profile.php?id=61590431443377' // sjá src/lib/social.js
+const INSTAGRAM = 'https://www.instagram.com/tossalisti.is/'
 const TODAY = new Date().toISOString().slice(0, 10)
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
@@ -108,6 +110,7 @@ ${relatedNav(urlPath)}
 </div>
 <footer>
   <p><a href="https://tossalisti.is/">Tossalisti</a> – íslenskt heimilisapp fyrir innkaupalista, uppskriftir, kvittanir og heimilisbókhald. Frítt.</p>
+<p>Fylgdu Tossalista á <a href="${FACEBOOK}" rel="noopener">Facebook</a> og <a href="${INSTAGRAM}" rel="noopener">Instagram</a></p>
 <br><small>Tossalisti er rekinn af Wonder ehf., kt. 471119-1560 · <a href="/personuvernd.html">Persónuvernd</a></small></footer>
 </body>
 </html>

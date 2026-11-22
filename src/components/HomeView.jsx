@@ -1,5 +1,7 @@
 import React from 'react'
 import AdBanner from './AdBanner.jsx'
+import { FACEBOOK_URL, INSTAGRAM_URL } from '../lib/social.js'
+import { landingEvent } from '../lib/landing.js'
 import RestockCard from './RestockCard.jsx'
 import { receiptAlerts } from './ReceiptsView.jsx'
 import { walletAlerts } from './WalletView.jsx'
@@ -43,6 +45,9 @@ function feedText(g) {
 
 export default function HomeView({ name, summary, lists = [], purchases = [], onOpenList, onOpenSpending, canInstall, onInstall, onOpenReminders, adsEnabled, bannerEnabled, hasSharedList = true, onInvite, cashback = 0, onOpenRewards, onOpenGriptu, onOpenRestock, rewardsEnabled = false, inPilot = true, onScanReceipt, onOpenReceipts, onCreateList, onDemoReceipt, wallet = [], onOpenWallet, staples = null, onOpenMyList, onAddStaples, onNewList, onVoice, voiceListName = '', inboxUnread = 0, inboxLatest = '', onOpenInbox, onWish, hasWish = false, onWatch, watchCount = 0 }) {
   const s = summary || { week_points: 0, week_done: 0, feed: [] }
+  // „Fylgdu á Facebook“: hverfur fyrir fullt og allt þegar smellt er á það eða það falið
+  const [fbShow, setFbShow] = React.useState(() => { try { return !localStorage.getItem('tossa.fb') } catch { return false } })
+  const hideFb = (why) => { setFbShow(false); try { localStorage.setItem('tossa.fb', why) } catch {} }
   const tk = todayKey()
 
   const pending = (l) => l.type === 'schedule'
@@ -218,6 +223,17 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {!firstTime && fbShow && (
+        <div className="home-fb">
+          <span className="home-fb-txt"><b>Fylgdu Tossalista</b><small>Nýjungar, ráð og uppskriftir, og þú sérð fyrst hvað er nýtt</small></span>
+          <span className="home-fb-btns">
+            <a className="fb" href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" onClick={() => { landingEvent('fb_follow_click', { once: false }); hideFb('followed') }}>Facebook</a>
+            <a className="ig" href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" onClick={() => { landingEvent('ig_follow_click', { once: false }); hideFb('followed') }}>Instagram</a>
+          </span>
+          <button className="home-fb-x" onClick={() => hideFb('dismissed')} aria-label="Fela">×</button>
         </div>
       )}
 

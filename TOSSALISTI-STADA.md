@@ -970,3 +970,11 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Nýtt `storeLabel()`: birting „Bónus · Spöng“, „ELKO · Lindir“ í bókhaldi og kvittanasafni. Upprunalega heitið helst óbreytt í `purchases.store` (fingrafar/tvítekningarvörn óbreytt).
 - DB: `purchases.store_chain` (trigger, fall `store_chain_name()`), fyllt fyrir allar kvittanir: 70 Bónus-kvittanir úr 18 afbrigðum, 61 Krónu úr 16. Fyrir greiningar og bankasamtal.
 - ATH: eldra fallið `store_chain(s)` (notað af brand_dashboard, skilar „Aðrar verslanir“ utan matvörukeðja) var látið óbreytt.
+
+## Facebook-tenging — 22. nóv. 2026
+- `src/lib/social.js` (FACEBOOK_URL = profile.php?id=61590431443377; síðan hefur ekki notendanafn). Heim: spjald „Fylgdu Tossalista á Facebook“ neðst, ekki fyrir nýja gesti, hverfur eftir smell eða ×. Atvik fb_follow_click. Listapanell: „Facebook“ hjá Persónuvernd.
+- Allar efnissíður og index.html (seo-pre) fá „Fylgdu Tossalista á Facebook“; WebApplication-schema fær sameAs. gen-seo.mjs: FACEBOOK fasti.
+- Ekki gert: tenglar í tölvupóstum (send-welcome o.fl. – athuga fyrst að staðbundnar skrár passi við útgáfur í loftinu), Instagram (vantar slóð).
+- 22.11: Instagram bætt við (https://www.instagram.com/tossalisti.is/): social.js, spjaldið á Heim („Fylgdu Tossalista“ með Facebook- og Instagram-hnöppum, atvik ig_follow_click), listapanell, allar vefsíður, sameAs, velkomupóstur (public/postur/velkomin.html), verðlækkunarpóstur (send-price-mail v3).
+- Ekki breytt: send-offers (Gríptu-tilboðspóstur) — staðbundin skrá ekki borin saman við útgáfu í loftinu.
+- **ÁMINNING: næsta tilkynning til allra notenda á að innihalda „Fylgdu okkur á Facebook og Instagram“** (ákvörðun Sverris 22.11.).

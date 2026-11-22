@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { FACEBOOK_URL, INSTAGRAM_URL } from '../lib/social.js'
 import { IconCalendar, IconChecklist, IconChevronDown, IconChevronRight, IconCopy, IconDots, IconNotebook, IconPencil, IconPlus, IconReceipt, IconShare, IconShieldCheck, IconShoppingCart, IconWallet, IconTemplate, IconTrash, IconX } from '@tabler/icons-react'
 
 // Hönnunarkerfi: eitt hlutlaust tákn-box, línutákn í stað emoji og litaðra reita.
@@ -108,6 +109,8 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
           <div className="sheet-legal">
             <span>Wonder ehf.</span>
             <a href="/personuvernd.html" target="_blank" rel="noopener">Persónuvernd</a>
+            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">Instagram</a>
             {onDeleteAccount && <button className="linklike" onClick={onDeleteAccount}>Eyða reikningi</button>}
           </div>
         </div>

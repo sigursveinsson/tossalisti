@@ -57,7 +57,8 @@ function html(m: any) {
     <tr><td style="padding-top:14px;font-size:16px;line-height:1.5">${esc(m.body)}</td></tr>
     ${link ? `<tr><td style="padding-top:20px"><a href="${esc(link)}" style="display:inline-block;background:#1b2a4a;color:#ffffff;text-decoration:none;font-weight:bold;border-radius:10px;padding:12px 20px">Skoða vöruna</a></td></tr>` : ''}
     <tr><td style="padding-top:24px;font-size:12px;line-height:1.5;color:#6b7a93">Þú færð þennan póst af því að þú baðst um tilkynningar frá Verðvaktinni í tölvupósti.
-      <a href="${APP}/afskra?t=${esc(m.unsub)}" style="color:#6b7a93">Afskrá mig</a> · tossalisti@tossalisti.is</td></tr>
+      <a href="${APP}/afskra?t=${esc(m.unsub)}" style="color:#6b7a93">Afskrá mig</a> · tossalisti@tossalisti.is<br>
+      Fylgdu Tossalista á <a href="https://www.facebook.com/profile.php?id=61590431443377" style="color:#1b2a4a">Facebook</a> og <a href="https://www.instagram.com/tossalisti.is/" style="color:#1b2a4a">Instagram</a></td></tr>
   </table></td></tr></table></body></html>`
 }
 
