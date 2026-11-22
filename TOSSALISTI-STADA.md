@@ -935,3 +935,10 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Prófað í SQL (rúllað til baka): ókunnugur getur ekki búið til hlekk, eigandi getur ekki tekið frá né séð frátekt, annar gestur fær „taken“ og getur ekki afturkallað frátekt annarra, list_id lekur ekki. Óprófað: viðmótið í vafra.
 - Atvik: wish_open, wish_share, wish_view, wish_claim, wish_unclaim.
 - ATH (eldra): RLS-reglan members_insert leyfir hverjum sem er að bæta SJÁLFUM sér á lista ef hann veit list_id. Þess vegna skilar wish_view aldrei list_id. Þarf að skoða með boðsflæðinu.
+
+## Tölvupóstval: nýjungar og Verðvakt — 22. nóv. 2026
+- notification_settings: news_email (+news_email_at), price_email. Hök undir Áminningum: „Nýjungar í Tossalista“, „Verðvakt í tölvupósti“, „Tilboð og herferðir“ (Gríptu, óbreytt).
+- Innhólf: skilaboð með action='news_email' sýna hnappinn „Já, sendu mér fréttir af nýjungum í tölvupósti“ (einn smellur). Verðlækkunarskilaboð bjóða „Fá verðlækkanir líka í tölvupósti“. Aðeins fyrir notendur með netfang (ekki gesti).
+- Edge-fall `send-price-mail` (cron mín. 33): sendir verðlækkanir til þeirra með price_email, merkir inbox_messages.emailed_at. /afskra slekkur nú á öllum valkvæðum pósti.
+- Óprófað: raunveruleg póstsending (engin verðlækkun enn). Ekki smíðað: fjöldasending á news_email-listann (þarf fall eins og send-offers).
+- Atvik: optin_news, optin_price.

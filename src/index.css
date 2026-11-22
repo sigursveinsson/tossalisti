@@ -2406,3 +2406,8 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .wv-foot b{display:block;font-size:16px;color:var(--navy);margin-bottom:4px;}
 .wv-foot p{margin:0 0 12px;font-size:13.5px;color:var(--muted);line-height:1.4;}
 .wv-foot a{display:inline-block;border-radius:10px;padding:10px 18px;background:var(--navy);color:#fff;font-weight:700;font-size:14px;text-decoration:none;}
+
+.inbox-opt{display:block;margin-top:8px;border:0;border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;font-weight:700;background:var(--navy);color:#fff;cursor:pointer;text-align:left;}
+.inbox-opt.done{background:#e6f4ec;color:#1f7a4d;cursor:default;}
+.inbox-foot{margin:12px 0 0;font-size:12px;color:var(--muted);}
+.inbox-chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink2,#3b4352);}

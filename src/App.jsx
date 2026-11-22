@@ -1257,7 +1257,7 @@ export default function App() {
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
-      {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onChanged={loadInbox} />}
+      {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} hasEmail={!!session?.user?.email} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onChanged={loadInbox} />}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}

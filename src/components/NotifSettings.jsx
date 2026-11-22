@@ -113,6 +113,14 @@ export default function NotifSettings({ onClose }) {
 
         <div className="ns-offers">
           <label className="ns-row">
+            <span>Nýjungar í Tossalista í tölvupósti<small>Stuttur póstur þegar eitthvað nýtt bætist við appið. Í mesta lagi einn á mánuði.</small></span>
+            <input type="checkbox" checked={!!s.news_email} onChange={e => patch(e.target.checked ? { news_email: true, news_email_at: new Date().toISOString() } : { news_email: false })} />
+          </label>
+          <label className="ns-row">
+            <span>Verðvakt í tölvupósti<small>Póstur þegar verð lækkar á vöru sem þú vaktar. Annars sérðu það bara í innhólfinu.</small></span>
+            <input type="checkbox" checked={!!s.price_email} onChange={e => patch({ price_email: e.target.checked })} />
+          </label>
+          <label className="ns-row">
             <span>Tilboð og herferðir í tölvupósti<small>Láttu mig vita þegar nýjar herferðir byrja í Gríptu. Í mesta lagi einn póstur á viku. Netfangið þitt fer aldrei til vörumerkja.</small></span>
             <input type="checkbox" checked={!!s.offers_email} onChange={e => patch({ offers_email: e.target.checked })} />
           </label>

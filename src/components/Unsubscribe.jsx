@@ -21,7 +21,7 @@ export default function Unsubscribe({ token }) {
         {state === 'done' && <>
           <div className="cc-big ok"><IconCheck size={42} stroke={2.5} /></div>
           <h2>Þú ert afskráð(ur)</h2>
-          <p className="cc-note">Þú færð ekki fleiri tölvupósta um tilboð og herferðir. Þú getur skráð þig aftur hvenær sem er undir Áminningum í appinu.</p>
+          <p className="cc-note">Þú færð ekki fleiri tölvupósta um nýjungar, verðlækkanir, tilboð eða herferðir. Þú getur skráð þig aftur hvenær sem er undir Áminningum í appinu.</p>
         </>}
         {state === 'bad' && <>
           <div className="cc-big bad"><IconX size={42} stroke={2.5} /></div>
