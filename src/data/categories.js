@@ -88,7 +88,7 @@ export function withStoreCategory(p) {
 
 // Verslunarkeðjur — sameina mismunandi útibú („Krónan Skeifunni", „Krónan Granda" → „Krónan").
 const STORE_CHAINS = [
-  ['Krónan', ['krónan', 'kronan']],
+  ['Krónan', ['krónan', 'kronan', 'krónu', 'kronu']],
   ['Bónus', ['bónus', 'bonus']],
   ['Nettó', ['nettó', 'netto']],
   ['Hagkaup', ['hagkaup']],

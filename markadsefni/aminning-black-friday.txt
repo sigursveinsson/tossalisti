@@ -2,11 +2,12 @@
 
 Skrifaðu áminningu með þessu efni:
 
-1. Kvittanaauglýsingin á Facebook (2.400 kr. á dag) rennur út miðvikudaginn 25. nóvember kl. 16:34. Raddauglýsingin „Með rödd nóv“ (3.200 kr. á dag) keyrir áfram.
+1. Kvittanaauglýsingin á Facebook (2.400 kr. á dag) rennur út miðvikudaginn 25. nóvember kl. 16:34. Raddauglýsingin „Með rödd nóv“ er slökkt (síðan 22.11).
 
 2. Planið var að skipta yfir í Black Friday auglýsingu þegar hún rennur út. Black Friday er föstudaginn 27. nóvember.
 
-3. Þrjár myndir (1080×1350) og textar eru tilbúin í möppunni korfan\markadsefni:
+3. TILBÚIÐ OG VALIÐ (23.11): stutt myndband tossalisti-blackfriday-stutt.mp4 (7,8 sek, 1080×1920, „100% afsláttur af áskrift að Tossalista* / *Frítt eins og alla aðra daga“, endar á lógói og tossalisti.is, intró lagsins undir). Sverrir vill setja það út í vikunni, ekki á mánudegi. Tillaga: þegar kvittanaauglýsingin rennur út á miðvikudag, keyrt fram yfir helgi.
+   Einnig til í möppunni korfan\markadsefni:
    - tossalisti-blackfriday-1.png: grínið, „100% afsláttur af áskrift að Tossalista* (*eins og alla aðra daga)“. Tillaga: nota sem auglýsingu frá miðvikudegi.
    - tossalisti-blackfriday-2.png: „Keyptirðu eitthvað á Black Friday? Taktu mynd af kvittuninni.“ Tillaga: færsla á föstudeginum og um helgina.
    - tossalisti-blackfriday-3.png: „Kaupa seinna“ með Verðvakt. Tillaga: bíða þar til „Kaupa seinna“ er komið út og prófað.
@@ -14,6 +15,6 @@ Skrifaðu áminningu með þessu efni:
 
 4. Það sem Sverrir þarf að ákveða: hvaða mynd fer í auglýsingu, hvaða fjárhæð á dag og hve lengi, og hvort Claude eigi að setja hana upp í Ads Manager (Claude biður um staðfestingu á fjárhæð áður en nokkuð er birt).
 
-5. Annað sem beið: senda skilaboð í innhólfið til allra notenda um „Kaupa seinna“ og óskalistann (eftir að hafa prófað hvort tveggja sjálfur), og birta Sigga og Jón færsluna.
+5. Annað: tilkynningin um „Kaupa seinna“ og óskalistann fór til allra 22.11. Næsta tilkynning á að innihalda „Fylgdu okkur á Facebook og Instagram“.
 
 Endaðu á: „Viltu að ég setji Black Friday auglýsinguna upp?“

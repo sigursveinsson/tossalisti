@@ -5,8 +5,9 @@ import { makeArchiveImage } from '../lib/receipt.js'
 import { useBackClose } from '../lib/backstack.js'
 import {
   IconX, IconSearch, IconShieldCheck, IconArrowBackUp, IconReceipt, IconPhoto, IconCamera,
-  IconShare, IconTrash, IconExternalLink, IconChevronRight, IconArrowLeft,
+  IconShare, IconTrash, IconExternalLink, IconChevronRight, IconArrowLeft, IconFileTypePdf,
 } from '@tabler/icons-react'
+import MailReceipts from './MailReceipts.jsx'
 
 // Kvittana- og ábyrgðageymsla: allar kvittanir heimilisins, ábyrgðir sem eru í gildi,
 // skilafrestir og mynd af kvittun. Myndir eru í einkageymslu (signed URL, 10 mín).
@@ -37,6 +38,7 @@ export function receiptAlerts(purchases = []) {
 function Detail({ p, canEdit, onBack, onChanged }) {
   const [url, setUrl] = useState(null)
   const [busy, setBusy] = useState(false)
+  const isPdf = /\.pdf$/i.test(p.receipt_path || '')
   const fileRef = useRef(null)
   useEffect(() => {
     let alive = true
@@ -73,7 +75,7 @@ function Detail({ p, canEdit, onBack, onChanged }) {
     if (!url) return
     try {
       const blob = await (await fetch(url)).blob()
-      const file = new File([blob], `kvittun-${(p.store || 'verslun').replace(/\s+/g, '-')}-${p.purchased_at}.jpg`, { type: blob.type || 'image/jpeg' })
+      const file = new File([blob], `kvittun-${(p.store || 'verslun').replace(/\s+/g, '-')}-${p.purchased_at}.${isPdf ? 'pdf' : 'jpg'}`, { type: blob.type || (isPdf ? 'application/pdf' : 'image/jpeg') })
       if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Kvittun' })
       else window.open(url, '_blank', 'noopener')
     } catch (e) { /* hætt við */ }
@@ -89,7 +91,9 @@ function Detail({ p, canEdit, onBack, onChanged }) {
       </div>
 
       <div className="rc-img-box">
-        {p.receipt_path
+        {p.receipt_path && isPdf
+          ? <button className="rc-img-ph rc-pdf" onClick={() => url && window.open(url, '_blank', 'noopener')} disabled={!url}><IconFileTypePdf size={34} stroke={1.5} /><span>{url ? 'PDF-reikningur — ýttu til að opna' : 'Sæki reikning…'}</span></button>
+          : p.receipt_path
           ? (url ? <img className="rc-img" src={url} alt="Kvittun" onClick={() => window.open(url, '_blank', 'noopener')} /> : <div className="rc-img-ph">Sæki mynd…</div>)
           : <div className="rc-img-ph"><IconPhoto size={28} stroke={1.5} /><span>Engin mynd geymd</span></div>}
       </div>
@@ -127,7 +131,7 @@ function Detail({ p, canEdit, onBack, onChanged }) {
   )
 }
 
-export default function ReceiptsView({ purchases = [], currentUserId, onClose, onChanged, onScanReceipt }) {
+export default function ReceiptsView({ purchases = [], currentUserId, onClose, onChanged, onScanReceipt, onReadMail, isGuest = false }) {
   const [q, setQ] = useState('')
   const [openId, setOpenId] = useState(null)
   useBackClose(true, onClose)
@@ -155,6 +159,7 @@ export default function ReceiptsView({ purchases = [], currentUserId, onClose, o
         ) : (<>
           <h2><span className="h2-ico"><IconReceipt size={20} stroke={1.75} /></span>Kvittanir & ábyrgðir <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
           <div className="rc-search"><IconSearch size={17} stroke={1.75} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Leita — t.d. „ryksuga“ eða „Elko“" /></div>
+          {onReadMail && !q && <MailReceipts onRead={onReadMail} isGuest={isGuest} />}
 
           {warranties.length > 0 && (<>
             <div className="modal-label">Ábyrgðir í gildi</div>

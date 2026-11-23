@@ -295,3 +295,7 @@ Hagkaup/Bónus: kort tengt Takk-appinu, Takk krónur safnast sjálfkrafa á Takk
 
 ## „Árið þitt í tölum“ — FRESTAÐ til desember 2027 (ákveðið 22. nóv. 2026)
 Flestir byrjuðu að skanna í nóvember 2026, svo yfirlit ársins segir of lítið. Smíða fyrir jólin 2027, þegar notendur eiga heilt ár af kvittunum. Fært í markaðsdagatalinu á 28.12.2027.
+
+## Seinna (22. nóv. 2026)
+- **Skjámælingar:** telja hvaða skjár er opnaður (Heim, Bókhald, Kvittanir, Listi), án innihalds. Sýnir hvort fastir notendur (t.d. Páll) koma til að skoða bókhaldið — góð rök fyrir bankann.
+- **„Mæltu með Tossalista“:** hnappur á réttu augnabliki, t.d. eftir 10. kvittunina.

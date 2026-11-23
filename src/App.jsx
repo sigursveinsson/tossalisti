@@ -96,6 +96,7 @@ export default function App() {
   const [customProducts, setCustomProducts] = useState([])
   const [purchases, setPurchases] = useState([])
   const [showReceipt, setShowReceipt] = useState(false)
+  const [mailRc, setMailRc] = useState(null) // { file, m }: kvittun sem barst í tölvupósti, lesin í skannanum
   const [demoReceipt, setDemoReceipt] = useState(false) // dæmakvittun fyrir nýja notendur
   const [receiptListId, setReceiptListId] = useState(null) // bókhald: tengja kvittun við hóp
   const [showBudgetIntro, setShowBudgetIntro] = useState(false)
@@ -139,6 +140,13 @@ export default function App() {
       setAutoGuest(error ? 'failed' : 'done')
     }).catch(() => { landingEvent('auto_guest_err'); setAutoGuest('failed') })
   }, [autoGuest, authReady])
+  // Af lendingarsíðunni /kvittun: skanninn opnast strax þegar notandinn er kominn inn (skráður eða gestur)
+  useEffect(() => {
+    if (!session) return
+    let go = false
+    try { go = !!localStorage.getItem('tossa.openScan'); if (go) localStorage.removeItem('tossa.openScan') } catch {}
+    if (go) { landingEvent('lp_open_scan'); setTimeout(() => { setReceiptListId(null); setShowReceipt(true) }, 300) }
+  }, [session])
   // Mæla tíma inni í appinu hjá gestum
   useEffect(() => { if (isAnon) return startAppTracking() }, [isAnon])
   // Gestur vill skrá sig inn með eigin aðgangi: út úr prufu, upphafssíða í innskráningarham.
@@ -1256,7 +1264,7 @@ export default function App() {
         />
       )}
 
-      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner demo={demoReceipt} onRealScan={() => setDemoReceipt(false)} requireImage={!demoReceipt && !!(pilot && pilot.member && rewardsEnabled)} onSave={scanReceiptMenu} onCheckDuplicate={demoReceipt ? null : (p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null); setDemoReceipt(false) }} /></ErrorBoundary>}
+      {showReceipt && <ErrorBoundary name="Kvittanaskanninn" onClose={() => { setShowReceipt(false); setReceiptListId(null) }}><ReceiptScanner demo={demoReceipt} initialFile={mailRc ? mailRc.file : null} onRealScan={() => setDemoReceipt(false)} requireImage={!demoReceipt && !!(pilot && pilot.member && rewardsEnabled)} onSave={async (p) => { const m = mailRc && mailRc.m; await scanReceiptMenu(p); if (m) { store.finishMailReceipt(m, 'done').catch(() => {}); setMailRc(null) } }} onCheckDuplicate={demoReceipt ? null : (p) => store.checkDuplicatePurchase(p)} onClose={() => { setShowReceipt(false); setReceiptListId(null); setDemoReceipt(false); setMailRc(null) }} /></ErrorBoundary>}
 
       {showBudgetIntro && (
         <BudgetIntro
@@ -1278,8 +1286,8 @@ export default function App() {
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
-      {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} hasEmail={!!session?.user?.email} onSettings={() => { closeInbox(); setShowNotif(true) }} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onChanged={loadInbox} />}
-      {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} />}
+      {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} hasEmail={!!session?.user?.email} onSettings={() => { closeInbox(); setShowNotif(true) }} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onOpenReceipts={() => setShowReceipts(true)} onChanged={loadInbox} />}
+      {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} isGuest={!!isAnon} onReadMail={(file, m) => { setShowReceipts(false); setReceiptListId(null); setDemoReceipt(false); setMailRc({ file, m }); setShowReceipt(true) }} />}
 
       {showOnboarding && <Onboarding onClose={finishOnboarding} onInvite={() => list && openShare(list)} />}
 

@@ -1,5 +1,6 @@
 // Tilkynningar út úr appinu, keyrt af pg_cron á 10 mín fresti (x-cron-key):
-//  1) Push í símann: persónulegar tilkynningar (inbox_messages kind 'price' = verðlækkun, 'join' = einhver gekk í listann)
+//  1) Push í símann: persónulegar tilkynningar (inbox_messages kind 'price' = verðlækkun, 'join' = einhver gekk í listann,
+//     'mail' = kvittun barst í tölvupósti)
 //     til þeirra sem hafa kveikt á tilkynningum (push_enabled), utan næðistíma. Merkt pushed_at.
 //  2) Tölvupóstur: verðlækkanir til þeirra sem báðu um það (price_email). Afskráning með einum smelli (/afskra).
 // ATH: deployað BEINT í Supabase (verify_jwt=false). Þessi skrá er heimildin.
@@ -20,7 +21,7 @@ async function pushInbox() {
   if (!VAPID_OK) return { push: 'no-vapid' }
   const since = new Date(Date.now() - 2 * 864e5).toISOString()
   const { data: msgs } = await db.from('inbox_messages').select('id,user_id,kind,title,body,link,list_id')
-    .in('kind', ['price', 'join']).not('user_id', 'is', null).is('pushed_at', null).gte('created_at', since).order('created_at').limit(200)
+    .in('kind', ['price', 'join', 'mail']).not('user_id', 'is', null).is('pushed_at', null).gte('created_at', since).order('created_at').limit(200)
   if (!msgs?.length) return { pushed: 0 }
   const ids = [...new Set(msgs.map((m: any) => m.user_id))]
   const { data: st } = await db.from('notification_settings').select('user_id,push_enabled,quiet_start,quiet_end').in('user_id', ids)
@@ -32,7 +33,7 @@ async function pushInbox() {
     if (inQuiet(hour, s.quiet_start ?? 21, s.quiet_end ?? 8)) continue            // næðistími: bíður til morguns
     const { data: subs } = await db.from('push_subscriptions').select('*').eq('user_id', m.user_id)
     const url = m.kind === 'join' && m.list_id ? '/#list=' + m.list_id : '/#view=home'
-    const body = JSON.stringify({ title: (m.kind === 'price' ? '📉 ' : '👋 ') + m.title, body: m.body || '', tag: m.kind + '-' + m.id, url })
+    const body = JSON.stringify({ title: (m.kind === 'price' ? '📉 ' : m.kind === 'mail' ? '🧾 ' : '👋 ') + m.title, body: m.body || '', tag: m.kind + '-' + m.id, url })
     for (const sub of subs || []) {
       if (sub.subscription?.native || !/^https?:/.test(sub.endpoint || '')) continue
       try { await webpush.sendNotification(sub.subscription, body); pushed++ }

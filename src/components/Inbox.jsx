@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { IconX, IconBell, IconSettings, IconTrendingDown } from '@tabler/icons-react'
+import { IconX, IconBell, IconSettings, IconTrendingDown, IconMailForward } from '@tabler/icons-react'
 import { supabase } from '../lib/supabaseClient.js'
 import { useBackClose } from '../lib/backstack.js'
 import { store } from '../lib/store.js'
@@ -20,7 +20,7 @@ function when(iso) {
   return dt.getDate() + '.' + (dt.getMonth() + 1) + '.'
 }
 
-export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onSettings, onClose, onOpenList, onChanged }) {
+export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onSettings, onClose, onOpenList, onOpenReceipts, onChanged }) {
   useBackClose(true, onClose)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -61,7 +61,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onSettings, 
           <div className={'inbox-msg' + (isNew(m) ? ' new' : '')} key={m.id}>
             {m.image_url
               ? <img className="inbox-img" src={m.image_url} alt="" loading="lazy" />
-              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : <IconBell size={20} stroke={1.75} />}</span>}
+              : <span className="inbox-ic">{m.kind === 'price' ? <IconTrendingDown size={20} stroke={1.75} /> : m.kind === 'mail' ? <IconMailForward size={20} stroke={1.75} /> : <IconBell size={20} stroke={1.75} />}</span>}
             <div className="inbox-txt">
               <b>{m.title}</b>
               {m.body && <p>{m.body}</p>}
@@ -69,6 +69,7 @@ export default function Inbox({ msgs = [], seen, isAdmin, hasEmail, onSettings, 
                 <span>{when(m.created_at)}</span>
                 {m.link && /^https:\/\//.test(m.link) && <a href={m.link} target="_blank" rel="noopener noreferrer">Skoða vöruna ↗</a>}
                 {m.list_id && onOpenList && <button onClick={() => { onOpenList(m.list_id); onClose() }}>Opna listann</button>}
+                {m.action === 'mail_receipt' && onOpenReceipts && <button onClick={() => { onClose(); onOpenReceipts() }}>Lesa inn kvittunina</button>}
                 {(m.user_id || isAdmin) && <button className="inbox-del" onClick={() => remove(m)}>Eyða</button>}
               </div>
               {hasEmail && ns && m.action === 'news_email' && (ns.news_email

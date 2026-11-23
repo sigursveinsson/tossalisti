@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import DemoBudget from './components/DemoBudget.jsx'
 import WishView from './components/WishView.jsx'
+import ScanLanding from './components/ScanLanding.jsx'
 import './index.css'
 import { isNative, hideSplash, setStatusBar, onAppUrlOpen, onBackButton } from './lib/native.js'
 
@@ -10,7 +11,11 @@ import { isNative, hideSplash, setStatusBar, onAppUrlOpen, onBackButton } from '
 const isDemo = /^\/(sig+aogjon|syning)\/?$/i.test(window.location.pathname) || /^#(sig+aogjon|syning)$/i.test(window.location.hash)
 // /osk/<tákn>: óskalisti sem eigandinn deildi — gestir skoða og taka frá án skráningar
 const wishTok = (window.location.pathname.match(/^\/osk\/([A-Za-z0-9]{8,40})\/?$/) || [])[1]
-createRoot(document.getElementById('root')).render(isDemo ? <DemoBudget /> : wishTok ? <WishView token={wishTok} /> : <App />)
+// /kvittun: lendingarsíða fyrir auglýsingar — dæmakvittun skönnuð með einum smelli, svo skráning
+// FORSKOÐUN: aðeins sýnileg með ?forskodun þar til LP_LIVE er sett á true (annars opnast venjulega appið).
+const LP_LIVE = false
+const isScanLp = /^\/kvittun\/?$/i.test(window.location.pathname) && (LP_LIVE || /[?&]forskodun\b/.test(window.location.search))
+createRoot(document.getElementById('root')).render(isDemo ? <DemoBudget /> : wishTok ? <WishView token={wishTok} /> : isScanLp ? <ScanLanding /> : <App />)
 
 if (isNative()) {
   // iOS/Android app (Capacitor): engin service worker — appið ber sjálft vefskrárnar. Ræsiskjár burt þegar React er komið upp.

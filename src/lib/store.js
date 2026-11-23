@@ -231,6 +231,11 @@ const local = {
   async walletList() { return [] }, async walletSave() { throw new Error('local') }, async walletDelete() {}, async walletImageUrl() { return null }, async walletParse() { return null },
   async removeReceiptImage() {},
   async getReceiptUrl() { return null },
+  async inboundDomain() { return '' },
+  async myReceiptMail() { return null },
+  async listMailReceipts() { return [] },
+  async getMailReceiptFile() { throw new Error('local') },
+  async finishMailReceipt() {},
   async setItemWarranty(itemId, until) {
     const all = JSON.parse(localStorage.getItem('korfan.purchases') || '[]')
     for (const p of all) for (const it of (p.items || [])) if (it.id === itemId) it.warranty_until = until || null
@@ -851,7 +856,7 @@ const cloud = {
   async uploadReceiptImage(purchaseId, blob) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !blob) return null
-    const ext = (blob.type || '').includes('png') ? 'png' : (blob.type || '').includes('webp') ? 'webp' : 'jpg'
+    const ext = (blob.type || '').includes('pdf') ? 'pdf' : (blob.type || '').includes('png') ? 'png' : (blob.type || '').includes('webp') ? 'webp' : 'jpg'
     const path = `${user.id}/${purchaseId}.${ext}`
     const { error } = await supabase.storage.from('receipts').upload(path, blob, { upsert: true, contentType: blob.type || 'image/jpeg' })
     if (error) throw error
@@ -866,6 +871,36 @@ const cloud = {
     if (!path) return null
     const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 600)
     return error ? null : data.signedUrl
+  },
+  // ── Áframsendar kvittanir (tölvupóstur → Tossalisti) ──
+  // Netfang notandans: <tóki>@<lén>. Lénið er í app_settings ('inbound_domain'); engin færsla = eiginleikinn falinn.
+  async inboundDomain() {
+    const { data } = await supabase.from('app_settings').select('value').eq('key', 'inbound_domain').maybeSingle()
+    const v = data && data.value
+    return typeof v === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v) ? v.toLowerCase() : ''
+  },
+  async myReceiptMail(reset = false) {
+    const { data, error } = await supabase.rpc(reset ? 'reset_receipt_mail' : 'my_receipt_mail')
+    if (error) throw error
+    return data || null
+  },
+  async listMailReceipts() {
+    const { data, error } = await supabase.from('mail_receipts').select('id,subject,from_addr,path,mime,filename,created_at')
+      .eq('status', 'new').not('path', 'is', null).order('created_at', { ascending: false }).limit(30)
+    if (error) return []
+    return data || []
+  },
+  // Sækir skrána sem File svo kvittanaskanninn lesi hana eins og mynd úr síma
+  async getMailReceiptFile(m) {
+    const { data, error } = await supabase.storage.from('receipts').download(m.path)
+    if (error || !data) throw error || new Error('download')
+    const name = m.filename || ('kvittun.' + ((m.mime || '').includes('pdf') ? 'pdf' : (m.mime || '').includes('text') ? 'txt' : 'jpg'))
+    return new File([data], name, { type: m.mime || data.type || 'application/pdf' })
+  },
+  // Lokið (vistuð) eða hent: skráin í biðhólfinu er fjarlægð (vistaða kvittunin á sitt eigið afrit)
+  async finishMailReceipt(m, status = 'done', purchaseId = null) {
+    await supabase.from('mail_receipts').update({ status, purchase_id: purchaseId, done_at: new Date().toISOString(), path: null }).eq('id', m.id)
+    if (m.path) await supabase.storage.from('receipts').remove([m.path])
   },
   async setItemWarranty(itemId, until) {
     const { error } = await supabase.from('purchase_items').update({ warranty_until: until || null, warranty_reminded_at: null }).eq('id', itemId)

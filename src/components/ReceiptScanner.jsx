@@ -33,24 +33,10 @@ const fmtDate = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateStri
 
 // Flæði: taka mynd → lesa (Tesseract) → staðfesta/laga → vista.
 // requireImage: boðshópur Gríptu — myndin er geymd alltaf (skoðuð áður en karfa er afhent), ekki hægt að afhaka.
-// Dæmakvittun fyrir nýja notendur: sýnir lesturinn og bókhaldið án þess að vera með kvittun við höndina.
-// Raunveruleg kvittun (Bónus Fiskislóð 2.11.2026, frá Sverri) — línurnar eins og appið las þær.
-const DEMO_STORE = 'Bónus Fiskislóð (dæmi)'
-const DEMO_DATE = '2026-11-02'
-const DEMO_IMG = '/postur/demo-kvittun.jpg'
-const DEMO_ITEMS = [
-  ['Starbucks 10 stk', 1, 769, 'drykkir'], ['EF hamborgarasósa 400 ml', 1, 487, 'matur'], ['OS Rjómaostur 400 g', 1, 998, 'matur'], ['Lambhaga salat box', 1, 525, 'matur'],
-  ['HP kleinur 7 stk', 1, 559, 'matur'], ['OS Góðostur 26% biti', 1, 1313, 'matur'], ['SFG agúrka', 1, 275, 'matur'], ['ES frosin bláber', 1, 459, 'matur'],
-  ['DJ döðlur', 1, 369, 'matur'], ['MCV Hob Nobs 262 g', 1, 314, 'snakk'], ['Bónus poki', 1, 53, 'heimili'],
-]
-// Sýnidæmið er ALDREI vistað (þetta er ekki kvittun gestsins): það sýnir bara lesturinn og flokkunina.
-const DEMO_TOTAL = DEMO_ITEMS.reduce((a, [, , pr]) => a + pr, 0)
-const DEMO_CATS = (() => {
-  const m = {}
-  for (const [, , pr, c] of DEMO_ITEMS) m[c] = (m[c] || 0) + pr
-  return Object.entries(m).map(([key, amount]) => ({ key, amount, ...(CAT_BY_KEY[key] || { name: 'Annað', color: '#6b7a93', icon: '•' }) })).sort((a, b) => b.amount - a.amount)
-})()
-export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRealScan, requireImage = false, demo = false }) {
+// Dæmakvittun (sjá data/demoReceipt.js). Sýnidæmið er ALDREI vistað (þetta er ekki kvittun gestsins).
+import { DEMO_STORE, DEMO_DATE, DEMO_IMG, DEMO_ITEMS, DEMO_TOTAL, DEMO_CATS } from '../data/demoReceipt.js'
+// initialFile: kvittun sem barst í tölvupósti (PDF/mynd/texti) — lesin strax, engin myndavél.
+export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRealScan, requireImage = false, demo = false, initialFile = null }) {
   const fileRef = useRef(null)
   const [phase, setPhase] = useState('capture') // capture | reading | review
   const [progress, setProgress] = useState(0)
@@ -88,7 +74,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
   // Beint í myndavélina (enginn leiðbeiningaskjár á milli). Ef vafrinn leyfir það ekki stendur skjárinn eftir sem varaleið.
   const autoOpened = useRef(false)
   useEffect(() => {
-    if (demo || autoOpened.current) return
+    if (demo || initialFile || autoOpened.current) return
     // Aðeins í síma/spjaldtölvu: þar opnast myndavélin. Í tölvu opnaðist skráaval, sem enginn bað um.
     const isPhone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 1 && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
     if (!isPhone && !hasDocumentScanner()) return
@@ -198,6 +184,15 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
     setPhase('review')
   }
 
+  // Kvittun úr tölvupósti: lesin strax þegar glugginn opnast
+  const initRead = useRef(false)
+  useEffect(() => {
+    if (!initialFile || initRead.current) return
+    initRead.current = true
+    gotFileRef.current = true
+    handleFile(initialFile)
+  }, [initialFile])
+
   const setItem = (id, field, val) => setItems(items.map(it => it.id === id ? { ...it, [field]: val } : it))
   const delItem = (id) => setItems(items.filter(it => it.id !== id))
   const addRow = () => setItems([...items, { id: 'n_' + Date.now(), name: '', qty: 1, price: '', w: 0 }])
@@ -239,7 +234,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
         <h2>Skrá kvittun <button className="x" onClick={onClose} aria-label="Loka"><IconX size={20} stroke={1.75} /></button></h2>
 
         <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={onFile} style={{ display: 'none' }} />
-        <input ref={galleryRef} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
+        <input ref={galleryRef} type="file" accept="image/*,application/pdf" onChange={onFile} style={{ display: 'none' }} />
         {camera && <CameraCapture title={multi ? `Hluti ${parts.length + 1} af kvittuninni` : undefined}
           onCapture={onShot} onPickFile={() => { setCamera(false); setTimeout(() => galleryRef.current && galleryRef.current.click(), 50) }} onClose={() => setCamera(false)} />}
 
@@ -388,7 +383,7 @@ export default function ReceiptScanner({ onSave, onClose, onCheckDuplicate, onRe
               <label className="receipt-keep locked"><input type="checkbox" checked readOnly disabled /> <IconArchive size={16} stroke={1.75} /> Mynd af kvittun er geymd — Gríptu skoðar hana áður en karfa er afhent. Aðeins þú, heimilið og Gríptu sjáið hana.</label>
             )}
             {archive && !requireImage && (
-              <label className="receipt-keep"><input type="checkbox" checked={keepImage} onChange={e => setKeepImage(e.target.checked)} /> <IconArchive size={16} stroke={1.75} /> Geyma mynd af kvittun (aðeins þú og heimilið sjáið hana)</label>
+              <label className="receipt-keep"><input type="checkbox" checked={keepImage} onChange={e => setKeepImage(e.target.checked)} /> <IconArchive size={16} stroke={1.75} /> {archive.type === 'application/pdf' ? 'Geyma PDF-reikninginn' : 'Geyma mynd af kvittun'} (aðeins þú og heimilið sjáið hana)</label>
             )}
             <div className="receipt-total">
               <span>Samtals</span>

@@ -978,3 +978,23 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - 22.11: Instagram bætt við (https://www.instagram.com/tossalisti.is/): social.js, spjaldið á Heim („Fylgdu Tossalista“ með Facebook- og Instagram-hnöppum, atvik ig_follow_click), listapanell, allar vefsíður, sameAs, velkomupóstur (public/postur/velkomin.html), verðlækkunarpóstur (send-price-mail v3).
 - Ekki breytt: send-offers (Gríptu-tilboðspóstur) — staðbundin skrá ekki borin saman við útgáfu í loftinu.
 - **ÁMINNING: næsta tilkynning til allra notenda á að innihalda „Fylgdu okkur á Facebook og Instagram“** (ákvörðun Sverris 22.11.).
+
+## Black Friday auglýsing — 23. nóv. 2026
+- Valið: `markadsefni/tossalisti-blackfriday-stutt.mp4` (7,8 sek, Reels/Stories; eitt skilaboð + lokamynd með lógói; tónlist = intró lagsins, án söngs). Skript: blackfriday_video_stutt.py.
+- Ákvörðun Sverris: fer út seinna í vikunni, ekki á mánudegi. Kvittanaauglýsingin rennur út mið. 25.11 kl. 16:34 og fer illa af stað eftir endurræsingu (88 kr/lending).
+
+## Áframsendar kvittanir (23.11.2026)
+- Notandi áframsendir rafræna kvittun (PDF frá ELKO o.fl., mynd, eða kvittun í meginmáli) á sitt netfang `<tóki>@kvittun.tossalisti.is`.
+- Edge-fall `inbound-receipt` (verify_jwt=false, Svix-undirskrift staðfest): Resend `email.received` → sækir skeytið og viðhengi → vistar í `receipts/<uid>/mail/…` + röð í `mail_receipts` (status new) + tilkynning (kind 'mail', action 'mail_receipt'). Hámark 30/dag á notanda, 3 skrár á skeyti, 10 MB.
+- Enginn Gemini-kostnaður við móttöku: lesið þegar notandinn ýtir á „Lesa inn“ (Kvittanir & ábyrgðir) → sami skanni og staðfesting. PDF geymt í kvittanasafni (receipts bucket leyfir nú application/pdf og text/plain).
+- Töflur: `receipt_mail` (user_id, token), `mail_receipts`. RPC: `my_receipt_mail()`, `reset_receipt_mail()` (gestir fá ekkert netfang).
+- Kveikt á eiginleikanum í appinu með `app_settings` key `inbound_domain` (jsonb strengur). Engin færsla = falið.
+- send-price-mail v5: push fyrir kind 'mail' líka.
+- Prófað: parse-receipt les PDF-reikning (vörur, afslátt, 5 ára ábyrgð, samtala stemmir) og texta úr pósti.
+- Bíður Sverris: Resend Receiving á kvittun.tossalisti.is (MX), webhook á inbound-receipt, leyndarmál RESEND_WEBHOOK_SECRET.
+
+## Lendingarsíða /kvittun (23.11.2026)
+- `src/components/ScanLanding.jsx`, leið í main.jsx (`/kvittun`). Dæmakvittun (data/demoReceipt.js, sama og í skannanum) + einn hnappur „Skanna kvittun“ → skannlína 1,6 sek → flokkuð niðurstaða → skráning (netfang + lykilorð, valfrjálst fréttabréf) → appið opnar skannann strax (localStorage `tossa.openScan`, lesið í App.jsx).
+- „Prófa með minni kvittun án skráningar“ → gestur (shouldAutoGuest les `tossa.openScan`) beint í skannann.
+- Mælingar (landing_events): lp_view, lp_scan, lp_result, lp_lines, lp_focus_email, lp_signup_click/ok/err, lp_try_guest, lp_open_scan.
+- Auglýsingin á að vísa á https://tossalisti.is/kvittun (með utm) — Sverrir breytir/samþykkir í Ads Manager.

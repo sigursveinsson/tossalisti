@@ -84,6 +84,8 @@ export function shouldAutoGuest() {
     if (p.has('invite')) return true
     // Uppskriftahlekkur af efnissíðu: beint í „Setja hráefnin á listann“ án skráningar
     if (p.has('uppskrift')) return true
+    // Af lendingarsíðunni /kvittun („Prófa með minni kvittun án skráningar“): beint í skannann sem gestur
+    if (localStorage.getItem('tossa.openScan')) return true
     const c = pageContext()
     return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
   } catch { return false }

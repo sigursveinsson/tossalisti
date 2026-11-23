@@ -406,6 +406,24 @@ async function parseReceiptMulti(files, onProgress, products) {
 }
 
 async function parseReceiptInner(file, onProgress, products) {
+  // PDF-reikningur eða texti úr tölvupósti (áframsendar kvittanir): sent beint, sjónlíkanið les PDF og texta.
+  // PDF-ið sjálft er geymt í kvittanasafninu; textinn ekki (engin mynd til að sýna).
+  const ft = (file.type || '').toLowerCase()
+  if (ft === 'application/pdf' || ft === 'text/plain') {
+    if (onProgress) onProgress(0.3)
+    const archive = ft === 'application/pdf' && file.size <= ARCHIVE_RAW_MAX ? file : null
+    try {
+      const ai = await visionInvoke([{ image: await fileToBase64(file), mime: ft }], products)
+      if (onProgress) onProgress(1)
+      if (ai) {
+        if (ai.ai_down) return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'ai', failed: 'ai_down' }
+        if (ai.unreadable) return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: noLines(ai) ? 'nolines' : 'empty' }
+        if (ai.items && ai.items.length) return { ...ai, archive, decoded: true, stage: 'ai' }
+        return { ...ai, items: [], archive, decoded: true, stage: 'ai', failed: noLines(ai) ? 'nolines' : 'empty' }
+      }
+    } catch (e) { /* netvilla */ }
+    return { store: '', items: [], total: null, date: null, archive, decoded: true, stage: 'upload', failed: 'network' }
+  }
   // Afkóða EINU SINNI í minnkaðri stærð — endurnýtt fyrir bæði sjónlíkan og OCR-vara.
   // Heldur minnistoppi niðri svo síminn endurhleðist ekki (Android/iOS OOM).
   let canvas = null, image = null, mime = 'image/jpeg'
