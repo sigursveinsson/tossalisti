@@ -4,6 +4,7 @@ import App from './App.jsx'
 import DemoBudget from './components/DemoBudget.jsx'
 import WishView from './components/WishView.jsx'
 import ScanLanding from './components/ScanLanding.jsx'
+import { pageContext, isBot } from './lib/attribution.js'
 import './index.css'
 import { isNative, hideSplash, setStatusBar, onAppUrlOpen, onBackButton } from './lib/native.js'
 
@@ -12,9 +13,21 @@ const isDemo = /^\/(sig+aogjon|syning)\/?$/i.test(window.location.pathname) || /
 // /osk/<tákn>: óskalisti sem eigandinn deildi — gestir skoða og taka frá án skráningar
 const wishTok = (window.location.pathname.match(/^\/osk\/([A-Za-z0-9]{8,40})\/?$/) || [])[1]
 // /kvittun: lendingarsíða fyrir auglýsingar — dæmakvittun skönnuð með einum smelli, svo skráning
-// FORSKOÐUN: aðeins sýnileg með ?forskodun þar til LP_LIVE er sett á true (annars opnast venjulega appið).
-const LP_LIVE = false
-const isScanLp = /^\/kvittun\/?$/i.test(window.location.pathname) && (LP_LIVE || /[?&]forskodun\b/.test(window.location.search))
+// Nýir gestir af Facebook/Instagram sem lenda á forsíðunni fá lendingarsíðuna í stað appsins.
+// Ekki: boðs-/uppskriftahlekkir, tæki sem hefur skráð sig inn eða er með virka setu (líka gestasetu),
+// þeir sem völdu „Prófa án skráningar“ (tossa.openScan) né þeir sem fluttust úr Facebook-vafranum (esc).
+function fbNewVisitor() {
+  try {
+    if (window.location.pathname !== '/' || isBot()) return false
+    const p = new URLSearchParams(window.location.search)
+    if (['invite', 'uppskrift', 'reset', 'griptu', 'esc'].some(k => p.has(k))) return false
+    if (localStorage.getItem('tossa.known') || localStorage.getItem('tossa.noAuto') || localStorage.getItem('tossa.openScan')) return false
+    if (Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k))) return false
+    const s = pageContext().source
+    return s === 'facebook' || s === 'instagram'
+  } catch { return false }
+}
+const isScanLp = /^\/kvittun\/?$/i.test(window.location.pathname) || fbNewVisitor()
 createRoot(document.getElementById('root')).render(isDemo ? <DemoBudget /> : wishTok ? <WishView token={wishTok} /> : isScanLp ? <ScanLanding /> : <App />)
 
 if (isNative()) {

@@ -997,4 +997,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - `src/components/ScanLanding.jsx`, leið í main.jsx (`/kvittun`). Dæmakvittun (data/demoReceipt.js, sama og í skannanum) + einn hnappur „Skanna kvittun“ → skannlína 1,6 sek → flokkuð niðurstaða → skráning (netfang + lykilorð, valfrjálst fréttabréf) → appið opnar skannann strax (localStorage `tossa.openScan`, lesið í App.jsx).
 - „Prófa með minni kvittun án skráningar“ → gestur (shouldAutoGuest les `tossa.openScan`) beint í skannann.
 - Mælingar (landing_events): lp_view, lp_scan, lp_result, lp_lines, lp_focus_email, lp_signup_click/ok/err, lp_try_guest, lp_open_scan.
-- Auglýsingin á að vísa á https://tossalisti.is/kvittun (með utm) — Sverrir breytir/samþykkir í Ads Manager.
+- Í loftinu 23.11: nýir gestir af Facebook/Instagram á forsíðunni (/) fá lendingarsíðuna sjálfkrafa (main.jsx fbNewVisitor) — engin breyting á auglýsingaslóð. /kvittun opin öllum. Undanþegnir: invite/uppskrift/reset/griptu/esc, tossa.known/noAuto/openScan, virk seta.
