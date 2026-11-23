@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { IconScan, IconCheck } from '@tabler/icons-react'
 import { supabase } from '../lib/supabaseClient.js'
-import { landingEvent, startLandingTracking } from '../lib/landing.js'
+import { landingEvent, startLandingTracking, isInAppBrowser } from '../lib/landing.js'
+import GoogleButton from './GoogleButton.jsx'
 import { DEMO_IMG, DEMO_TOTAL } from '../data/demoReceipt.js'
 
 // /kvittun — lendingarsíða fyrir auglýsingar. Þrír skjáir:
@@ -78,6 +79,19 @@ export default function ScanLanding() {
     setInfo('Aðgangurinn er stofnaður. Við sendum staðfestingarhlekk á ' + em + ' — opnaðu hann og þú ert komin(n) inn.')
   }
 
+  const inApp = isInAppBrowser()
+  const google = async () => {
+    setErr(''); setBusy(true); landingEvent('lp_google')
+    try { localStorage.setItem('tossa.known', '1'); localStorage.setItem('tossa.openScan', '1'); localStorage.setItem('tossa.welcomed', '1') } catch {}
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })
+    if (error) {
+      setBusy(false); landingEvent('lp_google_err')
+      try { localStorage.removeItem('tossa.openScan') } catch {}
+      setErr('Ekki tókst að opna Google. Notaðu netfang hér fyrir neðan.')
+    }
+    // annars fer vafrinn til Google og kemur til baka innskráður → appið opnar skannann
+  }
+
   // 1) Mynd af kvittun + hnappur  ·  2) biðgluggi
   if (phase !== 'result') return (
     <div className="lp lp-start">
@@ -130,6 +144,11 @@ export default function ScanLanding() {
         <h2>Fáðu þetta yfirlit fyrir þitt heimili</h2>
         <p>Taktu mynd af kvittunum og Tossalisti sér um rest. Ókeypis og íslenskt.</p>
         {info ? <p className="lp-info">{info}</p> : (<>
+          {/* Google bannar innskráningu inni í Facebook/Instagram-vafranum — hnappurinn birtist aðeins í venjulegum vafra */}
+          {!inApp && (<>
+            <GoogleButton onClick={google} disabled={busy}>Halda áfram með Google</GoogleButton>
+            <div className="signin-or"><span>eða með netfangi</span></div>
+          </>)}
           <input value={email} onChange={e => setEmail(e.target.value)} onFocus={() => landingEvent('lp_focus_email')} placeholder="netfang@daemi.is" type="email" autoComplete="email" inputMode="email" />
           <input value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && signup()} placeholder="Veldu lykilorð (minnst 6 stafir)" type="password" autoComplete="new-password" />
           <label className="lp-optin"><input type="checkbox" checked={offers} onChange={e => setOffers(e.target.checked)} /> <span>Sendið mér fréttir af nýjungum (í mesta lagi einu sinni í viku)</span></label>

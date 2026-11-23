@@ -1,0 +1,16 @@
+Dagleg samantekt fyrir Sverri (Tossalisti, tossalisti.is). Svaraðu á íslensku, stutt. Eingöngu lestur: ekki breyta neinu, ekki senda neitt.
+
+Notaðu Supabase-verkefnið butgofssgsmlfxtwylgf (execute_sql). Tímabil: gærdagurinn (UTC = íslenskur tími). Slepptu röðum þar sem landing_events.excluded = true.
+
+1. Gestir af Facebook/Instagram (landing_events.source in ('facebook','instagram')), taldir sem einstakir visitor:
+   a) sáu lendingarsíðuna: event = 'lp_view'
+   b) ýttu á „Skanna kvittun“: 'lp_scan'
+   c) sáu niðurstöðuna: 'lp_result'
+   d) byrjuðu að skrá netfang: 'lp_focus_email'
+   e) skráðu sig: 'lp_signup_ok'  ·  Google: 'lp_google'
+   f) prófuðu án skráningar: 'lp_try_guest'
+   g) skönnuðu eigin kvittun: 'scan_saved' (sama visitor)
+   Sýndu sem trekt með fjölda og hlutfalli af (a), og hvar mest datt út.
+2. Nýskráningar í gær (auth.users, ekki is_anonymous, ekki í excluded_users) og hve margar þeirra hafa skannað kvittun.
+3. Berðu saman við daginn þar á undan og síðustu 7 daga.
+4. Ein setning: hvað ætti að prófa næst (ein breyting í einu) miðað við hvar flestir duttu út.
