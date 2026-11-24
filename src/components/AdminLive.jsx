@@ -183,7 +183,11 @@ export default function AdminLive() {
               <span className="live-row-t">{hm(g.t0)}</span>
               <span className="live-src" style={{ background: s[1] }} title={s[2] + (g.ad ? ' · auglýsing' : '')}>{s[0]}</span>
               <span className="live-row-main">
-                {g.is_back && <i className="live-badge back">Kom aftur</i>}
+                {g.reg
+                  ? <i className="live-badge reg" title="Tækið er tengt skráðum aðgangi">Skráður · {g.reg}</i>
+                  : g.guest
+                    ? <i className="live-badge back" title="Prufuaðgangur án netfangs">{g.is_back ? 'Gestur, kom aftur' : 'Gestur'}</i>
+                    : g.is_back && <i className="live-badge back" title="Tækið hefur heimsótt tossalisti.is áður">Kom aftur</i>}
                 {chips.length
                   ? chips.map(([label, kind]) => <i key={label} className={'live-chip' + (kind ? ' ' + kind : '')}>{label}</i>)
                   : <span className="live-row-none">{g.secs < 10 ? 'Fór strax' : 'Skoðaði, gerði ekkert'}</span>}

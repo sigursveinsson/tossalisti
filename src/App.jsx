@@ -31,7 +31,7 @@ import Dialog from './components/Dialog.jsx'
 import Auth, { ResetPassword } from './components/Auth.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { useBackClose } from './lib/backstack.js'
-import { captureAttribution, getAttribution, pageContext, isBot } from './lib/attribution.js'
+import { captureAttribution, getAttribution, pageContext, isBot, visitorId } from './lib/attribution.js'
 
 captureAttribution()
 const INVITE_TOKEN = pendingInvite() // úr slóð eða geymt (lifir af Google-innskráningu og staðfestingarpóst)
@@ -140,6 +140,16 @@ export default function App() {
       setAutoGuest(error ? 'failed' : 'done')
     }).catch(() => { landingEvent('auto_guest_err'); setAutoGuest('failed') })
   }, [autoGuest, authReady])
+  // Lifandi yfirlit stjórnanda: tengja gesta-auðkenni tækisins við aðganginn (einu sinni á dag á hvern aðgang)
+  useEffect(() => {
+    const uid = session && session.user && session.user.id
+    if (!uid || !supabase) return
+    const k = 'tossa.nv.' + uid.slice(0, 8), today = new Date().toISOString().slice(0, 10)
+    try { if (localStorage.getItem(k) === today) return } catch {}
+    const v = visitorId()
+    if (!v) return
+    supabase.rpc('note_visitor', { p_visitor: v }).then(({ error }) => { if (!error) { try { localStorage.setItem(k, today) } catch {} } }, () => {})
+  }, [session])
   // Af lendingarsíðunni /kvittun: skanninn opnast strax þegar notandinn er kominn inn (skráður eða gestur)
   useEffect(() => {
     if (!session) return

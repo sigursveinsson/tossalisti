@@ -2311,6 +2311,7 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .live-badge.new{background:var(--cta);color:var(--cta-ink);}
 .live-badge.star{background:#e3f4ea;color:#12864f;}
 .live-badge.back{background:#e8eefb;color:var(--navy);margin-left:0;margin-right:6px;}
+.live-badge.reg{background:#e3f4ea;color:#12864f;margin-left:0;margin-right:6px;}
 .live-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13px;}
 .live-row.win{background:#f1faf5;margin:0 -8px;padding:7px 8px;border-radius:8px;}
 .live-row.fresh{animation:liveFresh 2.4s ease-out;}
