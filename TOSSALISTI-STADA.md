@@ -998,3 +998,14 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - „Prófa með minni kvittun án skráningar“ → gestur (shouldAutoGuest les `tossa.openScan`) beint í skannann.
 - Mælingar (landing_events): lp_view, lp_scan, lp_result, lp_lines, lp_focus_email, lp_signup_click/ok/err, lp_try_guest, lp_open_scan.
 - Í loftinu 23.11: nýir gestir af Facebook/Instagram á forsíðunni (/) fá lendingarsíðuna sjálfkrafa (main.jsx fbNewVisitor) — engin breyting á auglýsingaslóð. /kvittun opin öllum. Undanþegnir: invite/uppskrift/reset/griptu/esc, tossa.known/noAuto/openScan, virk seta.
+
+## REGLA: aldrei krafist innskráningar (25.11.2026)
+- Allir nýir gestir fara beint inn í appið sem gestir (landing.js shouldAutoGuest). Innskráningarsíða aðeins ef tækið hefur skráð sig inn áður (tossa.known), notandi valdi „Skrá inn“ (tossa.noAuto), innskráningarhlekkur/reset/griptu, eða vélmenni.
+- Lendingarsíðan (nýir af FB/IG): „Skanna mína kvittun“ (gestur → skanninn) eða „Sjá dæmi fyrst“. Eftir dæmið: Skanna mína kvittun, „Minntu mig á“ (bara netfang + Í kvöld/Á morgun/Um helgina) og valfrjáls skráning.
+- ?skanna=1 í slóð opnar skannann (main.jsx → tossa.openScan).
+
+## Áminningar um fyrstu kvittun (edge-fall scan-reminders, cron */10)
+- A) scan_reminders (RPC request_scan_reminder, anon): ein áminning á völdum tíma + ein eftirfylgni eftir 7 daga ef engin kvittun. GET ?stop=<tóki> afþakkar.
+- B) onboarding_due(): nýskráðir 20–48 klst án kvittunar fá EINN póst (onboarding_mails kind day1).
+- Hnappurinn í pósti = Supabase magic link → /?skanna=1. Notandi stofnaður ef ekki til (staðfestist við smell).
+- POST {dry:true} með x-cron-key sýnir hvað yrði sent.

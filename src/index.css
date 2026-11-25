@@ -2509,3 +2509,14 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .lp-later { display: block; width: 100%; margin-top: 12px; background: none; border: 0; color: var(--text); text-decoration: underline; font-size: 15px; padding: 8px; }
 .lp-legal { font-size: 12px; color: var(--faint); text-align: center; margin: 8px 0 0; }
 .lp-legal a { color: inherit; }
+.lp-btn-2 { background: var(--surface); color: var(--text); border: 1.5px solid var(--line); box-shadow: none; font-size: 16px; padding: 14px 16px; }
+.lp-start { gap: 12px; }
+.lp-start-note { text-align: center; color: var(--muted); font-size: 13px; margin: 0; }
+.lp-remind { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.lp-remind > b { font-size: 16px; }
+.lp-remind > span { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+.lp-remind input { width: 100%; box-sizing: border-box; height: 48px; border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; font-size: 16px; background: var(--surface); color: var(--text); }
+.lp-when { display: flex; gap: 6px; margin: 4px 0; }
+.lp-when button { flex: 1; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 10px 4px; font-size: 14px; font-weight: 600; }
+.lp-when button.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.lp-signup-form { margin-top: 12px; }

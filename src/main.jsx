@@ -13,6 +13,16 @@ const isDemo = /^\/(sig+aogjon|syning)\/?$/i.test(window.location.pathname) || /
 // /osk/<tákn>: óskalisti sem eigandinn deildi — gestir skoða og taka frá án skráningar
 const wishTok = (window.location.pathname.match(/^\/osk\/([A-Za-z0-9]{8,40})\/?$/) || [])[1]
 // /kvittun: lendingarsíða fyrir auglýsingar — dæmakvittun skönnuð með einum smelli, svo skráning
+// ?skanna=1 (hlekkur í áminningarpósti): skanninn opnast um leið og notandinn er kominn inn
+try {
+  const q = new URLSearchParams(window.location.search)
+  if (q.has('skanna')) {
+    localStorage.setItem('tossa.openScan', '1')
+    q.delete('skanna')
+    const rest = q.toString()
+    window.history.replaceState(window.history.state, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash)
+  }
+} catch {}
 // Nýir gestir af Facebook/Instagram sem lenda á forsíðunni fá lendingarsíðuna í stað appsins.
 // Ekki: boðs-/uppskriftahlekkir, tæki sem hefur skráð sig inn eða er með virka setu (líka gestasetu),
 // þeir sem völdu „Prófa án skráningar“ (tossa.openScan) né þeir sem fluttust úr Facebook-vafranum (esc).

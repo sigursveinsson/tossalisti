@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react'
-import { IconScan, IconCheck } from '@tabler/icons-react'
+import { IconScan, IconCheck, IconCamera } from '@tabler/icons-react'
+import { pageContext, visitorId } from '../lib/attribution.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { landingEvent, startLandingTracking, isInAppBrowser } from '../lib/landing.js'
 import GoogleButton from './GoogleButton.jsx'
 import { DEMO_IMG, DEMO_TOTAL } from '../data/demoReceipt.js'
 
-// /kvittun — lendingarsíða fyrir auglýsingar. Þrír skjáir:
-//  1) Mynd af kvittun og einn hnappur „Skanna kvittun“
+// /kvittun — lendingarsíða fyrir auglýsingar. REGLA: aldrei krafist skráningar. Skjáir:
+//  1) Mynd af kvittun: „Skanna mína kvittun“ (beint í skannann sem gestur) eða „Sjá dæmi fyrst“
 //  2) Biðgluggi í 1 sek („Les kvittunina…“)
-//  3) Niðurstaðan: mánuður af kvittunum (útgjöld eftir dögum + verslanir í lista) og skráning fyrir neðan
+//  3) Dæmið: mánuður af kvittunum, svo „Skanna mína kvittun“, „Minntu mig á“ (bara netfang) og valfrjáls skráning
 // Ekkert vistast og enginn gagnagrunnur fyrr en notandinn skráir sig. Tölurnar eru sýnidæmi.
 const kr = (n) => Math.round(n).toLocaleString('is-IS').replace(/,/g, '.') + ' kr'
 const ERR = (m) => {
@@ -79,6 +80,31 @@ export default function ScanLanding() {
     setInfo('Aðgangurinn er stofnaður. Við sendum staðfestingarhlekk á ' + em + ' — opnaðu hann og þú ert komin(n) inn.')
   }
 
+  // „Minntu mig á“: aðeins netfang og tími — ein áminning (netþjónninn reiknar tímann)
+  const [remEmail, setRemEmail] = useState('')
+  const [when, setWhen] = useState('kvold')
+  const [remBusy, setRemBusy] = useState(false)
+  const [remErr, setRemErr] = useState('')
+  const [remindAt, setRemindAt] = useState('')
+  const [showSignup, setShowSignup] = useState(false)
+  const remind = async () => {
+    setRemErr('')
+    const em = remEmail.trim().toLowerCase()
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(em)) { setRemErr('Athugaðu netfangið.'); return }
+    setRemBusy(true); landingEvent('lp_remind_click')
+    let source = null
+    try { source = pageContext().source || null } catch {}
+    const { data, error } = await supabase.rpc('request_scan_reminder', { p_email: em, p_when: when, p_visitor: visitorId(), p_source: source })
+    setRemBusy(false)
+    if (error) { landingEvent('lp_remind_err'); setRemErr('Tókst ekki. Reyndu aftur.'); return }
+    landingEvent('lp_remind_ok')
+    try {
+      const d = new Date(data)
+      const day = d.toDateString() === new Date().toDateString() ? 'í dag' : d.toLocaleDateString('is-IS', { weekday: 'long', day: 'numeric', month: 'long' })
+      setRemindAt(day + ' kl. ' + d.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit', timeZone: 'Atlantic/Reykjavik' }))
+    } catch { setRemindAt('á tímanum sem þú valdir') }
+  }
+
   const inApp = isInAppBrowser()
   const google = async () => {
     setErr(''); setBusy(true); landingEvent('lp_google')
@@ -98,7 +124,9 @@ export default function ScanLanding() {
       <div className="lp-receipt">
         <img src={DEMO_IMG} alt="Kvittun úr Bónus" />
       </div>
-      <button className="lp-btn" onClick={scan} disabled={phase === 'reading'}><IconScan size={22} stroke={2} /> Skanna kvittun</button>
+      <button className="lp-btn" onClick={() => { landingEvent('lp_try_guest_start'); goApp(true) }} disabled={phase === 'reading'}><IconCamera size={22} stroke={2} /> Skanna mína kvittun</button>
+      <button className="lp-btn lp-btn-2" onClick={scan} disabled={phase === 'reading'}><IconScan size={20} stroke={2} /> Sjá dæmi fyrst</button>
+      <p className="lp-start-note">Ókeypis · engin skráning</p>
       {phase === 'reading' && (
         <div className="lp-wait" role="status">
           <div className="lp-wait-box"><span className="lp-spin" /> Les kvittunina…</div>
@@ -141,8 +169,29 @@ export default function ScanLanding() {
       </div>
 
       <div className="lp-signup">
-        <h2>Fáðu þetta yfirlit fyrir þitt heimili</h2>
-        <p>Taktu mynd af kvittunum og Tossalisti sér um rest. Ókeypis og íslenskt.</p>
+        <h2>Prófaðu með þinni kvittun</h2>
+        <p>Engin skráning. Taktu mynd og sjáðu þína eigin kvittun flokkaða.</p>
+        <button className="lp-btn" onClick={() => { landingEvent('lp_try_guest'); goApp(true) }}><IconCamera size={21} stroke={2} /> Skanna mína kvittun</button>
+
+        <div className="lp-remind">
+          {remindAt ? (
+            <p className="lp-info">Klárt! Við sendum þér áminningu {remindAt}. Hnappurinn í póstinum opnar skannann beint.</p>
+          ) : (<>
+            <b>Ekki með kvittun við höndina?</b>
+            <span>Við minnum þig á, einu sinni. Bara netfang, ekkert lykilorð.</span>
+            <input value={remEmail} onChange={e => setRemEmail(e.target.value)} onFocus={() => landingEvent('lp_focus_remind')} placeholder="netfang@daemi.is" type="email" autoComplete="email" inputMode="email" />
+            <div className="lp-when">
+              {[['kvold', 'Í kvöld'], ['morgun', 'Á morgun'], ['helgi', 'Um helgina']].map(([k, l]) => (
+                <button key={k} className={when === k ? 'on' : ''} onClick={() => setWhen(k)}>{l}</button>
+              ))}
+            </div>
+            <button className="lp-btn lp-btn-2" onClick={remind} disabled={remBusy}>{remBusy ? 'Augnablik…' : 'Minntu mig á'}</button>
+            {remErr && <p className="lp-err">{remErr}</p>}
+          </>)}
+        </div>
+
+        {!showSignup && !info && <button className="lp-later" onClick={() => { setShowSignup(true); landingEvent('lp_open_signup') }}>Eða stofnaðu aðgang strax</button>}
+        {(showSignup || info) && <div className="lp-signup-form">
         {info ? <p className="lp-info">{info}</p> : (<>
           {/* Google bannar innskráningu inni í Facebook/Instagram-vafranum — hnappurinn birtist aðeins í venjulegum vafra */}
           {!inApp && (<>
@@ -157,7 +206,7 @@ export default function ScanLanding() {
             ? <p className="lp-err">Þetta netfang er þegar skráð. <a href="/" onClick={() => { try { localStorage.setItem('tossa.noAuto', '1') } catch {} }}>Skráðu þig inn hér</a>.</p>
             : err && <p className="lp-err">{err}</p>}
         </>)}
-        <button className="lp-later" onClick={() => { landingEvent('lp_try_guest'); goApp(true) }}>Prófa með minni kvittun án skráningar</button>
+        </div>}
         <p className="lp-legal">Með skráningu samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
       </div>
     </div>

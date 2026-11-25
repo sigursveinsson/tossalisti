@@ -71,23 +71,19 @@ export function startAppTracking() {
   return () => { document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', onPageHide) }
 }
 
-// Gestir úr Facebook/Instagram (auglýsing eða færsla) lenda beint í appinu með prufuaðgangi.
-// Ekki ef tækið hefur áður skráð sig inn, notandi valdi „Skrá inn“, eða um vélmenni er að ræða.
+// REGLA: innskráning er aldrei krafist. Allir nýir gestir fara beint inn í appið með prufuaðgangi og geta byrjað strax;
+// skráning er val (Vista aðgang / Skrá inn). Innskráningarsíðan birtist aðeins ef:
+// tækið hefur áður skráð sig inn (tossa.known) eða notandi valdi „Skrá inn“ (tossa.noAuto), innskráningarhlekkur er
+// í vinnslu (#access_token / ?code=), lykilorðsendurstilling, Gríptu-heildsalar, eða um vélmenni er að ræða.
 export function shouldAutoGuest() {
   if (!isCloud || isBot()) return false
   try {
     if (localStorage.getItem('tossa.known') || localStorage.getItem('tossa.noAuto')) return false
     const p = new URLSearchParams(window.location.search)
-    if (p.has('reset') || p.has('griptu')) return false
+    if (p.has('reset') || p.has('griptu') || p.has('code')) return false
+    if (/access_token|refresh_token|error_description/.test(window.location.hash || '')) return false
     if (/^\/(afskra|postlisti)/.test(window.location.pathname)) return false
-    // Boðshlekkur á tæki sem hefur aldrei skráð sig inn: beint inn á listann sem gestur (hægt að vista aðgang síðar)
-    if (p.has('invite')) return true
-    // Uppskriftahlekkur af efnissíðu: beint í „Setja hráefnin á listann“ án skráningar
-    if (p.has('uppskrift')) return true
-    // Af lendingarsíðunni /kvittun („Prófa með minni kvittun án skráningar“): beint í skannann sem gestur
-    if (localStorage.getItem('tossa.openScan')) return true
-    const c = pageContext()
-    return c.source === 'facebook' || c.source === 'instagram' || p.has('fbclid') || /^\d{8,}$/.test(c.utm_campaign || '')
+    return true
   } catch { return false }
 }
 
