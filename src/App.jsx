@@ -160,10 +160,15 @@ export default function App() {
   // Mæla tíma inni í appinu hjá gestum
   useEffect(() => { if (isAnon) return startAppTracking() }, [isAnon])
   // Gestur vill skrá sig inn með eigin aðgangi: út úr prufu, upphafssíða í innskráningarham.
+  // Prufuaðgangurinn er geymdur (tossa.guestSession) og skráður út aðeins í þessum vafra: ef gesturinn velur svo
+  // „Nýskráning“ á innskráningarsíðunni verður prufuaðgangurinn að skráða aðganginum og allt fylgir (Auth.jsx).
   const guestSignIn = async () => {
-    if (lists.some(l => (l.items || []).length > 0) && !window.confirm('Prufulistarnir þínir fylgja ekki með ef þú skráir þig inn með öðrum aðgangi. Halda áfram?')) return
-    try { localStorage.setItem('tossa.noAuto', '1'); localStorage.setItem('tossa.known', '1') } catch {}
-    await supabase.auth.signOut()
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession()
+      if (s && s.user && s.user.is_anonymous) localStorage.setItem('tossa.guestSession', JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token }))
+      localStorage.setItem('tossa.noAuto', '1'); localStorage.setItem('tossa.known', '1')
+    } catch {}
+    await supabase.auth.signOut({ scope: 'local' })
     setSession(null)
   }
   // Google-innskráning/tenging sem mistókst kemur til baka með villu í slóðinni → sýna á íslensku.
@@ -1139,7 +1144,7 @@ export default function App() {
       {isAnon && (
         <div className="guest-bar">
           <span>{saveHint === 'receipt' ? 'Kvittunin er bara geymd í þessum vafra' : saveHint === 'items' ? 'Listinn er bara geymdur í þessum vafra' : 'Þú ert að prófa Tossalista'}</span>
-          <button className={saveHint ? 'hl' : ''} onClick={() => setShowSaveAcct(saveHint || true)}><b>Vista aðgang</b></button>
+          <button className={saveHint ? 'hl' : ''} onClick={() => setShowSaveAcct(saveHint || true)}><b>Stofna aðgang</b></button>
           <button onClick={guestSignIn}>Skrá inn</button>
           {guestActed && escHint === 'ios' && (
             <div className="ios-hint">

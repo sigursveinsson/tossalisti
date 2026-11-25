@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { IconScan, IconCheck, IconCamera } from '@tabler/icons-react'
-import { pageContext, visitorId } from '../lib/attribution.js'
+import { pageContext, visitorId, isBot } from '../lib/attribution.js'
 import { supabase } from '../lib/supabaseClient.js'
 import { landingEvent, startLandingTracking, isInAppBrowser } from '../lib/landing.js'
 import GoogleButton from './GoogleButton.jsx'
@@ -53,6 +53,15 @@ export default function ScanLanding() {
   const [info, setInfo] = useState('')
 
   useEffect(() => { landingEvent('lp_view'); return startLandingTracking() }, [])
+  // Síðuflettingar (gestir á dag í stjórnborðinu): áður taldist aðeins sá sem opnaði appið, svo gestir sem sáu
+  // bara lendingarsíðuna vantaði í grafið frá 23.11.
+  useEffect(() => {
+    try {
+      if (isBot() || localStorage.getItem('tossa.noTrack')) return
+      const c = pageContext()
+      supabase.from('pageviews').insert({ path: c.path || '/kvittun', source: c.source || null, utm_campaign: c.utm_campaign || null, utm_content: c.utm_content || null, referrer: c.referrer || null, visitor: c.visitor || null }).then(() => {}, () => {})
+    } catch {}
+  }, [])
   useEffect(() => {
     document.title = 'Skannaðu kvittun | Tossalisti'
     // Auglýsingasíða: ekki í leitarvélum (efnissíðurnar sjá um það)

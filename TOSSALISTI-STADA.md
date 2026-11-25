@@ -1009,3 +1009,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - B) onboarding_due(): nýskráðir 20–48 klst án kvittunar fá EINN póst (onboarding_mails kind day1).
 - Hnappurinn í pósti = Supabase magic link → /?skanna=1. Notandi stofnaður ef ekki til (staðfestist við smell).
 - POST {dry:true} með x-cron-key sýnir hvað yrði sent.
+- Gestur → skráning (25.11): „Skrá inn“ í gestastikunni geymir prufuaðganginn (tossa.guestSession) og skráir út aðeins staðbundið. Velji hann svo „Nýskráning“ (netfang eða Google) verður prufuaðgangurinn að skráða aðganginum (updateUser / linkIdentity) og allt fylgir. „Halda áfram sem gestur“ endurheimtir hann. Gestastikan: „Stofna aðgang“ (áður „Vista aðgang“).

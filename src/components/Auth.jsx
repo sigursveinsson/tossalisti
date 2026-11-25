@@ -55,6 +55,37 @@ export function ResetPassword({ onDone }) {
   )
 }
 
+// Prufuaðgangur sem gestur yfirgaf með „Skrá inn“ (App.jsx geymir hann í tossa.guestSession)
+function guestTokens() {
+  try { const g = JSON.parse(localStorage.getItem('tossa.guestSession') || 'null'); return g && g.access_token && g.refresh_token ? g : null } catch { return null }
+}
+// Gerir prufuaðganginn að skráðum aðgangi: 'ok' | 'confirm' | 'fallback' (stofna nýjan) | villuskilaboð
+async function convertGuest(email, password, offers) {
+  const gt = guestTokens()
+  if (!gt) return 'fallback'
+  const { data: sd, error: se } = await supabase.auth.setSession(gt)
+  if (se || !sd || !sd.user || !sd.user.is_anonymous) {
+    try { localStorage.removeItem('tossa.guestSession') } catch {}
+    if (sd && sd.session) await supabase.auth.signOut({ scope: 'local' })
+    return 'fallback'
+  }
+  const { data, error } = await supabase.auth.updateUser({ email, data: { offers_opt_in: !!offers } }, { emailRedirectTo: window.location.origin + '/' })
+  if (error) {
+    await supabase.auth.signOut({ scope: 'local' }) // aftur á innskráningarsíðuna; prufuaðgangurinn geymist áfram
+    const m = (error.message || '').toLowerCase()
+    return m.includes('already') || m.includes('registered') || m.includes('exists')
+      ? 'Þetta netfang er þegar skráð. Veldu „Skrá inn“ hér fyrir neðan.' : (error.message || 'Eitthvað fór úrskeiðis.')
+  }
+  try { localStorage.removeItem('tossa.guestSession'); localStorage.setItem('tossa.known', '1'); localStorage.removeItem('tossa.noAuto') } catch {}
+  if (data && data.user && data.user.email === email) {
+    const r = await supabase.auth.updateUser({ password })
+    return r.error ? (r.error.message || 'Ekki tókst að vista lykilorð.') : 'ok'
+  }
+  // Staðfesting á netfangi er á: lykilorð valið eftir að hlekkurinn er opnaður (App.jsx les tossa.needPw)
+  try { localStorage.setItem('tossa.needPw', '1') } catch {}
+  return 'confirm'
+}
+
 // Myndrænt yfirlit á forsíðunni: hvað appið gerir, í þeirri röð sem fólk notar það
 const SHOTS = [
   { src: '/postur/rodd.png', title: 'Segðu hvað vantar', text: 'Listinn verður til sjálfur' },
@@ -87,6 +118,13 @@ export default function Auth() {
   const tryGuest = async () => {
     setError(''); setInfo(''); setBusy(true)
     landingEvent('click_guest')
+    // Sami prufuaðgangur og áður ef hann er til (listar og kvittanir gestsins haldast)
+    const gt = guestTokens()
+    if (gt) {
+      const { error: e1 } = await supabase.auth.setSession(gt)
+      try { localStorage.removeItem('tossa.guestSession'); localStorage.removeItem('tossa.noAuto') } catch {}
+      if (!e1) { setBusy(false); landingEvent('guest_restored'); return }
+    }
     const { error } = await supabase.auth.signInAnonymously({ options: { data: { guest: true } } })
     setBusy(false)
     landingEvent(error ? 'guest_err' : 'guest_ok')
@@ -100,6 +138,19 @@ export default function Auth() {
     setError(''); setInfo(''); setBusy(true)
     landingEvent('click_google')
     try { localStorage.setItem('tossa.known', '1') } catch {}
+    // Nýskráning gests með Google: Google tengt við prufuaðganginn svo allt fylgir (eins og „Vista með Google“)
+    const gt = mode === 'signup' ? guestTokens() : null
+    if (gt) {
+      const { data: sd, error: se } = await supabase.auth.setSession(gt)
+      if (!se && sd && sd.user && sd.user.is_anonymous) {
+        try { localStorage.removeItem('tossa.guestSession'); localStorage.removeItem('tossa.noAuto') } catch {}
+        const { error: le } = await supabase.auth.linkIdentity({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })
+        if (!le) return
+        // tenging ekki í boði: aftur á innskráningarsíðuna og venjuleg Google-innskráning
+        try { localStorage.setItem('tossa.guestSession', JSON.stringify(gt)); localStorage.setItem('tossa.noAuto', '1') } catch {}
+        await supabase.auth.signOut({ scope: 'local' })
+      }
+    }
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/' } })
     if (error) {
       setBusy(false); landingEvent('google_err')
@@ -124,9 +175,18 @@ export default function Auth() {
     if (mode === 'signup') landingEvent('click_signup')
     if (!email || !password) { setError('Sláðu inn netfang og lykilorð.'); return }
     setBusy(true)
+    // Gestur sem fór hingað úr appinu: nýskráning gerir prufuaðganginn að skráðum aðgangi (kvittanir, listar og
+    // bókhald fylgja). Tekst það ekki (t.d. prufuaðgangur útrunninn) er stofnaður nýr aðgangur eins og áður.
+    if (mode === 'signup' && guestTokens()) {
+      const r = await convertGuest(email.trim().toLowerCase(), password, offers)
+      if (r === 'ok') { setBusy(false); landingEvent('signup_ok'); landingEvent('signup_from_guest'); return }
+      if (r === 'confirm') { setBusy(false); landingEvent('signup_ok'); setInfo('Við sendum staðfestingarhlekk á ' + email.trim() + '. Opnaðu hann í þessum síma — allt sem þú gerðir sem gestur fylgir með.'); return }
+      if (r && r !== 'fallback') { setBusy(false); setError(r); return }
+    }
     const { data, error } = mode === 'signup'
       ? await supabase.auth.signUp({ email, password, options: { data: { offers_opt_in: !!offers } } })
       : await supabase.auth.signInWithPassword({ email, password })
+    if (!error && mode === 'signin') { try { localStorage.removeItem('tossa.guestSession') } catch {} }
     setBusy(false)
     if (error) { if (mode === 'signup') landingEvent('signup_err'); setError(ICELANDIC_ERROR(error.message)); return }
     if (mode === 'signup') landingEvent('signup_ok')
@@ -159,7 +219,7 @@ export default function Auth() {
 
       {mode === 'signup' && !invite && (
         <div className="try-now">
-          <button className="try-btn" onClick={tryGuest} disabled={busy}>{busy ? '…' : 'Prófa strax — án skráningar'}</button>
+          <button className="try-btn" onClick={tryGuest} disabled={busy}>{busy ? '…' : (guestTokens() ? 'Halda áfram sem gestur' : 'Prófa strax — án skráningar')}</button>
           <p className="signin-help guest-help">Ókeypis. Þú getur vistað aðganginn hvenær sem er. Með því að halda áfram samþykkir þú <a href="/personuvernd.html" target="_blank" rel="noopener">persónuverndarstefnuna</a>.</p>
         </div>
       )}
