@@ -514,6 +514,7 @@ const local = {
   },
   async shareList() { throw new Error('local') }, // deiling krefst innskráningar
   async sendInviteEmail() { return 'error' },
+  async kronanStatus() { return null }, async kronanSetToken() { return { ok: false } }, async kronanClearToken() { return { ok: false } },
   subscribe() { return () => {} },
 }
 
@@ -1499,6 +1500,18 @@ const cloud = {
     if (error) throw error
     if (data === false) throw new Error('Notandi með þetta netfang fannst ekki')
     return true
+  },
+  // Krónan (lokuð prófun): staða notandans og eigin Krónu-lykill. Lykillinn fer aðeins á netþjóninn (edge-fallið kronan),
+  // er prófaður þar og geymdur dulkóðaður; hann er aldrei geymdur í vafranum né sóttur til baka.
+  async kronanStatus() { const { data, error } = await supabase.rpc('kronan_status'); if (error) return null; return data },
+  async kronanSetToken(token) {
+    const { data, error } = await supabase.functions.invoke('kronan', { body: { action: 'token_set', token } })
+    if (!error && data) return data
+    try { return await error.context.json() } catch (e) { return { ok: false, error: 'net' } }
+  },
+  async kronanClearToken() {
+    const { data, error } = await supabase.functions.invoke('kronan', { body: { action: 'token_clear' } })
+    return !error && data ? data : { ok: false }
   },
   // Boð á lista í tölvupósti, sent frá Tossalista (edge-fall invite-email). Skilar 'ok' | 'guest' | 'rate' | 'self' | 'error'.
   async sendInviteEmail(listId, email) {

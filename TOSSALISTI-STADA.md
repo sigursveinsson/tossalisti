@@ -1027,3 +1027,10 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Tafla `list_invite_mails` (RLS, aðeins þjónustulykill). `store.sendInviteEmail`, `App.emailInvite` (share_list fyrst, svo póstur), `ShareModal` sýnir stöðu í glugganum. Atburður `invite_email`.
 - Óprófað enda á milli (þarf innskráðan notanda): prófa eftir deploy.
 - share_list: skráður viðtakandi fær nú tilkynningu í appinu (inbox_messages, kind 'join', með „Opna listann“). Migration share_list_inbox_notice. sw.js v5 + útgáfuathugun í main.jsx (appið endurhleður sig eftir deploy).
+
+## Krónan: eigin lykill á notanda 28.11.2026 (framendi bíður deploy)
+- Áður: einn sameiginlegur KRONAN_TOKEN (stjórnandi) og netfang skrifað fast í kóðann. Nú: aðgangslisti `private.kronan_users` (stjórnandi + Eva) og hver notandi með SINN lykil.
+- Lyklar í Supabase Vault (`kronan_token_<uid>`), aðeins service_role les (`kronan_token_get/set/clear`, `kronan_user_allowed`). `kronan_status()` segir appinu allowed/has_token/admin.
+- Edge-fall `kronan` v7: `token_set` (prófar lykil gegn /me/ áður en vistað), `token_clear`; notandi á lista fær 428 `no_token` án eigin lykils — aldrei lykil stjórnanda. Stjórnandi notar áfram KRONAN_TOKEN ef hann á engan eigin.
+- Framendi: `KronanConnect.jsx` (Listarnir mínir → „Tengja Krónuna (prófun)“), `store.kronanStatus/SetToken/ClearToken`, `kronanOn` í App.jsx í stað fasts netfangs.
+- Bæta notanda við prófun: `insert into private.kronan_users(user_id) values ('<uid>')`. ALDREI er gengið frá pöntun. Óprófað enda á milli.

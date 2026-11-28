@@ -1,17 +1,22 @@
-// kronan — prufutenging við Krónan Public API (BETA). Aðeins stjórnandi á meðan beðið er svars Krónunnar.
-// Lykillinn (KRONAN_TOKEN) er Supabase-leyndarmál sem Sverrir setti sjálfur; hann fer aldrei í vafrann eða svör.
-// Aðgangur: (a) innskráður stjórnandi (am_admin) — les + skrifar á innkaupamiða Krónunnar,
-//           (b) x-cron-secret — aðeins lestur (til að kanna gögnin úr gagnagrunni).
-// Krónan: 200 fyrirspurnir á 200 sek; Authorization: AccessToken <token>.
+// kronan — prufutenging við Krónan Public API (BETA). Lokaður aðgangur á meðan beðið er svars Krónunnar.
+// Hver notandi notar SINN EIGIN Krónu-lykil: hann límir hann sjálfur inn í appið (action 'token_set'), lykillinn er
+// prófaður gegn /me/ og geymdur dulkóðaður í Supabase Vault. Hann fer aldrei til baka í vafrann, í svör eða í logga.
+// Aðgangur: (a) stjórnandi (am_admin) — eigin lykill ef til, annars KRONAN_TOKEN (leyndarmál sem Sverrir setti sjálfur),
+//           (b) notendur á private.kronan_users — AÐEINS með eigin lykli (aldrei lykli stjórnanda),
+//           (c) x-cron-secret — aðeins lestur með KRONAN_TOKEN (til að kanna gögnin úr gagnagrunni).
+// ALDREI er gengið frá pöntun. Krónan: 200 fyrirspurnir á 200 sek; Authorization: AccessToken <token>.
+// ATH: deployað BEINT í Supabase (verify_jwt=false; auðkenning er gerð hér). Þessi skrá er heimildin.
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 const BASE = 'https://api.kronan.is/api/v1'
 const UA = 'Tossalisti/1.0 (+https://tossalisti.is)'
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret' }
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } })
+const SB = Deno.env.get('SUPABASE_URL')!, ANON = Deno.env.get('SUPABASE_ANON_KEY')!
+const db = createClient(SB, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-async function kr(path: string, init: RequestInit = {}) {
-  const TOKEN = Deno.env.get('KRONAN_TOKEN')
-  if (!TOKEN) throw new Error('KRONAN_TOKEN vantar')
-  const r = await fetch(BASE + path, { ...init, headers: { Authorization: 'AccessToken ' + TOKEN, Accept: 'application/json', 'Content-Type': 'application/json', 'User-Agent': UA, ...(init.headers || {}) } })
+async function krWith(token: string, path: string, init: RequestInit = {}) {
+  const r = await fetch(BASE + path, { ...init, headers: { Authorization: 'AccessToken ' + token, Accept: 'application/json', 'Content-Type': 'application/json', 'User-Agent': UA, ...(init.headers || {}) } })
   const text = await r.text()
   let data: unknown = null
   try { data = JSON.parse(text) } catch { data = text.slice(0, 500) }
@@ -20,19 +25,50 @@ async function kr(path: string, init: RequestInit = {}) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
-  const SB = Deno.env.get('SUPABASE_URL')!, ANON = Deno.env.get('SUPABASE_ANON_KEY')!
   const secret = Deno.env.get('CRON_SECRET')
-  let admin = false, readOnly = true
-  if (secret && req.headers.get('x-cron-secret') === secret) { admin = true; readOnly = true }
-  else {
-    const chk = await fetch(SB + '/rest/v1/rpc/am_admin', { method: 'POST', headers: { apikey: ANON, Authorization: req.headers.get('authorization') || '', 'Content-Type': 'application/json' }, body: '{}' })
-    if (chk.ok && (await chk.json()) === true) { admin = true; readOnly = false }
-  }
-  if (!admin) return json({ error: 'not authorized' }, 403)
-
+  const ENV_TOKEN = Deno.env.get('KRONAN_TOKEN') || ''
   let b: any = {}
   try { b = await req.json() } catch {}
   const a = String(b.action || '')
+
+  let readOnly = true, token = ''
+  if (secret && req.headers.get('x-cron-secret') === secret) { token = ENV_TOKEN }
+  else {
+    const authz = req.headers.get('authorization') || ''
+    const { data: ud } = await db.auth.getUser(authz.replace(/^Bearer\s+/i, ''))
+    const user = ud?.user
+    if (!user || user.is_anonymous) return json({ error: 'not authorized' }, 403)
+    const uid = user.id
+    // Stjórnandi? (sama athugun og áður: am_admin í nafni notandans)
+    const chk = await fetch(SB + '/rest/v1/rpc/am_admin', { method: 'POST', headers: { apikey: ANON, Authorization: authz, 'Content-Type': 'application/json' }, body: '{}' })
+    const isAdmin = chk.ok && (await chk.json()) === true
+    if (!isAdmin) {
+      const { data: ok } = await db.rpc('kronan_user_allowed', { p_user: uid })
+      if (ok !== true) return json({ error: 'not authorized' }, 403)
+    }
+    readOnly = false
+    // Notandinn setur inn eigin lykil: prófaður gegn Krónunni áður en hann er vistaður. Aldrei skrifaður í logga né svar.
+    if (a === 'token_set') {
+      const t = String(b.token || '').trim()
+      if (t.length < 8 || t.length > 400 || /\s/.test(t)) return json({ ok: false, error: 'format' }, 400)
+      const me = await krWith(t, '/me/')
+      if (me.status !== 200) return json({ ok: false, error: me.status === 401 || me.status === 403 ? 'rejected' : 'kronan_' + me.status }, 400)
+      const { error } = await db.rpc('kronan_token_set', { p_user: uid, p_token: t })
+      if (error) return json({ ok: false, error: 'store' }, 500)
+      const m: any = me.data || {}
+      return json({ ok: true, name: String(m.name || m.fullName || m.firstName || '').slice(0, 60) })
+    }
+    if (a === 'token_clear') {
+      const { error } = await db.rpc('kronan_token_clear', { p_user: uid })
+      return json({ ok: !error })
+    }
+    const { data: own } = await db.rpc('kronan_token_get', { p_user: uid })
+    token = typeof own === 'string' && own ? own : (isAdmin ? ENV_TOKEN : '')
+    if (!token) return json({ error: 'no_token' }, 428)
+  }
+  if (!token) return json({ error: 'KRONAN_TOKEN vantar' }, 500)
+  const kr = (path: string, init: RequestInit = {}) => krWith(token, path, init)
+
   try {
     if (a === 'me') return json(await kr('/me/'))
     if (a === 'stats') return json(await kr(`/product-purchase-stats/?sort=${encodeURIComponent(b.sort || 'most_frequent')}&limit=${Math.min(100, +b.limit || 50)}&offset=${+b.offset || 0}`))

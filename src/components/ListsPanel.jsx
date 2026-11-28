@@ -10,7 +10,7 @@ const TYPE = {
   budget: { Icon: IconNotebook },
 }
 
-export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], startCreating = false, onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, onOpenWallet, userEmail, onSignOut, onDeleteAccount, onClose }) {
+export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDelete, onShare, onDuplicate, onRename, templates = [], startCreating = false, onCreateFromTemplate, onScanReceipt, onOpenBudget, onOpenReceipts, onOpenWallet, onOpenKronan, kronanConnected = false, userEmail, onSignOut, onDeleteAccount, onClose }) {
   const [name, setName] = useState('')
   const [newType, setNewType] = useState('shopping')
   const [creating, setCreating] = useState(!!startCreating)
@@ -78,6 +78,9 @@ export default function ListsPanel({ lists, currentId, onSwitch, onCreate, onDel
           )}
           {onOpenWallet && (
             <button className="budget-link-btn" onClick={onOpenWallet}><IconWallet size={18} stroke={1.75} /> Veskið — gjafakort & inneignir</button>
+          )}
+          {onOpenKronan && (
+            <button className="budget-link-btn" onClick={onOpenKronan}><IconShoppingCart size={18} stroke={1.75} /> {kronanConnected ? 'Krónan — tengt' : 'Tengja Krónuna (prófun)'}</button>
           )}
 
           <div className="sheet-label">Mínir listar</div>

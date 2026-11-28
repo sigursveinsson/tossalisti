@@ -60,6 +60,7 @@ import SaveAccount from './components/SaveAccount.jsx'
 import WelcomeGuest from './components/WelcomeGuest.jsx'
 import WalletView from './components/WalletView.jsx'
 import Inbox from './components/Inbox.jsx'
+import KronanConnect from './components/KronanConnect.jsx'
 import { shouldAutoGuest, landingEvent, startAppTracking, shouldEscape, noteEscaped, escapeTarget, androidIntentUrl } from './lib/landing.js'
 import { celebrate, celebrateLevelUp } from './lib/celebrate.js'
 import { totalPoints, levelFor } from './lib/gamify.js'
@@ -362,6 +363,12 @@ export default function App() {
   // Innhólf: nýjungar (til allra) og Verðvakt (til notandans). Ólesið = nýrra en inbox_state.seen_at.
   const [inbox, setInbox] = useState({ msgs: [], seen: null })
   const [showInbox, setShowInbox] = useState(false)
+  // Krónan (lokuð prófun): stjórnandi + notendur á aðgangslista, hver með sinn eigin Krónu-lykil (sjá edge-fallið kronan)
+  const [kronanSt, setKronanSt] = useState(null) // { allowed, has_token, admin }
+  const [showKronanConnect, setShowKronanConnect] = useState(false)
+  const loadKronanSt = () => store.kronanStatus().then(setKronanSt).catch(() => setKronanSt(null))
+  useEffect(() => { if (isCloud && session?.user?.email) loadKronanSt(); else setKronanSt(null) }, [session?.user?.id])
+  const kronanOn = !!(isCloud && kronanSt && kronanSt.allowed && (kronanSt.has_token || kronanSt.admin))
   const loadInbox = async () => {
     if (!isCloud || !session) return
     try {
@@ -1230,7 +1237,7 @@ export default function App() {
           ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
           : tab === 'recipes' && isShopping
             ? <RecipesView onAddRecipe={addRecipe} authorName={session?.user?.email || ''}
-                kronan={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'}
+                kronan={kronanOn}
                 shoppingLists={lists.filter(l => l.type === 'shopping')}
                 defaultListId={(lists.find(l => l.id === currentId && l.type === 'shopping') || lists.find(l => l.type === 'shopping') || {}).id}
                 onAddKronan={addKronanToList} />
@@ -1238,7 +1245,7 @@ export default function App() {
             ? <GriptuTab refreshKey={griptuRefresh} points={myRewards?.balance || 0} onScan={() => { setReceiptListId(list.id); setShowReceipt(true) }} onOpenRewards={() => setShowRewards(true)} onAdd={griptuAdd} onList={griptuInList} />
             : tab === 'spending' && isShopping
               ? <BudgetView purchases={purchases} members={people} currentUserId={myId} customCats={customCats} onAddCategory={addCategory} onDeleteCategory={deleteCategory} onSave={addExpense} onUpdate={updatePurchase} onDelete={deletePurchase} onSetCategory={setPurchaseCat} onSetItemCategory={setItemCat} onSetItemsCategory={setItemsCat} onOpenReceipts={() => setShowReceipts(true)} onScanReceipt={() => { setReceiptListId(null); setShowReceipt(true) }} />
-              : <ListView isGuest={!!isAnon} items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} voiceNow={voiceNow} quickStart={quickStart} onClearChecked={clearChecked} onScanReceipt={() => { setReceiptListId(list.id); setShowReceipt(true) }} kronanEnabled={isCloud && session?.user?.email === 'sigursveinsson@gmail.com'} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
+              : <ListView isGuest={!!isAnon} items={list.items} listId={list.id} listType={list.type} members={people} kids={kids} completions={completions} rewards={rewards} redemptions={redemptions} currentUserId={myId} catalog={catalog} genericImgs={genericImgs} oftenSignal={oftenSignal} voiceSignal={voiceSignal} voiceNow={voiceNow} quickStart={quickStart} onClearChecked={clearChecked} onScanReceipt={() => { setReceiptListId(list.id); setShowReceipt(true) }} kronanEnabled={kronanOn} onCatalog={saveToCatalog} onCatalogLookup={catalogLookup} onSetQty={setQty} onAdd={addItem} onToggle={toggleItem} onRemove={removeItem} onAssign={assignItem} onSetPoints={setPoints} onSetRecurrence={setRecurrence} onSetReminder={setReminder} onSetReminderFull={setReminderFull} adsEnabled={adsEnabled} bannerEnabled={bannerEnabled} onSetItemImage={setItemImage} onAddSchedule={addSchedule} onNewWeek={newWeek} onCreateKid={createKid} onUpdateKid={updateKid} onDeleteKid={deleteKid} onCreateReward={createReward} onUpdateReward={updateReward} onDeleteReward={deleteReward} onRedeemReward={redeemReward} onDeleteRedemption={deleteRedemption} onRecategorize={recategorize} onSetDue={setDue} onSetWeekday={setWeekday} onSetTime={setTime} rewardProducts={rewardCatalog} />}
       </div>
 
       {showLists && (
@@ -1258,6 +1265,8 @@ export default function App() {
           onOpenBudget={() => { setShowLists(false); goBudget() }}
           onOpenReceipts={() => { setShowLists(false); loadPurchases(); setShowReceipts(true) }}
           onOpenWallet={isCloud ? () => { setShowLists(false); setShowWallet(true) } : null}
+          onOpenKronan={kronanSt && kronanSt.allowed ? () => { setShowLists(false); setShowKronanConnect(true) } : null}
+          kronanConnected={!!(kronanSt && kronanSt.has_token)}
           userEmail={isAnon ? 'Gestur – aðgangur ekki vistaður' : session?.user?.email}
           onSignOut={isCloud ? signOut : null}
           onDeleteAccount={isCloud ? () => { setShowLists(false); setShowDeleteAccount(true) } : null}
@@ -1319,6 +1328,7 @@ export default function App() {
       )}
       {showRewards && <ErrorBoundary name="Gríptu stig" onClose={() => setShowRewards(false)}><RewardsView onClose={() => setShowRewards(false)} /></ErrorBoundary>}
       {showWallet && <WalletView onClose={() => setShowWallet(false)} onChanged={loadWallet} />}
+      {showKronanConnect && kronanSt && kronanSt.allowed && <KronanConnect status={kronanSt} onChanged={loadKronanSt} onClose={() => setShowKronanConnect(false)} />}
       {showInbox && <Inbox msgs={inbox.msgs} seen={inbox.seen} isAdmin={isAdmin} hasEmail={!!session?.user?.email} onSettings={() => { closeInbox(); setShowNotif(true) }} onClose={closeInbox} onOpenList={(id) => { if (lists.some(l => l.id === id)) switchList(id) }} onOpenReceipts={() => setShowReceipts(true)} onChanged={loadInbox} />}
       {showReceipts && <ReceiptsView purchases={purchases} currentUserId={myId} onClose={() => setShowReceipts(false)} onChanged={loadPurchases} onScanReceipt={() => { setShowReceipts(false); setReceiptListId(null); setShowReceipt(true) }} isGuest={!!isAnon} onReadMail={(file, m) => { setShowReceipts(false); setReceiptListId(null); setDemoReceipt(false); setMailRc({ file, m }); setShowReceipt(true) }} />}
 
