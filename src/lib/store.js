@@ -513,6 +513,7 @@ const local = {
     if (it) { const a = personRef(person); it.assignee = a.user; it.assignee_kid = a.kid; lsWrite(lists) }
   },
   async shareList() { throw new Error('local') }, // deiling krefst innskráningar
+  async sendInviteEmail() { return 'error' },
   subscribe() { return () => {} },
 }
 
@@ -1498,6 +1499,14 @@ const cloud = {
     if (error) throw error
     if (data === false) throw new Error('Notandi með þetta netfang fannst ekki')
     return true
+  },
+  // Boð á lista í tölvupósti, sent frá Tossalista (edge-fall invite-email). Skilar 'ok' | 'guest' | 'rate' | 'self' | 'error'.
+  async sendInviteEmail(listId, email) {
+    const { data, error } = await supabase.functions.invoke('invite-email', { body: { list_id: listId, email: String(email || '').trim().toLowerCase() } })
+    if (!error && data && data.ok) return 'ok'
+    let code = ''
+    try { const j = await error.context.json(); code = (j && j.error) || '' } catch (e) {}
+    return ['guest', 'rate', 'self'].includes(code) ? code : 'error'
   },
   subscribe(listId, onChange) {
     const ch = supabase.channel('list-' + listId)

@@ -1004,9 +1004,17 @@ export default function App() {
     } catch (e) { flash('Tókst ekki að búa til hlekk'); return '' }
   }
   const emailInvite = async (l, email) => {
-    if (!email) return
-    try { await store.shareList(l.id, email); await reload(l.id); setSharing(null); flash('Deilt með ' + email) }
-    catch (e) { flash(e.message || 'Tókst ekki að deila') }
+    if (!email) return 'error'
+    // 1) Sé viðtakandinn þegar með aðgang fer listinn beint til hans (share_list).
+    // 2) Tossalisti sendir honum alltaf póst með boðshlekk (edge-fall invite-email) — áður fór enginn póstur.
+    // Skilar stöðu svo deilingarglugginn geti sýnt hvað gerðist: 'shared' | 'guest' | 'rate' | 'self' | 'error'.
+    let added = false
+    try { await store.shareList(l.id, email); added = true } catch (e) { /* ekki með aðgang (eða ekki eigandi): boðið fer í pósti */ }
+    const r = await store.sendInviteEmail(l.id, email)
+    if (added) await reload(l.id)
+    if (r === 'ok') { setSharing(null); flash('Boð sent á ' + email); landingEvent('invite_email', { once: false }); return 'shared' }
+    if (added) { setSharing(null); flash('Deilt með ' + email); return 'shared' }
+    return r
   }
 
   if (!authReady) return null

@@ -1020,3 +1020,9 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - **Útlit:** ✕ í gluggum og „…“ í listavalmynd voru óstílaðir gráir kassar; fótur listavalmyndar flæddi út á 375px. Undirfyrirsögn Heim („kláraðu fyrsta verkið…“) birtist nú aðeins þeim sem eru með verkefnalista.
 - Prófað: hermun á vafrasögu í node (5 sviðsmyndir), Babel-parse, undef-check. Villan staðfest í lifandi appi fyrir lagfæringu.
 - **Ólagað / tillögur:** dæmakvittun er blindgata (42 opnuðu, 2 fóru í alvöru skönnun); „Kaupa seinna“ og „Óskalisti“ taka pláss efst á Heim en eru nánast ónotuð (2 og 1); listinn sjálfur lendir undir „Fleiri algengar vörur“.
+
+## Boð á lista í tölvupósti 28.11.2026 (framendi bíður deploy)
+- Áður sendi „Bjóða með netfangi“ engan póst: `share_list` bætti aðeins notanda sem var þegar með aðgang á listann, annars villa sem sást illa.
+- Nýtt edge-fall `invite-email` (v1, verify_jwt=true, skráin er heimildin): býr til boðshlekk í nafni notandans (`create_invite`) og sendir póst gegnum Resend, reply-to = sendandinn. Aðeins skráðir notendur (ekki gestir), mest 10 boð/sólarhring, sama netfang+listi ekki oftar en á 10 mín.
+- Tafla `list_invite_mails` (RLS, aðeins þjónustulykill). `store.sendInviteEmail`, `App.emailInvite` (share_list fyrst, svo póstur), `ShareModal` sýnir stöðu í glugganum. Atburður `invite_email`.
+- Óprófað enda á milli (þarf innskráðan notanda): prófa eftir deploy.

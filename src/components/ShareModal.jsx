@@ -37,6 +37,21 @@ export default function ShareModal({ list, inviterName, onInviteLink, onEmail, o
     if (url) { try { await navigator.clipboard.writeText(message + ' ' + url); setStatus('Skilaboð afrituð.') } catch (e) {} }
   }
 
+  // Bjóða með netfangi: Tossalisti sendir viðtakandanum póst með boðshlekk (App.emailInvite → invite-email).
+  // Áður gerðist ekkert sýnilegt og enginn póstur fór nema viðtakandinn væri þegar með aðgang.
+  const inviteEmail = async () => {
+    const em = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { setStatus('Sláðu inn gilt netfang.'); return }
+    setStatus(''); setBusy(true)
+    const r = await onEmail(list, em)
+    if (r === 'shared') return // boð sent — glugginn lokast í App
+    setBusy(false)
+    setStatus(r === 'guest' ? 'Stofnaðu aðgang til að senda boð í tölvupósti. Þangað til geturðu notað „Senda boðshlekk“ hér fyrir ofan.'
+      : r === 'rate' ? 'Þú hefur sent mörg boð í dag. Notaðu „Senda boðshlekk“ hér fyrir ofan eða reyndu aftur á morgun.'
+      : r === 'self' ? 'Þetta er þitt eigið netfang.'
+      : 'Tókst ekki að senda boðið. Reyndu aftur eða notaðu „Senda boðshlekk“ hér fyrir ofan.')
+  }
+
   return (
     <div className="sheet-bg center" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -48,14 +63,14 @@ export default function ShareModal({ list, inviterName, onInviteLink, onEmail, o
         <button className="ghost-btn" onClick={copyLink} disabled={busy}><IconLink size={18} stroke={1.75} /> Afrita hlekk</button>
 
         {link && <p style={{ fontSize: 12, color: 'var(--muted)', wordBreak: 'break-all', marginTop: 8 }}>{link}</p>}
-        {status && <p className="signin-note" style={{ marginTop: 6 }}>{status}</p>}
         <p className="signin-note" style={{ marginTop: 8 }}>Hver sem opnar hlekkinn gengur beint í listann.</p>
 
         <div className="modal-label">Eða bjóða með netfangi</div>
         <div className="newrow">
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="netfang@daemi.is" type="email" />
-          <button onClick={() => { onEmail(list, email); setEmail('') }}>Bjóða</button>
+          <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') inviteEmail() }} placeholder="netfang@daemi.is" type="email" />
+          <button onClick={inviteEmail} disabled={busy}>{busy ? 'Sendi…' : 'Senda boð'}</button>
         </div>
+        {status && <p className="signin-note" style={{ marginTop: 8 }}>{status}</p>}
       </div>
     </div>
   )
