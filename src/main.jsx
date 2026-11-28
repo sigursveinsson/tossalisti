@@ -66,3 +66,25 @@ if (isNative()) {
     }).catch(() => {})
   })
 }
+// Ný útgáfa af appinu sjálfu (ekki sw.js): opið app / uppsett app á heimaskjá hélt áfram að keyra gamla
+// útgáfu eftir deploy, því þjónustuvörðurinn breytist sjaldan. Þegar appið kemur aftur í forgrunn berum við
+// saman skriftuna sem keyrir og þá sem index.html vísar á núna, og endurhlöðum ef hún er önnur.
+if (import.meta.env.PROD) {
+  const current = () => { const s = document.querySelector('script[type="module"][src*="/assets/index-"]'); return s ? new URL(s.src).pathname : '' }
+  let lastCheck = Date.now()
+  const checkVersion = async () => {
+    if (document.visibilityState !== 'visible' || Date.now() - lastCheck < 5 * 60 * 1000 || window.__tossaReloading) return
+    lastCheck = Date.now()
+    try {
+      const mine = current(); if (!mine) return
+      const r = await fetch('/index.html?v=' + Date.now(), { cache: 'no-store' })
+      if (!r.ok) return
+      const m = /\/assets\/index-[A-Za-z0-9_-]+\.js/.exec(await r.text())
+      // Ekki endurhlaða ofan í innslátt: aðeins ef enginn reitur er í fókus
+      const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)
+      if (m && m[0] !== mine && !typing) { window.__tossaReloading = true; window.location.reload() }
+    } catch (e) { /* ótengt: reynum næst */ }
+  }
+  document.addEventListener('visibilitychange', checkVersion)
+  window.addEventListener('focus', checkVersion)
+}

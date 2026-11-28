@@ -1,4 +1,4 @@
-const CACHE = 'tossalisti-v4' // hækka við hverja breytingu á sw.js — gamlar eignir hreinsast við activate
+const CACHE = 'tossalisti-v5' // hækka við hverja breytingu á sw.js — gamlar eignir hreinsast við activate
 
 self.addEventListener('install', () => self.skipWaiting())
 
