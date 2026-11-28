@@ -205,7 +205,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
       {!hasSharedList && onInvite && !(firstTime && purchases.length === 0) && (
         <button className="home-invite" onClick={() => onInvite()}>
           <span className="home-invite-ic"><IconUsers size={22} stroke={1.75} /></span>
-          <span className="home-invite-txt"><b>Bjóddu heimilisfólki á listann</b><small>Tossalisti er bestur þegar fjölskyldan deilir — sjáið innkaup og verk uppfærast í rauntíma</small></span>
+          <span className="home-invite-txt"><b>Bjóddu einhverjum á listann</b><small>Maka, fjölskyldu eða vinum — þið sjáið innkaup og verk uppfærast í rauntíma</small></span>
           <Go />
         </button>
       )}
@@ -220,7 +220,7 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
 
       {groups.length > 0 && (
         <div className="home-sec">
-          <div className="home-sec-h">Hjá fjölskyldunni</div>
+          <div className="home-sec-h">Nýtt á sameiginlegum listum</div>
           {groups.map((g, i) => (
             <div className="home-feed" key={i}>
               <span className="home-feed-ava">{initials(g.actor)}</span>
