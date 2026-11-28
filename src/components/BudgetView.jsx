@@ -60,6 +60,7 @@ function TxForm({ initial, catMap, cats, onAddCategory, onSave, onClose }) {
   const [override, setOverride] = useState(initial?.id && !(initial?.items || []).length && initial?.total != null ? String(initial.total) : '')
   const [catRow, setCatRow] = useState(null)
   useBackClose(true, onClose)
+  useBackClose(!!catRow, () => setCatRow(null))
 
   const setItem = (i, patch) => setItems(arr => arr.map((it, idx) => idx === i ? { ...it, ...patch } : it))
   const addRow = () => setItems(arr => [...arr, { name: '', price: '', category: null }])
@@ -195,6 +196,10 @@ export default function BudgetView({ purchases: purchasesIn = [], members = [], 
   const [bulkOpen, setBulkOpen] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [itemLimit, setItemLimit] = useState(150)
+  // Til baka lokar smágluggum bókhaldsins
+  useBackClose(!!catForItem, () => setCatForItem(null))
+  useBackClose(manageCats, () => setManageCats(false))
+  useBackClose(bulkOpen, () => { if (!bulkBusy) setBulkOpen(false) })
 
   // Sameinaðir flokkar: innbyggðir + eigin flokkar notanda.
   const allCats = [...EXPENSE_CATEGORIES, ...customCats.map(c => ({ key: c.id, name: c.name, icon: c.icon, color: c.color, custom: true }))]

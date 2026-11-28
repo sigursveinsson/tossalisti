@@ -10,6 +10,7 @@ import { IconShoppingBag, IconArrowBackUp, IconCalendar, IconChecklist, IconChev
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const todayKey = () => DAY_KEYS[(new Date().getDay() + 6) % 7]
 const kr = (n) => Math.round(Number(n) || 0).toLocaleString('is-IS') + ' kr'
+const MONTHS_IS = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember']
 const MONTHS = ['janúar', 'febrúar', 'mars', 'apríl', 'maí', 'júní', 'júlí', 'ágúst', 'september', 'október', 'nóvember', 'desember']
 
 // Hönnunarkerfi: engir regnbogalitir — allir avatarar í sama hlutlausa tóni.
@@ -65,6 +66,9 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
   const hasShopping = lists.some(l => l.type === 'shopping')
   // Fyrsta heimsókn: enginn listi með vörum enn → stór „Búa til lista“ efst.
   const firstTime = !lists.some(l => (l.items || []).length > 0)
+  // Undirfyrirsögn: stigatextinn á aðeins við þá sem eru með verkefna-/skemalista
+  const hasChores = lists.some(l => l.type === 'task' || l.type === 'schedule')
+  const openItems = lists.filter(l => l.type === 'shopping').reduce((n, l) => n + (l.items || []).filter(i => !i.checked).length, 0)
 
   const groups = groupFeed(s.feed)
   const alerts = receiptAlerts(purchases)
@@ -83,7 +87,10 @@ export default function HomeView({ name, summary, lists = [], purchases = [], on
         <div className="home-ach">
           {s.week_done > 0
             ? <>Þú hefur klárað <b>{s.week_done}</b> {s.week_done === 1 ? 'verk' : 'verk'} í vikunni{s.week_points > 0 ? ` — ${s.week_points} stig` : ''}</>
-            : (firstTime && purchases.length === 0) ? <>Byrjaðu á einu: búðu til lista eða skannaðu kvittun.</> : <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>}
+            : (firstTime && purchases.length === 0) ? <>Byrjaðu á einu: búðu til lista eða skannaðu kvittun.</> : hasChores ? <>Nýr dagur — kláraðu fyrsta verkið þitt og safnaðu stigum.</>
+              : monthSpend > 0 ? <>Þú hefur skráð <b>{kr(monthSpend)}</b> í {MONTHS_IS[new Date().getMonth()]}.</>
+              : openItems > 0 ? <><b>{openItems}</b> {openItems === 1 ? 'vara' : 'vörur'} eftir á innkaupalistanum.</>
+              : <>Hvað vantar í dag?</>}
         </div>
       </div>
 

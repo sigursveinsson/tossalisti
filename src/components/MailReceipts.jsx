@@ -18,6 +18,9 @@ export default function MailReceipts({ onRead, isGuest = false, compact = false 
   const [copied, setCopied] = useState(false)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [alias, setAlias] = useState('')
+  const [show, setShow] = useState(false) // sýna afgreiðslufólki
 
   const [domain, setDomain] = useState(_domain || '')
   const load = () => store.listMailReceipts().then(setPending).catch(() => {})
@@ -55,6 +58,26 @@ export default function MailReceipts({ onRead, isGuest = false, compact = false 
     if (!window.confirm('Búa til nýtt netfang? Það gamla hættir að virka, t.d. ef þú færð ruslpóst á það.')) return
     try { setToken(await store.myReceiptMail(true)) } catch {}
   }
+  // Gælunafn: fyrri hlutinn af netfanginu (t.d. „sigga“ í sigga-k7p@…). Nýtt gælunafn = nýtt netfang.
+  const saveAlias = async () => {
+    const a = alias.trim()
+    if (a.length < 2) return
+    if (token && !window.confirm('Nýtt netfang verður til. Það gamla hættir að virka. Halda áfram?')) return
+    try { setToken(await store.myReceiptMail(true, a)); setEditing(false); landingEvent('mail_alias_set', { once: false }) } catch { alert('Tókst ekki. Reyndu aftur.') }
+  }
+
+  // Stórt á skjá til að sýna afgreiðslufólki (eða lesa upp)
+  if (show && addr) {
+    const [name, rest] = [addr.split('@')[0], '@' + addr.split('@')[1]]
+    return (
+      <div className="mailrc-show" onClick={() => setShow(false)}>
+        <small>Kvittun í tölvupósti á:</small>
+        <b>{name}</b>
+        <span>{rest}</span>
+        <em>Ýttu hvar sem er til að loka</em>
+      </div>
+    )
+  }
 
   return (
     <div className="mailrc">
@@ -76,17 +99,30 @@ export default function MailReceipts({ onRead, isGuest = false, compact = false 
         <div className="mailrc-box">
           <IconMailForward size={20} stroke={1.75} />
           <div className="mailrc-txt">
-            <b>Fékkstu kvittunina í tölvupósti?</b>
-            <span>Áframsendu hana á netfangið þitt og hún birtist hér, tilbúin í bókhaldið.</span>
+            <b>Kvittanir í tölvupósti beint í Tossalista</b>
+            <span>Gefðu þetta netfang upp í búðinni þegar þú færð kvittun í pósti, eða áframsendu kvittanir sem þú hefur fengið.</span>
             {addr
               ? <button className="mailrc-addr" onClick={copy}>{addr} {copied ? <IconCheck size={15} stroke={2} /> : <IconCopy size={15} stroke={1.75} />}</button>
               : <span className="mailrc-wait">Sæki netfang…</span>}
-            {addr && <button className="mailrc-more" onClick={() => setOpen(o => !o)}>{open ? 'Fela' : 'Hvernig virkar þetta?'}</button>}
+            {addr && !editing && (
+              <span className="mailrc-actions">
+                <button className="mailrc-more" onClick={() => { setShow(true); landingEvent('mail_addr_show', { once: false }) }}>Sýna í búðinni</button>
+                <button className="mailrc-more" onClick={() => { setAlias(token.split('-')[0] || ''); setEditing(true) }}>Breyta nafni</button>
+                <button className="mailrc-more" onClick={() => setOpen(o => !o)}>{open ? 'Fela' : 'Hvernig virkar þetta?'}</button>
+              </span>
+            )}
+            {editing && (
+              <span className="mailrc-alias">
+                <input value={alias} onChange={e => setAlias(e.target.value.toLowerCase().replace(/[^a-záðéíóúýþæö0-9]/g, '').slice(0, 14))} placeholder="t.d. sigga" maxLength={14} autoFocus />
+                <button className="mailrc-read" onClick={saveAlias} disabled={alias.trim().length < 2}>Vista</button>
+                <button className="mailrc-drop" onClick={() => setEditing(false)} aria-label="Hætta við">✕</button>
+              </span>
+            )}
             {open && (
               <div className="mailrc-help">
-                <p>Virkar með PDF-reikningum (t.d. ELKO, Húsasmiðjan, netverslanir), myndum af kvittunum og kvittunum sem eru í sjálfum póstinum.</p>
-                <p>Ráð: vistaðu netfangið sem tengilið, t.d. „Tossalisti kvittanir“, svo það sé fljótlegt að áframsenda.</p>
-                <p>Aðeins þú sérð það sem berst á netfangið. Fáirðu ruslpóst á það geturðu <button className="linklike" onClick={reset}>búið til nýtt netfang</button>.</p>
+                <p><b>Í búðinni:</b> þegar þú ert spurð(ur) hvort þú viljir kvittunina í tölvupósti (t.d. í ELKO), gefðu upp þetta netfang. Kvittunin kemur beint hingað.</p>
+                <p><b>Heima:</b> áframsendu PDF-reikninga og kvittanir úr netverslunum á netfangið. Vistaðu það sem tengilið, t.d. „Tossalisti kvittanir“.</p>
+                <p>Stafirnir þrír aftast gera netfangið þitt einstakt. Aðeins þú sérð það sem berst. Fáirðu ruslpóst á það geturðu <button className="linklike" onClick={reset}>búið til nýtt netfang</button>.</p>
               </div>
             )}
           </div>

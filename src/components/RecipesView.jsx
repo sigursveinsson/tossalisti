@@ -5,6 +5,7 @@ import RecipeForm from './RecipeForm.jsx'
 import KronanRecipes from './KronanRecipes.jsx'
 import Dialog from './Dialog.jsx'
 import { IconArrowLeft, IconCheck, IconLock } from '@tabler/icons-react'
+import { useBackClose } from '../lib/backstack.js'
 
 function StarRow({ value, count }) {
   if (!value) return <span className="stars muted">Engin einkunn enn</span>
@@ -27,6 +28,9 @@ export default function RecipesView({ onAddRecipe, authorName, kronan = false, s
   const [custom, setCustom] = useState([])
   const [confirmDel, setConfirmDel] = useState(null)
   const [stats, setStats] = useState({ uses: {}, popular: {}, avg: {}, mine: {} })
+  // Til baka: úr uppskrift aftur í yfirlitið / lokar „Ný uppskrift“
+  useBackClose(!!open, () => setOpen(null))
+  useBackClose(creating, () => setCreating(false))
 
   const loadRecipes = async () => { try { setCustom(await store.getRecipes()) } catch (e) {} }
   const loadStats = async () => {

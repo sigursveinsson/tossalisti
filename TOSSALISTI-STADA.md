@@ -1010,3 +1010,13 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Hnappurinn í pósti = Supabase magic link → /?skanna=1. Notandi stofnaður ef ekki til (staðfestist við smell).
 - POST {dry:true} með x-cron-key sýnir hvað yrði sent.
 - Gestur → skráning (25.11): „Skrá inn“ í gestastikunni geymir prufuaðganginn (tossa.guestSession) og skráir út aðeins staðbundið. Velji hann svo „Nýskráning“ (netfang eða Google) verður prufuaðgangurinn að skráða aðganginum (updateUser / linkIdentity) og allt fylgir. „Halda áfram sem gestur“ endurheimtir hann. Gestastikan: „Stofna aðgang“ (áður „Vista aðgang“).
+- Kvittananetfang (25.11): <gælunafn>-<3 stafir>@kvittun.tossalisti.is, t.d. sigga-k7p. Sjálfgefið gælunafn úr netfangi notandans (receipt_alias_clean, íslenskir stafir umritaðir). Notandi getur breytt nafni (reset_receipt_mail(p_alias)) → nýtt netfang. „Sýna í búðinni“ birtir netfangið stórt á skjá. inbound-receipt v2 les nýja sniðið.
+
+
+## UX-yfirferð 26.11.2026 (bíður deploy)
+- **Villa löguð — til baka/áfram:** þegar glugga var lokað með hnappi í sama andartaki og sýn breyttist (kvittun vistuð → Bókhald; Tilkynningar → „Opna listann“) lenti `history.back()` frá glugganum á nýju slóðinni og sýnin hoppaði til baka. Notandinn sá því aldrei flokkuðu útgjöldin eftir skönnun. Lagað í `lib/backstack.js` (`whenHistoryIdle`, popstate-hlustandi skráður við innlestur + `stopImmediatePropagation`) og slóðarskrif í `App.jsx` bíða.
+- **Til baka lokar nú líka:** listavalmynd, „Stofna aðgang“ (áður endurhlóðst síðan og innslegið glataðist), „Eyða reikningi“, smágluggar lista (breyta/úthluta/áminning/deild/börn/verðlaun/skema), smágluggar bókhalds, opin uppskrift.
+- **`lib/isLocale.js`:** íslenskt tölu-/dagsetningasnið þar sem vafrinn kann ekki `is-IS` (Chrome sýndi „November 26, 2026“ og „3,837 kr“). Sett upp í `main.jsx`.
+- **Útlit:** ✕ í gluggum og „…“ í listavalmynd voru óstílaðir gráir kassar; fótur listavalmyndar flæddi út á 375px. Undirfyrirsögn Heim („kláraðu fyrsta verkið…“) birtist nú aðeins þeim sem eru með verkefnalista.
+- Prófað: hermun á vafrasögu í node (5 sviðsmyndir), Babel-parse, undef-check. Villan staðfest í lifandi appi fyrir lagfæringu.
+- **Ólagað / tillögur:** dæmakvittun er blindgata (42 opnuðu, 2 fóru í alvöru skönnun); „Kaupa seinna“ og „Óskalisti“ taka pláss efst á Heim en eru nánast ónotuð (2 og 1); listinn sjálfur lendir undir „Fleiri algengar vörur“.

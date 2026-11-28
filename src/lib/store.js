@@ -879,8 +879,9 @@ const cloud = {
     const v = data && data.value
     return typeof v === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v) ? v.toLowerCase() : ''
   },
-  async myReceiptMail(reset = false) {
-    const { data, error } = await supabase.rpc(reset ? 'reset_receipt_mail' : 'my_receipt_mail')
+  // reset: nýtt netfang (nýir 3 stafir); alias: nýtt gælunafn
+  async myReceiptMail(reset = false, alias = null) {
+    const { data, error } = reset ? await supabase.rpc('reset_receipt_mail', { p_alias: alias }) : await supabase.rpc('my_receipt_mail')
     if (error) throw error
     return data || null
   },

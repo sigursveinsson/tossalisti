@@ -1,5 +1,5 @@
 // Áframsendar kvittanir: Resend „email.received“ webhook.
-// Notandi áframsendir kvittun (t.d. PDF-reikning frá ELKO) á sitt netfang <tóki>@<INBOUND_DOMAIN>.
+// Notandi áframsendir kvittun (t.d. PDF-reikning frá ELKO) á sitt netfang <gælunafn>-<3 stafir>@<INBOUND_DOMAIN>.
 // Hér er skeytið sótt, viðhengið (PDF/mynd) eða textinn vistaður í kvittanageymslu notandans og
 // tilkynning sett í Tilkynningar. Lesturinn sjálfur (Gemini) gerist ekki hér heldur þegar notandinn
 // opnar kvittunina í appinu og staðfestir — sama flæði og skönnun, enginn AI-kostnaður af ruslpósti.
@@ -37,8 +37,8 @@ function tokenFrom(list: string[], domain: string) {
     const at = a.lastIndexOf('@'); if (at < 1) continue
     const local = a.slice(0, at), dom = a.slice(at + 1)
     if (domain && dom !== domain) continue
-    const t = local.replace(/^kvittun[+.-]?/, '')
-    if (/^[a-z0-9]{8,16}$/.test(t)) return t
+    // Snið: <gælunafn>-<3 stafir>, t.d. sigga-k7p (sjá receipt_mail_new)
+    if (/^[a-z0-9]{2,14}-[a-z0-9]{3}$/.test(local)) return local
   }
   return null
 }

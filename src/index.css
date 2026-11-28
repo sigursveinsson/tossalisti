@@ -2520,3 +2520,18 @@ div.guest-bar button.hl{background:var(--cta);text-decoration:none;border-radius
 .lp-when button { flex: 1; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 10px 4px; font-size: 14px; font-weight: 600; }
 .lp-when button.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
 .lp-signup-form { margin-top: 12px; }
+.mailrc-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.mailrc-alias { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+.mailrc-alias input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font-size: 16px; }
+.mailrc-show { position: fixed; inset: 0; z-index: 200; background: #fff; color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
+.mailrc-show small { font-size: 18px; color: var(--muted); }
+.mailrc-show b { font-size: 54px; letter-spacing: 1px; word-break: break-all; line-height: 1.1; }
+.mailrc-show span { font-size: 30px; font-weight: 600; word-break: break-all; }
+.mailrc-show em { margin-top: 30px; font-size: 14px; color: var(--faint); font-style: normal; }
+
+/* ── UX-yfirferð 26.11: lokunarhnappar og aðgerðahnappar sem birtust sem gráir sjálfgefnir kassar ── */
+.modal h2:has(> .x) { display: flex; align-items: flex-start; gap: 10px; }
+.modal h2 > .x { margin-left: auto; flex: none; background: none; border: 0; padding: 4px; color: var(--muted); cursor: pointer; border-radius: 8px; }
+.lrow2 .ico { background: none; border: 0; color: var(--muted); padding: 6px; border-radius: 8px; flex: none; cursor: pointer; }
+/* Fótur listavalmyndar flæddi út fyrir á mjóum símum (375px) */
+.sheet-legal { flex-wrap: wrap; gap: 6px 14px; }

@@ -30,7 +30,7 @@ import ConsentNotice from './components/ConsentNotice.jsx'
 import Dialog from './components/Dialog.jsx'
 import Auth, { ResetPassword } from './components/Auth.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
-import { useBackClose } from './lib/backstack.js'
+import { useBackClose, whenHistoryIdle } from './lib/backstack.js'
 import { captureAttribution, getAttribution, pageContext, isBot, visitorId } from './lib/attribution.js'
 
 captureAttribution()
@@ -578,6 +578,7 @@ export default function App() {
 
   // ---- Vafrasaga fyrir lista/flipa: refresh heldur sér, back/forward virkar ----
   const navRef = useRef({ first: true, fromPop: false })
+  const navSeq = useRef(0)
   const currentIdRef = useRef(currentId); currentIdRef.current = currentId
   const tabRef = useRef(tab); tabRef.current = tab
   const viewRef = useRef(view); viewRef.current = view
@@ -608,14 +609,18 @@ export default function App() {
       if (tab && tab !== 'list') p.set('tab', tab)
       next = '#' + p.toString()
     } else next = '#view=home'
-    if (window.location.hash === next) { navRef.current.first = false; navRef.current.fromPop = false; return }
-    if (navRef.current.first || navRef.current.fromPop) {
-      window.history.replaceState(window.history.state, '', next)
-    } else {
-      window.history.pushState(window.history.state, '', next)
-    }
+    const replace = navRef.current.first || navRef.current.fromPop
     navRef.current.first = false
     navRef.current.fromPop = false
+    // Sé glugga lokað í sama andartaki (t.d. kvittun vistuð → Bókhald, Tilkynningar → Opna listann) er
+    // history.back() frá glugganum enn á leiðinni. Skrifum slóðina fyrst þegar hún er lent — annars
+    // lendir bakkfærslan á nýju færslunni og sýnin hoppar til baka á gamla staðinn.
+    const seq = ++navSeq.current
+    whenHistoryIdle(() => {
+      if (seq !== navSeq.current || window.location.hash === next) return
+      if (replace) window.history.replaceState(window.history.state, '', next)
+      else window.history.pushState(null, '', next)
+    })
   }, [view, currentId, tab])
 
   // Back/forward: lesa lista/flipa úr slóðinni. Gluggar breyta ekki hash-inu, svo þetta
@@ -641,6 +646,11 @@ export default function App() {
   useBackClose(!!sharing, () => setSharing(null))
   useBackClose(!!pendingRecipe, () => setPendingRecipe(null))
   useBackClose(!!dialog, () => setDialog(null))
+  // Listavalmyndin, „Stofna aðgang“ og „Eyða reikningi“: til baka lokar glugganum (áður fór notandinn úr appinu
+  // eða síðan endurhlóðst og það sem búið var að slá inn glataðist). Öruggt eftir whenHistoryIdle í backstack.js.
+  useBackClose(showLists, () => setShowLists(false))
+  useBackClose(!!showSaveAcct, () => setShowSaveAcct(false))
+  useBackClose(showDeleteAccount, () => setShowDeleteAccount(false))
   // ReceiptScanner skráir sig sjálfur í bakk-staflann (engin tvískráning hér).
 
   // ?add=Vöruheiti (frá griptu.is „Á listann"): bæta á fyrsta innkaupalistann þegar allt er hlaðið, einu sinni.

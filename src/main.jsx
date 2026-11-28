@@ -1,3 +1,5 @@
+import { installIsLocale } from './lib/isLocale.js'
+installIsLocale() // á undan öllu: íslenskar tölur og dagsetningar líka þar sem vafrinn kann ekki 'is-IS'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'

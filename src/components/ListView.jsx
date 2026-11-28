@@ -132,6 +132,15 @@ export default function ListView({ isGuest = false, items, listType = 'shopping'
   const suggPlain = showTyped ? suggFiltered.filter(s => s !== typed) : suggFiltered
   const closeScan = () => { setScanning(false); setScanFeed([]); scanLock.current = {} }
   useBackClose(scanning, closeScan)
+  // Smágluggar listans: til baka lokar þeim í stað þess að skipta um lista / fara úr appinu
+  useBackClose(!!assigning, () => setAssigning(null))
+  useBackClose(!!editItem, () => setEditItem(null))
+  useBackClose(!!remItem, () => setRemItem(null))
+  useBackClose(!!deptItem, () => setDeptItem(null))
+  useBackClose(kidsOpen, () => setKidsOpen(false))
+  useBackClose(!!profilePerson, () => setProfilePerson(null))
+  useBackClose(rewardsOpen, () => setRewardsOpen(false))
+  useBackClose(showSchedForm, () => setShowSchedForm(false))
 
   // ── Raddstýring (🎤): tala → gervigreind skilar vörulista → staðfesta → bætt á lista ──
   const [voiceState, setVoiceState] = useState(null) // null | 'rec' | 'think' | 'review' | 'error'
