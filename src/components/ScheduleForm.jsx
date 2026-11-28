@@ -51,7 +51,7 @@ export default function ScheduleForm({ members = [], currentUserId, defaultDay =
         </div>
         <div className="emoji-actions">
           <label className="emoji-photo-btn">📷 Taka mynd
-            <input type="file" accept="image/*" capture="environment" hidden onChange={pickPhoto} />
+            <input type="file" accept="image/*" hidden onChange={pickPhoto} />
           </label>
           {effImage && !isEmojiImage(effImage) && <img className="item-img" src={effImage} alt="" style={{ width: 34, height: 34 }} />}
           {(image || effImage) && <button className="emoji-clear" onClick={() => { setImage(null); setImgTouched(true) }}>Fjarlægja</button>}

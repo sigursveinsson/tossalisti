@@ -816,7 +816,7 @@ export default function ListView({ isGuest = false, items, listType = 'shopping'
             </div>
             <div className="emoji-actions">
               <label className="emoji-photo-btn"><IconCamera size={16} stroke={1.75} /> Taka mynd
-                <input type="file" accept="image/*" capture="environment" hidden onChange={async ev => {
+                <input type="file" accept="image/*" hidden onChange={async ev => {
                   const f = ev.target.files && ev.target.files[0]; if (!f) return
                   try { const url = await resizeImageFile(f, 256); onSetItemImage(editItem, url); setEditItem({ ...editItem, image_url: url }) } catch (err) {}
                 }} />

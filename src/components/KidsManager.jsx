@@ -26,7 +26,8 @@ function KidForm({ initial, onSave, onCancel }) {
         <label className="kid-avatar-pick" style={{ background: color }}>
           {avatar ? <img src={avatar} alt="" /> : <span>{initials(name)}</span>}
           <span className="kid-cam">📷</span>
-          <input type="file" accept="image/*" capture="user" hidden onChange={pickPhoto} />
+          {/* Ekkert capture: síminn býður þá bæði myndavél og myndasafn */}
+          <input type="file" accept="image/*" hidden onChange={pickPhoto} />
         </label>
         <input className="dialog-input" autoFocus value={name} onChange={e => setName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && save()} placeholder="Nafn krakka" />

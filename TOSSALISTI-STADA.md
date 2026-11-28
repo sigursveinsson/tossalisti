@@ -1026,3 +1026,4 @@ Staða 48 klst: 122 gestir, 58 úr auglýsingu: 57% <5 sek, 28% 5–15 sek, 16% 
 - Nýtt edge-fall `invite-email` (v1, verify_jwt=true, skráin er heimildin): býr til boðshlekk í nafni notandans (`create_invite`) og sendir póst gegnum Resend, reply-to = sendandinn. Aðeins skráðir notendur (ekki gestir), mest 10 boð/sólarhring, sama netfang+listi ekki oftar en á 10 mín.
 - Tafla `list_invite_mails` (RLS, aðeins þjónustulykill). `store.sendInviteEmail`, `App.emailInvite` (share_list fyrst, svo póstur), `ShareModal` sýnir stöðu í glugganum. Atburður `invite_email`.
 - Óprófað enda á milli (þarf innskráðan notanda): prófa eftir deploy.
+- share_list: skráður viðtakandi fær nú tilkynningu í appinu (inbox_messages, kind 'join', með „Opna listann“). Migration share_list_inbox_notice. sw.js v5 + útgáfuathugun í main.jsx (appið endurhleður sig eftir deploy).
